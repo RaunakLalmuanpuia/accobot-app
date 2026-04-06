@@ -1,0 +1,611 @@
+# Laravel 12 Multi‑Tenant Authentication + RBAC + CA↔Business Client Access (Design Doc)
+
+**Status:** Theory / Architecture (no code yet)  
+**Backend:** Laravel 12 (API-only)  
+**Web:** SPA (React/Vue/Next)  
+**Mobile:** Flutter  
+**Auth:** Laravel Sanctum (SPA cookies for web, PAT bearer tokens for mobile + integrations)  
+**RBAC:** spatie/laravel-permission (tenant-scoped via Teams)  
+**Tenancy:** Multi-tenant, UUID tenant IDs, tenant context in URL  
+**Date:** 2026-04-06
+
+---
+
+## 1. Goals
+
+1. Secure authentication for:
+   - Web/admin SPA
+   - Flutter mobile
+   - Third-party integrations
+2. Multi-tenant authorization with:
+   - Tenant-scoped roles and permissions
+   - Exactly **one role per user per tenant**
+   - Users can belong to multiple tenants
+3. Two tenant classes:
+   - **CA Firm** tenants
+   - **Business** tenants
+4. CA firm can link to multiple business tenants (clients) with:
+   - Mandatory **business-owner approval**
+   - CA selects which staff get access per business
+   - CA staff become **external members** in the business tenant
+5. Strong auditability and controlled Super Admin impersonation:
+   - Impersonation allowed
+   - Destructive actions blocked while impersonating
+6. Support roadmap:
+   - Phone verification later (MSG91-like flow)
+   - 2FA later (privileged roles first)
+   - More verification options for CA signup (manual, docs, domain/invite)
+
+---
+
+## 2. Non-Goals (MVP)
+
+- Social login (Google/Apple) — optional later
+- Email/phone verification enforcement — later
+- OAuth2 (Passport) — not required for MVP
+- Attribute-based access control (ABAC) beyond tenant scoping — not required for MVP
+
+---
+
+## 3. Key Decisions (Locked)
+
+### 3.1 Authentication modes
+- **Web SPA:** Sanctum SPA **cookie-based** auth + CSRF.
+- **Mobile:** Sanctum **Personal Access Tokens** (bearer token).
+- **Integrations:** Integration User + PAT (created by tenant admins).
+
+### 3.2 Tenant context
+- Tenant context is passed via URL:  
+  `/api/tenants/{tenantId}/...`
+- Tenant IDs are **UUIDs**.
+
+### 3.3 Roles and permissions
+- Tenant-scoped RBAC using Spatie "teams" mode (team_id = tenant_id).
+- Exactly **one role per tenant membership** (enforced at application/service level).
+- Multiple `Owner` users allowed per tenant.
+- Custom roles allowed (Owner/Admin can create/edit roles).
+
+### 3.4 CA↔Business client linking
+- CA requests link.
+- Business tenant **Owner** approves.
+- After approved, CA admin may grant selected CA staff access to that business tenant.
+- Granted CA staff are inserted into business tenant membership as **external** members.
+
+### 3.5 Impersonation
+- Super Admin can impersonate a user/tenant.
+- All impersonated actions are audited with both identities.
+- Destructive operations are blocked during impersonation.
+
+---
+
+## 4. Terminology
+
+- **Tenant:** An organization/workspace. Types: `business`, `ca_firm`.
+- **Membership:** Relationship between user and tenant, stored in `tenant_user`.
+- **Internal member:** Normal tenant user (`member_type=internal`).
+- **External member:** CA staff inside a business tenant (`member_type=external`, `source_tenant_id=<ca_firm_tenant_uuid>`).
+- **Relationship:** Link between CA tenant and Business tenant (client engagement).
+
+---
+
+## 5. High-Level Architecture
+
+### 5.1 Request lifecycle (tenant-scoped endpoint)
+1. Authenticate:
+   - Web: cookie session via Sanctum SPA
+   - Mobile/Integration: bearer token via Sanctum PAT
+2. Resolve `{tenantId}` from URL
+3. Verify membership active in that tenant
+4. Set tenant context in request container
+5. Set Spatie team context to tenant
+6. Authorize via `permission` check + policy rules
+7. Enforce tenant scoping on all DB queries (`tenant_id = currentTenantId`)
+
+---
+
+## 6. Data Model (Core Tables)
+
+> Note: Names are suggestions. Use UUID primary keys where indicated.
+
+### 6.1 `users`
+- `id` (UUID, PK)
+- `email` (unique, required)
+- `password_hash`
+- `name`
+- `type` enum: `human` | `integration`
+- `status` enum: `active` | `platform_suspended` (optional)
+- `email_verified_at` nullable (later)
+
+### 6.2 `tenants`
+- `id` (UUID, PK)
+- `type` enum: `business` | `ca_firm`
+- `name`
+- `status` enum: `active` | `suspended` | `pending_verification`
+- `created_by_user_id` (FK → users)
+- `owner_user_id` (FK → users) (optional convenience)
+
+### 6.3 `tenant_user` (membership pivot)
+- `id` (UUID, PK)
+- `tenant_id` (FK → tenants, UUID)
+- `user_id` (FK → users, UUID)
+- `status` enum: `active` | `suspended` | `invited` | `pending` | `removed`
+- `member_type` enum: `internal` | `external`
+- `source_tenant_id` nullable UUID (for external members; CA firm tenant id)
+- `role_name` string (mirrors Spatie role in this tenant)
+- `invited_by_user_id` nullable
+- `joined_at` nullable
+
+**Constraints**
+- Unique (`tenant_id`, `user_id`)
+
+### 6.4 `tenant_client_relationships`
+- `id` (UUID, PK)
+- `ca_tenant_id` (FK → tenants)
+- `business_tenant_id` (FK → tenants)
+- `status` enum: `pending` | `active` | `rejected` | `terminated`
+- `requested_by_user_id` (FK → users)
+- `approved_by_user_id` nullable (FK → users)
+- timestamps
+
+**Constraints**
+- Unique (`ca_tenant_id`, `business_tenant_id`)
+
+### 6.5 `ca_business_staff_assignments`
+- `id` (UUID, PK)
+- `relationship_id` (FK → tenant_client_relationships)
+- `ca_user_id` (FK → users)
+- `business_tenant_id` (FK → tenants) (denormalized)
+- `created_by_user_id` (FK → users) (CA admin)
+- `status` enum: `active` | `revoked`
+- timestamps
+
+**Constraints**
+- Unique (`relationship_id`, `ca_user_id`)
+
+### 6.6 `invitations`
+- `id` (UUID, PK)
+- `tenant_id` (FK → tenants)
+- `email` (required)
+- `role_name`
+- `invited_by_user_id`
+- `token_hash` (store hash only)
+- `expires_at`
+- `accepted_at` nullable
+- `status` enum: `pending` | `accepted` | `expired` | `revoked`
+
+### 6.7 `personal_access_tokens` (Sanctum)
+- Default Sanctum table plus optional metadata:
+  - `name` (device label)
+  - `abilities` (scopes)
+  - `last_used_at`
+  - `ip_last_used`, `user_agent_last_used`, `device_platform`, `app_version` (optional)
+
+### 6.8 `audit_events` (append-only)
+- `id` (UUID, PK)
+- `occurred_at`
+- `tenant_id` nullable
+- `actor_user_id` nullable
+- `actor_type` enum: `human` | `integration` | `system`
+- `impersonator_user_id` nullable
+- `event_type` string
+- `ip`, `user_agent`
+- `metadata` JSON
+
+---
+
+## 7. Authentication Flows
+
+### 7.1 Web SPA (Sanctum SPA cookies + CSRF)
+- `GET /sanctum/csrf-cookie` (or equivalent bootstrapping)
+- `POST /api/auth/login`
+- Auth cookie is set; SPA uses cookie automatically.
+- All state-changing requests require CSRF header.
+
+### 7.2 Mobile (Sanctum PAT)
+- `POST /api/auth/mobile/login` returns bearer token (shown once).
+- Flutter stores token in secure storage (Keychain/Keystore).
+- Device sessions:
+  - list sessions/tokens
+  - revoke per token or revoke all
+
+### 7.3 Invitations (Magic link)
+- Admin invites by email
+- Invitee clicks link
+- If user does not exist: create user + set password
+- Accept invitation -> membership activates
+
+---
+
+## 8. Tenant Switching & Access
+
+### 8.1 Endpoints
+- `GET /api/me`
+- `GET /api/me/tenants` (list memberships)
+- Tenant-scoped endpoints live under:
+  - `/api/tenants/{tenantId}/...`
+
+### 8.2 Membership enforcement
+A request to `/api/tenants/{tenantId}/...` requires:
+- authenticated user
+- membership exists in `tenant_user`
+- membership `status = active`
+
+External members are treated identically for access checks, but have:
+- `member_type=external`
+- `source_tenant_id=<ca_firm_tenant_uuid>`
+
+---
+
+## 9. RBAC Model (Spatie Teams)
+
+### 9.1 Team scoping
+- Spatie team_id = tenant_id
+- Roles are tenant-scoped
+- Permissions are global strings
+
+### 9.2 One role per membership
+When setting a user’s role in a tenant:
+1. remove any existing roles for that user in that team
+2. assign exactly one role
+3. update `tenant_user.role_name`
+
+### 9.3 Custom roles
+- Business tenant: Owner/Admin can create roles
+- CA tenant: Owner/Admin can create roles
+- Permission catalog remains consistent; roles are groupings
+
+---
+
+## 10. Permission Catalog (Authoritative)
+
+> Prefix convention: `domain.action`  
+> Example: `invoices.view`, `members.invite`
+
+### 10.1 Tenant / Settings
+- `tenant.view_settings`
+- `tenant.update_settings`
+
+### 10.2 Members / Roles
+- `members.view`
+- `members.invite`
+- `members.remove`
+- `members.suspend`
+- `members.assign_role`
+
+### 10.3 CA Client Linking (Business side owner actions)
+- `clients.view_requests`
+- `clients.approve_link` *(Owner-only by policy)*
+- `clients.terminate_link` *(Owner-only by policy)*
+
+### 10.4 Accounting (example baseline)
+- `invoices.view`
+- `invoices.create`
+- `invoices.edit`
+- `invoices.delete`
+- `reports.view`
+- `reports.export`
+
+### 10.5 Integrations
+- `integrations.view`
+- `integrations.manage`
+- `integrations.issue_token` (optional; can be part of manage)
+
+### 10.6 Audit
+- `audit.view` (tenant audit visibility)
+
+---
+
+## 11. Preset Role Templates (MVP)
+
+### 11.1 Business Tenant Presets
+
+#### Role: `Owner`
+**Purpose:** ultimate tenant control + CA approvals  
+**Permissions:**
+- tenant:
+  - `tenant.view_settings`
+  - `tenant.update_settings`
+- members:
+  - `members.view`
+  - `members.invite`
+  - `members.remove`
+  - `members.suspend`
+  - `members.assign_role`
+- CA linking:
+  - `clients.view_requests`
+  - `clients.approve_link` *(policy: Owner only)*
+  - `clients.terminate_link` *(policy: Owner only)*
+- accounting:
+  - `invoices.view`
+  - `invoices.create`
+  - `invoices.edit`
+  - `invoices.delete`
+  - `reports.view`
+  - `reports.export`
+- integrations:
+  - `integrations.view`
+  - `integrations.manage`
+- audit:
+  - `audit.view`
+
+**Notes**
+- Multiple Owners allowed.
+- System should prevent demoting/removing the last Owner (recommended).
+
+#### Role: `Admin`
+**Purpose:** operations admin, no CA approval  
+**Permissions:**
+- tenant:
+  - `tenant.view_settings`
+  - `tenant.update_settings` *(optional: you may restrict)*
+- members:
+  - `members.view`
+  - `members.invite`
+  - `members.remove`
+  - `members.suspend`
+  - `members.assign_role` *(cannot assign Owner optionally via policy)*
+- CA linking:
+  - `clients.view_requests` *(view only)*
+- accounting:
+  - `invoices.view`
+  - `invoices.create`
+  - `invoices.edit`
+  - `invoices.delete`
+  - `reports.view`
+  - `reports.export`
+- integrations:
+  - `integrations.view`
+  - `integrations.manage`
+- audit:
+  - `audit.view`
+
+#### Role: `Manager`
+**Purpose:** manages accounting operations  
+**Permissions:**
+- members:
+  - `members.view` *(optional)*
+- accounting:
+  - `invoices.view`
+  - `invoices.create`
+  - `invoices.edit`
+  - `reports.view`
+  - `reports.export`
+- integrations:
+  - `integrations.view`
+- audit:
+  - `audit.view` *(optional; many orgs restrict)*
+
+#### Role: `Staff`
+**Purpose:** data entry  
+**Permissions:**
+- accounting:
+  - `invoices.view`
+  - `invoices.create`
+  - `invoices.edit` *(optional; some orgs restrict edit)*
+  - `reports.view`
+
+#### Role: `Viewer`
+**Purpose:** read-only  
+**Permissions:**
+- accounting:
+  - `invoices.view`
+  - `reports.view`
+
+#### Role: `ExternalAccountant`
+**Purpose:** CA staff inside business tenant  
+**Default Permissions (safe baseline):**
+- accounting:
+  - `invoices.view`
+  - `reports.view`
+  - `reports.export` *(optional; many CAs need exports)*
+- audit:
+  - `audit.view` *(optional; depends on product positioning)*
+- members/integrations/tenant settings: **none**
+
+**Notes**
+- Business tenant Owner/Admin can elevate/restrict via custom roles if desired.
+- External memberships are visible and revocable by business tenant.
+
+---
+
+### 11.2 CA Firm Tenant Presets
+
+#### Role: `OwnerPartner`
+**Permissions:**
+- tenant:
+  - `tenant.view_settings`
+  - `tenant.update_settings`
+- members:
+  - `members.view`
+  - `members.invite`
+  - `members.remove`
+  - `members.suspend`
+  - `members.assign_role`
+- client management (CA side):
+  - request client links (implementation-specific)
+  - manage staff assignments to clients (implementation-specific)
+- accounting/reporting (inside CA tenant, if any):
+  - `reports.view`
+  - `reports.export`
+- integrations:
+  - `integrations.view`
+  - `integrations.manage`
+- audit:
+  - `audit.view`
+
+#### Role: `Manager`
+**Permissions:**
+- members:
+  - `members.view`
+- client operations:
+  - manage staff assignments to clients *(optional; you can restrict to OwnerPartner)*
+- reports:
+  - `reports.view`
+  - `reports.export`
+
+#### Role: `Auditor`
+**Permissions:**
+- reports:
+  - `reports.view`
+  - `reports.export` *(optional)*
+- accounting visibility where applicable:
+  - `invoices.view` *(inside CA tenant if you store work artifacts there)*
+
+#### Role: `Staff`
+**Permissions:**
+- reports:
+  - `reports.view`
+
+---
+
+## 12. CA↔Business Linking Workflow (Detailed)
+
+### 12.1 Steps
+1. CA tenant initiates link request -> relationship `pending`
+2. Business tenant Owner approves -> relationship `active`
+3. CA OwnerPartner selects staff per business client:
+   - create `ca_business_staff_assignments` rows
+   - ensure those CA users are members of business tenant with:
+     - `member_type=external`
+     - `source_tenant_id = ca_tenant_id`
+     - role `ExternalAccountant` by default
+
+### 12.2 Business controls
+- Business Owner/Admin can:
+  - view external members
+  - suspend/remove external members
+- Only Business Owner can:
+  - approve link
+  - terminate link
+
+---
+
+## 13. Integrations (Tally example)
+
+### 13.1 Integration credential creation
+Tenant Admin/Owner:
+1. Creates "Tally Sync" integration
+2. System creates integration user:
+   - `users.type = integration`
+3. Adds membership to tenant with role:
+   - `IntegrationTallySync` (custom/preset integration role)
+4. Issues PAT token
+5. Displays token once
+
+### 13.2 Suggested Integration role: `IntegrationTallySync`
+**Permissions (example)**
+- `invoices.view`
+- `invoices.create` *(if Tally pushes documents)*
+- `reports.view` *(optional)*
+
+> Keep integrations least-privilege and scoped to one tenant.
+
+---
+
+## 14. Audit Logging Spec
+
+### 14.1 Required events (baseline)
+**Auth**
+- `auth.login.success`
+- `auth.login.failure`
+- `auth.logout`
+- `auth.token.created`
+- `auth.token.revoked`
+
+**Tenant & membership**
+- `tenant.created`
+- `tenant.settings.updated`
+- `member.invited`
+- `member.invite.accepted`
+- `member.role.changed`
+- `member.suspended`
+- `member.removed`
+
+**CA relationship**
+- `client_link.requested`
+- `client_link.approved`
+- `client_link.rejected`
+- `client_link.terminated`
+- `external_member.granted`
+- `external_member.revoked`
+
+**Impersonation**
+- `impersonation.started`
+- `impersonation.ended`
+
+### 14.2 Metadata expectations
+Store IDs and before/after snapshots where relevant:
+- role change: from/to
+- link approve: relationship_id, ca_tenant_id, business_tenant_id
+- token events: token_id, device name, abilities
+
+### 14.3 Append-only requirement
+- No updates/deletes to audit rows in application logic.
+
+---
+
+## 15. Impersonation Rules
+
+### 15.1 Allowed
+- Super Admin can impersonate any user (for support).
+- All actions are audited with `impersonator_user_id`.
+
+### 15.2 Blocked while impersonating (destructive actions)
+At minimum block:
+- tenant deletion/archival
+- terminating CA↔Business relationship
+- removing/demoting Owners
+- mass revocation operations *(recommended)*
+
+---
+
+## 16. Security Baselines (MVP)
+
+- Password policy: standard length requirement (no expiry).
+- Login throttling: per-IP and per-identifier.
+- Web security:
+  - secure cookies
+  - CSRF enabled
+  - strict CORS allowlist
+- Mobile security:
+  - token stored in secure keystore
+  - token revocation supported
+- Future:
+  - enforce email verification
+  - add phone verification (MSG91-like)
+  - require 2FA for Owner/Admin
+
+---
+
+## 17. Open Items / Future Enhancements
+
+1. Phone verification workflow (MSG91-style):
+   - add phone number to user
+   - OTP verification for step-up or login
+2. 2FA rollout:
+   - privileged roles first
+   - TOTP + recovery codes
+3. CA verification:
+   - manual approval + document + domain/invite logic fully implemented
+4. Two-person approval for high-risk actions (optional)
+5. Tamper-evident audit logs (hash chaining / WORM storage) if required
+
+---
+
+## 18. Summary
+
+This design provides:
+- Secure SPA auth for web (cookies + CSRF)
+- Device-based token auth for mobile/integrations
+- Tenant-scoped RBAC with presets + custom roles
+- CA↔Business relationship with mandatory approval + controlled staff access
+- Strong audit logging and safe impersonation
+
+**Next step (when ready):** turn this into implementation tasks:
+- migrations
+- middleware (tenant resolver)
+- auth controllers for web/mobile
+- membership services
+- CA relationship services
+- audit event pipeline
+- role/permission seeding per tenant type
