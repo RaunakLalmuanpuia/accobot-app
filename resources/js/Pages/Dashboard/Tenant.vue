@@ -32,6 +32,24 @@ const roleColorMap = {
     IntegrationUser:    'bg-orange-100 text-orange-700',
 }
 const roleColor = (name) => roleColorMap[name] ?? 'bg-gray-100 text-gray-600'
+
+// Group permissions by category for the access card
+const permissionGroups = [
+    { label: 'Members',      perms: ['members.view','members.invite','members.remove','members.suspend','members.assign_role'] },
+    { label: 'Clients',      perms: ['clients.view','clients.create','clients.edit','clients.delete'] },
+    { label: 'Vendors',      perms: ['vendors.view','vendors.create','vendors.edit','vendors.delete'] },
+    { label: 'Accounting',   perms: ['invoices.view','invoices.create','invoices.edit','invoices.delete','reports.view','reports.export'] },
+    { label: 'Integrations', perms: ['integrations.view','integrations.manage'] },
+    { label: 'Settings',     perms: ['tenant.view_settings','tenant.update_settings'] },
+    { label: 'Audit',        perms: ['audit.view'] },
+]
+
+const activeGroups = permissionGroups
+    .map(g => ({ ...g, active: g.perms.filter(p => props.permissions.includes(p)) }))
+    .filter(g => g.active.length > 0)
+
+// Strip prefix for display: 'clients.create' → 'create'
+const permLabel = (p) => p.split('.').slice(1).join('.')
 </script>
 
 <template>
@@ -55,7 +73,7 @@ const roleColor = (name) => roleColorMap[name] ?? 'bg-gray-100 text-gray-600'
         <div class="py-8">
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6">
 
-                <!-- Stat cards — only shown for permissions the user has -->
+                <!-- Stat cards -->
                 <div v-if="stats && Object.keys(stats).length" class="grid gap-5" :class="{
                     'grid-cols-3': Object.keys(stats).length >= 3,
                     'grid-cols-2': Object.keys(stats).length === 2,
@@ -77,42 +95,88 @@ const roleColor = (name) => roleColorMap[name] ?? 'bg-gray-100 text-gray-600'
 
                 <div class="grid grid-cols-3 gap-6">
 
-                    <!-- Recent members (only if members.view) -->
-                    <div v-if="can('members.view')" class="col-span-2 bg-white rounded-2xl border border-gray-200 shadow-sm">
-                        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                            <h2 class="font-semibold text-gray-800">Recent Members</h2>
-                            <Link :href="route('team.index', { tenant: tenant.id })" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">View all →</Link>
+                    <!-- Left col: recent members (if members.view) -->
+                    <div v-if="can('members.view')" class="col-span-2 space-y-6">
+
+                        <div class="bg-white rounded-2xl border border-gray-200 shadow-sm">
+                            <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                                <h2 class="font-semibold text-gray-800">Recent Members</h2>
+                                <Link :href="route('team.index', { tenant: tenant.id })" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">View all →</Link>
+                            </div>
+
+                            <div v-if="roleBreakdown && roleBreakdown.length" class="px-6 py-3 border-b border-gray-50 flex flex-wrap gap-2">
+                                <span
+                                    v-for="r in roleBreakdown"
+                                    :key="r.role"
+                                    :class="['text-xs font-medium px-2.5 py-1 rounded-full capitalize', roleColor(r.role)]"
+                                >{{ r.count }} {{ r.role }}</span>
+                            </div>
+
+                            <ul class="divide-y divide-gray-50">
+                                <li v-for="m in recentMembers" :key="m.id" class="flex items-center gap-3 px-6 py-3">
+                                    <div :class="['h-8 w-8 rounded-full flex items-center justify-center text-white text-xs font-semibold shrink-0', avatarColor(m.id)]">
+                                        {{ initials(m.name) }}
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-medium text-gray-800 truncate">{{ m.name }}</p>
+                                        <p class="text-xs text-gray-400 truncate">{{ m.email }}</p>
+                                    </div>
+                                    <div class="flex items-center gap-1.5 shrink-0">
+                                        <span v-if="m.member_type === 'external'" class="text-xs px-1.5 py-0.5 rounded bg-teal-50 text-teal-600 border border-teal-100">ext</span>
+                                        <span :class="['text-xs font-medium px-2 py-0.5 rounded-full capitalize', roleColor(m.role)]">{{ m.role }}</span>
+                                    </div>
+                                </li>
+                                <li v-if="!recentMembers || !recentMembers.length" class="px-6 py-4 text-sm text-gray-400 text-center">No members yet</li>
+                            </ul>
                         </div>
 
-                        <!-- Role breakdown chips -->
-                        <div v-if="roleBreakdown && roleBreakdown.length" class="px-6 py-3 border-b border-gray-50 flex flex-wrap gap-2">
-                            <span
-                                v-for="r in roleBreakdown"
-                                :key="r.role"
-                                :class="['text-xs font-medium px-2.5 py-1 rounded-full capitalize', roleColor(r.role)]"
-                            >{{ r.count }} {{ r.role }}</span>
+                        <!-- Your Access card -->
+                        <div class="bg-white rounded-2xl border border-gray-200 shadow-sm">
+                            <div class="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
+                                <div>
+                                    <h2 class="font-semibold text-gray-800">Your Access</h2>
+                                    <p class="text-xs text-gray-400 mt-0.5">Role: <span :class="['font-medium px-1.5 py-0.5 rounded-full text-xs', roleColor(roleName)]">{{ roleName }}</span></p>
+                                </div>
+                            </div>
+                            <div class="px-6 py-4 grid grid-cols-2 gap-4">
+                                <div v-for="group in activeGroups" :key="group.label">
+                                    <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">{{ group.label }}</p>
+                                    <div class="flex flex-wrap gap-1.5">
+                                        <span
+                                            v-for="p in group.active"
+                                            :key="p"
+                                            class="text-xs px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-medium capitalize"
+                                        >{{ permLabel(p) }}</span>
+                                    </div>
+                                </div>
+                                <p v-if="!activeGroups.length" class="text-sm text-gray-400 col-span-2">No permissions assigned.</p>
+                            </div>
                         </div>
-
-                        <ul class="divide-y divide-gray-50">
-                            <li v-for="m in recentMembers" :key="m.id" class="flex items-center gap-3 px-6 py-3">
-                                <div :class="['h-8 w-8 rounded-full flex items-center justify-center text-white text-xs font-semibold shrink-0', avatarColor(m.id)]">
-                                    {{ initials(m.name) }}
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <p class="text-sm font-medium text-gray-800 truncate">{{ m.name }}</p>
-                                    <p class="text-xs text-gray-400 truncate">{{ m.email }}</p>
-                                </div>
-                                <div class="flex items-center gap-1.5 shrink-0">
-                                    <span v-if="m.member_type === 'external'" class="text-xs px-1.5 py-0.5 rounded bg-teal-50 text-teal-600 border border-teal-100">ext</span>
-                                    <span :class="['text-xs font-medium px-2 py-0.5 rounded-full capitalize', roleColor(m.role)]">{{ m.role }}</span>
-                                </div>
-                            </li>
-                            <li v-if="!recentMembers || !recentMembers.length" class="px-6 py-4 text-sm text-gray-400 text-center">No members yet</li>
-                        </ul>
                     </div>
 
-                    <!-- Quick actions -->
-                    <div class="space-y-3" :class="{ 'col-span-3': !can('members.view') }">
+                    <!-- If no members.view: Your Access takes full left col -->
+                    <div v-if="!can('members.view')" class="col-span-2 bg-white rounded-2xl border border-gray-200 shadow-sm">
+                        <div class="px-6 py-4 border-b border-gray-100">
+                            <h2 class="font-semibold text-gray-800">Your Access</h2>
+                            <p class="text-xs text-gray-400 mt-0.5">Role: <span :class="['font-medium px-1.5 py-0.5 rounded-full text-xs', roleColor(roleName)]">{{ roleName }}</span></p>
+                        </div>
+                        <div class="px-6 py-4 grid grid-cols-2 gap-4">
+                            <div v-for="group in activeGroups" :key="group.label">
+                                <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">{{ group.label }}</p>
+                                <div class="flex flex-wrap gap-1.5">
+                                    <span
+                                        v-for="p in group.active"
+                                        :key="p"
+                                        class="text-xs px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-medium capitalize"
+                                    >{{ permLabel(p) }}</span>
+                                </div>
+                            </div>
+                            <p v-if="!activeGroups.length" class="text-sm text-gray-400 col-span-2">No permissions assigned.</p>
+                        </div>
+                    </div>
+
+                    <!-- Right col: Quick actions -->
+                    <div class="space-y-3">
                         <h2 class="font-semibold text-gray-800 px-1">Quick Actions</h2>
 
                         <Link v-if="can('members.view')" :href="route('team.index', { tenant: tenant.id })"
@@ -170,7 +234,6 @@ const roleColor = (name) => roleColorMap[name] ?? 'bg-gray-100 text-gray-600'
                             </div>
                         </Link>
 
-                        <!-- Fallback when no actions are available -->
                         <p v-if="!can('members.view') && !can('clients.view') && !can('vendors.view') && !can('members.assign_role') && !can('audit.view')"
                             class="text-sm text-gray-400 px-1">No actions available for your role.</p>
                     </div>

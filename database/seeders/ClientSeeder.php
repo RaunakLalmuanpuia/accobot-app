@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\Client;
 use App\Models\Tenant;
 use Illuminate\Database\Seeder;
 
@@ -13,14 +12,18 @@ class ClientSeeder extends Seeder
         $tenants = Tenant::all()->keyBy('name');
 
         $data = [
-            'Beta Finance Group' => [
+            'Tili' => [
                 ['name' => 'Rahul Enterprises',   'email' => 'rahul@enterprises.com', 'phone' => '9876543210'],
                 ['name' => 'Priya Trading Co.',   'email' => 'priya@trading.com',     'phone' => '9123456780'],
                 ['name' => 'Suresh & Sons',        'email' => 'suresh@sons.com',       'phone' => null],
             ],
-            'Delta Retail Co.' => [
+            'Awab' => [
                 ['name' => 'NextGen Tech Pvt Ltd', 'email' => 'hello@nextgen.com',     'phone' => '9988776655'],
                 ['name' => 'Meera Exports',        'email' => 'meera@exports.in',      'phone' => '9871234560'],
+            ],
+            'Eightsis' => [
+                ['name' => 'Horizon Retail Ltd.',  'email' => 'contact@horizon.com',   'phone' => '9090909090'],
+                ['name' => 'Apex Solutions',       'email' => 'info@apexsolutions.io', 'phone' => null],
             ],
         ];
 

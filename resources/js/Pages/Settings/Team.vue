@@ -55,6 +55,43 @@ function removeMember(member) {
     })
 }
 
+// ── Add member directly ────────────────────────────────────────
+const showAddModal = ref(false)
+const emailExists  = ref(null) // null = unchecked, true/false after lookup
+
+const addForm = useForm({
+    email:    '',
+    name:     '',
+    password: '',
+    role_id:  '',
+})
+
+let emailCheckTimer = null
+function onEmailInput() {
+    emailExists.value = null
+    clearTimeout(emailCheckTimer)
+    if (!addForm.email) return
+    emailCheckTimer = setTimeout(async () => {
+        try {
+            const res = await fetch(route('team.check-email', { tenant }) + '?email=' + encodeURIComponent(addForm.email))
+            const data = await res.json()
+            emailExists.value = data.exists
+        } catch {
+            emailExists.value = null
+        }
+    }, 400)
+}
+
+function addMember() {
+    addForm.post(route('team.store', { tenant }), {
+        onSuccess: () => {
+            showAddModal.value = false
+            addForm.reset()
+            emailExists.value = null
+        },
+    })
+}
+
 // ── Invite ─────────────────────────────────────────────────────
 const showInviteModal = ref(false)
 
@@ -94,16 +131,26 @@ const canManage     = canInvite || canAssignRole || canRemove
                     </p>
                 </div>
 
-                <button
-                    v-if="canInvite"
-                    @click="showInviteModal = true"
-                    class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition"
-                >
-                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                    </svg>
-                    Invite Member
-                </button>
+                <div v-if="canInvite" class="flex items-center gap-2">
+                    <button
+                        @click="showAddModal = true"
+                        class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
+                    >
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+                        </svg>
+                        Add Member
+                    </button>
+                    <button
+                        @click="showInviteModal = true"
+                        class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition"
+                    >
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                        </svg>
+                        Invite via Email
+                    </button>
+                </div>
             </div>
         </template>
 
@@ -201,6 +248,84 @@ const canManage     = canInvite || canAssignRole || canRemove
 
             </div>
         </div>
+
+        <!-- ── Add member modal ───────────────────────────────── -->
+        <Teleport to="body">
+            <div
+                v-if="showAddModal"
+                class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+            >
+                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-5">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900">Add member</h3>
+                        <p class="text-sm text-gray-500 mt-0.5">Existing users are added instantly. New users get a password-set email.</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Email address</label>
+                            <input
+                                v-model="addForm.email"
+                                @input="onEmailInput"
+                                type="email"
+                                placeholder="user@example.com"
+                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            />
+                            <p v-if="emailExists === true" class="mt-1 text-xs text-emerald-600">✓ Existing account found — will be added directly.</p>
+                            <p v-if="emailExists === false" class="mt-1 text-xs text-amber-600">No account found — a new account will be created.</p>
+                            <p v-if="addForm.errors.email" class="mt-1 text-xs text-red-500">{{ addForm.errors.email }}</p>
+                        </div>
+
+                        <template v-if="emailExists === false">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Full name</label>
+                                <input
+                                    v-model="addForm.name"
+                                    type="text"
+                                    placeholder="Jane Smith"
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                />
+                                <p v-if="addForm.errors.name" class="mt-1 text-xs text-red-500">{{ addForm.errors.name }}</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                                <input
+                                    v-model="addForm.password"
+                                    type="password"
+                                    placeholder="Min. 8 characters"
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                />
+                                <p v-if="addForm.errors.password" class="mt-1 text-xs text-red-500">{{ addForm.errors.password }}</p>
+                            </div>
+                        </template>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                            <select
+                                v-model="addForm.role_id"
+                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            >
+                                <option value="" disabled>Select a role</option>
+                                <option v-for="role in roles" :key="role.id" :value="role.id">{{ role.name }}</option>
+                            </select>
+                            <p v-if="addForm.errors.role_id" class="mt-1 text-xs text-red-500">{{ addForm.errors.role_id }}</p>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end gap-3 pt-1">
+                        <button
+                            @click="showAddModal = false; addForm.reset(); emailExists = null"
+                            class="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 hover:bg-gray-50"
+                        >Cancel</button>
+                        <button
+                            @click="addMember"
+                            :disabled="addForm.processing"
+                            :class="['rounded-lg px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition', { 'opacity-50 cursor-not-allowed': addForm.processing }]"
+                        >Add to Team</button>
+                    </div>
+                </div>
+            </div>
+        </Teleport>
 
         <!-- ── Invite modal ────────────────────────────────────── -->
         <Teleport to="body">

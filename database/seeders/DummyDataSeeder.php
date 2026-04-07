@@ -16,10 +16,11 @@ class DummyDataSeeder extends Seeder
     public function run(): void
     {
         // ─── Tenants ──────────────────────────────────────────────────
-        $alphaCA  = Tenant::create(['name' => 'Alpha Accounting Firm', 'type' => 'ca_firm',  'status' => 'active']);
-        $betaBiz  = Tenant::create(['name' => 'Beta Finance Group',    'type' => 'business', 'status' => 'active']);
-        $gammaCA  = Tenant::create(['name' => 'Gamma Tax Consultants', 'type' => 'ca_firm',  'status' => 'active']);
-        $deltaBiz = Tenant::create(['name' => 'Delta Retail Co.',      'type' => 'business', 'status' => 'active']);
+        $tili     = Tenant::create(['name' => 'Tili',            'type' => 'business', 'status' => 'active']);
+        $awab     = Tenant::create(['name' => 'Awab',            'type' => 'business', 'status' => 'active']);
+        $eightsis = Tenant::create(['name' => 'Eightsis',        'type' => 'business', 'status' => 'active']);
+        $alphaCA  = Tenant::create(['name' => 'Alpha Advisors',  'type' => 'ca_firm',  'status' => 'active']);
+        $betaCA   = Tenant::create(['name' => 'Beta Consulting', 'type' => 'ca_firm',  'status' => 'active']);
 
         // ─── Role map ─────────────────────────────────────────────────
         $r = Role::all()->keyBy('name');
@@ -28,104 +29,49 @@ class DummyDataSeeder extends Seeder
         $admin = $this->user('Platform Admin', 'admin@example.com');
         $admin->assignRole($r['admin']);
 
-        // ─────────────────────────────────────────────────────────────
-        // Single-tenant users — one clear role per person
-        // ─────────────────────────────────────────────────────────────
+        // ─── Fela — owner of all three ────────────────────────────────
+        $fela = $this->user('Fela', 'fela@example.com', $tili);
+        $this->assign($fela, $tili,     $r['owner']);
+        $this->assign($fela, $awab,     $r['owner']);
+        $this->assign($fela, $eightsis, $r['owner']);
 
-        // betaBiz — owner
-        $owner = $this->user('Aisha Owner', 'owner@example.com', $betaBiz);
-        $this->assign($owner, $betaBiz, $r['owner']);
+        // ─── Zoa — owner of Eightsis ──────────────────────────────────
+        $zoa = $this->user('Zoa', 'zoa@example.com', $eightsis);
+        $this->assign($zoa, $eightsis, $r['owner']);
 
-        // betaBiz — TenantAdmin
-        $bizAdmin = $this->user('Rohan Admin', 'admin-biz@example.com', $betaBiz);
-        $this->assign($bizAdmin, $betaBiz, $r['TenantAdmin']);
+        // ─── Zira — TenantAdmin of Tili and Awab ─────────────────────
+        $zira = $this->user('Zira', 'zira@example.com', $tili);
+        $this->assign($zira, $tili, $r['TenantAdmin']);
+        $this->assign($zira, $awab, $r['TenantAdmin']);
 
-        // betaBiz — Viewer (read-only)
-        $viewer = $this->user('Leena Viewer', 'viewer@example.com', $betaBiz);
-        $this->assign($viewer, $betaBiz, $r['Viewer']);
+        // ─── Dini — Manager of Tili, Awab, Eightsis ──────────────────
+        $dini = $this->user('Dini', 'dini@example.com', $tili);
+        $this->assign($dini, $tili,     $r['Manager']);
+        $this->assign($dini, $awab,     $r['Manager']);
+        $this->assign($dini, $eightsis, $r['Manager']);
 
-        // deltaBiz — owner
-        $deltaOwner = $this->user('Sam Delta Owner', 'owner-delta@example.com', $deltaBiz);
-        $this->assign($deltaOwner, $deltaBiz, $r['owner']);
+        // ─── Raunak — member of Eightsis ─────────────────────────────
+        $raunak = $this->user('Raunak', 'raunak@example.com', $eightsis);
+        $this->assign($raunak, $eightsis, $r['Staff']);
 
-        // alphaCA — OwnerPartner
-        $ownerPartner = $this->user('Neha OwnerPartner', 'ownerpartner@example.com', $alphaCA);
-        $this->assign($ownerPartner, $alphaCA, $r['OwnerPartner']);
+        // ─── Dennis — member of Tili ──────────────────────────────────
+        $dennis = $this->user('Dennis', 'dennis@example.com', $tili);
+        $this->assign($dennis, $tili, $r['Staff']);
 
-        // alphaCA — Auditor
-        $auditor = $this->user('Meera Auditor', 'auditor@example.com', $alphaCA);
-        $this->assign($auditor, $alphaCA, $r['Auditor']);
+        // ─── Madini — member of Awab ──────────────────────────────────
+        $madini = $this->user('Madini', 'madini@example.com', $awab);
+        $this->assign($madini, $awab, $r['Staff']);
 
-        // gammaCA — OwnerPartner
-        $gammaPartner = $this->user('Sonal GammaPartner', 'partner-gamma@example.com', $gammaCA);
-        $this->assign($gammaPartner, $gammaCA, $r['OwnerPartner']);
+        // ─── CA1 — CA for Tili & Awab (Alpha Advisors) ───────────────
+        $ca1 = $this->user('CA1', 'ca1@example.com', $alphaCA);
+        $this->assign($ca1, $alphaCA, $r['OwnerPartner']);
+        $this->assign($ca1, $tili, $r['ExternalAccountant'], 'external', $alphaCA->id);
+        $this->assign($ca1, $awab, $r['ExternalAccountant'], 'external', $alphaCA->id);
 
-        // betaBiz — integration user (type=integration)
-        $integration = $this->user('Tally Sync', 'tally@integration.example.com', $betaBiz, 'integration');
-        $this->assign($integration, $betaBiz, $r['IntegrationUser']);
-
-        // ─────────────────────────────────────────────────────────────
-        // Multi-tenant users — different roles in different tenants
-        // ─────────────────────────────────────────────────────────────
-
-        // Priya: Manager @ betaBiz  |  CAManager @ alphaCA
-        $priya = $this->user('Priya Multi', 'priya@example.com', $betaBiz);
-        $this->assign($priya, $betaBiz, $r['Manager']);
-        $this->assign($priya, $alphaCA,  $r['CAManager']);
-
-        // Dev: Staff @ betaBiz  |  CAStaff @ alphaCA  |  Staff @ deltaBiz
-        $dev = $this->user('Dev Multi', 'dev@example.com', $betaBiz);
-        $this->assign($dev, $betaBiz,  $r['Staff']);
-        $this->assign($dev, $alphaCA,  $r['CAStaff']);
-        $this->assign($dev, $deltaBiz, $r['Staff']);
-
-        // Kiran: ExternalAccountant @ betaBiz (external from alphaCA)  |  CAStaff @ alphaCA
-        $kiran = $this->user('Kiran External', 'kiran@example.com', $betaBiz);
-        $this->assign($kiran, $betaBiz, $r['ExternalAccountant'], 'external', $alphaCA->id);
-        $this->assign($kiran, $alphaCA, $r['CAStaff']);
-
-        // Vijay: CAManager @ alphaCA  |  Auditor @ gammaCA
-        $vijay = $this->user('Vijay Multi', 'vijay@example.com', $alphaCA);
-        $this->assign($vijay, $alphaCA, $r['CAManager']);
-        $this->assign($vijay, $gammaCA, $r['Auditor']);
-
-        // Amit: Staff @ deltaBiz  |  Viewer @ betaBiz
-        $amit = $this->user('Amit Multi', 'amit@example.com', $deltaBiz);
-        $this->assign($amit, $deltaBiz, $r['Staff']);
-        $this->assign($amit, $betaBiz,  $r['Viewer']);
-
-        // Ravi: owner @ deltaBiz  |  TenantAdmin @ betaBiz  |  CAStaff @ gammaCA
-        $ravi = $this->user('Ravi Multi', 'ravi@example.com', $deltaBiz);
-        $this->assign($ravi, $deltaBiz, $r['owner']);
-        $this->assign($ravi, $betaBiz,  $r['TenantAdmin']);
-        $this->assign($ravi, $gammaCA,  $r['CAStaff']);
-
-        // Divya: Manager @ deltaBiz  |  Auditor @ alphaCA  |  Viewer @ betaBiz
-        $divya = $this->user('Divya Multi', 'divya@example.com', $deltaBiz);
-        $this->assign($divya, $deltaBiz, $r['Manager']);
-        $this->assign($divya, $alphaCA,  $r['Auditor']);
-        $this->assign($divya, $betaBiz,  $r['Viewer']);
-
-        // ─── Tenant-specific permission overrides ─────────────────────
-
-        // betaBiz: Manager gets read-only on clients/vendors (no create/edit/delete)
-        $this->override($betaBiz->id, $r['Manager']->id, [
-            'members.view',
-            'clients.view',
-            'vendors.view',
-            'invoices.view',
-            'reports.view',
-            'reports.export',
-            'integrations.view',
-        ]);
-
-        // deltaBiz: Staff gets vendor delete + client delete (elevated trust)
-        $this->override($deltaBiz->id, $r['Staff']->id, [
-            'clients.view',  'clients.create',  'clients.edit',  'clients.delete',
-            'vendors.view',  'vendors.create',  'vendors.edit',  'vendors.delete',
-            'invoices.view', 'invoices.create', 'invoices.edit',
-            'reports.view',  'reports.export',
-        ]);
+        // ─── CA2 — CA for Eightsis (Beta Consulting) ─────────────────
+        $ca2 = $this->user('CA2', 'ca2@example.com', $betaCA);
+        $this->assign($ca2, $betaCA, $r['OwnerPartner']);
+        $this->assign($ca2, $eightsis, $r['ExternalAccountant'], 'external', $betaCA->id);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────
@@ -144,10 +90,10 @@ class DummyDataSeeder extends Seeder
     }
 
     private function assign(
-        User    $user,
-        Tenant  $tenant,
-        Role    $role,
-        string  $memberType = 'internal',
+        User   $user,
+        Tenant $tenant,
+        Role   $role,
+        string $memberType = 'internal',
         ?string $sourceTenantId = null,
     ): void {
         $user->tenants()->syncWithoutDetaching([
@@ -164,18 +110,5 @@ class DummyDataSeeder extends Seeder
             ['user_id' => $user->id, 'tenant_id' => $tenant->id],
             ['role_id' => $role->id]
         );
-    }
-
-    private function override(string $tenantId, int $roleId, array $permissionNames): void
-    {
-        $permissionIds = Permission::whereIn('name', $permissionNames)->pluck('id');
-
-        foreach ($permissionIds as $permId) {
-            TenantRolePermission::firstOrCreate([
-                'tenant_id'     => $tenantId,
-                'role_id'       => $roleId,
-                'permission_id' => $permId,
-            ]);
-        }
     }
 }

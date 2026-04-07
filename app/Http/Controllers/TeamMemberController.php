@@ -49,6 +49,69 @@ class TeamMemberController extends Controller
         ]);
     }
 
+    public function store(Request $request, Tenant $tenant)
+    {
+        $request->validate([
+            'email'   => 'required|email|max:255',
+            'role_id' => 'required|exists:roles,id',
+        ]);
+
+        $user = User::where('email', $request->email)->first();
+
+        $request->validate([
+            'name'     => $user ? 'nullable' : 'required|string|max:255',
+            'password' => $user ? 'nullable' : 'required|string|min:8',
+        ]);
+
+        $role = Role::findOrFail($request->role_id);
+
+        if (! $user) {
+            $user = User::create([
+                'name'     => $request->name,
+                'email'    => $request->email,
+                'password' => \Illuminate\Support\Facades\Hash::make($request->password),
+                'type'     => 'human',
+                'status'   => 'active',
+            ]);
+        }
+
+        abort_if(
+            $user->tenants()->where('tenants.id', $tenant->id)->exists(),
+            422,
+            'This user is already a member of this tenant.'
+        );
+
+        $user->tenants()->attach($tenant->id, [
+            'status'      => 'active',
+            'member_type' => 'internal',
+            'role_name'   => $role->name,
+            'joined_at'   => now(),
+        ]);
+
+        TenantUserRole::create([
+            'user_id'   => $user->id,
+            'tenant_id' => $tenant->id,
+            'role_id'   => $role->id,
+        ]);
+
+        AuditEvent::log('member.added', [
+            'target_user_id' => $user->id,
+            'role_id'        => $role->id,
+        ]);
+
+        return back()->with('success', "{$user->name} added to the team.");
+    }
+
+    public function checkEmail(Request $request, Tenant $tenant)
+    {
+        $request->validate(['email' => 'required|email']);
+        $user = User::where('email', $request->email)->first();
+
+        return response()->json([
+            'exists' => (bool) $user,
+        ]);
+    }
+
     public function update(Request $request, Tenant $tenant, User $user)
     {
         $request->validate(['role_id' => 'required|exists:roles,id']);

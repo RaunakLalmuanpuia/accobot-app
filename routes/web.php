@@ -55,6 +55,8 @@ Route::middleware(['auth', 'verified', 'member'])
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
         Route::get('/settings/team', [TeamMemberController::class, 'index'])->name('team.index')->middleware('tenant.permission:members.view');
+        Route::get('/settings/team/check-email', [TeamMemberController::class, 'checkEmail'])->name('team.check-email')->middleware('tenant.permission:members.invite');
+        Route::post('/settings/team', [TeamMemberController::class, 'store'])->name('team.store')->middleware('tenant.permission:members.invite');
         Route::put('/settings/team/{user}', [TeamMemberController::class, 'update'])->name('team.update')->middleware('tenant.permission:members.assign_role');
         Route::delete('/settings/team/{user}', [TeamMemberController::class, 'destroy'])->name('team.destroy')->middleware(['tenant.permission:members.remove', 'no.impersonate']);
 
