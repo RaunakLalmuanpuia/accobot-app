@@ -1,18 +1,37 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
-import { Link } from '@inertiajs/vue3'
+import { Link, router } from '@inertiajs/vue3'
 
 defineProps({
-    stats:          Object,
-    businesses:     Array,
-    roleBreakdown:  Array,
+    stats:         Object,
+    tenants:       Array,
+    roleBreakdown: Array,
+    recentUsers:   Array,
 })
 
-const roleColors = {
-    admin:  'bg-red-100 text-red-700',
-    owner:  'bg-amber-100 text-amber-700',
-    ca:     'bg-indigo-100 text-indigo-700',
-    user:   'bg-gray-100 text-gray-600',
+const roleColor = (name) => {
+    const map = {
+        admin:              'bg-red-100 text-red-700',
+        owner:              'bg-amber-100 text-amber-700',
+        OwnerPartner:       'bg-amber-100 text-amber-700',
+        TenantAdmin:        'bg-red-100 text-red-700',
+        Manager:            'bg-blue-100 text-blue-700',
+        CAManager:          'bg-blue-100 text-blue-700',
+        Staff:              'bg-gray-100 text-gray-600',
+        CAStaff:            'bg-gray-100 text-gray-600',
+        Auditor:            'bg-purple-100 text-purple-700',
+        Viewer:             'bg-slate-100 text-slate-500',
+        ExternalAccountant: 'bg-teal-100 text-teal-700',
+        IntegrationUser:    'bg-orange-100 text-orange-700',
+    }
+    return map[name] ?? 'bg-gray-100 text-gray-600'
+}
+
+const typeLabel = (type) => type === 'ca_firm' ? 'CA Firm' : 'Business'
+const typeColor  = (type) => type === 'ca_firm' ? 'bg-indigo-50 text-indigo-600' : 'bg-amber-50 text-amber-600'
+
+function impersonate(userId) {
+    router.post(route('impersonate.start', userId))
 }
 </script>
 
@@ -29,32 +48,46 @@ const roleColors = {
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 
                 <!-- Stat cards -->
-                <div class="grid grid-cols-3 gap-5 mb-8">
-                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-                        <p class="text-sm text-gray-500 mb-1">Businesses</p>
-                        <p class="text-3xl font-bold text-gray-900">{{ stats.businesses }}</p>
+                <div class="grid grid-cols-5 gap-4 mb-8">
+                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+                        <p class="text-xs text-gray-500 mb-1">Tenants</p>
+                        <p class="text-3xl font-bold text-gray-900">{{ stats.tenants }}</p>
                     </div>
-                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-                        <p class="text-sm text-gray-500 mb-1">Total Users</p>
+                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+                        <p class="text-xs text-gray-500 mb-1">Businesses</p>
+                        <p class="text-3xl font-bold text-amber-600">{{ stats.businesses }}</p>
+                    </div>
+                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+                        <p class="text-xs text-gray-500 mb-1">CA Firms</p>
+                        <p class="text-3xl font-bold text-indigo-600">{{ stats.ca_firms }}</p>
+                    </div>
+                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+                        <p class="text-xs text-gray-500 mb-1">Users</p>
                         <p class="text-3xl font-bold text-gray-900">{{ stats.users }}</p>
                     </div>
-                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-                        <p class="text-sm text-gray-500 mb-1">Roles</p>
+                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+                        <p class="text-xs text-gray-500 mb-1">Roles</p>
                         <p class="text-3xl font-bold text-gray-900">{{ stats.roles }}</p>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-3 gap-6">
 
-                    <!-- Businesses list -->
+                    <!-- Tenants list -->
                     <div class="col-span-2 bg-white rounded-2xl border border-gray-200 shadow-sm">
-                        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                            <h2 class="font-semibold text-gray-800">All Businesses</h2>
+                        <div class="px-6 py-4 border-b border-gray-100">
+                            <h2 class="font-semibold text-gray-800">All Tenants</h2>
                         </div>
                         <ul class="divide-y divide-gray-50">
-                            <li v-for="b in businesses" :key="b.id" class="flex items-center justify-between px-6 py-3">
-                                <span class="text-sm font-medium text-gray-800">{{ b.name }}</span>
-                                <span class="text-xs text-gray-400">{{ b.users_count }} member{{ b.users_count !== 1 ? 's' : '' }}</span>
+                            <li v-for="t in tenants" :key="t.id" class="flex items-center justify-between px-6 py-3">
+                                <div class="flex items-center gap-3 min-w-0">
+                                    <span :class="['text-xs font-medium px-2 py-0.5 rounded-full shrink-0', typeColor(t.type)]">{{ typeLabel(t.type) }}</span>
+                                    <span class="text-sm font-medium text-gray-800 truncate">{{ t.name }}</span>
+                                </div>
+                                <div class="flex items-center gap-3 shrink-0 ml-3">
+                                    <span class="text-xs text-gray-400">{{ t.users_count }} member{{ t.users_count !== 1 ? 's' : '' }}</span>
+                                    <Link :href="route('dashboard', { tenant: t.id })" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">Open →</Link>
+                                </div>
                             </li>
                         </ul>
                     </div>
@@ -66,7 +99,7 @@ const roleColors = {
                         </div>
                         <ul class="divide-y divide-gray-50">
                             <li v-for="r in roleBreakdown" :key="r.name" class="flex items-center justify-between px-6 py-3">
-                                <span :class="['text-xs font-medium px-2.5 py-1 rounded-full capitalize', roleColors[r.name] ?? 'bg-gray-100 text-gray-600']">
+                                <span :class="['text-xs font-medium px-2.5 py-1 rounded-full capitalize', roleColor(r.name)]">
                                     {{ r.name }}
                                 </span>
                                 <span class="text-sm font-semibold text-gray-700">{{ r.count }}</span>
@@ -75,19 +108,30 @@ const roleColors = {
                     </div>
                 </div>
 
-                <!-- Quick links per business -->
-                <div class="mt-6">
-                    <p class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Jump to Business</p>
-                    <div class="grid grid-cols-3 gap-4">
-                        <Link
-                            v-for="b in businesses" :key="b.id"
-                            :href="route('dashboard', { business: b.id })"
-                            class="flex items-center justify-between bg-white rounded-xl border border-gray-200 px-4 py-3 hover:border-indigo-300 hover:shadow-sm transition"
-                        >
-                            <span class="text-sm font-medium text-gray-800">{{ b.name }}</span>
-                            <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                        </Link>
+                <!-- Recent users with impersonation -->
+                <div class="mt-6 bg-white rounded-2xl border border-gray-200 shadow-sm">
+                    <div class="px-6 py-4 border-b border-gray-100">
+                        <h2 class="font-semibold text-gray-800">Recent Users</h2>
                     </div>
+                    <ul class="divide-y divide-gray-50">
+                        <li v-for="u in recentUsers" :key="u.id" class="flex items-center justify-between px-6 py-3">
+                            <div class="min-w-0">
+                                <p class="text-sm font-medium text-gray-800">{{ u.name }}</p>
+                                <p class="text-xs text-gray-400">{{ u.email }}</p>
+                            </div>
+                            <div class="flex items-center gap-3 shrink-0 ml-3">
+                                <span :class="['text-xs px-2 py-0.5 rounded-full capitalize', u.status === 'active' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-500']">
+                                    {{ u.status }}
+                                </span>
+                                <button
+                                    @click="impersonate(u.id)"
+                                    class="text-xs text-gray-500 hover:text-indigo-600 font-medium border border-gray-200 rounded-lg px-2.5 py-1 hover:border-indigo-300 transition"
+                                >
+                                    Impersonate
+                                </button>
+                            </div>
+                        </li>
+                    </ul>
                 </div>
 
             </div>

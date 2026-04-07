@@ -3,11 +3,12 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\VendorController;
+use App\Http\Controllers\ImpersonationController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\TeamMemberController;
+use App\Http\Controllers\VendorController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -33,48 +34,64 @@ Route::middleware('auth')->group(function () {
     Route::post('logout', [AuthController::class, 'logout'])->name('logout');
 });
 
-// ── Admin (no business context) ───────────────────────────────────────
+// ── Admin (no tenant context) ─────────────────────────────────────────
 Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'adminIndex'])->name('admin.dashboard');
+
+    // Impersonation — Super Admin only
+    Route::post('/admin/impersonate/{user}', [ImpersonationController::class, 'start'])->name('impersonate.start');
 });
 
-// ── Business-scoped ───────────────────────────────────────────────────
+// Stop impersonation (available to anyone with an active impersonation session)
+Route::post('/impersonate/stop', [ImpersonationController::class, 'stop'])
+    ->middleware('auth')
+    ->name('impersonate.stop');
+
+// ── Tenant-scoped ─────────────────────────────────────────────────────
 Route::middleware(['auth', 'verified', 'member'])
-    ->prefix('b/{business}')
+    ->prefix('t/{tenant}')
     ->group(function () {
 
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-        Route::get('/settings/team', [TeamMemberController::class, 'index'])->name('team.index')->middleware('biz.permission:view users');
-        Route::put('/settings/team/{user}', [TeamMemberController::class, 'update'])->name('team.update')->middleware('biz.permission:assign roles');
-        Route::delete('/settings/team/{user}', [TeamMemberController::class, 'destroy'])->name('team.destroy')->middleware('biz.permission:remove user');
+        Route::get('/settings/team', [TeamMemberController::class, 'index'])->name('team.index')->middleware('tenant.permission:members.view');
+        Route::put('/settings/team/{user}', [TeamMemberController::class, 'update'])->name('team.update')->middleware('tenant.permission:members.assign_role');
+        Route::delete('/settings/team/{user}', [TeamMemberController::class, 'destroy'])->name('team.destroy')->middleware(['tenant.permission:members.remove', 'no.impersonate']);
 
-        Route::post('/invitations', [InvitationController::class, 'store'])->name('invitation.store')->middleware('biz.permission:invite user');
-        Route::delete('/invitations/{invitation}', [InvitationController::class, 'destroy'])->name('invitation.destroy')->middleware('biz.permission:invite user');
+        Route::post('/invitations', [InvitationController::class, 'store'])->name('invitation.store')->middleware('tenant.permission:members.invite');
+        Route::delete('/invitations/{invitation}', [InvitationController::class, 'destroy'])->name('invitation.destroy')->middleware('tenant.permission:members.invite');
 
-        Route::get('/roles', [RoleController::class, 'index'])->name('roles.index')->middleware('biz.permission:assign roles');
-        Route::post('/roles', [RoleController::class, 'store'])->name('roles.store')->middleware('biz.permission:assign roles');
-        Route::put('/roles/{role}', [RoleController::class, 'update'])->name('roles.update')->middleware('biz.permission:assign roles');
-        Route::delete('/roles/{role}', [RoleController::class, 'destroy'])->name('roles.destroy')->middleware('biz.permission:assign roles');
+        Route::get('/roles', [RoleController::class, 'index'])->name('roles.index')->middleware('tenant.permission:members.assign_role');
+        Route::post('/roles', [RoleController::class, 'store'])->name('roles.store')->middleware('tenant.permission:members.assign_role');
+        Route::put('/roles/{role}', [RoleController::class, 'update'])->name('roles.update')->middleware('tenant.permission:members.assign_role');
+        Route::delete('/roles/{role}', [RoleController::class, 'destroy'])->name('roles.destroy')->middleware(['tenant.permission:members.assign_role', 'no.impersonate']);
 
-        Route::get('/clients', [ClientController::class, 'index'])->name('clients.index')->middleware('biz.permission:view clients');
-        Route::post('/clients', [ClientController::class, 'store'])->name('clients.store')->middleware('biz.permission:create client');
-        Route::put('/clients/{client}', [ClientController::class, 'update'])->name('clients.update')->middleware('biz.permission:edit client');
-        Route::delete('/clients/{client}', [ClientController::class, 'destroy'])->name('clients.destroy')->middleware('biz.permission:delete client');
+        Route::get('/clients', [ClientController::class, 'index'])->name('clients.index')->middleware('tenant.permission:clients.view');
+        Route::post('/clients', [ClientController::class, 'store'])->name('clients.store')->middleware('tenant.permission:clients.create');
+        Route::put('/clients/{client}', [ClientController::class, 'update'])->name('clients.update')->middleware('tenant.permission:clients.edit');
+        Route::delete('/clients/{client}', [ClientController::class, 'destroy'])->name('clients.destroy')->middleware(['tenant.permission:clients.delete', 'no.impersonate']);
 
-        Route::get('/vendors', [VendorController::class, 'index'])->name('vendors.index')->middleware('biz.permission:view vendors');
-        Route::post('/vendors', [VendorController::class, 'store'])->name('vendors.store')->middleware('biz.permission:create vendor');
-        Route::put('/vendors/{vendor}', [VendorController::class, 'update'])->name('vendors.update')->middleware('biz.permission:edit vendor');
-        Route::delete('/vendors/{vendor}', [VendorController::class, 'destroy'])->name('vendors.destroy')->middleware('biz.permission:delete vendor');
+        Route::get('/vendors', [VendorController::class, 'index'])->name('vendors.index')->middleware('tenant.permission:vendors.view');
+        Route::post('/vendors', [VendorController::class, 'store'])->name('vendors.store')->middleware('tenant.permission:vendors.create');
+        Route::put('/vendors/{vendor}', [VendorController::class, 'update'])->name('vendors.update')->middleware('tenant.permission:vendors.edit');
+        Route::delete('/vendors/{vendor}', [VendorController::class, 'destroy'])->name('vendors.destroy')->middleware(['tenant.permission:vendors.delete', 'no.impersonate']);
 
     });
 
 // ── Invitations (public token link, auth checked in controller) ───────
-Route::get('/invite/{token}', [InvitationController::class, 'show'])->name('invitation.show');
-Route::post('/invite/{token}/accept', [InvitationController::class, 'accept'])->name('invitation.accept');
-Route::delete('/invite/{token}/decline', [InvitationController::class, 'decline'])->middleware('auth')->name('invitation.decline');
+Route::middleware('throttle:20,1')->group(function () {
+    Route::get('/invite/{rawToken}', [InvitationController::class, 'show'])->name('invitation.show');
+    Route::post('/invite/{rawToken}/accept', [InvitationController::class, 'accept'])->name('invitation.accept');
+    Route::delete('/invite/{rawToken}/decline', [InvitationController::class, 'decline'])->middleware('auth')->name('invitation.decline');
+});
 
-// ── Profile (auth only, no business required) ─────────────────────────
+// ── Invitations (bell dropdown — auth + ID-based, no raw token) ────────
+Route::middleware('auth')->group(function () {
+    Route::post('/invite/{invitation}/accept', [InvitationController::class, 'acceptById'])->name('invitation.accept-by-id');
+    Route::delete('/invite/{invitation}/decline', [InvitationController::class, 'declineById'])->name('invitation.decline-by-id');
+});
+
+// ── Profile (auth only, no tenant required) ───────────────────────────
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

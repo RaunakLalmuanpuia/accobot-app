@@ -6,19 +6,19 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
+            $table->string('type')->default('human');           // human | integration
+            $table->string('status')->default('active');        // active | platform_suspended
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->rememberToken();
             $table->timestamps();
+            // last_tenant_id added after tenants table is created
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
@@ -37,9 +37,6 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('users');

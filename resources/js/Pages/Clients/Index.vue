@@ -5,7 +5,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import { hasPermission } from '@/utils/permissions'
 
 const props = defineProps({
-    business: Object,
+    tenant: Object,
     clients:  Array,
 })
 
@@ -13,9 +13,9 @@ const props = defineProps({
 const showModal  = ref(false)
 const editing    = ref(null)
 
-const canCreate = hasPermission('create client')
-const canEdit   = hasPermission('edit client')
-const canDelete = hasPermission('delete client')
+const canCreate = hasPermission('clients.create')
+const canEdit   = hasPermission('clients.edit')
+const canDelete = hasPermission('clients.delete')
 
 const form = useForm({ name: '', email: '', phone: '' })
 
@@ -35,11 +35,11 @@ function openEdit(client) {
 
 function submit() {
     if (editing.value) {
-        form.put(route('clients.update', { business: props.business.id, client: editing.value.id }), {
+        form.put(route('clients.update', { tenant: props.tenant.id, client: editing.value.id }), {
             onSuccess: () => (showModal.value = false),
         })
     } else {
-        form.post(route('clients.store', { business: props.business.id }), {
+        form.post(route('clients.store', { tenant: props.tenant.id }), {
             onSuccess: () => (showModal.value = false),
         })
     }
@@ -47,7 +47,7 @@ function submit() {
 
 function destroy(client) {
     if (!confirm(`Remove ${client.name}?`)) return
-    router.delete(route('clients.destroy', { business: props.business.id, client: client.id }))
+    router.delete(route('clients.destroy', { tenant: props.tenant.id, client: client.id }))
 }
 </script>
 

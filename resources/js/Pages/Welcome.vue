@@ -30,8 +30,8 @@ defineProps({
                             v-if="$page.props.auth.user"
                             :href="$page.props.auth.is_admin
                                 ? route('admin.dashboard')
-                                : $page.props.auth.current_business_id
-                                    ? route('dashboard', { business: $page.props.auth.current_business_id })
+                                : $page.props.auth.current_tenant_id
+                                    ? route('dashboard', { tenant: $page.props.auth.current_tenant_id })
                                     : route('profile.edit')"
                             class="rounded-md px-3 py-2 text-black ring-1 ring-transparent transition hover:text-black/70 focus:outline-none focus-visible:ring-indigo-500 dark:text-white dark:hover:text-white/80 dark:focus-visible:ring-white"
                         >

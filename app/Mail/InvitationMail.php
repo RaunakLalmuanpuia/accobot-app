@@ -13,12 +13,15 @@ class InvitationMail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public function __construct(public Invitation $invitation) {}
+    public function __construct(
+        public Invitation $invitation,
+        public string $rawToken,   // never stored — passed only for URL generation
+    ) {}
 
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: "You've been invited to join {$this->invitation->business->name}",
+            subject: "You've been invited to join {$this->invitation->tenant->name}",
         );
     }
 
@@ -26,6 +29,7 @@ class InvitationMail extends Mailable
     {
         return new Content(
             view: 'emails.invitation',
+            with: ['rawToken' => $this->rawToken],
         );
     }
 }

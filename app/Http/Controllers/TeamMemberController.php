@@ -2,32 +2,33 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Business;
-use App\Models\BusinessUserRole;
+use App\Models\AuditEvent;
 use App\Models\Invitation;
+use App\Models\Tenant;
+use App\Models\TenantUserRole;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
 
 class TeamMemberController extends Controller
 {
-    public function index(Business $business)
+    public function index(Tenant $tenant)
     {
-        $members = User::whereHas('businesses', fn($q) => $q->where('businesses.id', $business->id))
-            ->with(['businessRoles' => fn($q) => $q->where('business_id', $business->id)->with('role')])
+        $members = User::whereHas('tenants', fn($q) => $q->where('tenants.id', $tenant->id))
+            ->with(['tenantRoles' => fn($q) => $q->where('tenant_id', $tenant->id)->with('role')])
             ->get()
             ->map(fn($user) => [
                 'id'    => $user->id,
                 'name'  => $user->name,
                 'email' => $user->email,
-                'role'  => $user->businessRoles->first()?->role
-                    ? ['id' => $user->businessRoles->first()->role->id, 'name' => $user->businessRoles->first()->role->name]
+                'role'  => $user->tenantRoles->first()?->role
+                    ? ['id' => $user->tenantRoles->first()->role->id, 'name' => $user->tenantRoles->first()->role->name]
                     : null,
             ]);
 
         $pendingInvitations = Invitation::with('role')
-            ->where('business_id', $business->id)
-            ->whereNull('accepted_at')
+            ->where('tenant_id', $tenant->id)
+            ->where('status', 'pending')
             ->where('expires_at', '>', now())
             ->get()
             ->map(fn($inv) => [
@@ -38,7 +39,7 @@ class TeamMemberController extends Controller
             ]);
 
         return inertia('Settings/Team', [
-            'business'           => $business,
+            'tenant'             => $tenant,
             'members'            => $members,
             'pendingInvitations' => $pendingInvitations,
             'roles'              => Role::select('id', 'name')
@@ -48,27 +49,37 @@ class TeamMemberController extends Controller
         ]);
     }
 
-    public function update(Request $request, Business $business, User $user)
+    public function update(Request $request, Tenant $tenant, User $user)
     {
         $request->validate(['role_id' => 'required|exists:roles,id']);
 
-        BusinessUserRole::updateOrCreate(
-            ['user_id' => $user->id, 'business_id' => $business->id],
+        $old = TenantUserRole::where('user_id', $user->id)->where('tenant_id', $tenant->id)->first();
+
+        TenantUserRole::updateOrCreate(
+            ['user_id' => $user->id, 'tenant_id' => $tenant->id],
             ['role_id' => $request->role_id]
         );
+
+        AuditEvent::log('member.role.changed', [
+            'target_user_id' => $user->id,
+            'from_role_id'   => $old?->role_id,
+            'to_role_id'     => $request->role_id,
+        ]);
 
         return back();
     }
 
-    public function destroy(Business $business, User $user)
+    public function destroy(Tenant $tenant, User $user)
     {
         abort_if($user->id === auth()->id(), 403, 'You cannot remove yourself.');
 
-        BusinessUserRole::where('user_id', $user->id)
-            ->where('business_id', $business->id)
+        TenantUserRole::where('user_id', $user->id)
+            ->where('tenant_id', $tenant->id)
             ->delete();
 
-        $user->businesses()->detach($business->id);
+        $user->tenants()->detach($tenant->id);
+
+        AuditEvent::log('member.removed', ['target_user_id' => $user->id]);
 
         return back();
     }

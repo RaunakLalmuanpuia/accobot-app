@@ -2,21 +2,21 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Business;
+use App\Models\Tenant;
 use App\Models\Vendor;
 use Illuminate\Http\Request;
 
 class VendorController extends Controller
 {
-    public function index(Business $business)
+    public function index(Tenant $tenant)
     {
         return inertia('Vendors/Index', [
-            'business' => $business,
-            'vendors'  => Vendor::orderBy('name')->get(['id', 'name', 'email', 'phone']),
+            'tenant'  => $tenant,
+            'vendors' => Vendor::orderBy('name')->get(['id', 'name', 'email', 'phone']),
         ]);
     }
 
-    public function store(Request $request, Business $business)
+    public function store(Request $request, Tenant $tenant)
     {
         $request->validate([
             'name'  => 'required|string|max:255',
@@ -24,14 +24,14 @@ class VendorController extends Controller
             'phone' => 'nullable|string|max:50',
         ]);
 
-        $business->vendors()->create($request->only('name', 'email', 'phone'));
+        $tenant->vendors()->create($request->only('name', 'email', 'phone'));
 
         return back();
     }
 
-    public function update(Request $request, Business $business, Vendor $vendor)
+    public function update(Request $request, Tenant $tenant, Vendor $vendor)
     {
-        abort_if($vendor->business_id !== $business->id, 403);
+        abort_if($vendor->tenant_id !== $tenant->id, 403);
 
         $request->validate([
             'name'  => 'required|string|max:255',
@@ -44,9 +44,9 @@ class VendorController extends Controller
         return back();
     }
 
-    public function destroy(Business $business, Vendor $vendor)
+    public function destroy(Tenant $tenant, Vendor $vendor)
     {
-        abort_if($vendor->business_id !== $business->id, 403);
+        abort_if($vendor->tenant_id !== $tenant->id, 403);
 
         $vendor->delete();
 

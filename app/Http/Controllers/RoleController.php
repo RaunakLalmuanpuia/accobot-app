@@ -2,28 +2,66 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Business;
-use App\Models\BusinessRolePermission;
+use App\Models\Tenant;
+use App\Models\TenantRolePermission;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
 class RoleController extends Controller
 {
-    private const SYSTEM_ROLES = ['admin', 'owner'];
+    private const SYSTEM_ROLES = ['admin', 'owner', 'TenantAdmin'];
 
     private function permissionGroups(): array
     {
         return [
-            'Dashboard'       => ['view dashboard'],
-            'Clients'         => ['view clients', 'create client', 'edit client', 'delete client'],
-            'Vendors'         => ['view vendors', 'create vendor', 'edit vendor', 'delete vendor'],
-            'Settings'        => ['view settings', 'manage settings'],
-            'User Management' => ['view users', 'invite user', 'remove user', 'assign roles'],
+            'Tenant / Settings' => [
+                'tenant.view_settings',
+                'tenant.update_settings',
+            ],
+            'Members / Roles' => [
+                'members.view',
+                'members.invite',
+                'members.remove',
+                'members.suspend',
+                'members.assign_role',
+            ],
+            'CA Client Linking' => [
+                'clients.view_requests',
+                'clients.approve_link',
+                'clients.terminate_link',
+            ],
+            'Clients' => [
+                'clients.view',
+                'clients.create',
+                'clients.edit',
+                'clients.delete',
+            ],
+            'Vendors' => [
+                'vendors.view',
+                'vendors.create',
+                'vendors.edit',
+                'vendors.delete',
+            ],
+            'Accounting' => [
+                'invoices.view',
+                'invoices.create',
+                'invoices.edit',
+                'invoices.delete',
+                'reports.view',
+                'reports.export',
+            ],
+            'Integrations' => [
+                'integrations.view',
+                'integrations.manage',
+            ],
+            'Audit' => [
+                'audit.view',
+            ],
         ];
     }
 
-    public function index(Business $business)
+    public function index(Tenant $tenant)
     {
         $allPermissions = Permission::all()->keyBy('name');
 
@@ -34,37 +72,35 @@ class RoleController extends Controller
             ])
             ->values();
 
-        // Business-specific permission overrides grouped by role_id
-        $overrides = BusinessRolePermission::where('business_id', $business->id)
+        $overrides = TenantRolePermission::where('tenant_id', $tenant->id)
             ->with('permission')
             ->get()
             ->groupBy('role_id');
 
         $roles = Role::with('permissions')->get()->map(function (Role $role) use ($overrides) {
-            $businessOverride = $overrides->get($role->id);
+            $tenantOverride = $overrides->get($role->id);
 
-            // Use business-specific permissions if set, otherwise fall back to global
-            $effectivePermissions = $businessOverride
-                ? $businessOverride->map(fn($brp) => ['id' => $brp->permission->id, 'name' => $brp->permission->name])->values()
+            $effectivePermissions = $tenantOverride
+                ? $tenantOverride->map(fn($trp) => ['id' => $trp->permission->id, 'name' => $trp->permission->name])->values()
                 : $role->permissions->map(fn($p) => ['id' => $p->id, 'name' => $p->name])->values();
 
             return [
-                'id'           => $role->id,
-                'name'         => $role->name,
-                'permissions'  => $effectivePermissions,
-                'is_customized'=> $businessOverride !== null,
+                'id'            => $role->id,
+                'name'          => $role->name,
+                'permissions'   => $effectivePermissions,
+                'is_customized' => $tenantOverride !== null,
             ];
         });
 
         return inertia('Roles/Index', [
-            'business'         => $business,
+            'tenant'           => $tenant,
             'roles'            => $roles,
             'permissionGroups' => $permissionGroups,
             'systemRoles'      => self::SYSTEM_ROLES,
         ]);
     }
 
-    public function store(Request $request, Business $business)
+    public function store(Request $request, Tenant $tenant)
     {
         $request->validate([
             'name'        => 'required|string|max:255|unique:roles,name',
@@ -73,12 +109,12 @@ class RoleController extends Controller
 
         $role = Role::create(['name' => $request->name]);
 
-        $this->syncBusinessPermissions($business->id, $role->id, $request->permissions ?? []);
+        $this->syncTenantPermissions($tenant->id, $role->id, $request->permissions ?? []);
 
         return back();
     }
 
-    public function update(Request $request, Business $business, Role $role)
+    public function update(Request $request, Tenant $tenant, Role $role)
     {
         abort_if(in_array($role->name, self::SYSTEM_ROLES), 403, 'System roles cannot be modified.');
 
@@ -89,16 +125,16 @@ class RoleController extends Controller
 
         $role->update(['name' => $request->name]);
 
-        $this->syncBusinessPermissions($business->id, $role->id, $request->permissions ?? []);
+        $this->syncTenantPermissions($tenant->id, $role->id, $request->permissions ?? []);
 
         return back();
     }
 
-    public function destroy(Business $business, Role $role)
+    public function destroy(Tenant $tenant, Role $role)
     {
         abort_if(in_array($role->name, self::SYSTEM_ROLES), 403, 'System roles cannot be deleted.');
 
-        BusinessRolePermission::where('business_id', $business->id)
+        TenantRolePermission::where('tenant_id', $tenant->id)
             ->where('role_id', $role->id)
             ->delete();
 
@@ -107,17 +143,17 @@ class RoleController extends Controller
         return back();
     }
 
-    private function syncBusinessPermissions(string $businessId, int $roleId, array $permissionNames): void
+    private function syncTenantPermissions(string $tenantId, int $roleId, array $permissionNames): void
     {
         $permissionIds = Permission::whereIn('name', $permissionNames)->pluck('id');
 
-        BusinessRolePermission::where('business_id', $businessId)
+        TenantRolePermission::where('tenant_id', $tenantId)
             ->where('role_id', $roleId)
             ->delete();
 
         foreach ($permissionIds as $permissionId) {
-            BusinessRolePermission::create([
-                'business_id'   => $businessId,
+            TenantRolePermission::create([
+                'tenant_id'     => $tenantId,
                 'role_id'       => $roleId,
                 'permission_id' => $permissionId,
             ]);

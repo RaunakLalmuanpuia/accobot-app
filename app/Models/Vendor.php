@@ -2,18 +2,18 @@
 
 namespace App\Models;
 
-use App\Models\Concerns\BelongsToBusiness;
+use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Vendor extends Model
 {
-    use BelongsToBusiness;
+    use BelongsToTenant;
 
-    protected $fillable = ['business_id', 'name', 'email', 'phone'];
+    protected $fillable = ['tenant_id', 'name', 'email', 'phone'];
 
-    public function business(): BelongsTo
+    public function tenant(): BelongsTo
     {
-        return $this->belongsTo(Business::class);
+        return $this->belongsTo(Tenant::class);
     }
 }

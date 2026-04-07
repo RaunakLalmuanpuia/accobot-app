@@ -12,7 +12,7 @@ const form = useForm({
     password: '',
     password_confirmation: '',
     role: '',
-    business_name: '',
+    tenant_name: '',
 });
 
 const submit = () => {
@@ -64,17 +64,18 @@ const submit = () => {
                 <InputError class="mt-2" :message="form.errors.role" />
             </div>
 
-            <div class="mt-4">
-                <InputLabel for="business_name" value="Business Name" />
+            <div class="mt-4" v-if="form.role">
+                <InputLabel for="tenant_name" :value="form.role === 'ca' ? 'Firm Name' : 'Business Name'" />
                 <TextInput
-                    id="business_name"
+                    id="tenant_name"
                     type="text"
                     class="mt-1 block w-full"
-                    v-model="form.business_name"
+                    v-model="form.tenant_name"
                     required
                     autocomplete="organization"
+                    :placeholder="form.role === 'ca' ? 'e.g. Alpha Accounting & Co.' : 'e.g. Acme Pvt. Ltd.'"
                 />
-                <InputError class="mt-2" :message="form.errors.business_name" />
+                <InputError class="mt-2" :message="form.errors.tenant_name" />
             </div>
 
             <div class="mt-4">

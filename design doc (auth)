@@ -1,6 +1,6 @@
 # Laravel 12 Multi‑Tenant Authentication + RBAC + CA↔Business Client Access (Design Doc)
 
-**Status:** Theory / Architecture (no code yet)  
+**Status:** Theory / Architecture (no code yet) → **Partially Implemented** (see §19)
 **Backend:** Laravel 12 (API-only)  
 **Web:** SPA (React/Vue/Next)  
 **Mobile:** Flutter  
@@ -609,3 +609,138 @@ This design provides:
 - CA relationship services
 - audit event pipeline
 - role/permission seeding per tenant type
+
+---
+
+## 19. Implementation Status (2026-04-07)
+
+> This section tracks what has been built. The design above is unchanged.
+
+### 19.1 Database — Implemented
+
+| Table | Status | Notes |
+|---|---|---|
+| `users` | Done | Added `type` (`human`\|`integration`), `status` (`active`\|`platform_suspended`) |
+| `tenants` | Done | Renamed from `businesses`. Has `type` (`business`\|`ca_firm`), `status`, `is_personal`, `created_by_user_id` |
+| `tenant_user` | Done | Full pivot: `status`, `member_type`, `source_tenant_id`, `role_name`, `invited_by_user_id`, `joined_at`. Unique (`user_id`, `tenant_id`) |
+| `tenant_user_roles` | Done | Maps user → tenant → Spatie role. Unique (`user_id`, `tenant_id`) = one role per membership |
+| `tenant_role_permissions` | Done | Per-tenant permission overrides on top of global Spatie role defaults |
+| `invitations` | Done | `token_hash` (sha256, raw token never stored), `status` enum (`pending`\|`accepted`\|`expired`\|`revoked`) |
+| `clients` | Done | `tenant_id` FK |
+| `vendors` | Done | `tenant_id` FK |
+| `audit_events` | Done | UUID PK, append-only (updates/deletes blocked in model), `impersonator_user_id` field |
+| `personal_access_tokens` | Done | Via `laravel/sanctum` (already installed) |
+| `tenant_client_relationships` | Not started | CA↔Business linking — deferred |
+| `ca_business_staff_assignments` | Not started | External member assignment — deferred |
+
+### 19.2 Authentication — Implemented
+
+**Web SPA (cookie-based)**
+- Login / register / logout via `AuthController`
+- Register flow: user picks role (`owner` or `ca`) + tenant name → tenant created, user assigned as owner
+- Tenant type set from role: `ca` → `ca_firm`, `owner` → `business`
+- Audit events logged: `auth.login.success`, `auth.logout`, `tenant.created`
+
+**Mobile (Sanctum PAT)**
+- `POST /api/mobile/login` — returns bearer token (shown once)
+- `GET /api/mobile/me` — authenticated user + tenants
+- `POST /api/mobile/logout` — revokes current token
+- `GET /api/mobile/tokens` — list device sessions
+- `DELETE /api/mobile/tokens/{id}` — revoke specific token
+- `DELETE /api/mobile/tokens` — revoke all tokens
+- Login throttled (`throttle:10,1`)
+- Audit events logged: `auth.login.failure`, `auth.token.created`, `auth.token.revoked`
+
+**Invitations (magic link)**
+- Send invite → `token_hash` stored, raw token emailed
+- Accept: creates user if new, attaches to tenant with role, logs `member.invite.accepted`
+- Decline / revoke supported
+- Status field tracks lifecycle (`pending` → `accepted` / `revoked`)
+
+### 19.3 Tenant Context — Implemented
+
+- URL prefix: `/t/{tenant}/...` (model-bound)
+- `EnsureBelongsToTenant` middleware — verifies active membership, tracks `last_tenant_id`
+- `TenantPermission` middleware — checks `hasPermissionInTenant()` with per-tenant override support
+- `BelongsToTenant` trait — global scope on `Client` and `Vendor` models
+- Tenant switcher in nav (all user tenants loaded via `HandleInertiaRequests`)
+
+### 19.4 RBAC — Implemented
+
+**Architecture deviation from design doc:**
+Spatie Teams mode (`team_id = tenant_id`) was **not used**. Instead a custom `tenant_user_roles` table provides the tenant-scoped role assignment, and `tenant_role_permissions` allows per-tenant permission overrides on top of global Spatie role defaults. See §9 for original intent.
+
+**Permission catalog — implemented:**
+
+| Group | Permissions |
+|---|---|
+| Tenant / Settings | `tenant.view_settings`, `tenant.update_settings` |
+| Members / Roles | `members.view`, `members.invite`, `members.remove`, `members.suspend`, `members.assign_role` |
+| CA Client Linking | `clients.view_requests`, `clients.approve_link`, `clients.terminate_link` |
+| Clients (contacts) | `clients.view`, `clients.create`, `clients.edit`, `clients.delete` |
+| Vendors | `vendors.view`, `vendors.create`, `vendors.edit`, `vendors.delete` |
+| Accounting | `invoices.view`, `invoices.create`, `invoices.edit`, `invoices.delete`, `reports.view`, `reports.export` |
+| Integrations | `integrations.view`, `integrations.manage` |
+| Audit | `audit.view` |
+
+**Preset roles — implemented:**
+
+| Role | Type | Notes |
+|---|---|---|
+| `admin` | Platform | Super admin, all permissions |
+| `owner` | Business | Full control including CA linking approvals |
+| `TenantAdmin` | Business | Ops admin; no CA approve/terminate. Named `TenantAdmin` (not `Admin`) to avoid MySQL case-insensitive collision with `admin` |
+| `Manager` | Business | Accounting + client/vendor ops |
+| `Staff` | Business | Data entry |
+| `Viewer` | Business | Read-only |
+| `ExternalAccountant` | Business (external) | CA staff inside business tenant; read-only baseline |
+| `OwnerPartner` | CA Firm | Full CA firm control |
+| `CAManager` | CA Firm | Manages staff/reporting |
+| `Auditor` | CA Firm | Read + export |
+| `CAStaff` | CA Firm | Read-only |
+| `IntegrationUser` | Any | Least-privilege for integration bots |
+
+### 19.5 Impersonation — Implemented
+
+- `POST /admin/impersonate/{user}` — Super Admin starts impersonation, stores `impersonator_id` in session
+- `POST /impersonate/stop` — restores original identity
+- `BlockImpersonationDestructive` middleware — applied to all destructive routes (`DELETE` members, roles, clients, vendors); returns 403 while impersonating
+- Audit events logged: `impersonation.started`, `impersonation.ended`
+- Impersonation banner shown in nav with "Stop impersonating" button
+
+### 19.6 Audit Logging — Implemented (partial)
+
+`AuditEvent::log($eventType, $metadata)` helper available on the model.
+
+Currently logged automatically:
+- `auth.login.success`, `auth.login.failure`, `auth.logout`
+- `auth.token.created`, `auth.token.revoked`
+- `tenant.created`
+- `member.invited`, `member.invite.accepted`, `member.role.changed`, `member.removed`
+- `impersonation.started`, `impersonation.ended`
+
+Not yet logged (wired up but no emit points):
+- `tenant.settings.updated`, `member.suspended`, `client_link.*`, `external_member.*`
+
+### 19.7 Not Started
+
+- CA↔Business linking workflow (§12) — `tenant_client_relationships` table, link request/approval flow, external member provisioning
+- Phone verification (§17.1)
+- 2FA (§17.2)
+- CA verification (§17.3)
+- Email verification enforcement
+- Social login
+
+### 19.8 Additional — Implemented
+
+**Dashboard**
+- Single unified `Dashboard/Tenant.vue` replaces role-specific views; conditionally renders stats, recent members, and quick-action links based on effective permissions
+- `Dashboard/Admin.vue`: 5-stat grid (tenants / businesses / CA firms / users / roles), recent users list with per-user Impersonate button
+
+**Registration flow**
+- Selecting "CA / Accountant" at registration creates a `ca_firm` tenant with the registrant as `OwnerPartner`
+- Selecting "Business Owner" creates a `business` tenant with the registrant as `owner`
+- Firm/business name field is context-sensitive: hidden until role is selected, labelled "Firm Name" for CA and "Business Name" for business owner
+
+**Invitation email**
+- Raw token (never stored) is passed to the email template and embedded in the accept URL; only the sha256 hash is stored in the DB (per §6)

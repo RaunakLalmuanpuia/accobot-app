@@ -4,13 +4,13 @@ import { router, usePage } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 
 const props = defineProps({
-    business: Object,
+    tenant: Object,
     roles: Array,
     permissionGroups: Array,
     systemRoles: Array,
 })
 
-const business = props.business
+const tenant = props.tenant
 
 // ── Modal state ────────────────────────────────────────────────
 const showModal   = ref(false)
@@ -80,12 +80,12 @@ function submit() {
     errors.value = {}
 
     if (editingRole.value) {
-        router.put(route('roles.update', { business: business.id, role: editingRole.value.id }), form.value, {
+        router.put(route('roles.update', { tenant: tenant.id, role: editingRole.value.id }), form.value, {
             onSuccess: closeModal,
             onError: e => (errors.value = e),
         })
     } else {
-        router.post(route('roles.store', { business: business.id }), form.value, {
+        router.post(route('roles.store', { tenant: tenant.id }), form.value, {
             onSuccess: closeModal,
             onError: e => (errors.value = e),
         })
@@ -96,7 +96,7 @@ function submit() {
 const confirmDelete = ref(null)
 
 function deleteRole(role) {
-    router.delete(route('roles.destroy', { business: business.id, role: role.id }), {
+    router.delete(route('roles.destroy', { tenant: tenant.id, role: role.id }), {
         onSuccess: () => (confirmDelete.value = null),
     })
 }

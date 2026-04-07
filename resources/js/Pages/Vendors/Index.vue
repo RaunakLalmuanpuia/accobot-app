@@ -5,7 +5,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import { hasPermission } from '@/utils/permissions'
 
 const props = defineProps({
-    business: Object,
+    tenant: Object,
     vendors:  Array,
 })
 
@@ -13,9 +13,9 @@ const props = defineProps({
 const showModal  = ref(false)
 const editing    = ref(null)
 
-const canCreate = hasPermission('create vendor')
-const canEdit   = hasPermission('edit vendor')
-const canDelete = hasPermission('delete vendor')
+const canCreate = hasPermission('vendors.create')
+const canEdit   = hasPermission('vendors.edit')
+const canDelete = hasPermission('vendors.delete')
 
 const form = useForm({ name: '', email: '', phone: '' })
 
@@ -35,11 +35,11 @@ function openEdit(vendor) {
 
 function submit() {
     if (editing.value) {
-        form.put(route('vendors.update', { business: props.business.id, vendor: editing.value.id }), {
+        form.put(route('vendors.update', { tenant: props.tenant.id, vendor: editing.value.id }), {
             onSuccess: () => (showModal.value = false),
         })
     } else {
-        form.post(route('vendors.store', { business: props.business.id }), {
+        form.post(route('vendors.store', { tenant: props.tenant.id }), {
             onSuccess: () => (showModal.value = false),
         })
     }
@@ -47,7 +47,7 @@ function submit() {
 
 function destroy(vendor) {
     if (!confirm(`Remove ${vendor.name}?`)) return
-    router.delete(route('vendors.destroy', { business: props.business.id, vendor: vendor.id }))
+    router.delete(route('vendors.destroy', { tenant: props.tenant.id, vendor: vendor.id }))
 }
 </script>
 

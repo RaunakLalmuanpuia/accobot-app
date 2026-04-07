@@ -11,7 +11,7 @@ const props = defineProps({
 })
 
 const page = usePage()
-const business = page.props.auth.current_business_id
+const tenant = page.props.auth.current_tenant_id
 const currentUserId = page.props.auth.user.id
 
 // ── Initials avatar ────────────────────────────────────────────
@@ -43,14 +43,14 @@ function badgeClass(roleName) {
 
 // ── Change role ────────────────────────────────────────────────
 function changeRole(member, roleId) {
-    router.put(route('team.update', { business, user: member.id }), { role_id: roleId })
+    router.put(route('team.update', { tenant, user: member.id }), { role_id: roleId })
 }
 
 // ── Remove member ──────────────────────────────────────────────
 const confirmRemove = ref(null)
 
 function removeMember(member) {
-    router.delete(route('team.destroy', { business, user: member.id }), {
+    router.delete(route('team.destroy', { tenant, user: member.id }), {
         onSuccess: () => (confirmRemove.value = null),
     })
 }
@@ -64,7 +64,7 @@ const inviteForm = useForm({
 })
 
 function sendInvite() {
-    inviteForm.post(route('invitation.store', { business }), {
+    inviteForm.post(route('invitation.store', { tenant }), {
         onSuccess: () => {
             showInviteModal.value = false
             inviteForm.reset()
@@ -74,10 +74,13 @@ function sendInvite() {
 
 // ── Revoke pending invite ──────────────────────────────────────
 function revokeInvitation(invitation) {
-    router.delete(route('invitation.destroy', { business, invitation: invitation.id }))
+    router.delete(route('invitation.destroy', { tenant, invitation: invitation.id }))
 }
 
-const canManage = hasPermission('assign roles')
+const canInvite     = hasPermission('members.invite')
+const canAssignRole = hasPermission('members.assign_role')
+const canRemove     = hasPermission('members.remove')
+const canManage     = canInvite || canAssignRole || canRemove
 </script>
 
 <template>
@@ -87,12 +90,12 @@ const canManage = hasPermission('assign roles')
                 <div>
                     <h1 class="text-xl font-semibold text-gray-900">Team Members</h1>
                     <p class="text-sm text-gray-500 mt-0.5">
-                        {{ members.length }} member{{ members.length !== 1 ? 's' : '' }} in this business
+                        {{ members.length }} member{{ members.length !== 1 ? 's' : '' }} in this tenant
                     </p>
                 </div>
 
                 <button
-                    v-if="canManage"
+                    v-if="canInvite"
                     @click="showInviteModal = true"
                     class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition"
                 >
@@ -134,7 +137,7 @@ const canManage = hasPermission('assign roles')
                         </div>
 
                         <div class="col-span-4">
-                            <template v-if="canManage && member.id !== currentUserId">
+                            <template v-if="canAssignRole && member.id !== currentUserId">
                                 <select
                                     :value="member.role?.id"
                                     @change="changeRole(member, $event.target.value)"
@@ -157,7 +160,7 @@ const canManage = hasPermission('assign roles')
 
                         <div class="col-span-3 flex justify-end">
                             <button
-                                v-if="canManage && member.id !== currentUserId"
+                                v-if="canRemove && member.id !== currentUserId"
                                 @click="confirmRemove = member"
                                 class="text-sm text-red-500 hover:text-red-700 font-medium transition"
                             >Remove</button>
@@ -189,7 +192,7 @@ const canManage = hasPermission('assign roles')
                             </p>
                         </div>
                         <button
-                            v-if="canManage"
+                            v-if="canInvite"
                             @click="revokeInvitation(inv)"
                             class="text-xs text-red-500 hover:text-red-700 font-medium transition"
                         >Revoke</button>
@@ -268,7 +271,7 @@ const canManage = hasPermission('assign roles')
                         </div>
                         <div>
                             <p class="font-semibold text-gray-900">Remove {{ confirmRemove.name }}?</p>
-                            <p class="text-sm text-gray-500 mt-0.5">They will lose access to this business.</p>
+                            <p class="text-sm text-gray-500 mt-0.5">They will lose access to this tenant.</p>
                         </div>
                     </div>
                     <div class="flex justify-end gap-3">

@@ -2,8 +2,8 @@
 
 namespace App\Http\Middleware;
 
-use App\Models\BusinessRolePermission;
 use App\Models\Invitation;
+use App\Models\TenantRolePermission;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 use Spatie\Permission\Models\Permission;
@@ -19,8 +19,8 @@ class HandleInertiaRequests extends Middleware
 
     public function share(Request $request): array
     {
-        $user     = $request->user();
-        $business = $request->route('business'); // resolved via route model binding
+        $user   = $request->user();
+        $tenant = $request->route('tenant'); // resolved via route model binding
 
         return [
             ...parent::share($request),
@@ -29,49 +29,52 @@ class HandleInertiaRequests extends Middleware
                 'user'     => $user,
                 'is_admin' => $user?->hasRole('admin') ?? false,
 
-                // All businesses the user belongs to (for the switcher)
-                'businesses' => $user && !$user->hasRole('admin')
-                    ? $user->businesses()->select('businesses.id', 'businesses.name')->get()
+                // Impersonation banner data
+                'impersonating' => session()->has('impersonator_id'),
+
+                // All tenants the user belongs to (for the switcher)
+                'tenants' => $user && ! $user->hasRole('admin')
+                    ? $user->tenants()->select('tenants.id', 'tenants.name', 'tenants.type')->get()
                     : [],
 
-                // Current business comes from the URL, not session
-                'current_business_id' => $business?->id,
+                // Current tenant comes from the URL, not session
+                'current_tenant_id' => $tenant?->id,
 
-                // Pending invitations for this user (to show in-app notifications)
-                'pending_invitations' => $user && !$user->hasRole('admin')
-                    ? Invitation::with(['business', 'role'])
+                // Pending invitations for this user (in-app notifications)
+                'pending_invitations' => $user && ! $user->hasRole('admin')
+                    ? Invitation::with(['tenant', 'role'])
                         ->where('email', $user->email)
-                        ->whereNull('accepted_at')
+                        ->where('status', 'pending')
                         ->where('expires_at', '>', now())
                         ->get()
                         ->map(fn($inv) => [
-                            'token'         => $inv->token,
-                            'business_name' => $inv->business->name,
-                            'role_name'     => $inv->role->name,
+                            'id'          => $inv->id,
+                            'tenant_name' => $inv->tenant->name,
+                            'role_name'   => $inv->role->name,
                         ])
                     : [],
 
-                // Admin gets all permissions; others get their role's permissions for this business
+                // Admin gets all permissions; others get effective permissions for this tenant
                 'permissions' => match (true) {
                     $user === null          => [],
                     $user->hasRole('admin') => Permission::pluck('name'),
-                    $business === null      => [],
-                    default => (function () use ($user, $business) {
-                        $businessRole = $user->businessRoles()
-                            ->where('business_id', $business->id)
+                    $tenant === null        => [],
+                    default => (function () use ($user, $tenant) {
+                        $tenantRole = $user->tenantRoles()
+                            ->where('tenant_id', $tenant->id)
                             ->with('role.permissions')
                             ->first();
 
-                        if (!$businessRole) return collect();
+                        if (! $tenantRole) return collect();
 
-                        $override = BusinessRolePermission::where('business_id', $business->id)
-                            ->where('role_id', $businessRole->role_id)
+                        $override = TenantRolePermission::where('tenant_id', $tenant->id)
+                            ->where('role_id', $tenantRole->role_id)
                             ->with('permission')
                             ->get();
 
                         return $override->isNotEmpty()
                             ? $override->pluck('permission.name')->unique()->values()
-                            : $businessRole->role->permissions->pluck('name')->values();
+                            : $tenantRole->role->permissions->pluck('name')->values();
                     })(),
                 },
             ],

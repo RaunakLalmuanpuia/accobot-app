@@ -49,7 +49,7 @@ function accept() {
         <div class="rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-3 mb-6">
             <div class="flex justify-between text-sm">
                 <span class="text-gray-500">Business</span>
-                <span class="font-medium text-gray-900">{{ invitation.business_name }}</span>
+                <span class="font-medium text-gray-900">{{ invitation.tenant_name }}</span>
             </div>
             <div class="flex justify-between text-sm">
                 <span class="text-gray-500">Role</span>
@@ -128,7 +128,7 @@ function accept() {
                 :disabled="form.processing"
                 :class="['w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 transition', { 'opacity-50 cursor-not-allowed': form.processing }]"
             >
-                Accept &amp; Join {{ invitation.business_name }}
+                Accept &amp; Join {{ invitation.tenant_name }}
             </button>
         </template>
         </template><!-- end v-else (valid invitation) -->

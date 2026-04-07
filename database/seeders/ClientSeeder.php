@@ -2,39 +2,34 @@
 
 namespace Database\Seeders;
 
-use App\Models\Business;
 use App\Models\Client;
+use App\Models\Tenant;
 use Illuminate\Database\Seeder;
 
 class ClientSeeder extends Seeder
 {
     public function run(): void
     {
-        $businesses = Business::all()->keyBy('name');
+        $tenants = Tenant::all()->keyBy('name');
 
         $data = [
-            'Alpha Accounting Firm' => [
+            'Beta Finance Group' => [
                 ['name' => 'Rahul Enterprises',   'email' => 'rahul@enterprises.com', 'phone' => '9876543210'],
                 ['name' => 'Priya Trading Co.',   'email' => 'priya@trading.com',     'phone' => '9123456780'],
                 ['name' => 'Suresh & Sons',        'email' => 'suresh@sons.com',       'phone' => null],
             ],
-            'Beta Finance Group' => [
+            'Delta Retail Co.' => [
                 ['name' => 'NextGen Tech Pvt Ltd', 'email' => 'hello@nextgen.com',     'phone' => '9988776655'],
                 ['name' => 'Meera Exports',        'email' => 'meera@exports.in',      'phone' => '9871234560'],
             ],
-            'Gamma Tax Consultants' => [
-                ['name' => 'Kiran Motors',         'email' => 'kiran@motors.com',      'phone' => '9090909090'],
-                ['name' => 'Laxmi Jewellers',      'email' => null,                    'phone' => '9876501234'],
-                ['name' => 'Amit Constructions',   'email' => 'amit@constructions.in', 'phone' => null],
-            ],
         ];
 
-        foreach ($data as $businessName => $clients) {
-            $business = $businesses->get($businessName);
-            if (!$business) continue;
+        foreach ($data as $tenantName => $clients) {
+            $tenant = $tenants->get($tenantName);
+            if (! $tenant) continue;
 
             foreach ($clients as $client) {
-                $business->clients()->create($client);
+                $tenant->clients()->create($client);
             }
         }
     }

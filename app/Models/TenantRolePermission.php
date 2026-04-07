@@ -7,15 +7,17 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
-class BusinessRolePermission extends Model
+class TenantRolePermission extends Model
 {
     public $timestamps = false;
 
-    protected $fillable = ['business_id', 'role_id', 'permission_id'];
+    protected $table = 'tenant_role_permissions';
 
-    public function business(): BelongsTo
+    protected $fillable = ['tenant_id', 'role_id', 'permission_id'];
+
+    public function tenant(): BelongsTo
     {
-        return $this->belongsTo(Business::class);
+        return $this->belongsTo(Tenant::class);
     }
 
     public function role(): BelongsTo

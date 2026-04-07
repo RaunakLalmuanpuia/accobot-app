@@ -2,21 +2,21 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Business;
 use App\Models\Client;
+use App\Models\Tenant;
 use Illuminate\Http\Request;
 
 class ClientController extends Controller
 {
-    public function index(Business $business)
+    public function index(Tenant $tenant)
     {
         return inertia('Clients/Index', [
-            'business' => $business,
-            'clients'  => Client::orderBy('name')->get(['id', 'name', 'email', 'phone']),
+            'tenant'  => $tenant,
+            'clients' => Client::orderBy('name')->get(['id', 'name', 'email', 'phone']),
         ]);
     }
 
-    public function store(Request $request, Business $business)
+    public function store(Request $request, Tenant $tenant)
     {
         $request->validate([
             'name'  => 'required|string|max:255',
@@ -24,14 +24,14 @@ class ClientController extends Controller
             'phone' => 'nullable|string|max:50',
         ]);
 
-        $business->clients()->create($request->only('name', 'email', 'phone'));
+        $tenant->clients()->create($request->only('name', 'email', 'phone'));
 
         return back();
     }
 
-    public function update(Request $request, Business $business, Client $client)
+    public function update(Request $request, Tenant $tenant, Client $client)
     {
-        abort_if($client->business_id !== $business->id, 403);
+        abort_if($client->tenant_id !== $tenant->id, 403);
 
         $request->validate([
             'name'  => 'required|string|max:255',
@@ -44,9 +44,9 @@ class ClientController extends Controller
         return back();
     }
 
-    public function destroy(Business $business, Client $client)
+    public function destroy(Tenant $tenant, Client $client)
     {
-        abort_if($client->business_id !== $business->id, 403);
+        abort_if($client->tenant_id !== $tenant->id, 403);
 
         $client->delete();
 

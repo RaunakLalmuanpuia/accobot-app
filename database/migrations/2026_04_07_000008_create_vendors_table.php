@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('vendors', function (Blueprint $table) {
             $table->id();
-            $table->foreignUuid('business_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('tenant_id')->constrained('tenants')->cascadeOnDelete();
             $table->string('name');
             $table->string('email')->nullable();
             $table->string('phone')->nullable();

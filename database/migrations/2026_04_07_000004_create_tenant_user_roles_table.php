@@ -6,27 +6,21 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
-        Schema::create('business_user_roles', function (Blueprint $table) {
+        Schema::create('tenant_user_roles', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->foreignUuid('business_id')->constrained('businesses')->cascadeOnDelete();
+            $table->foreignUuid('tenant_id')->constrained('tenants')->cascadeOnDelete();
             $table->foreignId('role_id')->constrained()->cascadeOnDelete();
             $table->timestamps();
 
-            $table->unique(['user_id', 'business_id']);
+            $table->unique(['user_id', 'tenant_id']); // one role per user per tenant
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::dropIfExists('business_user_roles');
+        Schema::dropIfExists('tenant_user_roles');
     }
 };
