@@ -765,9 +765,9 @@ Not yet logged (wired up but no emit points):
 Alongside the existing invitation flow, users with `members.invite` can add a member to a tenant directly from the Team page without sending an invitation.
 
 **Flow:**
-1. Admin enters an email — a debounced `GET /t/{tenant}/settings/team/check-email?email=` call checks whether the email belongs to an existing user
-2. If account exists: shown a green confirmation; added instantly on submit
-3. If no account: name field appears; on submit a new `User` is created (random 24-char password, `type=human`, `status=active`) and a password-reset email is dispatched so they can set their own password
+1. Admin enters an email — a debounced `GET /t/{tenant}/settings/team/check-email?email=` call returns `{ exists: bool }` (no user data exposed)
+2. If account exists: green confirmation shown; user added instantly on submit
+3. If no account: name + password fields appear; on submit a new `User` is created with the admin-supplied password (`type=human`, `status=active`); admin shares credentials with the new user
 4. User is attached to the tenant with the selected role via `tenant_user` pivot + `TenantUserRole` record
 5. Audit event `member.added` is logged
 
@@ -777,7 +777,7 @@ Alongside the existing invitation flow, users with `members.invite` can add a me
 
 **Distinction from invitation:**
 - Invitation: token emailed, user accepts themselves, works for external recipients
-- Direct add: immediate, no email link, works for new or existing users; new users receive only a password-reset email
+- Direct add: immediate, no email link, works for new or existing users; admin sets the password for new accounts
 
 ### 19.8 Additional — Implemented
 
