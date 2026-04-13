@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToTenant;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -17,6 +18,16 @@ class NarrationHead extends Model
         'is_active'  => 'boolean',
         'sort_order' => 'integer',
     ];
+
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->where('is_active', true);
+    }
+
+    public function scopeForTransactionType(Builder $query, string $type): Builder
+    {
+        return $query->where(fn ($q) => $q->where('type', $type)->orWhere('type', 'both'));
+    }
 
     public function tenant(): BelongsTo
     {

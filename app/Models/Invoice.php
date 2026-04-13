@@ -16,15 +16,21 @@ class Invoice extends Model
         'tenant_id', 'invoice_number', 'client_id',
         'issue_date', 'due_date', 'status',
         'subtotal', 'tax_amount', 'total', 'currency', 'notes',
+        'amount_paid', 'amount_due',
     ];
 
     protected $casts = [
-        'issue_date' => 'date',
-        'due_date'   => 'date',
-        'subtotal'   => 'decimal:2',
-        'tax_amount' => 'decimal:2',
-        'total'      => 'decimal:2',
+        'issue_date'  => 'date',
+        'due_date'    => 'date',
+        'subtotal'    => 'decimal:2',
+        'tax_amount'  => 'decimal:2',
+        'total'       => 'decimal:2',
+        'amount_paid' => 'decimal:2',
+        'amount_due'  => 'decimal:2',
     ];
+
+    // Ensure client_name accessor is included in JSON serialization (e.g. via Inertia)
+    protected $appends = ['client_name'];
 
     public function tenant(): BelongsTo
     {
@@ -39,6 +45,43 @@ class Invoice extends Model
     public function items(): HasMany
     {
         return $this->hasMany(InvoiceItem::class);
+    }
+
+    // ── Accessors (for invoice matching compatibility) ─────────────────────
+
+    public function getClientNameAttribute(): ?string
+    {
+        return $this->client?->name;
+    }
+
+    /** Alias for `total` — used by InvoiceMatchingService. */
+    public function getTotalAmountAttribute(): float
+    {
+        return (float) $this->total;
+    }
+
+    /** Alias for `issue_date` — used by InvoiceMatchingService. */
+    public function getInvoiceDateAttribute()
+    {
+        return $this->issue_date;
+    }
+
+    // ── Reconciliation helper ──────────────────────────────────────────────
+
+    public function recordPayment(float $amount): void
+    {
+        $paid = min((float) $this->total, (float) $this->amount_paid + $amount);
+        $due  = max(0.0, (float) $this->total - $paid);
+
+        $status = $due <= 0.0
+            ? 'paid'
+            : ($paid > 0 ? 'partial' : $this->status);
+
+        $this->update([
+            'amount_paid' => $paid,
+            'amount_due'  => $due,
+            'status'      => $status,
+        ]);
     }
 
     /**

@@ -168,6 +168,12 @@ function stopImpersonation() {
                                         :href="route('chat.index', { tenant: currentTenantId() })"
                                         :active="route().current('chat.index')"
                                     >Assistant</NavLink>
+
+                                    <NavLink
+                                        v-if="hasPermission('transactions.view')"
+                                        :href="route('banking.index', { tenant: currentTenantId() })"
+                                        :active="route().current('banking.index')"
+                                    >Transactions</NavLink>
                                 </template>
                             </div>
                         </div>

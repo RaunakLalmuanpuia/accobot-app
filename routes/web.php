@@ -1,14 +1,19 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BankTransactionController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EmailIngestController;
 use App\Http\Controllers\ImpersonationController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\NarrationReviewController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\SmsIngestController;
+use App\Http\Controllers\StatementUploadController;
 use App\Http\Controllers\TeamMemberController;
 use App\Http\Controllers\VendorController;
 use Illuminate\Support\Facades\Route;
@@ -86,6 +91,29 @@ Route::middleware(['auth', 'verified', 'member'])
 
         // ── Invoice PDF download ───────────────────────────────────────
         Route::get('/invoices/{invoice}/download', [InvoiceController::class, 'download'])->name('invoices.download');
+
+        // ── Banking / Narration ────────────────────────────────────────
+        Route::get('/banking', [BankTransactionController::class, 'pending'])
+            ->name('banking.index')
+            ->middleware('tenant.permission:transactions.view');
+
+        // review route: transactions.review is the baseline; controller enforces
+        // transactions.edit for the 'correct' action
+        Route::post('/banking/transactions/{transaction}/review/{action}', [NarrationReviewController::class, 'handle'])
+            ->name('banking.transactions.review')
+            ->middleware('tenant.permission:transactions.review');
+
+        Route::post('/banking/transactions/sms', SmsIngestController::class)
+            ->name('banking.transactions.sms')
+            ->middleware('tenant.permission:transactions.import');
+
+        Route::post('/banking/transactions/email', EmailIngestController::class)
+            ->name('banking.transactions.email')
+            ->middleware('tenant.permission:transactions.import');
+
+        Route::post('/banking/transactions/statement', StatementUploadController::class)
+            ->name('banking.transactions.statement')
+            ->middleware('tenant.permission:transactions.import');
 
     });
 

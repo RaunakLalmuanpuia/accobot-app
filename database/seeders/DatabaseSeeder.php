@@ -25,10 +25,12 @@ class DatabaseSeeder extends Seeder
             RolesAndPermissionsSeeder::class,
             DummyDataSeeder::class,
             NarrationHeadSeeder::class,
+            NarrationRuleSeeder::class,
             ClientSeeder::class,
             VendorSeeder::class,
             AccountingSeeder::class,
             BankTransactionSeeder::class,
+            InvoiceMatchingDemoSeeder::class,   // invoices + matching transactions
         ]);
     }
 }

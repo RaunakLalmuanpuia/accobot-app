@@ -65,6 +65,12 @@ class RolesAndPermissionsSeeder extends Seeder
 
             // Accounting Assistant (Chat)
             'chat.view',
+
+            // Banking / Narration
+            'transactions.view',
+            'transactions.review',  // approve / reject a pending transaction
+            'transactions.edit',    // correct narration details, link invoices
+            'transactions.import',  // upload statements, paste SMS / email
         ];
 
         foreach ($permissions as $perm) {
@@ -102,6 +108,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'integrations.view', 'integrations.manage',
             'audit.view',
             'chat.view',
+            'transactions.view', 'transactions.review', 'transactions.edit', 'transactions.import',
         ]);
 
         $manager = Role::firstOrCreate(['name' => 'Manager']);
@@ -113,6 +120,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'reports.view',   'reports.export',
             'integrations.view',
             'chat.view',
+            'transactions.view', 'transactions.review', 'transactions.edit', 'transactions.import',
         ]);
 
         $staff = Role::firstOrCreate(['name' => 'Staff']);
@@ -121,6 +129,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'vendors.view',  'vendors.create',
             'invoices.view', 'invoices.create', 'invoices.edit',
             'reports.view',
+            'transactions.view', 'transactions.review',
         ]);
 
         $viewer = Role::firstOrCreate(['name' => 'Viewer']);
@@ -129,6 +138,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'vendors.view',
             'invoices.view',
             'reports.view',
+            'transactions.view',
         ]);
 
         /**
@@ -141,6 +151,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'invoices.view',
             'reports.view',
             'reports.export',
+            'transactions.view',
         ]);
 
         // ─── CA firm tenant presets ───────────────────────────────────
