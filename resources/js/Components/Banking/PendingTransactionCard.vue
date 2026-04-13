@@ -4,7 +4,7 @@ import { useForm, router, usePage } from '@inertiajs/vue3';
 import { hasPermission } from '@/utils/permissions';
 import {
     Check, Wand2, TrendingUp, TrendingDown, AlertTriangle, Edit3,
-    Link2, Link2Off, FileText, ChevronDown, ChevronUp, Sparkles, X,
+    Link2, Link2Off, FileText, ChevronDown, ChevronUp, Sparkles, X, Zap,
 } from 'lucide-vue-next';
 
 const props = defineProps({
@@ -74,6 +74,13 @@ const form = useForm({
 const activeSubHeads = computed(() =>
     selectedHead.value?.active_sub_heads || selectedHead.value?.sub_heads || []
 );
+
+const isRuleBased   = computed(() => props.transaction.narration_source === 'rule_based');
+const isAiSuggested = computed(() => props.transaction.narration_source === 'ai_suggested');
+const aiConfidence  = computed(() => {
+    const c = props.transaction.ai_confidence;
+    return c ? Math.round(c * 100) : null;
+});
 
 const vendorStepLabel = computed(() => hasInvoiceSection.value ? '4. Vendor Name' : '3. Vendor Name');
 const noteStepLabel   = computed(() => hasInvoiceSection.value ? '5. Additional Note' : '4. Additional Note');
@@ -184,17 +191,52 @@ const handleCancel = () => {
 
                     <!-- ── Collapsed ── -->
                     <template v-if="!isExpanded">
-                        <!-- AI suggestion box (pending) -->
-                        <div v-if="!isReviewed && (transaction.reasoning || init?.head)"
-                            class="bg-[#F8FAFC] border border-indigo-50 rounded-xl p-3 mb-3 flex gap-3 text-sm text-gray-500 italic">
-                            <Wand2 :size="16" class="text-indigo-400 flex-shrink-0 mt-0.5" />
-                            <div>
-                                <span v-if="init?.head" class="block not-italic font-semibold text-indigo-700 mb-0.5">
-                                    Suggested: {{ init.head.name }}{{ init.subHead ? ` → ${init.subHead.name}` : '' }}
-                                </span>
-                                <p>Narration: {{ transaction.narration_note }}</p>
-                                <p class="mt-1">{{ transaction.reasoning || 'AI mapped this based on similar patterns.' }}</p>
+                        <!-- Rule-based suggestion box -->
+                        <div v-if="!isReviewed && isRuleBased && init?.head"
+                            class="bg-amber-50 border border-amber-100 rounded-xl p-3 mb-3 flex gap-3 text-sm">
+                            <Zap :size="16" class="text-amber-500 flex-shrink-0 mt-0.5" />
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2 flex-wrap mb-0.5">
+                                    <span class="not-italic font-semibold text-amber-800">
+                                        {{ init.head.name }}{{ init.subHead ? ` → ${init.subHead.name}` : '' }}
+                                    </span>
+                                    <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-200 text-amber-800 uppercase tracking-wide">
+                                        Rule matched
+                                    </span>
+                                </div>
+                                <p v-if="transaction.narration_note" class="text-amber-700/80 italic text-xs truncate">
+                                    {{ transaction.narration_note }}
+                                </p>
                             </div>
+                        </div>
+
+                        <!-- AI suggestion box -->
+                        <div v-else-if="!isReviewed && isAiSuggested && init?.head"
+                            class="bg-[#F8FAFC] border border-indigo-50 rounded-xl p-3 mb-3 flex gap-3 text-sm">
+                            <Sparkles :size="16" class="text-indigo-400 flex-shrink-0 mt-0.5" />
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2 flex-wrap mb-0.5">
+                                    <span class="not-italic font-semibold text-indigo-700">
+                                        {{ init.head.name }}{{ init.subHead ? ` → ${init.subHead.name}` : '' }}
+                                    </span>
+                                    <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700 uppercase tracking-wide">
+                                        AI suggested
+                                    </span>
+                                    <span v-if="aiConfidence" class="text-[10px] font-semibold text-gray-400">
+                                        {{ aiConfidence }}% confidence
+                                    </span>
+                                </div>
+                                <p v-if="transaction.narration_note" class="text-gray-500 italic text-xs truncate">
+                                    {{ transaction.narration_note }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Pending but no suggestion yet -->
+                        <div v-else-if="!isReviewed && !init?.head"
+                            class="bg-gray-50 border border-gray-100 rounded-xl p-3 mb-3 flex gap-3 text-sm text-gray-400">
+                            <AlertTriangle :size="16" class="flex-shrink-0 mt-0.5 text-gray-300" />
+                            <p class="italic text-xs">No suggestion yet — categorize manually.</p>
                         </div>
 
                         <!-- Reviewed categorisation box -->

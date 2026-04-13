@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\BankTransaction;
+use App\Models\NarrationRule;
 use App\Models\NarrationSubHead;
 use App\Models\Tenant;
 use App\Services\Banking\NarrationRuleEngine;
@@ -37,6 +38,31 @@ class BankTransactionSeeder extends Seeder
         $sub = fn (string $slug) => NarrationSubHead::whereHas(
             'narrationHead', fn ($q) => $q->where('tenant_id', $tenant->id)
         )->where('slug', $slug)->first();
+
+        // ── Step 2: Seed a learned rule to demonstrate party-name-first matching ──
+        // Simulates what happens after an accountant corrects a transaction and
+        // ticks "Save as rule". The note template uses {party}/{amount}/{date}
+        // placeholders so it stays accurate for every future transaction.
+        $rentSubHead = $sub('supplier_pay');
+        if ($rentSubHead) {
+            NarrationRule::withoutGlobalScope('tenant')->updateOrCreate(
+                [
+                    'tenant_id'        => $tenant->id,
+                    'match_value'      => 'xyz properties',   // normalised party name (no "pvt ltd")
+                    'match_type'       => 'contains',
+                    'transaction_type' => 'debit',
+                ],
+                [
+                    'narration_head_id'     => $rentSubHead->narration_head_id,
+                    'narration_sub_head_id' => $rentSubHead->id,
+                    'note_template'         => 'Office rent – {party} – ₹{amount} ({date})',
+                    'party_name'            => 'Xyz Properties Pvt Ltd',
+                    'priority'              => 3,
+                    'is_active'             => true,
+                    'source'                => 'learned',
+                ]
+            );
+        }
 
         // ── Raw transactions — rule engine will be tried first ─────────────
         // Each entry has only what a real bank SMS/statement would contain.
@@ -224,17 +250,41 @@ class BankTransactionSeeder extends Seeder
                 ],
             ],
 
-            // ── No suggestion at all ──────────────────────────────────────
+            // ── Learned rule — matched via party name (Tier A) ───────────────
+            // Simulates an SMS where SmsParserAgent already extracted the party.
+            // The raw narration alone ("Dear Customer, NEFT DR...") would NOT match
+            // any keyword/regex rule — but the AI-parsed partyName "Xyz Properties Pvt Ltd"
+            // contains "xyz properties", which hits the learned rule seeded above.
+            // Demonstrates party-name-first matching and note template with placeholders.
             [
                 'transaction_date'  => '2026-04-12',
                 'bank_account_name' => 'HDFC Current Account',
                 'bank_reference'    => 'NEFT/26041299999/MISC',
-                'raw_narration'     => 'NEFT DR-XYZ PROPERTIES PVT LTD-Q1RENT-SBI BANK',
+                'raw_narration'     => 'Dear Customer, NEFT DR INR 75,000 to XYZ PROPERTIES PVT LTD on 12-Apr-26 Ref 26041299999',
                 'type'              => 'debit',
                 'amount'            => 75000.00,
                 'balance_after'     => 259283.00,
+                // Simulated AI-parsed party name (what SmsParserAgent would return)
+                'party_name_hint'   => 'Xyz Properties Pvt Ltd',
                 'expected_source'   => 'rule_based',
-                'expected_party'    => 'Xyz Properties Pvt Ltd',     // NEFT dash debit regex (priority 6) extracts unknown party
+                'expected_party'    => 'Xyz Properties Pvt Ltd',     // matched via partyName (Tier A), not raw narration
+                'expected_note'     => 'Office rent – Xyz Properties Pvt Ltd – ₹75,000.00 (12-Apr-2026)',
+            ],
+
+            // ── Learned rule — same party, second month (note template fills new values) ──
+            // Proves {amount} and {date} placeholders update correctly each time.
+            [
+                'transaction_date'  => '2026-05-01',
+                'bank_account_name' => 'HDFC Current Account',
+                'bank_reference'    => 'NEFT/26050100001/MISC',
+                'raw_narration'     => 'Dear Customer, NEFT DR INR 75,000 to XYZ PROPERTIES PVT LTD on 01-May-26 Ref 26050100001',
+                'type'              => 'debit',
+                'amount'            => 75000.00,
+                'balance_after'     => 184283.00,
+                'party_name_hint'   => 'Xyz Properties Pvt Ltd',
+                'expected_source'   => 'rule_based',
+                'expected_party'    => 'Xyz Properties Pvt Ltd',
+                'expected_note'     => 'Office rent – Xyz Properties Pvt Ltd – ₹75,000.00 (01-May-2026)',
             ],
         ];
 
@@ -244,6 +294,8 @@ class BankTransactionSeeder extends Seeder
         foreach ($rawTransactions as $data) {
             $expectedSource = $data['expected_source'];
             $expectedParty  = $data['expected_party'];
+            $expectedNote   = $data['expected_note']   ?? null;
+            $partyNameHint  = $data['party_name_hint'] ?? null;  // simulates AI-parsed party from SMS
             $fallback       = array_filter([
                 'sub_head'    => $data['fallback_sub_head']    ?? null,
                 'note'        => $data['fallback_note']        ?? null,
@@ -253,17 +305,20 @@ class BankTransactionSeeder extends Seeder
             ]);
 
             // Strip seeder-only keys before persisting
-            unset($data['expected_source'], $data['expected_party'],
+            unset($data['expected_source'], $data['expected_party'], $data['expected_note'],
+                  $data['party_name_hint'],
                   $data['fallback_sub_head'], $data['fallback_note'],
                   $data['fallback_party'], $data['fallback_confidence'],
                   $data['fallback_suggestions']);
 
             // ── Run the rule engine ────────────────────────────────────────
+            // Pass partyNameHint when present — simulates what the SMS/email AI parser
+            // would have extracted before handing off to the pipeline.
             $suggestion = $engine->match(
                 narration:  $data['raw_narration'],
                 type:       $data['type'],
                 amount:     $data['amount'],
-                partyName:  null,   // seeder uses raw narration only; no prior AI parse
+                partyName:  $partyNameHint,
                 tenantId:   $tenant->id,
             );
 
@@ -271,10 +326,12 @@ class BankTransactionSeeder extends Seeder
             $matched = $suggestion !== null;
             $actualSource = $suggestion?->source ?? 'no_match';
             $actualParty  = $suggestion?->partyName;
+            $actualNote   = $suggestion?->narrationNote;
 
             $ruleOk   = ($expectedSource === 'rule_based') === $matched;
             $partyOk  = $expectedParty === null || $actualParty === $expectedParty;
-            $allOk    = $ruleOk && $partyOk;
+            $noteOk   = $expectedNote  === null || $actualNote  === $expectedNote;
+            $allOk    = $ruleOk && $partyOk && $noteOk;
 
             $icon = $allOk ? '✓' : '✗';
             $this->command->line(sprintf(
@@ -285,6 +342,14 @@ class BankTransactionSeeder extends Seeder
                 $actualParty ?? '(none)',
             ));
 
+            // Print note for learned-rule transactions so the template output is visible
+            if ($partyNameHint && $actualNote) {
+                $this->command->line(sprintf(
+                    "       note: %s",
+                    $actualNote,
+                ));
+            }
+
             if (!$allOk) {
                 $fail++;
                 if (!$ruleOk) {
@@ -292,6 +357,10 @@ class BankTransactionSeeder extends Seeder
                 }
                 if (!$partyOk) {
                     $this->command->warn("      expected party=\"{$expectedParty}\", got=\"{$actualParty}\"");
+                }
+                if (!$noteOk) {
+                    $this->command->warn("      expected note=\"{$expectedNote}\"");
+                    $this->command->warn("      got      note=\"{$actualNote}\"");
                 }
             } else {
                 $pass++;
