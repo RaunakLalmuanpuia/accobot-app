@@ -89,10 +89,13 @@ class NarrationPipelineService
         $isDuplicate = $existing !== null;
 
         // ── Tier 1: Rule engine ────────────────────────────────────────────
+        // Pass the AI-parsed party name so the engine can match learned rules
+        // (e.g. "suntech solutions") before falling back to the raw narration text.
         $suggestion = $this->ruleEngine->match(
-            $dto->rawNarration,
-            $dto->type,
-            $dto->amount,
+            narration: $dto->rawNarration,
+            type:      $dto->type,
+            amount:    $dto->amount,
+            partyName: $dto->partyName,
         );
 
         // ── Tier 2: AI fallback ────────────────────────────────────────────

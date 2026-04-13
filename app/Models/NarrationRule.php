@@ -15,7 +15,7 @@ class NarrationRule extends Model
     protected $fillable = [
         'tenant_id', 'match_type', 'match_value', 'transaction_type',
         'amount_min', 'amount_max', 'narration_head_id',
-        'narration_sub_head_id', 'note_template', 'priority', 'is_active',
+        'narration_sub_head_id', 'note_template', 'party_name', 'priority', 'is_active',
         'source', 'match_count', 'last_matched_at',
     ];
 
@@ -46,11 +46,18 @@ class NarrationRule extends Model
 
     /**
      * Find the highest-priority matching rule for the current tenant.
-     * BelongsToTenant global scope scopes this to the request's tenant automatically.
+     *
+     * In a normal HTTP request, BelongsToTenant global scope handles tenant isolation
+     * automatically. Pass $tenantId explicitly (e.g. from seeders or CLI commands) to
+     * bypass the scope and query a specific tenant's rules directly.
      */
-    public static function findBestMatch(string $narration, string $type, float $amount): ?self
+    public static function findBestMatch(string $narration, string $type, float $amount, ?string $tenantId = null): ?self
     {
-        return self::query()
+        $query = $tenantId
+            ? self::withoutGlobalScope('tenant')->where('tenant_id', $tenantId)
+            : self::query();
+
+        return $query
             ->where('is_active', true)
             ->where(function ($q) use ($type) {
                 $q->where('transaction_type', $type)->orWhere('transaction_type', 'both');
@@ -78,16 +85,44 @@ class NarrationRule extends Model
         };
     }
 
-    public function generateNote(string $rawNarration, float $amount, $date = null): string
+    /**
+     * Extract party name from the narration.
+     *
+     * For regex rules: looks for a named capture group (?P<party>...).
+     * For all other rules: returns the static party_name stored on the rule.
+     */
+    public function extractParty(string $narration): ?string
+    {
+        if ($this->match_type === 'regex') {
+            if (preg_match($this->match_value, $narration, $matches) && !empty($matches['party'])) {
+                return Str::title(strtolower(trim($matches['party'])));
+            }
+        }
+
+        return $this->party_name ?: null;
+    }
+
+    /**
+     * Generate the narration note from the template.
+     *
+     * Supported placeholders: {match}, {raw}, {amount}, {date}, {party}
+     * {party} resolves to extractParty() result, falling back to the match_value.
+     */
+    public function generateNote(string $rawNarration, float $amount, $date = null, ?string $extractedParty = null): string
     {
         $template = $this->note_template ?? '{match} Transaction';
         $dateObj  = $date ?? now();
+
+        $party = $extractedParty
+            ?? $this->party_name
+            ?? Str::title($this->match_value);
 
         $replacements = [
             '{match}'  => Str::title($this->match_value),
             '{raw}'    => $rawNarration,
             '{amount}' => number_format($amount, 2),
             '{date}'   => $dateObj instanceof \DateTime ? $dateObj->format('d-M-Y') : $dateObj,
+            '{party}'  => $party,
         ];
 
         return str_replace(array_keys($replacements), array_values($replacements), $template);

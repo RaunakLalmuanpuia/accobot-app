@@ -100,7 +100,8 @@ class ReviewNarrationAction
             [
                 'narration_head_id'     => $headId,
                 'narration_sub_head_id' => $subHeadId,
-                'note_template'         => $narrationNote,
+                'note_template'         => $this->buildNoteTemplate($narrationNote, $transaction),
+                'party_name'            => $transaction->party_name ?: null,
                 'priority'              => 10,
                 'is_active'             => true,
                 'source'                => 'learned',
@@ -108,16 +109,81 @@ class ReviewNarrationAction
         );
     }
 
+    /**
+     * Convert a human-written note into a reusable template by replacing the
+     * transaction's actual values with placeholders.
+     *
+     * e.g. "NEFT receipt from Suntech Solutions – ₹82,600.00 on 14-Apr-2026"
+     *   →  "NEFT receipt from {party} – ₹{amount} on {date}"
+     *
+     * Next month, generateNote() fills the placeholders with the new values
+     * so the note stays accurate without the accountant rewriting it each time.
+     */
+    private function buildNoteTemplate(?string $note, BankTransaction $transaction): ?string
+    {
+        if (!$note) {
+            return null;
+        }
+
+        $replacements = [];
+
+        // Amount variants — cover both "82,600.00" and "82600.00" forms
+        $withCommas    = number_format((float) $transaction->amount, 2);
+        $withoutCommas = number_format((float) $transaction->amount, 2, '.', '');
+        foreach (array_unique([$withCommas, $withoutCommas]) as $formatted) {
+            $replacements[$formatted]         = '{amount}';
+            $replacements['₹' . $formatted]   = '₹{amount}';
+            $replacements['Rs.' . $formatted]  = 'Rs.{amount}';
+            $replacements['INR ' . $formatted] = 'INR {amount}';
+        }
+
+        // Party name
+        if ($transaction->party_name) {
+            $replacements[$transaction->party_name] = '{party}';
+        }
+
+        // Date variants
+        if ($transaction->transaction_date) {
+            $date = $transaction->transaction_date;
+            $replacements[$date->format('d-M-Y')] = '{date}';
+            $replacements[$date->format('d/m/Y')] = '{date}';
+            $replacements[$date->format('d-m-Y')] = '{date}';
+            $replacements[$date->format('Y-m-d')] = '{date}';
+            $replacements[$date->format('d M Y')] = '{date}';
+        }
+
+        // Replace longest strings first to avoid partial replacements
+        // e.g. "₹82,600.00" before "82,600.00"
+        uksort($replacements, fn ($a, $b) => strlen($b) - strlen($a));
+
+        return str_replace(array_keys($replacements), array_values($replacements), $note);
+    }
+
     private function buildMatchValue(BankTransaction $transaction): string
     {
+        // Best match key: party_name is the most stable identifier
         if (!empty($transaction->party_name)) {
             return strtolower(trim($transaction->party_name));
         }
 
+        // Extract meaningful tokens from bank_reference (skip numeric/short tokens)
         if (!empty($transaction->bank_reference)) {
-            return strtolower(trim(substr($transaction->bank_reference, 0, 20)));
+            $words = collect(preg_split('/[\s\/\-]+/', $transaction->bank_reference))
+                ->filter(fn ($w) => strlen($w) >= 4 && !is_numeric($w))
+                ->take(2)
+                ->implode(' ');
+
+            if (strlen($words) >= 4) {
+                return strtolower($words);
+            }
         }
 
-        return strtolower(trim(substr($transaction->raw_narration ?? '', 0, 30)));
+        // Fall back to first 3 meaningful words of raw narration
+        $words = collect(explode(' ', $transaction->raw_narration ?? ''))
+            ->filter(fn ($w) => strlen($w) >= 4 && !is_numeric($w))
+            ->take(3)
+            ->implode(' ');
+
+        return strtolower(trim($words ?: substr($transaction->raw_narration ?? '', 0, 30)));
     }
 }
