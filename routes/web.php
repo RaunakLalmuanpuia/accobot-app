@@ -1,10 +1,12 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ImpersonationController;
 use App\Http\Controllers\InvitationController;
+use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\TeamMemberController;
@@ -77,6 +79,13 @@ Route::middleware(['auth', 'verified', 'member'])
         Route::post('/vendors', [VendorController::class, 'store'])->name('vendors.store')->middleware('tenant.permission:vendors.create');
         Route::put('/vendors/{vendor}', [VendorController::class, 'update'])->name('vendors.update')->middleware('tenant.permission:vendors.edit');
         Route::delete('/vendors/{vendor}', [VendorController::class, 'destroy'])->name('vendors.destroy')->middleware(['tenant.permission:vendors.delete', 'no.impersonate']);
+
+        // ── Accounting Assistant (Chat) ────────────────────────────────
+        Route::get('/chat', [ChatController::class, 'index'])->name('chat.index')->middleware('tenant.permission:chat.view');
+        Route::post('/chat', [ChatController::class, 'chat'])->name('chat.store')->middleware('tenant.permission:chat.view');
+
+        // ── Invoice PDF download ───────────────────────────────────────
+        Route::get('/invoices/{invoice}/download', [InvoiceController::class, 'download'])->name('invoices.download');
 
     });
 

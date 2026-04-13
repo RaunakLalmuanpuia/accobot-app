@@ -62,6 +62,9 @@ class RolesAndPermissionsSeeder extends Seeder
 
             // Audit
             'audit.view',
+
+            // Accounting Assistant (Chat)
+            'chat.view',
         ];
 
         foreach ($permissions as $perm) {
@@ -98,6 +101,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'reports.view',   'reports.export',
             'integrations.view', 'integrations.manage',
             'audit.view',
+            'chat.view',
         ]);
 
         $manager = Role::firstOrCreate(['name' => 'Manager']);
@@ -108,6 +112,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'invoices.view',  'invoices.create',  'invoices.edit',
             'reports.view',   'reports.export',
             'integrations.view',
+            'chat.view',
         ]);
 
         $staff = Role::firstOrCreate(['name' => 'Staff']);

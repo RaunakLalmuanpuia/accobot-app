@@ -162,6 +162,12 @@ function stopImpersonation() {
                                         :href="route('roles.index', { tenant: currentTenantId() })"
                                         :active="route().current('roles.index')"
                                     >Roles</NavLink>
+
+                                    <NavLink
+                                        v-if="hasPermission('chat.view')"
+                                        :href="route('chat.index', { tenant: currentTenantId() })"
+                                        :active="route().current('chat.index')"
+                                    >Assistant</NavLink>
                                 </template>
                             </div>
                         </div>

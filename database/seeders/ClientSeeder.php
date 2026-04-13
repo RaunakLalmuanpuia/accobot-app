@@ -32,7 +32,10 @@ class ClientSeeder extends Seeder
             if (! $tenant) continue;
 
             foreach ($clients as $client) {
-                $tenant->clients()->create($client);
+                \App\Models\Client::firstOrCreate(
+                    ['tenant_id' => $tenant->id, 'name' => $client['name']],
+                    array_merge($client, ['tenant_id' => $tenant->id])
+                );
             }
         }
     }

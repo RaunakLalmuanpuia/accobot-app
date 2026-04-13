@@ -32,7 +32,10 @@ class VendorSeeder extends Seeder
             if (! $tenant) continue;
 
             foreach ($rows as $row) {
-                $tenant->vendors()->create($row);
+                \App\Models\Vendor::firstOrCreate(
+                    ['tenant_id' => $tenant->id, 'name' => $row['name']],
+                    array_merge($row, ['tenant_id' => $tenant->id])
+                );
             }
         }
     }

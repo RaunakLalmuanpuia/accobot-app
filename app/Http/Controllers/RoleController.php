@@ -51,6 +51,9 @@ class RoleController extends Controller
                 'reports.view',
                 'reports.export',
             ],
+            'Accounting Assistant' => [
+                'chat.view',
+            ],
             'Integrations' => [
                 'integrations.view',
                 'integrations.manage',
