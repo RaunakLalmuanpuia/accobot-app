@@ -174,99 +174,99 @@ const formatCurrency = (value, currency = 'INR') =>
                     </div>
                 </div>
 
-                <!-- Invoice Preview Card -->
-                <div v-if="lastInvoice" class="bg-white shadow-sm rounded-lg p-6">
-                    <div class="flex justify-between items-start mb-4">
-                        <div>
-                            <h3 class="text-lg font-bold text-gray-900">{{ lastInvoice.invoice_number }}</h3>
-                            <p class="text-sm text-gray-500">Client: {{ lastInvoice.client }}</p>
-                        </div>
-                        <span class="inline-flex items-center rounded-full bg-yellow-100 px-3 py-1 text-xs font-medium text-yellow-800 capitalize">
-                            {{ lastInvoice.status }}
-                        </span>
-                    </div>
+<!--                &lt;!&ndash; Invoice Preview Card &ndash;&gt;-->
+<!--                <div v-if="lastInvoice" class="bg-white shadow-sm rounded-lg p-6">-->
+<!--                    <div class="flex justify-between items-start mb-4">-->
+<!--                        <div>-->
+<!--                            <h3 class="text-lg font-bold text-gray-900">{{ lastInvoice.invoice_number }}</h3>-->
+<!--                            <p class="text-sm text-gray-500">Client: {{ lastInvoice.client }}</p>-->
+<!--                        </div>-->
+<!--                        <span class="inline-flex items-center rounded-full bg-yellow-100 px-3 py-1 text-xs font-medium text-yellow-800 capitalize">-->
+<!--                            {{ lastInvoice.status }}-->
+<!--                        </span>-->
+<!--                    </div>-->
 
-                    <div class="text-xs text-gray-500 mb-4 flex gap-4">
-                        <span>Issue: {{ lastInvoice.issue_date }}</span>
-                        <span>Due: {{ lastInvoice.due_date }}</span>
-                    </div>
+<!--                    <div class="text-xs text-gray-500 mb-4 flex gap-4">-->
+<!--                        <span>Issue: {{ lastInvoice.issue_date }}</span>-->
+<!--                        <span>Due: {{ lastInvoice.due_date }}</span>-->
+<!--                    </div>-->
 
-                    <!-- Line Items -->
-                    <table class="w-full text-sm mb-4">
-                        <thead>
-                            <tr class="border-b text-left text-gray-500 text-xs uppercase">
-                                <th class="pb-2">Description</th>
-                                <th class="pb-2 text-right">Qty</th>
-                                <th class="pb-2 text-right">Unit Price</th>
-                                <th class="pb-2 text-right">Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="(item, idx) in lastInvoice.items" :key="idx" class="border-b last:border-0">
-                                <td class="py-2">{{ item.description }}</td>
-                                <td class="py-2 text-right">{{ item.quantity }}</td>
-                                <td class="py-2 text-right">{{ formatCurrency(item.unit_price, lastInvoice.currency) }}</td>
-                                <td class="py-2 text-right font-medium">{{ formatCurrency(item.total, lastInvoice.currency) }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
+<!--                    &lt;!&ndash; Line Items &ndash;&gt;-->
+<!--                    <table class="w-full text-sm mb-4">-->
+<!--                        <thead>-->
+<!--                            <tr class="border-b text-left text-gray-500 text-xs uppercase">-->
+<!--                                <th class="pb-2">Description</th>-->
+<!--                                <th class="pb-2 text-right">Qty</th>-->
+<!--                                <th class="pb-2 text-right">Unit Price</th>-->
+<!--                                <th class="pb-2 text-right">Total</th>-->
+<!--                            </tr>-->
+<!--                        </thead>-->
+<!--                        <tbody>-->
+<!--                            <tr v-for="(item, idx) in lastInvoice.items" :key="idx" class="border-b last:border-0">-->
+<!--                                <td class="py-2">{{ item.description }}</td>-->
+<!--                                <td class="py-2 text-right">{{ item.quantity }}</td>-->
+<!--                                <td class="py-2 text-right">{{ formatCurrency(item.unit_price, lastInvoice.currency) }}</td>-->
+<!--                                <td class="py-2 text-right font-medium">{{ formatCurrency(item.total, lastInvoice.currency) }}</td>-->
+<!--                            </tr>-->
+<!--                        </tbody>-->
+<!--                    </table>-->
 
-                    <!-- Totals -->
-                    <div class="flex flex-col items-end gap-1 text-sm">
-                        <div class="flex gap-8 text-gray-500">
-                            <span>Subtotal</span>
-                            <span>{{ formatCurrency(lastInvoice.subtotal, lastInvoice.currency) }}</span>
-                        </div>
-                        <div class="flex gap-8 text-gray-500">
-                            <span>Tax</span>
-                            <span>{{ formatCurrency(lastInvoice.tax_amount, lastInvoice.currency) }}</span>
-                        </div>
-                        <div class="flex gap-8 font-bold text-gray-900 text-base border-t pt-2 mt-1">
-                            <span>Total</span>
-                            <span>{{ formatCurrency(lastInvoice.total, lastInvoice.currency) }}</span>
-                        </div>
-                    </div>
-                </div>
+<!--                    &lt;!&ndash; Totals &ndash;&gt;-->
+<!--                    <div class="flex flex-col items-end gap-1 text-sm">-->
+<!--                        <div class="flex gap-8 text-gray-500">-->
+<!--                            <span>Subtotal</span>-->
+<!--                            <span>{{ formatCurrency(lastInvoice.subtotal, lastInvoice.currency) }}</span>-->
+<!--                        </div>-->
+<!--                        <div class="flex gap-8 text-gray-500">-->
+<!--                            <span>Tax</span>-->
+<!--                            <span>{{ formatCurrency(lastInvoice.tax_amount, lastInvoice.currency) }}</span>-->
+<!--                        </div>-->
+<!--                        <div class="flex gap-8 font-bold text-gray-900 text-base border-t pt-2 mt-1">-->
+<!--                            <span>Total</span>-->
+<!--                            <span>{{ formatCurrency(lastInvoice.total, lastInvoice.currency) }}</span>-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                </div>-->
 
-                <!-- Invoice List -->
-                <div v-if="invoiceList.length" class="bg-white shadow-sm rounded-lg overflow-hidden">
-                    <div class="px-5 py-3 border-b flex items-center justify-between">
-                        <h3 class="text-sm font-semibold text-gray-700">Invoices</h3>
-                        <span class="text-xs text-gray-400">{{ invoiceList.length }} result(s)</span>
-                    </div>
-                    <table class="w-full text-sm">
-                        <thead>
-                            <tr class="bg-gray-50 text-left text-xs text-gray-500 uppercase tracking-wider">
-                                <th class="px-5 py-2.5 font-medium">Invoice</th>
-                                <th class="px-5 py-2.5 font-medium">Client</th>
-                                <th class="px-5 py-2.5 font-medium">Issue Date</th>
-                                <th class="px-5 py-2.5 font-medium">Due Date</th>
-                                <th class="px-5 py-2.5 font-medium text-right">Total</th>
-                                <th class="px-5 py-2.5 font-medium">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100">
-                            <tr v-for="inv in invoiceList" :key="inv.id" class="hover:bg-gray-50 transition-colors">
-                                <td class="px-5 py-3 font-mono font-medium text-gray-800">{{ inv.invoice_number }}</td>
-                                <td class="px-5 py-3 text-gray-600">{{ inv.client }}</td>
-                                <td class="px-5 py-3 text-gray-500">{{ inv.issue_date }}</td>
-                                <td class="px-5 py-3 text-gray-500">{{ inv.due_date ?? '—' }}</td>
-                                <td class="px-5 py-3 text-right font-medium text-gray-800">{{ formatCurrency(inv.total, inv.currency) }}</td>
-                                <td class="px-5 py-3">
-                                    <span :class="{
-                                        'bg-gray-100 text-gray-600': inv.status === 'draft',
-                                        'bg-blue-100 text-blue-700': inv.status === 'sent',
-                                        'bg-green-100 text-green-700': inv.status === 'paid',
-                                        'bg-red-100 text-red-700': inv.status === 'overdue',
-                                        'bg-gray-100 text-gray-400': inv.status === 'cancelled',
-                                    }" class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize">
-                                        {{ inv.status }}
-                                    </span>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+<!--                &lt;!&ndash; Invoice List &ndash;&gt;-->
+<!--                <div v-if="invoiceList.length" class="bg-white shadow-sm rounded-lg overflow-hidden">-->
+<!--                    <div class="px-5 py-3 border-b flex items-center justify-between">-->
+<!--                        <h3 class="text-sm font-semibold text-gray-700">Invoices</h3>-->
+<!--                        <span class="text-xs text-gray-400">{{ invoiceList.length }} result(s)</span>-->
+<!--                    </div>-->
+<!--                    <table class="w-full text-sm">-->
+<!--                        <thead>-->
+<!--                            <tr class="bg-gray-50 text-left text-xs text-gray-500 uppercase tracking-wider">-->
+<!--                                <th class="px-5 py-2.5 font-medium">Invoice</th>-->
+<!--                                <th class="px-5 py-2.5 font-medium">Client</th>-->
+<!--                                <th class="px-5 py-2.5 font-medium">Issue Date</th>-->
+<!--                                <th class="px-5 py-2.5 font-medium">Due Date</th>-->
+<!--                                <th class="px-5 py-2.5 font-medium text-right">Total</th>-->
+<!--                                <th class="px-5 py-2.5 font-medium">Status</th>-->
+<!--                            </tr>-->
+<!--                        </thead>-->
+<!--                        <tbody class="divide-y divide-gray-100">-->
+<!--                            <tr v-for="inv in invoiceList" :key="inv.id" class="hover:bg-gray-50 transition-colors">-->
+<!--                                <td class="px-5 py-3 font-mono font-medium text-gray-800">{{ inv.invoice_number }}</td>-->
+<!--                                <td class="px-5 py-3 text-gray-600">{{ inv.client }}</td>-->
+<!--                                <td class="px-5 py-3 text-gray-500">{{ inv.issue_date }}</td>-->
+<!--                                <td class="px-5 py-3 text-gray-500">{{ inv.due_date ?? '—' }}</td>-->
+<!--                                <td class="px-5 py-3 text-right font-medium text-gray-800">{{ formatCurrency(inv.total, inv.currency) }}</td>-->
+<!--                                <td class="px-5 py-3">-->
+<!--                                    <span :class="{-->
+<!--                                        'bg-gray-100 text-gray-600': inv.status === 'draft',-->
+<!--                                        'bg-blue-100 text-blue-700': inv.status === 'sent',-->
+<!--                                        'bg-green-100 text-green-700': inv.status === 'paid',-->
+<!--                                        'bg-red-100 text-red-700': inv.status === 'overdue',-->
+<!--                                        'bg-gray-100 text-gray-400': inv.status === 'cancelled',-->
+<!--                                    }" class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize">-->
+<!--                                        {{ inv.status }}-->
+<!--                                    </span>-->
+<!--                                </td>-->
+<!--                            </tr>-->
+<!--                        </tbody>-->
+<!--                    </table>-->
+<!--                </div>-->
 
             </div>
         </div>
