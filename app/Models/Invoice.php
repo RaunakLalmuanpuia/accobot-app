@@ -91,11 +91,16 @@ class Invoice extends Model
     public static function generateNumber(string $tenantId): string
     {
         return DB::transaction(function () use ($tenantId) {
+            // Lock a real row (not an aggregate) — FOR UPDATE is invalid with MAX() in PostgreSQL.
+            // Order by the numeric part of the invoice number to get the highest, lock it, read it.
             $last = static::withoutGlobalScopes()
                 ->where('tenant_id', $tenantId)
+                ->orderByDesc(DB::raw("CAST(REPLACE(invoice_number, 'INV-', '') AS INTEGER)"))
                 ->lockForUpdate()
-                ->max(DB::raw("CAST(REPLACE(invoice_number, 'INV-', '') AS INTEGER)")) ?? 0;
-            return 'INV-' . str_pad((int) $last + 1, 5, '0', STR_PAD_LEFT);
+                ->value('invoice_number');
+
+            $lastNum = $last ? (int) str_replace('INV-', '', $last) : 0;
+            return 'INV-' . str_pad($lastNum + 1, 5, '0', STR_PAD_LEFT);
         });
     }
 }
