@@ -21,10 +21,11 @@ class DashboardController extends Controller
             ->get();
 
         $roleBreakdown = Role::withCount('users')
-            ->having('users_count', '>', 0)
             ->orderByDesc('users_count')
             ->get()
-            ->map(fn($r) => ['name' => $r->name, 'count' => $r->users_count]);
+            ->filter(fn($r) => $r->users_count > 0)
+            ->map(fn($r) => ['name' => $r->name, 'count' => $r->users_count])
+            ->values();
 
         return inertia('Dashboard/Admin', [
             'stats' => [
