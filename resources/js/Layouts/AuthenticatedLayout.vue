@@ -139,41 +139,53 @@ function stopImpersonation() {
                                 <template v-if="currentTenantId()">
                                     <NavLink :href="route('dashboard', { tenant: currentTenantId() })" :active="route().current('dashboard')">Dashboard</NavLink>
 
-                                    <NavLink
-                                        v-if="hasPermission('members.view')"
-                                        :href="route('team.index', { tenant: currentTenantId() })"
-                                        :active="route().current('team.index')"
-                                    >Team</NavLink>
+                                    <template v-if="hasPermission('members.view') || hasPermission('members.assign_role')">
+                                        <span class="self-center h-5 w-px bg-gray-200"></span>
 
-                                    <NavLink
-                                        v-if="hasPermission('clients.view')"
-                                        :href="route('clients.index', { tenant: currentTenantId() })"
-                                        :active="route().current('clients.index')"
-                                    >Clients</NavLink>
+                                        <NavLink
+                                            v-if="hasPermission('members.view')"
+                                            :href="route('team.index', { tenant: currentTenantId() })"
+                                            :active="route().current('team.index')"
+                                        >Team</NavLink>
 
-                                    <NavLink
-                                        v-if="hasPermission('vendors.view')"
-                                        :href="route('vendors.index', { tenant: currentTenantId() })"
-                                        :active="route().current('vendors.index')"
-                                    >Vendors</NavLink>
+                                        <NavLink
+                                            v-if="hasPermission('members.assign_role')"
+                                            :href="route('roles.index', { tenant: currentTenantId() })"
+                                            :active="route().current('roles.index')"
+                                        >Roles</NavLink>
+                                    </template>
 
-                                    <NavLink
-                                        v-if="hasPermission('members.assign_role')"
-                                        :href="route('roles.index', { tenant: currentTenantId() })"
-                                        :active="route().current('roles.index')"
-                                    >Roles</NavLink>
+                                    <template v-if="hasPermission('clients.view') || hasPermission('vendors.view')">
+                                        <span class="self-center h-5 w-px bg-gray-200"></span>
 
-                                    <NavLink
-                                        v-if="hasPermission('chat.view')"
-                                        :href="route('chat.index', { tenant: currentTenantId() })"
-                                        :active="route().current('chat.index')"
-                                    >Assistant</NavLink>
+                                        <NavLink
+                                            v-if="hasPermission('clients.view')"
+                                            :href="route('clients.index', { tenant: currentTenantId() })"
+                                            :active="route().current('clients.index')"
+                                        >Clients</NavLink>
 
-                                    <NavLink
-                                        v-if="hasPermission('transactions.view')"
-                                        :href="route('banking.index', { tenant: currentTenantId() })"
-                                        :active="route().current('banking.index')"
-                                    >Transactions</NavLink>
+                                        <NavLink
+                                            v-if="hasPermission('vendors.view')"
+                                            :href="route('vendors.index', { tenant: currentTenantId() })"
+                                            :active="route().current('vendors.index')"
+                                        >Vendors</NavLink>
+                                    </template>
+
+                                    <template v-if="hasPermission('chat.view') || hasPermission('transactions.view')">
+                                        <span class="self-center h-5 w-px bg-gray-200"></span>
+
+                                        <NavLink
+                                            v-if="hasPermission('chat.view')"
+                                            :href="route('chat.index', { tenant: currentTenantId() })"
+                                            :active="route().current('chat.index')"
+                                        >Assistant</NavLink>
+
+                                        <NavLink
+                                            v-if="hasPermission('transactions.view')"
+                                            :href="route('banking.index', { tenant: currentTenantId() })"
+                                            :active="route().current('banking.index')"
+                                        >Narration</NavLink>
+                                    </template>
                                 </template>
                             </div>
                         </div>
