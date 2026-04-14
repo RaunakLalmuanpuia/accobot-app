@@ -53,7 +53,7 @@ const init = computed(() => getInitData());
 const isExpanded       = ref(false);
 const selectedHead     = ref(init.value?.head ?? null);
 const selectedSub      = ref(init.value?.subHead ?? null);
-const saveRule         = ref(false);
+const saveRule         = ref(true);
 const selectedInvoiceId = ref(props.transaction.is_reconciled ? props.transaction.reconciled_invoice_id : null);
 
 // Invoice picker state
@@ -65,7 +65,7 @@ const form = useForm({
     narration_sub_head_id: init.value?.subHead?.id ?? '',
     party_name:            props.transaction.party_name ?? '',
     narration_note:        props.transaction.narration_note ?? '',
-    save_as_rule:          false,
+    save_as_rule:          true,
     invoice_id:            props.transaction.is_reconciled ? props.transaction.reconciled_invoice_id : null,
     invoice_number:        null,
     unreconcile:           false,
@@ -152,7 +152,7 @@ const handleCancel = () => {
     isExpanded.value        = false;
     selectedHead.value      = init.value?.head ?? null;
     selectedSub.value       = init.value?.subHead ?? null;
-    saveRule.value          = false;
+    saveRule.value          = true;
     selectedInvoiceId.value = props.transaction.is_reconciled ? props.transaction.reconciled_invoice_id : null;
     form.reset();
 };
