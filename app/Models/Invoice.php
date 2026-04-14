@@ -95,8 +95,8 @@ class Invoice extends Model
             // Order by the numeric part of the invoice number to get the highest, lock it, read it.
             $last = static::withoutGlobalScopes()
                 ->where('tenant_id', $tenantId)
-                ->where('invoice_number', 'like', 'INV-%')
-                ->orderByDesc(DB::raw("CAST(REPLACE(invoice_number, 'INV-', '') AS INTEGER)"))
+                ->whereRaw("invoice_number ~ '^INV-[0-9]+$'")
+                ->orderByDesc(DB::raw("CAST(SUBSTRING(invoice_number FROM 5) AS INTEGER)"))
                 ->lockForUpdate()
                 ->value('invoice_number');
 
