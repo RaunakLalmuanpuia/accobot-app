@@ -131,12 +131,12 @@ function stopImpersonation() {
                                 </div>
 
                                 <!-- Admin nav -->
-                                <template v-if="isAdmin()">
+                                <template v-if="isAdmin() && !currentTenantId()">
                                     <NavLink :href="route('admin.dashboard')" :active="route().current('admin.dashboard')">Dashboard</NavLink>
                                 </template>
 
-                                <!-- Tenant nav -->
-                                <template v-else-if="currentTenantId()">
+                                <!-- Tenant nav (shown for both tenant users and admin visiting a tenant) -->
+                                <template v-if="currentTenantId()">
                                     <NavLink :href="route('dashboard', { tenant: currentTenantId() })" :active="route().current('dashboard')">Dashboard</NavLink>
 
                                     <NavLink

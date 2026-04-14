@@ -1,6 +1,7 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
-import { Link } from '@inertiajs/vue3'
+import { computed } from 'vue'
+import { Link, usePage } from '@inertiajs/vue3'
 
 const props = defineProps({
     tenant:        Object,
@@ -12,6 +13,7 @@ const props = defineProps({
     roleBreakdown: Array,
 })
 
+const page = usePage()
 const can = (p) => props.permissions.includes(p)
 
 const avatarColors = ['bg-violet-500','bg-indigo-500','bg-sky-500','bg-teal-500','bg-emerald-500','bg-amber-500','bg-rose-500']
@@ -33,20 +35,12 @@ const roleColorMap = {
 }
 const roleColor = (name) => roleColorMap[name] ?? 'bg-gray-100 text-gray-600'
 
-// Group permissions by category for the access card
-const permissionGroups = [
-    { label: 'Members',      perms: ['members.view','members.invite','members.remove','members.suspend','members.assign_role'] },
-    { label: 'Clients',      perms: ['clients.view','clients.create','clients.edit','clients.delete'] },
-    { label: 'Vendors',      perms: ['vendors.view','vendors.create','vendors.edit','vendors.delete'] },
-    { label: 'Accounting',   perms: ['invoices.view','invoices.create','invoices.edit','invoices.delete','reports.view','reports.export'] },
-    { label: 'Integrations', perms: ['integrations.view','integrations.manage'] },
-    { label: 'Settings',     perms: ['tenant.view_settings','tenant.update_settings'] },
-    { label: 'Audit',        perms: ['audit.view'] },
-]
-
-const activeGroups = permissionGroups
-    .map(g => ({ ...g, active: g.perms.filter(p => props.permissions.includes(p)) }))
-    .filter(g => g.active.length > 0)
+// Permission groups come from the backend (config/permission_groups.php)
+const activeGroups = computed(() =>
+    (page.props.auth.permission_groups ?? [])
+        .map(g => ({ ...g, active: g.perms.filter(p => props.permissions.includes(p)) }))
+        .filter(g => g.active.length > 0)
+)
 
 // Strip prefix for display: 'clients.create' → 'create'
 const permLabel = (p) => p.split('.').slice(1).join('.')
@@ -212,6 +206,28 @@ const permLabel = (p) => p.split('.').slice(1).join('.')
                             </div>
                         </Link>
 
+                        <Link v-if="can('transactions.view')" :href="route('banking.index', { tenant: tenant.id })"
+                            class="flex items-center gap-3 bg-white rounded-xl border border-gray-200 px-4 py-3.5 hover:border-indigo-300 hover:shadow-sm transition group">
+                            <div class="h-8 w-8 rounded-lg bg-violet-50 flex items-center justify-center group-hover:bg-violet-100 transition shrink-0">
+                                <svg class="h-4 w-4 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                            </div>
+                            <div>
+                                <p class="text-sm font-semibold text-gray-800">Transactions</p>
+                                <p class="text-xs text-gray-400">Review bank transactions</p>
+                            </div>
+                        </Link>
+
+                        <Link v-if="can('chat.view')" :href="route('chat.index', { tenant: tenant.id })"
+                            class="flex items-center gap-3 bg-white rounded-xl border border-gray-200 px-4 py-3.5 hover:border-indigo-300 hover:shadow-sm transition group">
+                            <div class="h-8 w-8 rounded-lg bg-rose-50 flex items-center justify-center group-hover:bg-rose-100 transition shrink-0">
+                                <svg class="h-4 w-4 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+                            </div>
+                            <div>
+                                <p class="text-sm font-semibold text-gray-800">Assistant</p>
+                                <p class="text-xs text-gray-400">Ask your accounting AI</p>
+                            </div>
+                        </Link>
+
                         <Link v-if="can('members.assign_role')" :href="route('roles.index', { tenant: tenant.id })"
                             class="flex items-center gap-3 bg-white rounded-xl border border-gray-200 px-4 py-3.5 hover:border-indigo-300 hover:shadow-sm transition group">
                             <div class="h-8 w-8 rounded-lg bg-indigo-50 flex items-center justify-center group-hover:bg-indigo-100 transition shrink-0">
@@ -234,7 +250,7 @@ const permLabel = (p) => p.split('.').slice(1).join('.')
                             </div>
                         </Link>
 
-                        <p v-if="!can('members.view') && !can('clients.view') && !can('vendors.view') && !can('members.assign_role') && !can('audit.view')"
+                        <p v-if="!can('members.view') && !can('clients.view') && !can('vendors.view') && !can('transactions.view') && !can('chat.view') && !can('members.assign_role') && !can('audit.view')"
                             class="text-sm text-gray-400 px-1">No actions available for your role.</p>
                     </div>
                 </div>

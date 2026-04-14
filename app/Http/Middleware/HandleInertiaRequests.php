@@ -59,6 +59,9 @@ class HandleInertiaRequests extends Middleware
                         ])
                     : [],
 
+                // Permission group definitions for the dashboard access card
+                'permission_groups' => config('permission_groups'),
+
                 // Admin gets all permissions; others get effective permissions for this tenant
                 'permissions' => match (true) {
                     $user === null          => [],
