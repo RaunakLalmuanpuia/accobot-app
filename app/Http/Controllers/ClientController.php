@@ -12,7 +12,7 @@ class ClientController extends Controller
     {
         return inertia('Clients/Index', [
             'tenant'  => $tenant,
-            'clients' => Client::orderBy('name')->get(['id', 'name', 'email', 'phone']),
+            'clients' => Client::where('tenant_id', $tenant->id)->orderBy('name')->get(['id', 'name', 'email', 'phone']),
         ]);
     }
 

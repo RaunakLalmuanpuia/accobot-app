@@ -12,7 +12,7 @@ class VendorController extends Controller
     {
         return inertia('Vendors/Index', [
             'tenant'  => $tenant,
-            'vendors' => Vendor::orderBy('name')->get(['id', 'name', 'email', 'phone']),
+            'vendors' => Vendor::where('tenant_id', $tenant->id)->orderBy('name')->get(['id', 'name', 'email', 'phone']),
         ]);
     }
 

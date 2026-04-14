@@ -37,8 +37,8 @@ class GetInvoiceTool implements Tool
 
         try {
             $invoice = is_numeric($identifier)
-                ? Invoice::with('client', 'items.product')->find((int) $identifier)
-                : Invoice::with('client', 'items.product')->where('invoice_number', $identifier)->first();
+                ? Invoice::with('client', 'items.product')->where('tenant_id', $tid)->find((int) $identifier)
+                : Invoice::with('client', 'items.product')->where('tenant_id', $tid)->where('invoice_number', $identifier)->first();
 
             if (! $invoice) {
                 return "Invoice \"{$identifier}\" not found.";

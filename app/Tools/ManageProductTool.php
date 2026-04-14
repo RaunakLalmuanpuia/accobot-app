@@ -88,7 +88,7 @@ class ManageProductTool implements Tool
         $limit           = min((int) ($request['limit'] ?? 20) ?: 20, 100);
         $page            = max((int) ($request['page'] ?? 1) ?: 1, 1);
 
-        $query = Product::query()->orderBy('category')->orderBy('sub_category')->orderBy('name');
+        $query = Product::query()->where('tenant_id', $this->tenantId())->orderBy('category')->orderBy('sub_category')->orderBy('name');
 
         if (! $includeInactive) {
             $query->where('is_active', true);
@@ -275,7 +275,7 @@ class ManageProductTool implements Tool
             return 'product_id is required for update.';
         }
 
-        $product = Product::find((int) $productId);
+        $product = Product::where('tenant_id', $this->tenantId())->find((int) $productId);
         if (! $product) {
             return 'Product not found.';
         }

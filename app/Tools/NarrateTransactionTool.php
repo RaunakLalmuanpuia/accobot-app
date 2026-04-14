@@ -89,6 +89,11 @@ class NarrateTransactionTool implements Tool
         ];
     }
 
+    private function tenantId(): ?string
+    {
+        return request()->route('tenant')?->id;
+    }
+
     public function handle(Request $request): Stringable|string
     {
         $action = trim((string) ($request['action'] ?? ''));
@@ -173,6 +178,7 @@ class NarrateTransactionTool implements Tool
         }
 
         $heads = NarrationHead::with('activeSubHeads')
+            ->where('tenant_id', $this->tenantId())
             ->where('is_active', true)
             ->whereIn('type', [$type, 'both'])
             ->orderBy('sort_order')
@@ -204,7 +210,9 @@ class NarrateTransactionTool implements Tool
         $partyName          = $this->nullableString($request['party_name'] ?? null);
         $narrationNote      = trim((string) ($request['narration_note'] ?? ''));
 
-        $transaction = BankTransaction::find($transactionId);
+        $tid = $this->tenantId();
+
+        $transaction = BankTransaction::where('tenant_id', $tid)->find($transactionId);
         if (! $transaction) {
             return 'Transaction not found.';
         }
@@ -213,7 +221,7 @@ class NarrateTransactionTool implements Tool
             ? NarrationSubHead::with('narrationHead')->find($narrationSubHeadId)
             : null;
 
-        if ($narrationSubHeadId && ! $subHead) {
+        if ($narrationSubHeadId && (! $subHead || $subHead->narrationHead->tenant_id !== $tid)) {
             return 'Narration sub-head not found.';
         }
 
@@ -235,7 +243,7 @@ class NarrateTransactionTool implements Tool
             'review_status'         => 'reviewed',
         ]);
 
-        $head = $subHead?->narrationHead ?? ($headId ? NarrationHead::find($headId) : null);
+        $head = $subHead?->narrationHead ?? ($headId ? NarrationHead::where('tenant_id', $tid)->find($headId) : null);
 
         return sprintf(
             "Narration saved for transaction on **%s** (₹%s %s).\n- **Head:** %s\n- **Sub-Head:** %s%s\n- **Note:** %s",

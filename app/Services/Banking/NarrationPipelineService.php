@@ -78,8 +78,7 @@ class NarrationPipelineService
             $dto->bankReference
         );
 
-        // BelongsToTenant global scope scopes this to the current tenant
-        $existing = BankTransaction::where('dedup_hash', $hash)->first();
+        $existing = BankTransaction::where('tenant_id', $tenant->id)->where('dedup_hash', $hash)->first();
 
         // ── Source priority upgrade ────────────────────────────────────────
         if ($existing && $this->incomingOutranks($importSource, $existing->import_source)) {
@@ -96,6 +95,7 @@ class NarrationPipelineService
             type:      $dto->type,
             amount:    $dto->amount,
             partyName: $dto->partyName,
+            tenantId:  $tenant->id,
         );
 
         // ── Tier 2: AI fallback ────────────────────────────────────────────
@@ -105,6 +105,7 @@ class NarrationPipelineService
                 $dto->type,
                 $dto->amount,
                 $dto->transactionDate->toDateString(),
+                $tenant->id,
             );
         }
 

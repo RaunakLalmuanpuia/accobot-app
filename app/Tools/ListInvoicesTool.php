@@ -48,7 +48,7 @@ class ListInvoicesTool implements Tool
         $validStatuses = ['draft', 'sent', 'paid', 'overdue', 'cancelled'];
 
         try {
-            $query = Invoice::with('client')->orderByDesc('issue_date')->orderByDesc('id');
+            $query = Invoice::with('client')->where('tenant_id', $tid)->orderByDesc('issue_date')->orderByDesc('id');
 
             if ($status && in_array($status, $validStatuses, true)) $query->where('status', $status);
 

@@ -78,8 +78,8 @@ class UpdateInvoiceTool implements Tool
 
         try {
             $invoice = is_numeric($identifier)
-                ? Invoice::with('items.product', 'client')->find((int) $identifier)
-                : Invoice::with('items.product', 'client')->where('invoice_number', $identifier)->first();
+                ? Invoice::with('items.product', 'client')->where('tenant_id', $tid)->find((int) $identifier)
+                : Invoice::with('items.product', 'client')->where('tenant_id', $tid)->where('invoice_number', $identifier)->first();
 
             if (! $invoice) {
                 return "Invoice \"{$identifier}\" not found.";
@@ -120,7 +120,7 @@ class UpdateInvoiceTool implements Tool
                 }
 
                 foreach ($addItems as $itemData) {
-                    $product   = isset($itemData['product_id']) ? Product::find($itemData['product_id']) : null;
+                    $product   = isset($itemData['product_id']) ? Product::where('tenant_id', $invoice->tenant_id)->find($itemData['product_id']) : null;
                     $qty       = (float) ($itemData['quantity'] ?? 1);
                     $unitPrice = (float) ($itemData['unit_price'] ?? ($product?->unit_price ?? 0));
                     $taxRate   = (float) ($itemData['tax_rate'] ?? ($product?->tax_rate ?? 0));

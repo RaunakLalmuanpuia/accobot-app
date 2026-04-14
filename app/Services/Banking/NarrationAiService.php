@@ -9,17 +9,17 @@ use App\Models\NarrationHead;
 class NarrationAiService
 {
     /**
-     * Ask the AI to categorize a transaction using the current tenant's catalog.
-     * BelongsToTenant on NarrationHead scopes queries automatically.
+     * Ask the AI to categorize a transaction using the given tenant's catalog.
      */
     public function suggest(
         string $rawNarration,
         string $type,
         float  $amount,
         string $date,
+        string $tenantId,
     ): NarrationSuggestionDTO {
 
-        $catalog     = $this->buildCatalog($type);
+        $catalog     = $this->buildCatalog($type, $tenantId);
         $catalogJson = json_encode($catalog, JSON_PRETTY_PRINT);
         $amountStr   = number_format($amount, 2);
 
@@ -41,7 +41,8 @@ class NarrationAiService
         [$headId, $subHeadId] = $this->resolveIds(
             $response['narration_head_name'] ?? '',
             $response['narration_sub_head_name'] ?? '',
-            $type
+            $type,
+            $tenantId,
         );
 
         return new NarrationSuggestionDTO(
@@ -63,9 +64,10 @@ class NarrationAiService
 
     // ── Private Helpers ────────────────────────────────────────────────────
 
-    private function buildCatalog(string $type): array
+    private function buildCatalog(string $type, string $tenantId): array
     {
         return NarrationHead::with('activeSubHeads')
+            ->where('tenant_id', $tenantId)
             ->active()
             ->forTransactionType($type)
             ->orderBy('sort_order')
@@ -77,9 +79,10 @@ class NarrationAiService
             ->toArray();
     }
 
-    private function resolveIds(string $headName, string $subHeadName, string $type): array
+    private function resolveIds(string $headName, string $subHeadName, string $type, string $tenantId): array
     {
-        $head = NarrationHead::active()
+        $head = NarrationHead::where('tenant_id', $tenantId)
+            ->active()
             ->forTransactionType($type)
             ->where('name', $headName)
             ->first();

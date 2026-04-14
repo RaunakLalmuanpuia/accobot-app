@@ -18,6 +18,7 @@ class BankTransactionController extends Controller
     public function pending(Request $request, Tenant $tenant): Response
     {
         $transactions = BankTransaction::with(['narrationHead', 'narrationSubHead', 'reconciledInvoice'])
+            ->where('tenant_id', $tenant->id)
             ->where('is_duplicate', false)
             ->whereIn('review_status', ['pending', 'reviewed'])
             ->orderByDesc('transaction_date')
@@ -34,6 +35,7 @@ class BankTransactionController extends Controller
         });
 
         $heads = NarrationHead::with('activeSubHeads')
+            ->where('tenant_id', $tenant->id)
             ->active()
             ->orderBy('sort_order')
             ->get();

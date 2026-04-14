@@ -40,7 +40,8 @@ class NarrationRuleEngine
             return null;
         }
 
-        $rule->update(['match_count' => $rule->match_count + 1, 'last_matched_at' => now()]);
+        $rule->increment('match_count');
+        $rule->update(['last_matched_at' => now()]);
 
         // Resolve final party name:
         // regex extractParty() on the narration → rule's static party_name → AI-extracted $partyName

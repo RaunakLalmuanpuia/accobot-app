@@ -23,7 +23,6 @@ class InvoiceMatchingService
 
     /**
      * Find invoice candidates for a transaction.
-     * BelongsToTenant on Invoice scopes queries to the request's tenant automatically.
      */
     public function findCandidates(BankTransaction $transaction): Collection
     {
@@ -32,7 +31,8 @@ class InvoiceMatchingService
             return collect();
         }
 
-        $candidates = Invoice::whereIn('status', ['sent', 'partial', 'overdue'])
+        $candidates = Invoice::where('tenant_id', $transaction->tenant_id)
+            ->whereIn('status', ['sent', 'partial', 'overdue'])
             ->whereBetween('issue_date', [
                 $transaction->transaction_date->copy()->subDays(self::DATE_WINDOW_DAYS),
                 $transaction->transaction_date->copy()->addDays(self::DATE_WINDOW_DAYS),
@@ -69,7 +69,7 @@ class InvoiceMatchingService
         $amountDiff = abs($txAmount - $amountDue);
         $tolerance  = $amountDue * self::AMOUNT_TOLERANCE;
 
-        if ($amountDiff === 0.0) {
+        if ($amountDiff < 0.01) {
             $score     += 50;
             $reasons[]  = 'Exact amount match';
         } elseif ($amountDiff <= $tolerance) {

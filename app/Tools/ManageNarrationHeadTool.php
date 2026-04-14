@@ -140,7 +140,7 @@ class ManageNarrationHeadTool implements Tool
             return 'head_id is required for update_head.';
         }
 
-        $head = NarrationHead::find((int) $headId);
+        $head = NarrationHead::where('tenant_id', $this->tenantId())->find((int) $headId);
         if (! $head) {
             return 'Narration head not found.';
         }
@@ -170,7 +170,7 @@ class ManageNarrationHeadTool implements Tool
             return 'Sub-head name is required.';
         }
 
-        $head = NarrationHead::find((int) $headId);
+        $head = NarrationHead::where('tenant_id', $this->tenantId())->find((int) $headId);
         if (! $head) {
             return 'Narration head not found.';
         }
@@ -199,7 +199,7 @@ class ManageNarrationHeadTool implements Tool
         }
 
         $sub = NarrationSubHead::with('narrationHead')->find((int) $subHeadId);
-        if (! $sub) {
+        if (! $sub || $sub->narrationHead->tenant_id !== $this->tenantId()) {
             return 'Narration sub-head not found.';
         }
 
@@ -226,7 +226,7 @@ class ManageNarrationHeadTool implements Tool
             return 'head_id is required for delete_head.';
         }
 
-        $head = NarrationHead::with('subHeads')->find((int) $headId);
+        $head = NarrationHead::with('subHeads')->where('tenant_id', $this->tenantId())->find((int) $headId);
         if (! $head) {
             return 'Narration head not found.';
         }
@@ -248,7 +248,7 @@ class ManageNarrationHeadTool implements Tool
         }
 
         $sub = NarrationSubHead::with('narrationHead')->find((int) $subHeadId);
-        if (! $sub) {
+        if (! $sub || $sub->narrationHead->tenant_id !== $this->tenantId()) {
             return 'Narration sub-head not found.';
         }
 

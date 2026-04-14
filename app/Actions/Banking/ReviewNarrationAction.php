@@ -50,8 +50,8 @@ class ReviewNarrationAction
                 $this->reconciler->unreconcile($transaction);
             } elseif ($invoiceId || $invoiceNumber) {
                 $invoice = $invoiceId
-                    ? Invoice::findOrFail($invoiceId)
-                    : Invoice::where('invoice_number', $invoiceNumber)->firstOrFail();
+                    ? Invoice::where('tenant_id', $transaction->tenant_id)->findOrFail($invoiceId)
+                    : Invoice::where('tenant_id', $transaction->tenant_id)->where('invoice_number', $invoiceNumber)->firstOrFail();
 
                 if (!$transaction->is_reconciled || $transaction->reconciled_invoice_id !== $invoice->id) {
                     if ($transaction->is_reconciled) {

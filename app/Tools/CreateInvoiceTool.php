@@ -65,7 +65,7 @@ class CreateInvoiceTool implements Tool
         Log::info('CreateInvoiceTool', ['client_id' => $clientId, 'items' => count($itemsRaw)]);
 
         try {
-            $client = Client::find($clientId);
+            $client = Client::where('tenant_id', $tid)->find($clientId);
             if (! $client) {
                 return "Client with ID {$clientId} not found. Please search for the client first.";
             }
@@ -77,7 +77,7 @@ class CreateInvoiceTool implements Tool
             $invoice = DB::transaction(function () use ($tid, $client, $itemsRaw, $dueDate, $notes, $currency) {
                 $invoice = Invoice::create([
                     'tenant_id'      => $tid,
-                    'invoice_number' => Invoice::generateNumber(),
+                    'invoice_number' => Invoice::generateNumber($tid),
                     'client_id'      => $client->id,
                     'issue_date'     => today(),
                     'due_date'       => $dueDate,
@@ -93,7 +93,7 @@ class CreateInvoiceTool implements Tool
                 $taxAmount = 0;
 
                 foreach ($itemsRaw as $item) {
-                    $product   = isset($item['product_id']) ? Product::find($item['product_id']) : null;
+                    $product   = isset($item['product_id']) ? Product::where('tenant_id', $tid)->find($item['product_id']) : null;
                     $qty       = (float) ($item['quantity'] ?? 1);
                     $unitPrice = (float) ($item['unit_price'] ?? ($product?->unit_price ?? 0));
                     $taxRate   = (float) ($item['tax_rate'] ?? ($product?->tax_rate ?? 0));

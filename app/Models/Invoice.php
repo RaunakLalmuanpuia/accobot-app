@@ -85,14 +85,17 @@ class Invoice extends Model
     }
 
     /**
-     * Generate the next sequential invoice number globally unique.
+     * Generate the next sequential invoice number for the given tenant.
      * Uses a lock to prevent duplicates under concurrent requests.
      */
-    public static function generateNumber(): string
+    public static function generateNumber(string $tenantId): string
     {
-        return DB::transaction(function () {
-            $last = static::withoutGlobalScopes()->orderByDesc('id')->lockForUpdate()->value('id') ?? 0;
-            return 'INV-' . str_pad($last + 1, 5, '0', STR_PAD_LEFT);
+        return DB::transaction(function () use ($tenantId) {
+            $last = static::withoutGlobalScopes()
+                ->where('tenant_id', $tenantId)
+                ->lockForUpdate()
+                ->max(DB::raw("CAST(REPLACE(invoice_number, 'INV-', '') AS INTEGER)")) ?? 0;
+            return 'INV-' . str_pad((int) $last + 1, 5, '0', STR_PAD_LEFT);
         });
     }
 }

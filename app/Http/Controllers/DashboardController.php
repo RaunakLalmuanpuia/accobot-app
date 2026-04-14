@@ -92,7 +92,10 @@ class DashboardController extends Controller
 
         if ($permissions->contains('members.view')) {
             $recentMembers = User::whereHas('tenants', fn($q) => $q->where('tenants.id', $tenant->id))
-                ->with(['tenantRoles' => fn($q) => $q->where('tenant_id', $tenant->id)->with('role')])
+                ->with([
+                    'tenantRoles' => fn($q) => $q->where('tenant_id', $tenant->id)->with('role'),
+                    'tenants'     => fn($q) => $q->where('tenants.id', $tenant->id),
+                ])
                 ->latest()
                 ->take(5)
                 ->get()
@@ -101,7 +104,7 @@ class DashboardController extends Controller
                     'name'        => $u->name,
                     'email'       => $u->email,
                     'role'        => $u->tenantRoles->first()?->role?->name,
-                    'member_type' => $u->tenants()->where('tenants.id', $tenant->id)->first()?->pivot?->member_type ?? 'internal',
+                    'member_type' => $u->tenants->first()?->pivot?->member_type ?? 'internal',
                 ]);
 
             $roleBreakdown = collect($recentMembers)

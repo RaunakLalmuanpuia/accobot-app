@@ -76,7 +76,7 @@ class ManageClientTool implements Tool
         $limit  = min((int) ($request['limit'] ?? 20) ?: 20, 100);
         $page   = max((int) ($request['page'] ?? 1) ?: 1, 1);
 
-        $query = Client::query()->orderBy('name');
+        $query = Client::query()->where('tenant_id', $this->tenantId())->orderBy('name');
 
         if ($filter) {
             $query->where(fn ($q) => $q
@@ -180,9 +180,10 @@ class ManageClientTool implements Tool
             return 'Client name is required.';
         }
 
-        $existing = Client::whereRaw('LOWER(name) = ?', [strtolower($name)])
-            ->orWhere(fn ($q) => $q->whereNotNull('email')->where('email', $email ?? ''))
-            ->first();
+        $existing = Client::where(fn ($q) => $q
+            ->whereRaw('LOWER(name) = ?', [strtolower($name)])
+            ->orWhere(fn ($inner) => $inner->whereNotNull('email')->where('email', $email ?? ''))
+        )->first();
 
         if ($existing) {
             $this->lastClient = [
@@ -230,7 +231,7 @@ class ManageClientTool implements Tool
             return 'client_id is required for update.';
         }
 
-        $client = Client::find((int) $clientId);
+        $client = Client::where('tenant_id', $this->tenantId())->find((int) $clientId);
         if (! $client) {
             return 'Client not found.';
         }
