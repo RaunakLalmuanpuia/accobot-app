@@ -30,6 +30,13 @@ const roleColor = (name) => {
 const typeLabel = (type) => type === 'ca_firm' ? 'CA Firm' : 'Business'
 const typeColor  = (type) => type === 'ca_firm' ? 'bg-violet-50 text-violet-600' : 'bg-amber-50 text-amber-600'
 
+const statusLabel = (s) => ({ active: 'Active', suspended: 'Suspended', pending_verification: 'Pending' })[s] ?? s
+const statusColor = (s) => ({
+    active:               'bg-emerald-50 text-emerald-600',
+    suspended:            'bg-red-50 text-red-500',
+    pending_verification: 'bg-amber-50 text-amber-500',
+})[s] ?? 'bg-gray-100 text-gray-500'
+
 function impersonate(userId) {
     router.post(route('impersonate.start', userId))
 }
@@ -48,7 +55,7 @@ function impersonate(userId) {
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 
                 <!-- Stat cards -->
-                <div class="grid grid-cols-5 gap-4 mb-8">
+                <div class="grid grid-cols-4 gap-4 mb-4">
                     <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
                         <p class="text-xs text-gray-500 mb-1">Tenants</p>
                         <p class="text-3xl font-bold text-gray-900">{{ stats.tenants }}</p>
@@ -65,9 +72,19 @@ function impersonate(userId) {
                         <p class="text-xs text-gray-500 mb-1">Users</p>
                         <p class="text-3xl font-bold text-gray-900">{{ stats.users }}</p>
                     </div>
+                </div>
+                <div class="grid grid-cols-4 gap-4 mb-8">
                     <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
                         <p class="text-xs text-gray-500 mb-1">Roles</p>
                         <p class="text-3xl font-bold text-gray-900">{{ stats.roles }}</p>
+                    </div>
+                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+                        <p class="text-xs text-gray-500 mb-1">Suspended</p>
+                        <p class="text-3xl font-bold" :class="stats.suspended > 0 ? 'text-red-500' : 'text-gray-900'">{{ stats.suspended }}</p>
+                    </div>
+                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+                        <p class="text-xs text-gray-500 mb-1">Pending Verification</p>
+                        <p class="text-3xl font-bold" :class="stats.pending > 0 ? 'text-amber-500' : 'text-gray-900'">{{ stats.pending }}</p>
                     </div>
                 </div>
 
@@ -85,6 +102,7 @@ function impersonate(userId) {
                                     <span class="text-sm font-medium text-gray-800 truncate">{{ t.name }}</span>
                                 </div>
                                 <div class="flex items-center gap-3 shrink-0 ml-3">
+                                    <span :class="['text-xs font-medium px-2 py-0.5 rounded-full', statusColor(t.status)]">{{ statusLabel(t.status) }}</span>
                                     <span class="text-xs text-gray-400">{{ t.users_count }} member{{ t.users_count !== 1 ? 's' : '' }}</span>
                                     <Link :href="route('dashboard', { tenant: t.id })" class="text-xs text-violet-600 hover:text-violet-800 font-medium">Open →</Link>
                                 </div>

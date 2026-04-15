@@ -68,11 +68,7 @@ const permLabel = (p) => p.split('.').slice(1).join('.')
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6">
 
                 <!-- Stat cards -->
-                <div v-if="stats && Object.keys(stats).length" class="grid gap-5" :class="{
-                    'grid-cols-3': Object.keys(stats).length >= 3,
-                    'grid-cols-2': Object.keys(stats).length === 2,
-                    'grid-cols-1': Object.keys(stats).length === 1,
-                }">
+                <div v-if="stats && Object.keys(stats).length" class="grid gap-5 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
                     <div v-if="stats.members !== undefined" class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
                         <p class="text-sm text-gray-500 mb-1">Team Members</p>
                         <p class="text-3xl font-bold text-gray-900">{{ stats.members }}</p>
@@ -84,6 +80,18 @@ const permLabel = (p) => p.split('.').slice(1).join('.')
                     <div v-if="stats.vendors !== undefined" class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
                         <p class="text-sm text-gray-500 mb-1">Vendors</p>
                         <p class="text-3xl font-bold text-gray-900">{{ stats.vendors }}</p>
+                    </div>
+                    <div v-if="stats.products !== undefined" class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+                        <p class="text-sm text-gray-500 mb-1">Inventory</p>
+                        <p class="text-3xl font-bold text-gray-900">{{ stats.products }}</p>
+                    </div>
+                    <div v-if="stats.invoices !== undefined" class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+                        <p class="text-sm text-gray-500 mb-1">Invoices</p>
+                        <p class="text-3xl font-bold text-gray-900">{{ stats.invoices }}</p>
+                    </div>
+                    <div v-if="stats.pending_transactions !== undefined" class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+                        <p class="text-sm text-gray-500 mb-1">Pending Transactions</p>
+                        <p class="text-3xl font-bold" :class="stats.pending_transactions > 0 ? 'text-amber-500' : 'text-gray-900'">{{ stats.pending_transactions }}</p>
                     </div>
                 </div>
 
@@ -206,6 +214,28 @@ const permLabel = (p) => p.split('.').slice(1).join('.')
                             </div>
                         </Link>
 
+                        <Link v-if="can('products.view')" :href="route('products.index', { tenant: tenant.id })"
+                            class="flex items-center gap-3 bg-white rounded-xl border border-gray-200 px-4 py-3.5 hover:border-violet-300 hover:shadow-sm transition group">
+                            <div class="h-8 w-8 rounded-lg bg-teal-50 flex items-center justify-center group-hover:bg-teal-100 transition shrink-0">
+                                <svg class="h-4 w-4 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                            </div>
+                            <div>
+                                <p class="text-sm font-semibold text-gray-800">Inventory</p>
+                                <p class="text-xs text-gray-400">Manage products</p>
+                            </div>
+                        </Link>
+
+                        <Link v-if="can('invoices.view')" :href="route('invoices.index', { tenant: tenant.id })"
+                            class="flex items-center gap-3 bg-white rounded-xl border border-gray-200 px-4 py-3.5 hover:border-violet-300 hover:shadow-sm transition group">
+                            <div class="h-8 w-8 rounded-lg bg-sky-50 flex items-center justify-center group-hover:bg-sky-100 transition shrink-0">
+                                <svg class="h-4 w-4 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                            </div>
+                            <div>
+                                <p class="text-sm font-semibold text-gray-800">Invoices</p>
+                                <p class="text-xs text-gray-400">View & create invoices</p>
+                            </div>
+                        </Link>
+
                         <Link v-if="can('transactions.view')" :href="route('banking.index', { tenant: tenant.id })"
                             class="flex items-center gap-3 bg-white rounded-xl border border-gray-200 px-4 py-3.5 hover:border-violet-300 hover:shadow-sm transition group">
                             <div class="h-8 w-8 rounded-lg bg-violet-50 flex items-center justify-center group-hover:bg-violet-100 transition shrink-0">
@@ -250,7 +280,7 @@ const permLabel = (p) => p.split('.').slice(1).join('.')
                             </div>
                         </Link>
 
-                        <p v-if="!can('members.view') && !can('clients.view') && !can('vendors.view') && !can('transactions.view') && !can('chat.view') && !can('members.assign_role') && !can('audit.view')"
+                        <p v-if="!can('members.view') && !can('clients.view') && !can('vendors.view') && !can('products.view') && !can('invoices.view') && !can('transactions.view') && !can('chat.view') && !can('members.assign_role') && !can('audit.view')"
                             class="text-sm text-gray-400 px-1">No actions available for your role.</p>
                     </div>
                 </div>

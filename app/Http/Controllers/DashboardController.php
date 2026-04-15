@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BankTransaction;
 use App\Models\Client;
+use App\Models\Invoice;
+use App\Models\Product;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Models\Vendor;
@@ -18,7 +21,7 @@ class DashboardController extends Controller
         $tenants = Tenant::withCount('users')
             ->orderBy('type')
             ->orderBy('name')
-            ->get();
+            ->get(['id', 'name', 'type', 'status']);
 
         $roleBreakdown = Role::withCount('users')
             ->orderByDesc('users_count')
@@ -29,11 +32,13 @@ class DashboardController extends Controller
 
         return inertia('Dashboard/Admin', [
             'stats' => [
-                'tenants'   => Tenant::count(),
+                'tenants'    => Tenant::count(),
                 'businesses' => Tenant::where('type', 'business')->count(),
-                'ca_firms'  => Tenant::where('type', 'ca_firm')->count(),
-                'users'     => User::where('type', 'human')->count(),
-                'roles'     => Role::count(),
+                'ca_firms'   => Tenant::where('type', 'ca_firm')->count(),
+                'suspended'  => Tenant::where('status', 'suspended')->count(),
+                'pending'    => Tenant::where('status', 'pending_verification')->count(),
+                'users'      => User::where('type', 'human')->count(),
+                'roles'      => Role::count(),
             ],
             'tenants'       => $tenants,
             'roleBreakdown' => $roleBreakdown,
@@ -85,6 +90,20 @@ class DashboardController extends Controller
         if ($permissions->contains('vendors.view')) {
             $stats['vendors'] = Vendor::withoutGlobalScope('tenant')
                 ->where('tenant_id', $tenant->id)->count();
+        }
+        if ($permissions->contains('products.view')) {
+            $stats['products'] = Product::withoutGlobalScope('tenant')
+                ->where('tenant_id', $tenant->id)->count();
+        }
+        if ($permissions->contains('invoices.view')) {
+            $stats['invoices'] = Invoice::withoutGlobalScope('tenant')
+                ->where('tenant_id', $tenant->id)->count();
+        }
+        if ($permissions->contains('transactions.view')) {
+            $stats['pending_transactions'] = BankTransaction::withoutGlobalScope('tenant')
+                ->where('tenant_id', $tenant->id)
+                ->where('review_status', 'pending')
+                ->count();
         }
 
         // Recent members (only if they can view the team)
