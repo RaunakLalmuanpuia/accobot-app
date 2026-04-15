@@ -11,6 +11,7 @@ import { hasPermission } from '@/utils/permissions';
 const showingNavigationDropdown = ref(false)
 const showInvitations = ref(false)
 const showTenantSwitcher = ref(false)
+const showMasterDropdown = ref(false)
 const page = usePage()
 
 const currentTenantId = () => page.props.auth.current_tenant_id
@@ -37,6 +38,7 @@ function closeDropdowns(e) {
     if (!e.target.closest('[data-dropdown]')) {
         showTenantSwitcher.value = false
         showInvitations.value = false
+        showMasterDropdown.value = false
     }
 }
 onMounted(() => document.addEventListener('click', closeDropdowns))
@@ -155,20 +157,44 @@ function stopImpersonation() {
                                         >Roles</NavLink>
                                     </template>
 
-                                    <template v-if="hasPermission('clients.view') || hasPermission('vendors.view')">
+                                    <template v-if="hasPermission('clients.view') || hasPermission('vendors.view') || hasPermission('products.view')">
                                         <span class="self-center h-5 w-px bg-gray-200"></span>
 
-                                        <NavLink
-                                            v-if="hasPermission('clients.view')"
-                                            :href="route('clients.index', { tenant: currentTenantId() })"
-                                            :active="route().current('clients.index')"
-                                        >Clients</NavLink>
+                                        <div class="relative flex items-center" data-dropdown>
+                                            <button
+                                                @click="showMasterDropdown = !showMasterDropdown"
+                                                class="inline-flex items-center gap-1 px-1 pt-1 text-sm font-medium leading-5 text-gray-500 hover:text-gray-700 transition duration-150 ease-in-out focus:outline-none"
+                                            >
+                                                Master
+                                                <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                                </svg>
+                                            </button>
 
-                                        <NavLink
-                                            v-if="hasPermission('vendors.view')"
-                                            :href="route('vendors.index', { tenant: currentTenantId() })"
-                                            :active="route().current('vendors.index')"
-                                        >Vendors</NavLink>
+                                            <div
+                                                v-if="showMasterDropdown"
+                                                class="absolute left-0 top-full mt-2 w-40 rounded-xl border border-gray-200 bg-white shadow-lg z-50 overflow-hidden"
+                                            >
+                                                <Link
+                                                    v-if="hasPermission('clients.view')"
+                                                    :href="route('clients.index', { tenant: currentTenantId() })"
+                                                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition"
+                                                    @click="showMasterDropdown = false"
+                                                >Clients</Link>
+                                                <Link
+                                                    v-if="hasPermission('vendors.view')"
+                                                    :href="route('vendors.index', { tenant: currentTenantId() })"
+                                                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition"
+                                                    @click="showMasterDropdown = false"
+                                                >Vendors</Link>
+                                                <Link
+                                                    v-if="hasPermission('products.view')"
+                                                    :href="route('products.index', { tenant: currentTenantId() })"
+                                                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition"
+                                                    @click="showMasterDropdown = false"
+                                                >Inventory</Link>
+                                            </div>
+                                        </div>
                                     </template>
 
                                     <template v-if="hasPermission('chat.view') || hasPermission('transactions.view')">

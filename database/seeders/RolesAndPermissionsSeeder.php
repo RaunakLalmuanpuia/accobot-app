@@ -48,6 +48,12 @@ class RolesAndPermissionsSeeder extends Seeder
             'vendors.edit',
             'vendors.delete',
 
+            // Products / Inventory
+            'products.view',
+            'products.create',
+            'products.edit',
+            'products.delete',
+
             // Accounting
             'invoices.view',
             'invoices.create',
@@ -103,6 +109,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'clients.view_requests',
             'clients.view',   'clients.create',   'clients.edit',   'clients.delete',
             'vendors.view',   'vendors.create',   'vendors.edit',   'vendors.delete',
+            'products.view',  'products.create',  'products.edit',  'products.delete',
             'invoices.view',  'invoices.create',  'invoices.edit',  'invoices.delete',
             'reports.view',   'reports.export',
             'integrations.view', 'integrations.manage',
@@ -116,6 +123,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'members.view',
             'clients.view',   'clients.create',   'clients.edit',
             'vendors.view',   'vendors.create',   'vendors.edit',
+            'products.view',  'products.create',  'products.edit',
             'invoices.view',  'invoices.create',  'invoices.edit',
             'reports.view',   'reports.export',
             'integrations.view',
@@ -127,6 +135,7 @@ class RolesAndPermissionsSeeder extends Seeder
         $staff->syncPermissions([
             'clients.view',  'clients.create',
             'vendors.view',  'vendors.create',
+            'products.view', 'products.create',
             'invoices.view', 'invoices.create', 'invoices.edit',
             'reports.view',
             'transactions.view', 'transactions.review',
@@ -136,6 +145,7 @@ class RolesAndPermissionsSeeder extends Seeder
         $viewer->syncPermissions([
             'clients.view',
             'vendors.view',
+            'products.view',
             'invoices.view',
             'reports.view',
             'transactions.view',
@@ -148,6 +158,7 @@ class RolesAndPermissionsSeeder extends Seeder
         $extAccountant->syncPermissions([
             'clients.view',
             'vendors.view',
+            'products.view',
             'invoices.view',
             'reports.view',
             'reports.export',
@@ -167,6 +178,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'members.assign_role',
             'clients.view',
             'vendors.view',
+            'products.view',
             'reports.view',   'reports.export',
             'integrations.view', 'integrations.manage',
             'audit.view',
@@ -177,6 +189,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'members.view',
             'clients.view',
             'vendors.view',
+            'products.view',
             'reports.view',
             'reports.export',
         ]);
@@ -185,6 +198,7 @@ class RolesAndPermissionsSeeder extends Seeder
         $auditor->syncPermissions([
             'clients.view',
             'vendors.view',
+            'products.view',
             'invoices.view',
             'reports.view',
             'reports.export',
@@ -194,6 +208,7 @@ class RolesAndPermissionsSeeder extends Seeder
         $caStaff->syncPermissions([
             'clients.view',
             'vendors.view',
+            'products.view',
             'reports.view',
         ]);
 
@@ -201,6 +216,7 @@ class RolesAndPermissionsSeeder extends Seeder
         $integration->syncPermissions([
             'clients.view',
             'vendors.view',
+            'products.view',
             'invoices.view',
             'invoices.create',
             'reports.view',

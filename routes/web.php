@@ -15,6 +15,7 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SmsIngestController;
 use App\Http\Controllers\StatementUploadController;
 use App\Http\Controllers\TeamMemberController;
+use App\Http\Controllers\ProductController;
 use App\Http\Controllers\VendorController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -84,6 +85,11 @@ Route::middleware(['auth', 'verified', 'member'])
         Route::post('/vendors', [VendorController::class, 'store'])->name('vendors.store')->middleware('tenant.permission:vendors.create');
         Route::put('/vendors/{vendor}', [VendorController::class, 'update'])->name('vendors.update')->middleware('tenant.permission:vendors.edit');
         Route::delete('/vendors/{vendor}', [VendorController::class, 'destroy'])->name('vendors.destroy')->middleware(['tenant.permission:vendors.delete', 'no.impersonate']);
+
+        Route::get('/products', [ProductController::class, 'index'])->name('products.index')->middleware('tenant.permission:products.view');
+        Route::post('/products', [ProductController::class, 'store'])->name('products.store')->middleware('tenant.permission:products.create');
+        Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update')->middleware('tenant.permission:products.edit');
+        Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy')->middleware(['tenant.permission:products.delete', 'no.impersonate']);
 
         // ── Accounting Assistant (Chat) ────────────────────────────────
         Route::get('/chat', [ChatController::class, 'index'])->name('chat.index')->middleware('tenant.permission:chat.view');
