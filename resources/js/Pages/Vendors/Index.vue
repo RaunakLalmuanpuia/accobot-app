@@ -5,19 +5,18 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import { hasPermission } from '@/utils/permissions'
 
 const props = defineProps({
-    tenant: Object,
-    vendors:  Array,
+    tenant:  Object,
+    vendors: Array,
 })
 
-// ── Form ──────────────────────────────────────────────────────
-const showModal  = ref(false)
-const editing    = ref(null)
+const showModal = ref(false)
+const editing   = ref(null)
 
 const canCreate = hasPermission('vendors.create')
 const canEdit   = hasPermission('vendors.edit')
 const canDelete = hasPermission('vendors.delete')
 
-const form = useForm({ name: '', email: '', phone: '' })
+const form = useForm({ name: '', email: '', phone: '', company: '', tax_id: '', address: '', notes: '' })
 
 function openCreate() {
     editing.value = null
@@ -26,11 +25,15 @@ function openCreate() {
 }
 
 function openEdit(vendor) {
-    editing.value = vendor
-    form.name  = vendor.name
-    form.email = vendor.email ?? ''
-    form.phone = vendor.phone ?? ''
-    showModal.value = true
+    editing.value    = vendor
+    form.name        = vendor.name
+    form.email       = vendor.email    ?? ''
+    form.phone       = vendor.phone    ?? ''
+    form.company     = vendor.company  ?? ''
+    form.tax_id      = vendor.tax_id   ?? ''
+    form.address     = vendor.address  ?? ''
+    form.notes       = vendor.notes    ?? ''
+    showModal.value  = true
 }
 
 function submit() {
@@ -73,13 +76,15 @@ function destroy(vendor) {
         </template>
 
         <div class="py-8">
-            <div class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+            <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
                 <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
 
                     <div class="grid grid-cols-12 px-6 py-3 bg-gray-50 border-b border-gray-100 text-xs font-semibold uppercase tracking-wide text-gray-400">
-                        <div class="col-span-4">Name</div>
-                        <div class="col-span-4">Email</div>
-                        <div class="col-span-3">Phone</div>
+                        <div class="col-span-3">Name</div>
+                        <div class="col-span-3">Email</div>
+                        <div class="col-span-2">Phone</div>
+                        <div class="col-span-2">Tax ID</div>
+                        <div class="col-span-1">Address</div>
                         <div class="col-span-1"></div>
                     </div>
 
@@ -88,9 +93,14 @@ function destroy(vendor) {
                         :key="vendor.id"
                         class="grid grid-cols-12 items-center px-6 py-4 border-b border-gray-50 last:border-0 hover:bg-gray-50/60 transition"
                     >
-                        <div class="col-span-4 text-sm font-medium text-gray-900">{{ vendor.name }}</div>
-                        <div class="col-span-4 text-sm text-gray-500">{{ vendor.email ?? '—' }}</div>
-                        <div class="col-span-3 text-sm text-gray-500">{{ vendor.phone ?? '—' }}</div>
+                        <div class="col-span-3">
+                            <div class="text-sm font-medium text-gray-900">{{ vendor.name }}</div>
+                            <div v-if="vendor.company" class="text-xs text-gray-400">{{ vendor.company }}</div>
+                        </div>
+                        <div class="col-span-3 text-sm text-gray-500">{{ vendor.email ?? '—' }}</div>
+                        <div class="col-span-2 text-sm text-gray-500">{{ vendor.phone ?? '—' }}</div>
+                        <div class="col-span-2 text-sm text-gray-500 font-mono">{{ vendor.tax_id ?? '—' }}</div>
+                        <div class="col-span-1 text-sm text-gray-500 truncate" :title="vendor.address">{{ vendor.address ?? '—' }}</div>
                         <div class="col-span-1 flex justify-end gap-2">
                             <button v-if="canEdit" @click="openEdit(vendor)" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">Edit</button>
                             <button v-if="canDelete" @click="destroy(vendor)" class="text-xs text-red-500 hover:text-red-700 font-medium">Delete</button>
@@ -109,24 +119,42 @@ function destroy(vendor) {
                 class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
                 @click.self="showModal = false"
             >
-                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-4">
+                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 space-y-4 max-h-[90vh] overflow-y-auto">
                     <h2 class="text-lg font-semibold text-gray-900">{{ editing ? 'Edit Vendor' : 'Add Vendor' }}</h2>
 
                     <div class="space-y-3">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Name <span class="text-red-500">*</span></label>
                             <input v-model="form.name" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
                             <p v-if="form.errors.name" class="mt-1 text-xs text-red-500">{{ form.errors.name }}</p>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                            <input v-model="form.email" type="email" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                            <p v-if="form.errors.email" class="mt-1 text-xs text-red-500">{{ form.errors.email }}</p>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Company</label>
+                            <input v-model="form.company" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                <input v-model="form.email" type="email" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                <p v-if="form.errors.email" class="mt-1 text-xs text-red-500">{{ form.errors.email }}</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                                <input v-model="form.phone" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                <p v-if="form.errors.phone" class="mt-1 text-xs text-red-500">{{ form.errors.phone }}</p>
+                            </div>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                            <input v-model="form.phone" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                            <p v-if="form.errors.phone" class="mt-1 text-xs text-red-500">{{ form.errors.phone }}</p>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Tax ID</label>
+                            <input v-model="form.tax_id" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                            <textarea v-model="form.address" rows="2" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                            <textarea v-model="form.notes" rows="2" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
                         </div>
                     </div>
 
