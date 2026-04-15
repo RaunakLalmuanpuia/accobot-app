@@ -166,7 +166,7 @@ const handleCancel = () => {
         <!-- Status banner -->
         <div :class="[
             'text-white text-[10px] font-bold px-4 py-1.5 text-center tracking-widest uppercase',
-            isReviewed ? 'bg-emerald-500' : 'bg-indigo-600'
+            isReviewed ? 'bg-emerald-500' : 'bg-violet-600'
         ]">
             {{ isReviewed ? 'Reviewed' : 'Pending' }}
         </div>
@@ -212,14 +212,14 @@ const handleCancel = () => {
 
                         <!-- AI suggestion box -->
                         <div v-else-if="!isReviewed && isAiSuggested && init?.head"
-                            class="bg-[#F8FAFC] border border-indigo-50 rounded-xl p-3 mb-3 flex gap-3 text-sm">
-                            <Sparkles :size="16" class="text-indigo-400 flex-shrink-0 mt-0.5" />
+                            class="bg-[#F8FAFC] border border-violet-50 rounded-xl p-3 mb-3 flex gap-3 text-sm">
+                            <Sparkles :size="16" class="text-violet-400 flex-shrink-0 mt-0.5" />
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-center gap-2 flex-wrap mb-0.5">
-                                    <span class="not-italic font-semibold text-indigo-700">
+                                    <span class="not-italic font-semibold text-violet-700">
                                         {{ init.head.name }}{{ init.subHead ? ` → ${init.subHead.name}` : '' }}
                                     </span>
-                                    <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700 uppercase tracking-wide">
+                                    <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-violet-100 text-violet-700 uppercase tracking-wide">
                                         AI suggested
                                     </span>
                                     <span v-if="aiConfidence" class="text-[10px] font-semibold text-gray-400">
@@ -263,9 +263,9 @@ const handleCancel = () => {
                             </p>
                         </div>
                         <div v-else-if="transaction.invoice_suggestions?.length"
-                            class="mt-3 rounded-xl border border-indigo-100 bg-indigo-50/50 px-3 py-2 flex items-center gap-2">
-                            <Sparkles :size="13" class="text-indigo-500 flex-shrink-0" />
-                            <p class="text-xs text-indigo-700 font-medium">
+                            class="mt-3 rounded-xl border border-violet-100 bg-violet-50/50 px-3 py-2 flex items-center gap-2">
+                            <Sparkles :size="13" class="text-violet-500 flex-shrink-0" />
+                            <p class="text-xs text-violet-700 font-medium">
                                 {{ transaction.invoice_suggestions.length }} possible invoice match{{ transaction.invoice_suggestions.length > 1 ? 'es' : '' }} — open edit to link
                             </p>
                         </div>
@@ -284,7 +284,7 @@ const handleCancel = () => {
                                 <button
                                     v-if="canEdit"
                                     @click="isExpanded = true"
-                                    class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-4 rounded-xl transition-colors"
+                                    class="flex-1 bg-violet-600 hover:bg-violet-700 text-white font-semibold py-2.5 px-4 rounded-xl transition-colors"
                                 >
                                     {{ init?.head ? 'Enter Narration' : 'Categorize' }}
                                 </button>
@@ -314,7 +314,7 @@ const handleCancel = () => {
                                     :class="[
                                         'flex items-center justify-center rounded-xl border-2 py-2 px-2 text-xs font-bold transition-all',
                                         selectedHead?.id === h.id
-                                            ? 'border-indigo-600 bg-indigo-50 text-indigo-700 shadow-sm'
+                                            ? 'border-violet-600 bg-violet-50 text-violet-700 shadow-sm'
                                             : 'border-gray-100 bg-white text-gray-500 hover:border-gray-300'
                                     ]"
                                 >{{ h.name }}</button>
@@ -339,7 +339,7 @@ const handleCancel = () => {
                                     ]"
                                 >
                                     {{ s.name }}
-                                    <span v-if="selectedSub?.id === s.id" class="text-indigo-400">●</span>
+                                    <span v-if="selectedSub?.id === s.id" class="text-violet-400">●</span>
                                 </button>
                             </div>
                             <p v-if="form.errors.narration_sub_head_id" class="mt-1 text-xs text-red-500">{{ form.errors.narration_sub_head_id }}</p>
@@ -367,16 +367,16 @@ const handleCancel = () => {
 
                             <!-- User picked a new invoice -->
                             <template v-else-if="selectedInvoiceId !== null && selectedInvoiceId !== transaction.reconciled_invoice_id">
-                                <div class="rounded-xl border-2 border-indigo-500 bg-indigo-50 px-3 py-2.5 flex items-center justify-between gap-3">
+                                <div class="rounded-xl border-2 border-violet-500 bg-violet-50 px-3 py-2.5 flex items-center justify-between gap-3">
                                     <div class="flex items-center gap-2 min-w-0">
-                                        <Link2 :size="14" class="text-indigo-600 flex-shrink-0" />
+                                        <Link2 :size="14" class="text-violet-600 flex-shrink-0" />
                                         <div class="min-w-0">
-                                            <p class="text-xs font-bold text-indigo-800 truncate">
+                                            <p class="text-xs font-bold text-violet-800 truncate">
                                                 {{ (transaction.invoice_suggestions || []).find(s => s.id === selectedInvoiceId)?.invoice_number || selectedInvoiceId }}
                                             </p>
                                         </div>
                                     </div>
-                                    <button type="button" @click="handleInvoiceSelect(null)" class="text-indigo-400 hover:text-indigo-700 transition-colors flex-shrink-0">
+                                    <button type="button" @click="handleInvoiceSelect(null)" class="text-violet-400 hover:text-violet-700 transition-colors flex-shrink-0">
                                         <X :size="15" />
                                     </button>
                                 </div>
@@ -384,21 +384,21 @@ const handleCancel = () => {
 
                             <!-- Suggestions picker -->
                             <template v-else-if="(transaction.invoice_suggestions || []).length">
-                                <div class="rounded-xl border border-indigo-100 bg-indigo-50/40 overflow-hidden">
-                                    <div class="flex items-center justify-between px-3 py-2 border-b border-indigo-100">
-                                        <div class="flex items-center gap-1.5 text-xs font-semibold text-indigo-700">
+                                <div class="rounded-xl border border-violet-100 bg-violet-50/40 overflow-hidden">
+                                    <div class="flex items-center justify-between px-3 py-2 border-b border-violet-100">
+                                        <div class="flex items-center gap-1.5 text-xs font-semibold text-violet-700">
                                             <Sparkles :size="13" />
                                             {{ transaction.invoice_suggestions.length === 1 ? 'Matched Invoice' : `${transaction.invoice_suggestions.length} Possible Invoices` }}
                                         </div>
                                         <button v-if="transaction.invoice_suggestions.length > 1" type="button" @click="showAllSuggestions = !showAllSuggestions"
-                                            class="flex items-center gap-1 text-xs font-medium text-indigo-500 hover:text-indigo-700 transition-colors">
+                                            class="flex items-center gap-1 text-xs font-medium text-violet-500 hover:text-violet-700 transition-colors">
                                             <template v-if="showAllSuggestions"><ChevronUp :size="13" /> Less</template>
                                             <template v-else><ChevronDown :size="13" /> +{{ transaction.invoice_suggestions.length - 1 }} more</template>
                                         </button>
                                     </div>
                                     <div v-for="s in (showAllSuggestions ? transaction.invoice_suggestions : transaction.invoice_suggestions.slice(0,1))"
                                         :key="s.id"
-                                        class="flex items-center justify-between gap-3 px-3 py-2.5 border-b border-indigo-100/60 last:border-b-0">
+                                        class="flex items-center justify-between gap-3 px-3 py-2.5 border-b border-violet-100/60 last:border-b-0">
                                         <div class="min-w-0">
                                             <div class="flex items-center gap-1.5 flex-wrap">
                                                 <span class="text-xs font-bold text-gray-800">{{ s.invoice_number }}</span>
@@ -408,21 +408,21 @@ const handleCancel = () => {
                                                 </span>
                                             </div>
                                             <p class="text-xs text-gray-500 mt-0.5 truncate">{{ s.client_name }} · {{ formatCurrency(s.amount_due) }} due · {{ s.invoice_date }}</p>
-                                            <p v-if="s.match_reasons?.length" class="text-[10px] text-indigo-500 mt-0.5 truncate">{{ s.match_reasons[0] }}{{ s.match_reasons.length > 1 ? ` +${s.match_reasons.length - 1} more` : '' }}</p>
+                                            <p v-if="s.match_reasons?.length" class="text-[10px] text-violet-500 mt-0.5 truncate">{{ s.match_reasons[0] }}{{ s.match_reasons.length > 1 ? ` +${s.match_reasons.length - 1} more` : '' }}</p>
                                         </div>
                                         <button type="button" @click="handleInvoiceSelect(s.id)"
-                                            class="flex-shrink-0 text-xs bg-white border-2 border-indigo-200 hover:border-indigo-500 hover:bg-indigo-600 hover:text-white text-indigo-700 font-semibold px-2.5 py-1 rounded-lg transition-all flex items-center gap-1">
+                                            class="flex-shrink-0 text-xs bg-white border-2 border-violet-200 hover:border-violet-500 hover:bg-violet-600 hover:text-white text-violet-700 font-semibold px-2.5 py-1 rounded-lg transition-all flex items-center gap-1">
                                             <Link2 :size="12" /> Select
                                         </button>
                                     </div>
                                     <!-- Manual entry -->
-                                    <div class="px-3 py-2.5 border-t border-indigo-100 flex items-center gap-2">
-                                        <FileText :size="13" class="text-indigo-400 flex-shrink-0" />
+                                    <div class="px-3 py-2.5 border-t border-violet-100 flex items-center gap-2">
+                                        <FileText :size="13" class="text-violet-400 flex-shrink-0" />
                                         <input v-model="manualRef" type="text" placeholder="Or type invoice # manually…"
                                             @keydown.enter.prevent="handleManualRefSubmit"
-                                            class="flex-1 bg-white border border-indigo-200 rounded-lg px-2.5 py-1 text-xs outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500" />
+                                            class="flex-1 bg-white border border-violet-200 rounded-lg px-2.5 py-1 text-xs outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500" />
                                         <button type="button" :disabled="!manualRef.trim()" @click="handleManualRefSubmit"
-                                            class="text-xs bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white font-semibold px-2.5 py-1 rounded-lg transition-colors flex-shrink-0">
+                                            class="text-xs bg-violet-600 hover:bg-violet-700 disabled:opacity-40 text-white font-semibold px-2.5 py-1 rounded-lg transition-colors flex-shrink-0">
                                             Select
                                         </button>
                                     </div>
@@ -446,7 +446,7 @@ const handleCancel = () => {
                                     type="text"
                                     placeholder="Vendor/Person name"
                                     :required="selectedSub?.requires_party"
-                                    class="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    class="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
                                 />
                                 <p v-if="form.errors.party_name" class="mt-1 text-xs text-red-500">{{ form.errors.party_name }}</p>
                             </div>
@@ -459,7 +459,7 @@ const handleCancel = () => {
                                     v-model="form.narration_note"
                                     type="text"
                                     placeholder="Add specific details..."
-                                    class="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    class="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
                                 />
                                 <p v-if="form.errors.narration_note" class="mt-1 text-xs text-red-500">{{ form.errors.narration_note }}</p>
                             </div>
@@ -468,14 +468,14 @@ const handleCancel = () => {
                         <!-- Auto-Rule toggle -->
                         <div :class="[
                             'rounded-xl border-2 p-3.5 transition-colors',
-                            saveRule ? 'border-indigo-100 bg-indigo-50/30' : 'border-gray-50 bg-gray-50/50'
+                            saveRule ? 'border-violet-100 bg-violet-50/30' : 'border-gray-50 bg-gray-50/50'
                         ]">
                             <label class="flex cursor-pointer items-center gap-3">
                                 <input
                                     type="checkbox"
                                     v-model="saveRule"
                                     @change="form.save_as_rule = saveRule"
-                                    class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                    class="h-4 w-4 rounded border-gray-300 text-violet-600 focus:ring-violet-500"
                                 />
                                 <div class="flex flex-col">
                                     <span class="text-sm font-bold text-gray-800">Auto-categorize in future?</span>
@@ -491,7 +491,7 @@ const handleCancel = () => {
                                 Cancel
                             </button>
                             <button type="submit" :disabled="!selectedHead || form.processing"
-                                class="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-semibold rounded-xl shadow-sm transition-colors">
+                                class="px-6 py-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white text-sm font-semibold rounded-xl shadow-sm transition-colors">
                                 {{ form.processing ? 'Saving...' : (isReviewed ? 'Update Details' : 'Confirm Details') }}
                             </button>
                         </div>

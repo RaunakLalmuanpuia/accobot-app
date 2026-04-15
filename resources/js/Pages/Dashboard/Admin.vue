@@ -28,7 +28,7 @@ const roleColor = (name) => {
 }
 
 const typeLabel = (type) => type === 'ca_firm' ? 'CA Firm' : 'Business'
-const typeColor  = (type) => type === 'ca_firm' ? 'bg-indigo-50 text-indigo-600' : 'bg-amber-50 text-amber-600'
+const typeColor  = (type) => type === 'ca_firm' ? 'bg-violet-50 text-violet-600' : 'bg-amber-50 text-amber-600'
 
 function impersonate(userId) {
     router.post(route('impersonate.start', userId))
@@ -59,7 +59,7 @@ function impersonate(userId) {
                     </div>
                     <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
                         <p class="text-xs text-gray-500 mb-1">CA Firms</p>
-                        <p class="text-3xl font-bold text-indigo-600">{{ stats.ca_firms }}</p>
+                        <p class="text-3xl font-bold text-violet-600">{{ stats.ca_firms }}</p>
                     </div>
                     <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
                         <p class="text-xs text-gray-500 mb-1">Users</p>
@@ -86,7 +86,7 @@ function impersonate(userId) {
                                 </div>
                                 <div class="flex items-center gap-3 shrink-0 ml-3">
                                     <span class="text-xs text-gray-400">{{ t.users_count }} member{{ t.users_count !== 1 ? 's' : '' }}</span>
-                                    <Link :href="route('dashboard', { tenant: t.id })" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">Open →</Link>
+                                    <Link :href="route('dashboard', { tenant: t.id })" class="text-xs text-violet-600 hover:text-violet-800 font-medium">Open →</Link>
                                 </div>
                             </li>
                         </ul>
@@ -125,7 +125,7 @@ function impersonate(userId) {
                                 </span>
                                 <button
                                     @click="impersonate(u.id)"
-                                    class="text-xs text-gray-500 hover:text-indigo-600 font-medium border border-gray-200 rounded-lg px-2.5 py-1 hover:border-indigo-300 transition"
+                                    class="text-xs text-gray-500 hover:text-violet-600 font-medium border border-gray-200 rounded-lg px-2.5 py-1 hover:border-violet-300 transition"
                                 >
                                     Impersonate
                                 </button>

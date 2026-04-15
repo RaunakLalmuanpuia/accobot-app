@@ -81,7 +81,7 @@ function fmtDate(val) {
                             :class="[
                                 'px-3 py-1.5 font-medium transition',
                                 statusFilter === f.value
-                                    ? 'bg-indigo-600 text-white'
+                                    ? 'bg-violet-600 text-white'
                                     : 'bg-white text-gray-500 hover:bg-gray-50'
                             ]"
                         >{{ f.label }}</button>
@@ -89,7 +89,7 @@ function fmtDate(val) {
                     <Link
                         v-if="canCreate"
                         :href="route('invoices.create', { tenant: tenant.id })"
-                        class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition"
+                        class="inline-flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 transition"
                     >
                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
@@ -147,7 +147,7 @@ function fmtDate(val) {
                                     </td>
                                     <td class="px-4 py-3 text-right whitespace-nowrap text-xs">
                                         <a :href="route('invoices.download', { tenant: tenant.id, invoice: inv.id })" class="text-gray-500 hover:text-gray-700 font-medium mr-2">PDF</a>
-                                        <Link v-if="canEdit" :href="route('invoices.edit', { tenant: tenant.id, invoice: inv.id })" class="text-indigo-600 hover:text-indigo-800 font-medium mr-2">Edit</Link>
+                                        <Link v-if="canEdit" :href="route('invoices.edit', { tenant: tenant.id, invoice: inv.id })" class="text-violet-600 hover:text-violet-800 font-medium mr-2">Edit</Link>
                                         <button v-if="canDelete" @click="destroy(inv)" class="text-red-500 hover:text-red-700 font-medium">Delete</button>
                                     </td>
                                 </tr>

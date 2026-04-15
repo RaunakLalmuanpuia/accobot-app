@@ -156,7 +156,7 @@ const typeBadge = { credit: 'bg-blue-100 text-blue-700', debit: 'bg-orange-100 t
                             :class="[
                                 'px-3 py-1.5 font-medium transition',
                                 typeFilter === opt.value
-                                    ? 'bg-indigo-600 text-white'
+                                    ? 'bg-violet-600 text-white'
                                     : 'bg-white text-gray-500 hover:bg-gray-50'
                             ]"
                         >{{ opt.label }}</button>
@@ -164,7 +164,7 @@ const typeBadge = { credit: 'bg-blue-100 text-blue-700', debit: 'bg-orange-100 t
                     <button
                         v-if="canCreate"
                         @click="openCreateHead"
-                        class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition"
+                        class="inline-flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 transition"
                     >
                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
@@ -207,8 +207,8 @@ const typeBadge = { credit: 'bg-blue-100 text-blue-700', debit: 'bg-orange-100 t
 
                         <div class="flex items-center gap-3 shrink-0 text-xs">
                             <span class="text-gray-400">{{ head.sub_heads?.length ?? head.subHeads?.length ?? 0 }} sub-heads</span>
-                            <button v-if="canCreate" @click="openCreateSubHead(head)" class="text-indigo-600 hover:text-indigo-800 font-medium">+ Sub-head</button>
-                            <button v-if="canEdit" @click="openEditHead(head)" class="text-indigo-600 hover:text-indigo-800 font-medium">Edit</button>
+                            <button v-if="canCreate" @click="openCreateSubHead(head)" class="text-violet-600 hover:text-violet-800 font-medium">+ Sub-head</button>
+                            <button v-if="canEdit" @click="openEditHead(head)" class="text-violet-600 hover:text-violet-800 font-medium">Edit</button>
                             <button v-if="canDelete" @click="destroyHead(head)" class="text-red-500 hover:text-red-700 font-medium">Delete</button>
                         </div>
                     </div>
@@ -233,7 +233,7 @@ const typeBadge = { credit: 'bg-blue-100 text-blue-700', debit: 'bg-orange-100 t
                                 </p>
                             </div>
                             <div class="flex items-center gap-3 shrink-0 text-xs">
-                                <button v-if="canEdit" @click="openEditSubHead(head, sub)" class="text-indigo-600 hover:text-indigo-800 font-medium">Edit</button>
+                                <button v-if="canEdit" @click="openEditSubHead(head, sub)" class="text-violet-600 hover:text-violet-800 font-medium">Edit</button>
                                 <button v-if="canDelete" @click="destroySubHead(head, sub)" class="text-red-500 hover:text-red-700 font-medium">Delete</button>
                             </div>
                         </div>
@@ -259,12 +259,12 @@ const typeBadge = { credit: 'bg-blue-100 text-blue-700', debit: 'bg-orange-100 t
                     <div class="space-y-3">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Name <span class="text-red-500">*</span></label>
-                            <input v-model="headForm.name" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                            <input v-model="headForm.name" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
                             <p v-if="headForm.errors.name" class="mt-1 text-xs text-red-500">{{ headForm.errors.name }}</p>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Type <span class="text-red-500">*</span></label>
-                            <select v-model="headForm.type" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <select v-model="headForm.type" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
                                 <option value="both">Both</option>
                                 <option value="credit">Credit</option>
                                 <option value="debit">Debit</option>
@@ -272,21 +272,21 @@ const typeBadge = { credit: 'bg-blue-100 text-blue-700', debit: 'bg-orange-100 t
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                            <textarea v-model="headForm.description" rows="2" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                            <textarea v-model="headForm.description" rows="2" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"></textarea>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Sort Order</label>
-                            <input v-model="headForm.sort_order" type="number" min="0" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                            <input v-model="headForm.sort_order" type="number" min="0" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
                         </div>
                         <div class="flex items-center gap-2">
-                            <input v-model="headForm.is_active" type="checkbox" id="head_is_active" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                            <input v-model="headForm.is_active" type="checkbox" id="head_is_active" class="h-4 w-4 rounded border-gray-300 text-violet-600 focus:ring-violet-500" />
                             <label for="head_is_active" class="text-sm font-medium text-gray-700">Active</label>
                         </div>
                     </div>
 
                     <div class="flex justify-end gap-3 pt-1">
                         <button @click="showHeadModal = false" class="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 border border-gray-300 hover:bg-gray-50">Cancel</button>
-                        <button @click="submitHead" :disabled="headForm.processing" class="rounded-lg px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition">
+                        <button @click="submitHead" :disabled="headForm.processing" class="rounded-lg px-4 py-2 text-sm font-medium text-white bg-violet-600 hover:bg-violet-700 transition">
                             {{ editingHead ? 'Save' : 'Add Head' }}
                         </button>
                     </div>
@@ -307,34 +307,34 @@ const typeBadge = { credit: 'bg-blue-100 text-blue-700', debit: 'bg-orange-100 t
                     <div class="space-y-3">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Name <span class="text-red-500">*</span></label>
-                            <input v-model="subForm.name" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                            <input v-model="subForm.name" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
                             <p v-if="subForm.errors.name" class="mt-1 text-xs text-red-500">{{ subForm.errors.name }}</p>
                         </div>
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Ledger Code</label>
-                                <input v-model="subForm.ledger_code" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                <input v-model="subForm.ledger_code" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Ledger Name</label>
-                                <input v-model="subForm.ledger_name" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                <input v-model="subForm.ledger_name" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
                             </div>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                            <textarea v-model="subForm.description" rows="2" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                            <textarea v-model="subForm.description" rows="2" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"></textarea>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Sort Order</label>
-                            <input v-model="subForm.sort_order" type="number" min="0" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                            <input v-model="subForm.sort_order" type="number" min="0" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
                         </div>
                         <div class="flex items-center gap-4">
                             <div class="flex items-center gap-2">
-                                <input v-model="subForm.requires_party" type="checkbox" id="requires_party" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                                <input v-model="subForm.requires_party" type="checkbox" id="requires_party" class="h-4 w-4 rounded border-gray-300 text-violet-600 focus:ring-violet-500" />
                                 <label for="requires_party" class="text-sm font-medium text-gray-700">Requires Party</label>
                             </div>
                             <div class="flex items-center gap-2">
-                                <input v-model="subForm.is_active" type="checkbox" id="sub_is_active" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                                <input v-model="subForm.is_active" type="checkbox" id="sub_is_active" class="h-4 w-4 rounded border-gray-300 text-violet-600 focus:ring-violet-500" />
                                 <label for="sub_is_active" class="text-sm font-medium text-gray-700">Active</label>
                             </div>
                         </div>
@@ -342,7 +342,7 @@ const typeBadge = { credit: 'bg-blue-100 text-blue-700', debit: 'bg-orange-100 t
 
                     <div class="flex justify-end gap-3 pt-1">
                         <button @click="showSubModal = false" class="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 border border-gray-300 hover:bg-gray-50">Cancel</button>
-                        <button @click="submitSubHead" :disabled="subForm.processing" class="rounded-lg px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition">
+                        <button @click="submitSubHead" :disabled="subForm.processing" class="rounded-lg px-4 py-2 text-sm font-medium text-white bg-violet-600 hover:bg-violet-700 transition">
                             {{ editingSubHead ? 'Save' : 'Add Sub-head' }}
                         </button>
                     </div>

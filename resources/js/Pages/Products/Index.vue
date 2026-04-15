@@ -84,7 +84,7 @@ function destroy(product) {
                 <button
                     v-if="canCreate"
                     @click="openCreate"
-                    class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition"
+                    class="inline-flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 transition"
                 >
                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
@@ -142,7 +142,7 @@ function destroy(product) {
                                     </span>
                                 </td>
                                 <td class="px-4 py-3 text-right whitespace-nowrap">
-                                    <button v-if="canEdit" @click="openEdit(product)" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium mr-2">Edit</button>
+                                    <button v-if="canEdit" @click="openEdit(product)" class="text-xs text-violet-600 hover:text-violet-800 font-medium mr-2">Edit</button>
                                     <button v-if="canDelete" @click="destroy(product)" class="text-xs text-red-500 hover:text-red-700 font-medium">Delete</button>
                                 </td>
                             </tr>
@@ -170,26 +170,26 @@ function destroy(product) {
                         <!-- Name -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Name <span class="text-red-500">*</span></label>
-                            <input v-model="form.name" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                            <input v-model="form.name" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
                             <p v-if="form.errors.name" class="mt-1 text-xs text-red-500">{{ form.errors.name }}</p>
                         </div>
 
                         <!-- Description -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                            <textarea v-model="form.description" rows="2" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                            <textarea v-model="form.description" rows="2" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"></textarea>
                         </div>
 
                         <!-- SKU / Unit -->
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">SKU</label>
-                                <input v-model="form.sku" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                <input v-model="form.sku" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
                                 <p v-if="form.errors.sku" class="mt-1 text-xs text-red-500">{{ form.errors.sku }}</p>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Unit</label>
-                                <input v-model="form.unit" type="text" placeholder="e.g. kg, pcs, box" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                <input v-model="form.unit" type="text" placeholder="e.g. kg, pcs, box" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
                             </div>
                         </div>
 
@@ -197,12 +197,12 @@ function destroy(product) {
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Unit Price <span class="text-red-500">*</span></label>
-                                <input v-model="form.unit_price" type="number" step="0.01" min="0" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                <input v-model="form.unit_price" type="number" step="0.01" min="0" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
                                 <p v-if="form.errors.unit_price" class="mt-1 text-xs text-red-500">{{ form.errors.unit_price }}</p>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Tax Rate (%)</label>
-                                <input v-model="form.tax_rate" type="number" step="0.01" min="0" max="100" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                <input v-model="form.tax_rate" type="number" step="0.01" min="0" max="100" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
                                 <p v-if="form.errors.tax_rate" class="mt-1 text-xs text-red-500">{{ form.errors.tax_rate }}</p>
                             </div>
                         </div>
@@ -210,7 +210,7 @@ function destroy(product) {
                         <!-- Stock Quantity -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Stock Quantity</label>
-                            <input v-model="form.stock_quantity" type="number" min="0" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                            <input v-model="form.stock_quantity" type="number" min="0" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
                             <p v-if="form.errors.stock_quantity" class="mt-1 text-xs text-red-500">{{ form.errors.stock_quantity }}</p>
                         </div>
 
@@ -218,11 +218,11 @@ function destroy(product) {
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                                <input v-model="form.category" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                <input v-model="form.category" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Sub Category</label>
-                                <input v-model="form.sub_category" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                <input v-model="form.sub_category" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
                             </div>
                         </div>
 
@@ -230,17 +230,17 @@ function destroy(product) {
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Main Group</label>
-                                <input v-model="form.main_group" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                <input v-model="form.main_group" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Sub Group</label>
-                                <input v-model="form.sub_group" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                <input v-model="form.sub_group" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
                             </div>
                         </div>
 
                         <!-- Is Active -->
                         <div class="flex items-center gap-2">
-                            <input v-model="form.is_active" type="checkbox" id="is_active" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                            <input v-model="form.is_active" type="checkbox" id="is_active" class="h-4 w-4 rounded border-gray-300 text-violet-600 focus:ring-violet-500" />
                             <label for="is_active" class="text-sm font-medium text-gray-700">Active</label>
                         </div>
 
@@ -248,7 +248,7 @@ function destroy(product) {
 
                     <div class="flex justify-end gap-3 pt-1">
                         <button @click="showModal = false" class="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 border border-gray-300 hover:bg-gray-50">Cancel</button>
-                        <button @click="submit" :disabled="form.processing" class="rounded-lg px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition">
+                        <button @click="submit" :disabled="form.processing" class="rounded-lg px-4 py-2 text-sm font-medium text-white bg-violet-600 hover:bg-violet-700 transition">
                             {{ editing ? 'Save' : 'Add Product' }}
                         </button>
                     </div>

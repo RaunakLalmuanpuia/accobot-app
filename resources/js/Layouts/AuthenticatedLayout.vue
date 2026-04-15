@@ -130,8 +130,8 @@ function stopImpersonation() {
                                                         :class="['h-2 w-2 rounded-full shrink-0', t.id === page.props.auth.current_tenant_id ? 'bg-emerald-400' : 'bg-transparent border border-gray-300']"
                                                     ></span>
                                                     <span class="truncate flex-1 text-left">{{ t.name }}</span>
-                                                    <span v-if="t.is_personal" class="shrink-0 rounded-full bg-indigo-50 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-600 leading-none">Mine</span>
-                                                    <svg v-if="t.id === page.props.auth.current_tenant_id" class="ml-auto h-4 w-4 text-indigo-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <span v-if="t.is_personal" class="shrink-0 rounded-full bg-violet-50 px-1.5 py-0.5 text-[10px] font-semibold text-violet-600 leading-none">Mine</span>
+                                                    <svg v-if="t.id === page.props.auth.current_tenant_id" class="ml-auto h-4 w-4 text-violet-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                                                     </svg>
                                                 </button>
@@ -263,7 +263,7 @@ function stopImpersonation() {
                                             <p class="text-sm font-medium text-gray-900">{{ inv.tenant_name }}</p>
                                             <p class="text-xs text-gray-500 mt-0.5 capitalize">Role: {{ inv.role_name }}</p>
                                             <div class="flex gap-2 mt-2">
-                                                <button @click="acceptInvitation(inv.id)" class="rounded-lg bg-indigo-600 px-3 py-1 text-xs font-medium text-white hover:bg-indigo-700 transition">Accept</button>
+                                                <button @click="acceptInvitation(inv.id)" class="rounded-lg bg-violet-600 px-3 py-1 text-xs font-medium text-white hover:bg-violet-700 transition">Accept</button>
                                                 <button @click="declineInvitation(inv.id)" class="rounded-lg border border-gray-300 px-3 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50 transition">Decline</button>
                                             </div>
                                         </div>

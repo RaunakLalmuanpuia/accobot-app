@@ -9,7 +9,7 @@ marked.use({
     breaks: true,
     renderer: {
         link({ href, text }) {
-            return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="underline font-medium text-indigo-400 hover:text-indigo-200">${text}</a>`;
+            return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="underline font-medium text-violet-400 hover:text-violet-200">${text}</a>`;
         },
     },
 });
@@ -138,7 +138,7 @@ const formatCurrency = (value, currency = 'INR') =>
                             <div
                                 class="max-w-[80%] rounded-2xl px-4 py-2 text-sm prose prose-sm"
                                 :class="msg.role === 'user'
-                                    ? 'bg-indigo-600 text-white rounded-br-sm prose-invert'
+                                    ? 'bg-violet-600 text-white rounded-br-sm prose-invert'
                                     : 'bg-gray-100 text-gray-800 rounded-bl-sm'"
                                 v-html="renderMarkdown(msg.content)"
                             ></div>
@@ -162,12 +162,12 @@ const formatCurrency = (value, currency = 'INR') =>
                             :disabled="loading"
                             rows="2"
                             placeholder="Create an invoice, narrate transactions, search clients or inventory..."
-                            class="flex-1 resize-none rounded-xl border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-50"
+                            class="flex-1 resize-none rounded-xl border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 disabled:bg-gray-50"
                         ></textarea>
                         <button
                             @click="send"
                             :disabled="loading || !input.trim()"
-                            class="rounded-xl bg-indigo-600 px-4 py-2 text-white text-sm font-medium hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                            class="rounded-xl bg-violet-600 px-4 py-2 text-white text-sm font-medium hover:bg-violet-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                         >
                             Send
                         </button>

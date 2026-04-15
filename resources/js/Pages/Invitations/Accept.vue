@@ -37,7 +37,7 @@ function accept() {
         <!-- Invitation content -->
         <template v-else>
         <div class="text-center mb-6">
-            <div class="inline-flex h-14 w-14 items-center justify-center rounded-full bg-indigo-100 text-2xl mb-3">
+            <div class="inline-flex h-14 w-14 items-center justify-center rounded-full bg-violet-100 text-2xl mb-3">
                 🏢
             </div>
             <h1 class="text-xl font-semibold text-gray-900">You've been invited</h1>
@@ -115,7 +115,7 @@ function accept() {
             <button
                 @click="accept"
                 :disabled="form.processing"
-                :class="['w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 transition', { 'opacity-50 cursor-not-allowed': form.processing }]"
+                :class="['w-full rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-violet-700 transition', { 'opacity-50 cursor-not-allowed': form.processing }]"
             >
                 Create Account &amp; Join
             </button>
@@ -126,7 +126,7 @@ function accept() {
             <button
                 @click="accept"
                 :disabled="form.processing"
-                :class="['w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 transition', { 'opacity-50 cursor-not-allowed': form.processing }]"
+                :class="['w-full rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-violet-700 transition', { 'opacity-50 cursor-not-allowed': form.processing }]"
             >
                 Accept &amp; Join {{ invitation.tenant_name }}
             </button>

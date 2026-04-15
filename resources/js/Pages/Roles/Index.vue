@@ -117,7 +117,7 @@ const isSystem = (role) => props.systemRoles.includes(role.name)
                 <h1 class="text-xl font-semibold text-gray-900">Roles & Permissions</h1>
                 <button
                     @click="openCreate"
-                    class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition"
+                    class="inline-flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 transition"
                 >
                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                     New Role
@@ -143,7 +143,7 @@ const isSystem = (role) => props.systemRoles.includes(role.name)
                             >system</span>
                             <span
                                 v-if="role.is_customized"
-                                class="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-medium"
+                                class="text-xs bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full font-medium"
                             >customized</span>
                         </div>
                         <p class="text-xs text-gray-400 mb-3">{{ rolePermCount(role) }}</p>
@@ -163,7 +163,7 @@ const isSystem = (role) => props.systemRoles.includes(role.name)
                         <button
                             @click="openEdit(role)"
                             :disabled="isSystem(role)"
-                            class="text-sm text-indigo-600 hover:text-indigo-800 disabled:opacity-30 disabled:cursor-not-allowed font-medium"
+                            class="text-sm text-violet-600 hover:text-violet-800 disabled:opacity-30 disabled:cursor-not-allowed font-medium"
                         >Edit</button>
                         <span class="text-gray-300">|</span>
                         <button
@@ -207,7 +207,7 @@ const isSystem = (role) => props.systemRoles.includes(role.name)
                                 v-model="form.name"
                                 type="text"
                                 placeholder="e.g. Accountant"
-                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
                             />
                             <p v-if="errors.name" class="mt-1 text-xs text-red-500">{{ errors.name }}</p>
                         </div>
@@ -218,7 +218,7 @@ const isSystem = (role) => props.systemRoles.includes(role.name)
                             <button
                                 type="button"
                                 @click="toggleAll"
-                                class="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+                                class="text-xs text-violet-600 hover:text-violet-800 font-medium"
                             >{{ allSelected ? 'Deselect all' : 'Select all' }}</button>
                         </div>
 
@@ -235,7 +235,7 @@ const isSystem = (role) => props.systemRoles.includes(role.name)
                                     :checked="groupSelected(group)"
                                     :indeterminate="groupPartial(group)"
                                     @change="toggleGroup(group)"
-                                    class="h-4 w-4 rounded border-gray-300 text-indigo-600"
+                                    class="h-4 w-4 rounded border-gray-300 text-violet-600"
                                 />
                                 <span class="text-sm font-semibold text-gray-700">{{ group.group }}</span>
                                 <span class="ml-auto text-xs text-gray-400">
@@ -248,13 +248,13 @@ const isSystem = (role) => props.systemRoles.includes(role.name)
                                 <label
                                     v-for="perm in group.permissions"
                                     :key="perm.id"
-                                    class="flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-indigo-50 transition"
+                                    class="flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-violet-50 transition"
                                 >
                                     <input
                                         type="checkbox"
                                         :value="perm.name"
                                         v-model="form.permissions"
-                                        class="h-4 w-4 rounded border-gray-300 text-indigo-600"
+                                        class="h-4 w-4 rounded border-gray-300 text-violet-600"
                                     />
                                     <span class="text-sm text-gray-600">{{ perm.name }}</span>
                                 </label>
@@ -270,7 +270,7 @@ const isSystem = (role) => props.systemRoles.includes(role.name)
                         >Cancel</button>
                         <button
                             @click="submit"
-                            class="rounded-lg px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition"
+                            class="rounded-lg px-4 py-2 text-sm font-medium text-white bg-violet-600 hover:bg-violet-700 transition"
                         >{{ editingRole ? 'Save changes' : 'Create role' }}</button>
                     </div>
                 </div>

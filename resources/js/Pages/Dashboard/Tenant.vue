@@ -16,7 +16,7 @@ const props = defineProps({
 const page = usePage()
 const can = (p) => props.permissions.includes(p)
 
-const avatarColors = ['bg-violet-500','bg-indigo-500','bg-sky-500','bg-teal-500','bg-emerald-500','bg-amber-500','bg-rose-500']
+const avatarColors = ['bg-violet-500','bg-violet-500','bg-sky-500','bg-teal-500','bg-emerald-500','bg-amber-500','bg-rose-500']
 const initials     = (name) => name.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase()
 const avatarColor  = (id)   => avatarColors[id % avatarColors.length]
 
@@ -95,7 +95,7 @@ const permLabel = (p) => p.split('.').slice(1).join('.')
                         <div class="bg-white rounded-2xl border border-gray-200 shadow-sm">
                             <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
                                 <h2 class="font-semibold text-gray-800">Recent Members</h2>
-                                <Link :href="route('team.index', { tenant: tenant.id })" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">View all →</Link>
+                                <Link :href="route('team.index', { tenant: tenant.id })" class="text-xs text-violet-600 hover:text-violet-800 font-medium">View all →</Link>
                             </div>
 
                             <div v-if="roleBreakdown && roleBreakdown.length" class="px-6 py-3 border-b border-gray-50 flex flex-wrap gap-2">
@@ -139,7 +139,7 @@ const permLabel = (p) => p.split('.').slice(1).join('.')
                                         <span
                                             v-for="p in group.active"
                                             :key="p"
-                                            class="text-xs px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-medium capitalize"
+                                            class="text-xs px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 font-medium capitalize"
                                         >{{ permLabel(p) }}</span>
                                     </div>
                                 </div>
@@ -161,7 +161,7 @@ const permLabel = (p) => p.split('.').slice(1).join('.')
                                     <span
                                         v-for="p in group.active"
                                         :key="p"
-                                        class="text-xs px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-medium capitalize"
+                                        class="text-xs px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 font-medium capitalize"
                                     >{{ permLabel(p) }}</span>
                                 </div>
                             </div>
@@ -174,7 +174,7 @@ const permLabel = (p) => p.split('.').slice(1).join('.')
                         <h2 class="font-semibold text-gray-800 px-1">Quick Actions</h2>
 
                         <Link v-if="can('members.view')" :href="route('team.index', { tenant: tenant.id })"
-                            class="flex items-center gap-3 bg-white rounded-xl border border-gray-200 px-4 py-3.5 hover:border-indigo-300 hover:shadow-sm transition group">
+                            class="flex items-center gap-3 bg-white rounded-xl border border-gray-200 px-4 py-3.5 hover:border-violet-300 hover:shadow-sm transition group">
                             <div class="h-8 w-8 rounded-lg bg-amber-50 flex items-center justify-center group-hover:bg-amber-100 transition shrink-0">
                                 <svg class="h-4 w-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                             </div>
@@ -185,7 +185,7 @@ const permLabel = (p) => p.split('.').slice(1).join('.')
                         </Link>
 
                         <Link v-if="can('clients.view')" :href="route('clients.index', { tenant: tenant.id })"
-                            class="flex items-center gap-3 bg-white rounded-xl border border-gray-200 px-4 py-3.5 hover:border-indigo-300 hover:shadow-sm transition group">
+                            class="flex items-center gap-3 bg-white rounded-xl border border-gray-200 px-4 py-3.5 hover:border-violet-300 hover:shadow-sm transition group">
                             <div class="h-8 w-8 rounded-lg bg-sky-50 flex items-center justify-center group-hover:bg-sky-100 transition shrink-0">
                                 <svg class="h-4 w-4 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
                             </div>
@@ -196,7 +196,7 @@ const permLabel = (p) => p.split('.').slice(1).join('.')
                         </Link>
 
                         <Link v-if="can('vendors.view')" :href="route('vendors.index', { tenant: tenant.id })"
-                            class="flex items-center gap-3 bg-white rounded-xl border border-gray-200 px-4 py-3.5 hover:border-indigo-300 hover:shadow-sm transition group">
+                            class="flex items-center gap-3 bg-white rounded-xl border border-gray-200 px-4 py-3.5 hover:border-violet-300 hover:shadow-sm transition group">
                             <div class="h-8 w-8 rounded-lg bg-emerald-50 flex items-center justify-center group-hover:bg-emerald-100 transition shrink-0">
                                 <svg class="h-4 w-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                             </div>
@@ -207,7 +207,7 @@ const permLabel = (p) => p.split('.').slice(1).join('.')
                         </Link>
 
                         <Link v-if="can('transactions.view')" :href="route('banking.index', { tenant: tenant.id })"
-                            class="flex items-center gap-3 bg-white rounded-xl border border-gray-200 px-4 py-3.5 hover:border-indigo-300 hover:shadow-sm transition group">
+                            class="flex items-center gap-3 bg-white rounded-xl border border-gray-200 px-4 py-3.5 hover:border-violet-300 hover:shadow-sm transition group">
                             <div class="h-8 w-8 rounded-lg bg-violet-50 flex items-center justify-center group-hover:bg-violet-100 transition shrink-0">
                                 <svg class="h-4 w-4 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
                             </div>
@@ -218,7 +218,7 @@ const permLabel = (p) => p.split('.').slice(1).join('.')
                         </Link>
 
                         <Link v-if="can('chat.view')" :href="route('chat.index', { tenant: tenant.id })"
-                            class="flex items-center gap-3 bg-white rounded-xl border border-gray-200 px-4 py-3.5 hover:border-indigo-300 hover:shadow-sm transition group">
+                            class="flex items-center gap-3 bg-white rounded-xl border border-gray-200 px-4 py-3.5 hover:border-violet-300 hover:shadow-sm transition group">
                             <div class="h-8 w-8 rounded-lg bg-rose-50 flex items-center justify-center group-hover:bg-rose-100 transition shrink-0">
                                 <svg class="h-4 w-4 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
                             </div>
@@ -229,9 +229,9 @@ const permLabel = (p) => p.split('.').slice(1).join('.')
                         </Link>
 
                         <Link v-if="can('members.assign_role')" :href="route('roles.index', { tenant: tenant.id })"
-                            class="flex items-center gap-3 bg-white rounded-xl border border-gray-200 px-4 py-3.5 hover:border-indigo-300 hover:shadow-sm transition group">
-                            <div class="h-8 w-8 rounded-lg bg-indigo-50 flex items-center justify-center group-hover:bg-indigo-100 transition shrink-0">
-                                <svg class="h-4 w-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                            class="flex items-center gap-3 bg-white rounded-xl border border-gray-200 px-4 py-3.5 hover:border-violet-300 hover:shadow-sm transition group">
+                            <div class="h-8 w-8 rounded-lg bg-violet-50 flex items-center justify-center group-hover:bg-violet-100 transition shrink-0">
+                                <svg class="h-4 w-4 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
                             </div>
                             <div>
                                 <p class="text-sm font-semibold text-gray-800">Roles & Permissions</p>
@@ -240,7 +240,7 @@ const permLabel = (p) => p.split('.').slice(1).join('.')
                         </Link>
 
                         <Link v-if="can('audit.view')" :href="route('dashboard', { tenant: tenant.id })"
-                            class="flex items-center gap-3 bg-white rounded-xl border border-gray-200 px-4 py-3.5 hover:border-indigo-300 hover:shadow-sm transition group">
+                            class="flex items-center gap-3 bg-white rounded-xl border border-gray-200 px-4 py-3.5 hover:border-violet-300 hover:shadow-sm transition group">
                             <div class="h-8 w-8 rounded-lg bg-slate-50 flex items-center justify-center group-hover:bg-slate-100 transition shrink-0">
                                 <svg class="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
                             </div>

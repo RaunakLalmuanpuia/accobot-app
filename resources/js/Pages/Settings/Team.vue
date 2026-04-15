@@ -20,7 +20,7 @@ function initials(name) {
 }
 
 const avatarColors = [
-    'bg-violet-500', 'bg-indigo-500', 'bg-sky-500',
+    'bg-violet-500', 'bg-violet-500', 'bg-sky-500',
     'bg-teal-500',   'bg-emerald-500','bg-amber-500',
     'bg-rose-500',   'bg-pink-500',
 ]
@@ -33,7 +33,7 @@ function avatarColor(id) {
 const roleBadgeClass = {
     admin:  'bg-red-100 text-red-700',
     owner:  'bg-amber-100 text-amber-700',
-    ca:     'bg-indigo-100 text-indigo-700',
+    ca:     'bg-violet-100 text-violet-700',
     user:   'bg-gray-100 text-gray-600',
 }
 
@@ -143,7 +143,7 @@ const canManage     = canInvite || canAssignRole || canRemove
                     </button>
                     <button
                         @click="showInviteModal = true"
-                        class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition"
+                        class="inline-flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 transition"
                     >
                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
@@ -188,7 +188,7 @@ const canManage     = canInvite || canAssignRole || canRemove
                                 <select
                                     :value="member.role?.id"
                                     @change="changeRole(member, $event.target.value)"
-                                    class="text-sm rounded-lg border border-gray-200 bg-white px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 capitalize"
+                                    class="text-sm rounded-lg border border-gray-200 bg-white px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-violet-500 capitalize"
                                 >
                                     <option value="" disabled>No role</option>
                                     <option v-for="role in roles" :key="role.id" :value="role.id">
@@ -269,7 +269,7 @@ const canManage     = canInvite || canAssignRole || canRemove
                                 @input="onEmailInput"
                                 type="email"
                                 placeholder="user@example.com"
-                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
                             />
                             <p v-if="emailExists === true" class="mt-1 text-xs text-emerald-600">✓ Existing account found — will be added directly.</p>
                             <p v-if="emailExists === false" class="mt-1 text-xs text-amber-600">No account found — a new account will be created.</p>
@@ -283,7 +283,7 @@ const canManage     = canInvite || canAssignRole || canRemove
                                     v-model="addForm.name"
                                     type="text"
                                     placeholder="Jane Smith"
-                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
                                 />
                                 <p v-if="addForm.errors.name" class="mt-1 text-xs text-red-500">{{ addForm.errors.name }}</p>
                             </div>
@@ -293,7 +293,7 @@ const canManage     = canInvite || canAssignRole || canRemove
                                     v-model="addForm.password"
                                     type="password"
                                     placeholder="Min. 8 characters"
-                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
                                 />
                                 <p v-if="addForm.errors.password" class="mt-1 text-xs text-red-500">{{ addForm.errors.password }}</p>
                             </div>
@@ -303,7 +303,7 @@ const canManage     = canInvite || canAssignRole || canRemove
                             <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
                             <select
                                 v-model="addForm.role_id"
-                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
                             >
                                 <option value="" disabled>Select a role</option>
                                 <option v-for="role in roles" :key="role.id" :value="role.id">{{ role.name }}</option>
@@ -320,7 +320,7 @@ const canManage     = canInvite || canAssignRole || canRemove
                         <button
                             @click="addMember"
                             :disabled="addForm.processing"
-                            :class="['rounded-lg px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition', { 'opacity-50 cursor-not-allowed': addForm.processing }]"
+                            :class="['rounded-lg px-4 py-2 text-sm font-medium text-white bg-violet-600 hover:bg-violet-700 transition', { 'opacity-50 cursor-not-allowed': addForm.processing }]"
                         >Add to Team</button>
                     </div>
                 </div>
@@ -346,7 +346,7 @@ const canManage     = canInvite || canAssignRole || canRemove
                                 v-model="inviteForm.email"
                                 type="email"
                                 placeholder="colleague@example.com"
-                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
                             />
                             <p v-if="inviteForm.errors.email" class="mt-1 text-xs text-red-500">{{ inviteForm.errors.email }}</p>
                         </div>
@@ -355,7 +355,7 @@ const canManage     = canInvite || canAssignRole || canRemove
                             <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
                             <select
                                 v-model="inviteForm.role_id"
-                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 capitalize"
+                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 capitalize"
                             >
                                 <option value="" disabled>Select a role</option>
                                 <option v-for="role in roles" :key="role.id" :value="role.id">
@@ -374,7 +374,7 @@ const canManage     = canInvite || canAssignRole || canRemove
                         <button
                             @click="sendInvite"
                             :disabled="inviteForm.processing"
-                            :class="['rounded-lg px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition', { 'opacity-50 cursor-not-allowed': inviteForm.processing }]"
+                            :class="['rounded-lg px-4 py-2 text-sm font-medium text-white bg-violet-600 hover:bg-violet-700 transition', { 'opacity-50 cursor-not-allowed': inviteForm.processing }]"
                         >Send Invite</button>
                     </div>
                 </div>

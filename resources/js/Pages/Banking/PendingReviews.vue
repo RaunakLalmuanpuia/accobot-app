@@ -98,7 +98,7 @@ const goToPage = (url) => {
                 <button
                     v-if="canImport"
                     @click="showIngestion = !showIngestion"
-                    class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition-colors"
+                    class="inline-flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 transition-colors"
                 >
                     <Upload :size="16" />
                     Import
@@ -135,7 +135,7 @@ const goToPage = (url) => {
                             :class="[
                                 'flex items-center gap-2 px-5 py-3 text-sm font-medium transition-colors',
                                 activeTab === tab.id
-                                    ? 'border-b-2 border-indigo-600 text-indigo-600'
+                                    ? 'border-b-2 border-violet-600 text-violet-600'
                                     : 'text-gray-500 hover:text-gray-700'
                             ]"
                         >
@@ -153,7 +153,7 @@ const goToPage = (url) => {
                                     v-model="smsForm.raw_sms"
                                     rows="4"
                                     placeholder="Paste your bank SMS alert here…&#10;e.g. INR 5,000.00 debited from A/c XX1234 on 14-Apr-2026. UPI Ref 123456789. Avl Bal INR 22,500.00"
-                                    class="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    class="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-violet-500"
                                 ></textarea>
                                 <p v-if="smsForm.errors.raw_sms" class="mt-1 text-xs text-red-500">{{ smsForm.errors.raw_sms }}</p>
                             </div>
@@ -163,14 +163,14 @@ const goToPage = (url) => {
                                     v-model="smsForm.bank_account_name"
                                     type="text"
                                     placeholder="e.g. HDFC Current Account"
-                                    class="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    class="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
                                 />
                             </div>
                             <div class="flex justify-end">
                                 <button
                                     type="submit"
                                     :disabled="smsForm.processing || !smsForm.raw_sms.trim()"
-                                    class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                                    class="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-2 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-50 transition-colors"
                                 >
                                     <RefreshCw v-if="smsForm.processing" :size="15" class="animate-spin" />
                                     {{ smsForm.processing ? 'Processing…' : 'Parse & Import' }}
@@ -186,7 +186,7 @@ const goToPage = (url) => {
                                     v-model="emailForm.email_subject"
                                     type="text"
                                     placeholder="Transaction Alert — HDFC Bank"
-                                    class="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    class="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
                                 />
                             </div>
                             <div>
@@ -195,7 +195,7 @@ const goToPage = (url) => {
                                     v-model="emailForm.email_body"
                                     rows="5"
                                     placeholder="Paste the email body here…"
-                                    class="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    class="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-violet-500"
                                 ></textarea>
                                 <p v-if="emailForm.errors.email_body" class="mt-1 text-xs text-red-500">{{ emailForm.errors.email_body }}</p>
                             </div>
@@ -205,14 +205,14 @@ const goToPage = (url) => {
                                     v-model="emailForm.bank_account_name"
                                     type="text"
                                     placeholder="e.g. ICICI Business Account"
-                                    class="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    class="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
                                 />
                             </div>
                             <div class="flex justify-end">
                                 <button
                                     type="submit"
                                     :disabled="emailForm.processing || !emailForm.email_body.trim()"
-                                    class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                                    class="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-2 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-50 transition-colors"
                                 >
                                     <RefreshCw v-if="emailForm.processing" :size="15" class="animate-spin" />
                                     {{ emailForm.processing ? 'Processing…' : 'Parse & Import' }}
@@ -225,7 +225,7 @@ const goToPage = (url) => {
                             <div>
                                 <label class="block text-xs font-medium text-gray-600 mb-1">Statement File * <span class="text-gray-400 font-normal">(PDF, CSV, XLSX, XLS, JPG, PNG · max 20 MB)</span></label>
                                 <div
-                                    class="relative rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 hover:border-indigo-300 hover:bg-indigo-50/30 transition-colors cursor-pointer"
+                                    class="relative rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 hover:border-violet-300 hover:bg-violet-50/30 transition-colors cursor-pointer"
                                     @click="fileInput?.click()"
                                 >
                                     <input
@@ -253,7 +253,7 @@ const goToPage = (url) => {
                                     v-model="fileForm.bank_account_name"
                                     type="text"
                                     placeholder="e.g. SBI Savings Account"
-                                    class="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    class="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
                                 />
                             </div>
 
@@ -261,7 +261,7 @@ const goToPage = (url) => {
                                 <button
                                     type="submit"
                                     :disabled="fileForm.processing || !fileForm.statement"
-                                    class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                                    class="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-2 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-50 transition-colors"
                                 >
                                     <RefreshCw v-if="fileForm.processing" :size="15" class="animate-spin" />
                                     {{ fileForm.processing ? 'Uploading…' : 'Upload & Parse' }}
@@ -282,13 +282,13 @@ const goToPage = (url) => {
                             <p class="text-xl font-bold text-gray-800">{{ transactions.data.length }}</p>
                         </div>
                     </div>
-                    <div class="bg-white rounded-2xl shadow-sm border border-indigo-100 px-5 py-4 flex items-center gap-3">
-                        <div class="w-9 h-9 rounded-full bg-indigo-50 flex items-center justify-center">
-                            <AlertCircle :size="18" class="text-indigo-500" />
+                    <div class="bg-white rounded-2xl shadow-sm border border-violet-100 px-5 py-4 flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-full bg-violet-50 flex items-center justify-center">
+                            <AlertCircle :size="18" class="text-violet-500" />
                         </div>
                         <div>
-                            <p class="text-xs text-indigo-400 font-medium uppercase tracking-wide">Pending</p>
-                            <p class="text-xl font-bold text-indigo-700">{{ pendingCount }}</p>
+                            <p class="text-xs text-violet-400 font-medium uppercase tracking-wide">Pending</p>
+                            <p class="text-xl font-bold text-violet-700">{{ pendingCount }}</p>
                         </div>
                     </div>
                     <div class="bg-white rounded-2xl shadow-sm border border-emerald-100 px-5 py-4 flex items-center gap-3">
@@ -323,7 +323,7 @@ const goToPage = (url) => {
                     <button
                         v-if="canImport"
                         @click="showIngestion = true"
-                        class="mt-2 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors"
+                        class="mt-2 inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-2 text-sm font-semibold text-white hover:bg-violet-700 transition-colors"
                     >
                         <Upload :size="15" /> Import Transactions
                     </button>
