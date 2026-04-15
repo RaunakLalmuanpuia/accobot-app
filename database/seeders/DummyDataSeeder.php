@@ -29,6 +29,7 @@ class DummyDataSeeder extends Seeder
         $raunak = $this->user('Raunak', 'raunak@example.com');
         $dennis = $this->user('Dennis', 'dennis@example.com');
         $madini = $this->user('Madini', 'madini@example.com');
+        $piyush = $this->user('Piyush', 'piyush@example.com');
         $ca1    = $this->user('CA1',    'ca1@example.com');
         $ca2    = $this->user('CA2',    'ca2@example.com');
 
@@ -50,6 +51,7 @@ class DummyDataSeeder extends Seeder
         $raunak->update(['last_tenant_id' => $eightsis->id]);
         $dennis->update(['last_tenant_id' => $tili->id]);
         $madini->update(['last_tenant_id' => $awab->id]);
+        $piyush->update(['last_tenant_id' => $tili->id]);
         $ca1->update(['last_tenant_id' => $alphaCA->id]);
         $ca2->update(['last_tenant_id' => $betaCA->id]);
 
@@ -61,9 +63,13 @@ class DummyDataSeeder extends Seeder
         // ─── Zoa — owner of Eightsis ──────────────────────────────────
         $this->assign($zoa, $eightsis, $r['owner']);
 
-        // ─── Zira — TenantAdmin of Tili and Awab ─────────────────────
+        // ─── Zira — TenantAdmin of Tili, Staff of Awab ───────────────
         $this->assign($zira, $tili, $r['TenantAdmin']);
-        $this->assign($zira, $awab, $r['TenantAdmin']);
+        $this->assign($zira, $awab, $r['Staff']);
+
+        // ─── Piyush — TenantAdmin of Tili and Awab ───────────────────
+        $this->assign($piyush, $tili, $r['TenantAdmin']);
+        $this->assign($piyush, $awab, $r['TenantAdmin']);
 
         // ─── Dini — Manager of Tili, Awab, Eightsis ──────────────────
         $this->assign($dini, $tili,     $r['Manager']);
