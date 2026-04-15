@@ -46,6 +46,82 @@ php artisan migrate:fresh --seed
 
 ---
 
+## Deployment (Digital Ocean)
+
+The app is hosted on a Digital Ocean Droplet. The queue driver is `database` — jobs are stored in the `jobs` table and processed by a persistent worker managed by **Supervisor**.
+
+### Queue Setup (one-time)
+
+**1. Install Supervisor**
+```bash
+sudo apt install supervisor -y
+```
+
+**2. Create the worker config**
+```bash
+sudo nano /etc/supervisor/conf.d/accobot-worker.conf
+```
+
+```ini
+[program:accobot-worker]
+process_name=%(program_name)s_%(process_num)02d
+command=php /var/www/accobot-app/artisan queue:work --sleep=3 --tries=3 --max-time=3600
+autostart=true
+autorestart=true
+stopasgroup=true
+killasgroup=true
+user=www-data
+numprocs=2
+redirect_stderr=true
+stdout_logfile=/var/www/accobot-app/storage/logs/worker.log
+stopwaitsecs=3600
+```
+
+> Adjust `/var/www/accobot-app` to your actual project path and `user=www-data` to the user that owns the app files.
+
+**3. Start the worker**
+```bash
+sudo supervisorctl reread
+sudo supervisorctl update
+sudo supervisorctl start accobot-worker:*
+```
+
+**4. Verify it is running**
+```bash
+sudo supervisorctl status
+```
+
+### After Every Deploy
+
+Supervisor keeps the old worker process alive in memory. Restart it after each deploy so it picks up new job classes:
+```bash
+sudo supervisorctl restart accobot-worker:*
+```
+
+### Monitoring & Debugging
+
+```bash
+# Live worker log
+tail -f /var/www/accobot-app/storage/logs/worker.log
+
+# List failed jobs
+php artisan queue:failed
+
+# Retry all failed jobs
+php artisan queue:retry all
+
+# Flush failed jobs table
+php artisan queue:flush
+```
+
+### What Uses the Queue
+
+| Job | Trigger | Purpose |
+|---|---|---|
+| `GenerateEmbeddingJob` | Client / Product / Vendor created or updated | Generates pgvector embedding via `text-embedding-3-small` |
+
+---
+
 ## Architecture Overview
 
 ```
