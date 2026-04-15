@@ -16,7 +16,7 @@ Accobot is a multi-tenant accounting platform for Indian CA firms and businesses
 | Database | PostgreSQL |
 | Auth (web) | Laravel Breeze + Spatie Laravel Permission v7 |
 | Auth (mobile/API) | Laravel Sanctum (Personal Access Tokens) |
-| AI | `laravel/ai` v0.5 — OpenAI provider |
+| AI | `laravel/ai` v0.5 — OpenAI provider (`gpt-4o`, `gpt-4o-mini`, `gpt-4.1-mini`, `text-embedding-3-small`) |
 | PDF | barryvdh/laravel-dompdf |
 | Spreadsheets | phpoffice/phpspreadsheet |
 | Testing | PestPHP 4.4 |
@@ -199,7 +199,8 @@ When a transaction is not yet reconciled, `InvoiceMatchingService` scores open i
 - `app/Services/Banking/NarrationAiService.php` — Tier 2 AI suggestion
 - `app/Services/Banking/InvoiceMatchingService.php` — invoice reconciliation candidates
 - `app/Actions/Banking/` — ReviewNarrationAction, IngestSmsTransactionAction, IngestEmailTransactionAction, ProcessStatementAction
-- `app/Agents/Narration/` — SmsParserAgent, EmailParserAgent, StatementDocumentParserAgent, NarrationSuggestionAgent
+- `app/Agents/Narration/` — SmsParserAgent (`gpt-4o-mini`), EmailParserAgent (`gpt-4o-mini`), StatementDocumentParserAgent (`gpt-4.1-mini`), NarrationSuggestionAgent (`gpt-4o-mini`)
+- `app/Services/EmbeddingService.php` — vector embeddings via `text-embedding-3-small` (1536 dims, stored in pgvector)
 - `app/Http/Controllers/BankTransactionController.php`
 - `app/Http/Controllers/NarrationReviewController.php`
 
@@ -209,7 +210,7 @@ When a transaction is not yet reconciled, `InvoiceMatchingService` scores open i
 
 A conversational AI agent powered by `laravel/ai` (OpenAI). Available on web (SSE stream) and mobile API.
 
-**Agent:** `AccountingAgent` — max 20 steps, 120s timeout
+**Agent:** `AccountingAgent` — model `gpt-4o`, max 20 steps, 120s timeout
 
 **8 tools available to the agent:**
 

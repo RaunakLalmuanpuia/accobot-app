@@ -13,7 +13,7 @@ use Laravel\Ai\Promptable;
 use Stringable;
 
 #[Provider(Lab::OpenAI)]
-#[Model('gpt-4o')]
+#[Model('gpt-4o-mini')]
 #[Temperature(0.1)]
 class EmailParserAgent implements Agent, HasStructuredOutput
 {

@@ -11,7 +11,7 @@ use Laravel\Ai\Promptable;
 use Stringable;
 
 #[Provider(Lab::OpenAI)]
-#[Model('gpt-4o')]
+#[Model('gpt-4.1-mini')]
 #[Temperature(0.0)]
 class StatementDocumentParserAgent implements Agent
 {
