@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Jobs\GenerateEmbeddingJob;
 use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -17,6 +18,12 @@ class Product extends Model
         'category', 'sub_category', 'main_group', 'sub_group',
         'is_active', 'embedding',
     ];
+
+    protected static function booted(): void
+    {
+        static::created(fn (self $m) => GenerateEmbeddingJob::dispatch(self::class, $m->id));
+        static::updated(fn (self $m) => GenerateEmbeddingJob::dispatch(self::class, $m->id));
+    }
 
     protected $casts = [
         'unit_price'     => 'decimal:2',

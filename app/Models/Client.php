@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Jobs\GenerateEmbeddingJob;
 use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -19,6 +20,12 @@ class Client extends Model
     protected $casts = [
         'embedding' => 'array',
     ];
+
+    protected static function booted(): void
+    {
+        static::created(fn (self $m) => GenerateEmbeddingJob::dispatch(self::class, $m->id));
+        static::updated(fn (self $m) => GenerateEmbeddingJob::dispatch(self::class, $m->id));
+    }
 
     public function tenant(): BelongsTo
     {
