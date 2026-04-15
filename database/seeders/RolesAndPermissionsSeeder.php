@@ -54,6 +54,12 @@ class RolesAndPermissionsSeeder extends Seeder
             'products.edit',
             'products.delete',
 
+            // Narration Heads & Sub-heads
+            'narration_heads.view',
+            'narration_heads.create',
+            'narration_heads.edit',
+            'narration_heads.delete',
+
             // Accounting
             'invoices.view',
             'invoices.create',
@@ -109,7 +115,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'clients.view_requests',
             'clients.view',   'clients.create',   'clients.edit',   'clients.delete',
             'vendors.view',   'vendors.create',   'vendors.edit',   'vendors.delete',
-            'products.view',  'products.create',  'products.edit',  'products.delete',
+            'products.view',         'products.create',         'products.edit',         'products.delete',
+            'narration_heads.view',  'narration_heads.create',  'narration_heads.edit',  'narration_heads.delete',
             'invoices.view',  'invoices.create',  'invoices.edit',  'invoices.delete',
             'reports.view',   'reports.export',
             'integrations.view', 'integrations.manage',
@@ -123,7 +130,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'members.view',
             'clients.view',   'clients.create',   'clients.edit',
             'vendors.view',   'vendors.create',   'vendors.edit',
-            'products.view',  'products.create',  'products.edit',
+            'products.view',        'products.create',        'products.edit',
+            'narration_heads.view', 'narration_heads.create', 'narration_heads.edit',
             'invoices.view',  'invoices.create',  'invoices.edit',
             'reports.view',   'reports.export',
             'integrations.view',
@@ -135,7 +143,8 @@ class RolesAndPermissionsSeeder extends Seeder
         $staff->syncPermissions([
             'clients.view',  'clients.create',
             'vendors.view',  'vendors.create',
-            'products.view', 'products.create',
+            'products.view',        'products.create',
+            'narration_heads.view', 'narration_heads.create',
             'invoices.view', 'invoices.create', 'invoices.edit',
             'reports.view',
             'transactions.view', 'transactions.review',
@@ -146,6 +155,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'clients.view',
             'vendors.view',
             'products.view',
+            'narration_heads.view',
             'invoices.view',
             'reports.view',
             'transactions.view',
@@ -159,6 +169,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'clients.view',
             'vendors.view',
             'products.view',
+            'narration_heads.view',
             'invoices.view',
             'reports.view',
             'reports.export',
@@ -179,6 +190,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'clients.view',
             'vendors.view',
             'products.view',
+            'narration_heads.view',
             'reports.view',   'reports.export',
             'integrations.view', 'integrations.manage',
             'audit.view',
@@ -190,6 +202,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'clients.view',
             'vendors.view',
             'products.view',
+            'narration_heads.view',
             'reports.view',
             'reports.export',
         ]);
@@ -199,6 +212,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'clients.view',
             'vendors.view',
             'products.view',
+            'narration_heads.view',
             'invoices.view',
             'reports.view',
             'reports.export',
@@ -209,6 +223,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'clients.view',
             'vendors.view',
             'products.view',
+            'narration_heads.view',
             'reports.view',
         ]);
 
@@ -217,6 +232,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'clients.view',
             'vendors.view',
             'products.view',
+            'narration_heads.view',
             'invoices.view',
             'invoices.create',
             'reports.view',

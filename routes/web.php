@@ -9,6 +9,7 @@ use App\Http\Controllers\EmailIngestController;
 use App\Http\Controllers\ImpersonationController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\NarrationHeadController;
 use App\Http\Controllers\NarrationReviewController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoleController;
@@ -90,6 +91,15 @@ Route::middleware(['auth', 'verified', 'member'])
         Route::post('/products', [ProductController::class, 'store'])->name('products.store')->middleware('tenant.permission:products.create');
         Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update')->middleware('tenant.permission:products.edit');
         Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy')->middleware(['tenant.permission:products.delete', 'no.impersonate']);
+
+        Route::get('/narration-heads', [NarrationHeadController::class, 'index'])->name('narration-heads.index')->middleware('tenant.permission:narration_heads.view');
+        Route::post('/narration-heads', [NarrationHeadController::class, 'store'])->name('narration-heads.store')->middleware('tenant.permission:narration_heads.create');
+        Route::put('/narration-heads/{narration_head}', [NarrationHeadController::class, 'update'])->name('narration-heads.update')->middleware('tenant.permission:narration_heads.edit');
+        Route::delete('/narration-heads/{narration_head}', [NarrationHeadController::class, 'destroy'])->name('narration-heads.destroy')->middleware(['tenant.permission:narration_heads.delete', 'no.impersonate']);
+
+        Route::post('/narration-heads/{narration_head}/sub-heads', [NarrationHeadController::class, 'storeSubHead'])->name('narration-heads.sub-heads.store')->middleware('tenant.permission:narration_heads.create');
+        Route::put('/narration-heads/{narration_head}/sub-heads/{narration_sub_head}', [NarrationHeadController::class, 'updateSubHead'])->name('narration-heads.sub-heads.update')->middleware('tenant.permission:narration_heads.edit');
+        Route::delete('/narration-heads/{narration_head}/sub-heads/{narration_sub_head}', [NarrationHeadController::class, 'destroySubHead'])->name('narration-heads.sub-heads.destroy')->middleware(['tenant.permission:narration_heads.delete', 'no.impersonate']);
 
         // ── Accounting Assistant (Chat) ────────────────────────────────
         Route::get('/chat', [ChatController::class, 'index'])->name('chat.index')->middleware('tenant.permission:chat.view');

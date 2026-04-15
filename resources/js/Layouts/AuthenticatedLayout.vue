@@ -157,7 +157,7 @@ function stopImpersonation() {
                                         >Roles</NavLink>
                                     </template>
 
-                                    <template v-if="hasPermission('clients.view') || hasPermission('vendors.view') || hasPermission('products.view')">
+                                    <template v-if="hasPermission('clients.view') || hasPermission('vendors.view') || hasPermission('products.view') || hasPermission('narration_heads.view')">
                                         <span class="self-center h-5 w-px bg-gray-200"></span>
 
                                         <div class="relative flex items-center" data-dropdown>
@@ -193,6 +193,12 @@ function stopImpersonation() {
                                                     class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition"
                                                     @click="showMasterDropdown = false"
                                                 >Inventory</Link>
+                                                <Link
+                                                    v-if="hasPermission('narration_heads.view')"
+                                                    :href="route('narration-heads.index', { tenant: currentTenantId() })"
+                                                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition"
+                                                    @click="showMasterDropdown = false"
+                                                >Narration Heads</Link>
                                             </div>
                                         </div>
                                     </template>
