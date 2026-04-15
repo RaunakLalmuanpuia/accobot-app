@@ -46,6 +46,11 @@ class Tenant extends Model
         return $this->hasMany(Product::class);
     }
 
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class);
+    }
+
     public function narrationHeads(): HasMany
     {
         return $this->hasMany(NarrationHead::class);

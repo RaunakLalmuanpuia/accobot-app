@@ -105,7 +105,13 @@ Route::middleware(['auth', 'verified', 'member'])
         Route::get('/chat', [ChatController::class, 'index'])->name('chat.index')->middleware('tenant.permission:chat.view');
         Route::post('/chat', [ChatController::class, 'chat'])->name('chat.store')->middleware('tenant.permission:chat.view');
 
-        // ── Invoice PDF download ───────────────────────────────────────
+        // ── Invoices ───────────────────────────────────────────────────
+        Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index')->middleware('tenant.permission:invoices.view');
+        Route::get('/invoices/create', [InvoiceController::class, 'create'])->name('invoices.create')->middleware('tenant.permission:invoices.create');
+        Route::post('/invoices', [InvoiceController::class, 'store'])->name('invoices.store')->middleware('tenant.permission:invoices.create');
+        Route::get('/invoices/{invoice}/edit', [InvoiceController::class, 'edit'])->name('invoices.edit')->middleware('tenant.permission:invoices.edit');
+        Route::put('/invoices/{invoice}', [InvoiceController::class, 'update'])->name('invoices.update')->middleware('tenant.permission:invoices.edit');
+        Route::delete('/invoices/{invoice}', [InvoiceController::class, 'destroy'])->name('invoices.destroy')->middleware(['tenant.permission:invoices.delete', 'no.impersonate']);
         Route::get('/invoices/{invoice}/download', [InvoiceController::class, 'download'])->name('invoices.download');
 
         // ── Banking / Narration ────────────────────────────────────────
