@@ -111,23 +111,31 @@ function stopImpersonation() {
                                         class="absolute left-0 top-full mt-2 w-56 rounded-xl border border-gray-200 bg-white shadow-lg z-50 overflow-hidden"
                                     >
                                         <div class="px-3 py-2 border-b border-gray-100">
-                                            <p class="text-xs font-semibold uppercase tracking-wide text-gray-400">Your Tenants</p>
+                                            <p class="text-xs font-semibold uppercase tracking-wide text-gray-400">Your Companies</p>
                                         </div>
                                         <div class="py-1">
-                                            <button
-                                                v-for="t in page.props.auth.tenants"
-                                                :key="t.id"
-                                                @click="switchTenant(t.id)"
-                                                class="flex w-full items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition"
-                                            >
-                                                <span
-                                                    :class="['h-2 w-2 rounded-full shrink-0', t.id === page.props.auth.current_tenant_id ? 'bg-emerald-400' : 'bg-transparent border border-gray-300']"
-                                                ></span>
-                                                <span class="truncate">{{ t.name }}</span>
-                                                <svg v-if="t.id === page.props.auth.current_tenant_id" class="ml-auto h-4 w-4 text-indigo-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                                </svg>
-                                            </button>
+                                            <template v-for="(t, index) in page.props.auth.tenants" :key="t.id">
+                                                <!-- Divider between own company and client companies -->
+                                                <div
+                                                    v-if="index > 0 && !t.is_personal && page.props.auth.tenants[index - 1].is_personal"
+                                                    class="mx-3 my-1 border-t border-gray-100"
+                                                >
+                                                    <p class="pt-1 text-[10px] font-semibold uppercase tracking-wide text-gray-400">Clients</p>
+                                                </div>
+                                                <button
+                                                    @click="switchTenant(t.id)"
+                                                    class="flex w-full items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition"
+                                                >
+                                                    <span
+                                                        :class="['h-2 w-2 rounded-full shrink-0', t.id === page.props.auth.current_tenant_id ? 'bg-emerald-400' : 'bg-transparent border border-gray-300']"
+                                                    ></span>
+                                                    <span class="truncate flex-1 text-left">{{ t.name }}</span>
+                                                    <span v-if="t.is_personal" class="shrink-0 rounded-full bg-indigo-50 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-600 leading-none">Mine</span>
+                                                    <svg v-if="t.id === page.props.auth.current_tenant_id" class="ml-auto h-4 w-4 text-indigo-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                                    </svg>
+                                                </button>
+                                            </template>
                                         </div>
                                     </div>
                                 </div>

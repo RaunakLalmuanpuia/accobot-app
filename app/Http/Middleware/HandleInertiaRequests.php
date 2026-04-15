@@ -37,9 +37,13 @@ class HandleInertiaRequests extends Middleware
                 // Impersonation banner data
                 'impersonating' => session()->has('impersonator_id'),
 
-                // All tenants the user belongs to (for the switcher)
+                // All tenants the user belongs to (for the switcher).
+                // Personal tenant (own company) is sorted first.
                 'tenants' => $user && ! $user->hasRole('admin')
-                    ? $user->tenants()->select('tenants.id', 'tenants.name', 'tenants.type')->get()
+                    ? $user->tenants()
+                        ->select('tenants.id', 'tenants.name', 'tenants.type', 'tenants.is_personal')
+                        ->orderByDesc('tenants.is_personal')
+                        ->get()
                     : [],
 
                 // Current tenant comes from the URL, not session
