@@ -16,7 +16,7 @@ Accobot is a multi-tenant accounting platform for Indian CA firms and businesses
 | Database | PostgreSQL |
 | Auth (web) | Laravel Breeze + Spatie Laravel Permission v7 |
 | Auth (mobile/API) | Laravel Sanctum (Personal Access Tokens) |
-| AI | `laravel/ai` v0.5 — OpenAI provider (`gpt-4o`, `gpt-4o-mini`, `gpt-4.1-mini`, `text-embedding-3-small`) |
+| AI | `laravel/ai` v0.5 — OpenAI provider (`gpt-4o`, `gpt-4o-mini`, `gpt-4.1-mini`, `text-embedding-3-small`). All calls logged to `ai_usage_logs` with token counts + computed USD cost. |
 | PDF | barryvdh/laravel-dompdf |
 | Spreadsheets | phpoffice/phpspreadsheet |
 | Testing | PestPHP 4.4 |
@@ -313,6 +313,7 @@ A conversational AI agent powered by `laravel/ai` (OpenAI). Available on web (SS
 - `app/Tools/` — 8 tool files
 - `app/Http/Controllers/ChatController.php` — web SSE
 - `app/Http/Controllers/Api/TenantChatController.php` — mobile SSE
+- `app/Models/AiUsageLog.php` — logs every AI call (tokens, cost, tenant, agent, model)
 
 ---
 
@@ -340,12 +341,15 @@ Platform admins (`role:admin`) access `/dashboard` (no tenant prefix). They can:
 - View platform-wide stats (tenants, businesses, CA firms, suspended, pending, users, roles)
 - Browse all tenants with their status and member count
 - Impersonate any user via the Recent Users list
+- Monitor AI token usage and costs across all tenants (`/admin/ai-usage`)
 
 Admin visiting a tenant (`/t/{tenant}/...`) sees the full tenant nav identical to a tenant user.
 
 **Key files:**
 - `app/Http/Controllers/DashboardController.php`
+- `app/Http/Controllers/Admin/AiUsageController.php`
 - `resources/js/Pages/Dashboard/Admin.vue`
+- `resources/js/Pages/Admin/AiUsage.vue`
 
 ---
 
@@ -357,7 +361,7 @@ Admin visiting a tenant (`/t/{tenant}/...`) sees the full tenant nav identical t
 |---|---|---|
 | Public | `/` | — |
 | Guest auth | `/login`, `/register` | `guest` |
-| Admin | `/dashboard`, `/admin/...` | `auth + role:admin` |
+| Admin | `/dashboard`, `/admin/ai-usage` | `auth + role:admin` |
 | Tenant | `/t/{tenant}/...` | `auth + verified + member` |
 | Invitations (token) | `/invite/{token}/...` | `throttle:20,1` |
 | Profile | `/profile` | `auth` |
@@ -386,7 +390,9 @@ See [`api-mobile.md`](api-mobile.md) for the full mobile API reference.
 | Source priority on dedup | A statement (official) silently upgrades an SMS (noisy) for the same transaction — no duplicate noise |
 | Per-tenant permission overrides | A CA firm needs different defaults than a business without forking the role definition |
 | SSE for chat | Streaming response — user sees the agent reply token-by-token without waiting |
-| `is_personal` on Tenant | CA's own firm is always sorted to the top of the tenant switcher and labelled "Mine" |
+| `is_personal` on Tenant | CA's own firm dot is green in the tenant switcher; client tenants are orange |
+| `AiUsageLog.safeCreate()` | DB failures never propagate back to the AI response — logging is best-effort |
+| Prefix-based model pricing | API returns versioned names (`gpt-5.4-2026-03-05`); longest-prefix match picks the right price row |
 
 ---
 
@@ -398,9 +404,11 @@ app/
 ├── Agents/                   ← AccountingAgent + 4 narration parser agents
 ├── Http/
 │   ├── Controllers/          ← web controllers
+│   ├── Controllers/Admin/    ← AiUsageController (platform admin only)
 │   ├── Controllers/Api/      ← mobile API controllers
 │   └── Middleware/           ← EnsureBelongsToTenant, TenantPermission, BlockImpersonationDestructive
 ├── Models/
+│   ├── AiUsageLog.php        ← logs all AI calls; PRICING table + cost computation
 │   └── Concerns/BelongsToTenant.php
 ├── Services/Banking/         ← NarrationPipelineService, RuleEngine, AiService, InvoiceMatchingService
 └── Tools/                    ← 8 AI agent tools

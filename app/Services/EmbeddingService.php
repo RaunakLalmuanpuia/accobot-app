@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\AiUsageLog;
 use Illuminate\Support\Facades\Log;
 use Laravel\Ai\Embeddings;
 
@@ -21,7 +22,7 @@ class EmbeddingService
      * @param  array<string>        $texts
      * @return array<array<float>>
      */
-    public function embedMany(array $texts): array
+    public function embedMany(array $texts, ?string $tenantId = null): array
     {
         // Truncate long texts to stay within token limits
         $texts = array_map(fn ($text) => mb_substr($text, 0, 8000), $texts);
@@ -35,6 +36,12 @@ class EmbeddingService
             ->dimensions($this->dimensions)
             ->generate(provider: 'openai');
 
+        AiUsageLog::fromEmbeddingResponse(
+            response:  $response,
+            batchSize: count($texts),
+            tenantId:  $tenantId,
+        );
+
         return $response->embeddings;
     }
 
@@ -43,9 +50,9 @@ class EmbeddingService
      *
      * @return array<float>
      */
-    public function embed(string $text): array
+    public function embed(string $text, ?string $tenantId = null): array
     {
-        return $this->embedMany([$text])[0];
+        return $this->embedMany([$text], $tenantId)[0];
     }
 
     /**
@@ -53,8 +60,8 @@ class EmbeddingService
      *
      * @return array<float>
      */
-    public function embedQuery(string $query): array
+    public function embedQuery(string $query, ?string $tenantId = null): array
     {
-        return $this->embed($query);
+        return $this->embed($query, $tenantId);
     }
 }

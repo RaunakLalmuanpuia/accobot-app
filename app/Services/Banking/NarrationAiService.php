@@ -4,6 +4,7 @@ namespace App\Services\Banking;
 
 use App\Agents\Narration\NarrationSuggestionAgent;
 use App\DTOs\Banking\NarrationSuggestionDTO;
+use App\Models\AiUsageLog;
 use App\Models\NarrationHead;
 
 class NarrationAiService
@@ -36,7 +37,24 @@ class NarrationAiService
         Categorize this transaction using only the heads and sub-heads listed above.
         PROMPT;
 
-        $response = NarrationSuggestionAgent::make()->prompt($prompt);
+        try {
+            $response = NarrationSuggestionAgent::make()->prompt($prompt);
+        } catch (\Throwable $e) {
+            AiUsageLog::fromError(
+                e:        $e,
+                agent:    'NarrationSuggestionAgent',
+                callType: 'structured',
+                tenantId: $tenantId,
+            );
+            throw $e;
+        }
+
+        AiUsageLog::fromAgentResponse(
+            response: $response,
+            agent:    'NarrationSuggestionAgent',
+            callType: 'structured',
+            tenantId: $tenantId,
+        );
 
         [$headId, $subHeadId] = $this->resolveIds(
             $response['narration_head_name'] ?? '',

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Agents\AccountingAgent;
 use App\Http\Controllers\Controller;
+use App\Models\AiUsageLog;
 use App\Models\Tenant;
 use App\Tools\CreateInvoiceTool;
 use App\Tools\GetInvoiceTool;
@@ -71,6 +72,16 @@ class TenantChatController extends Controller
                 $agent    = AccountingAgent::make();
                 $response = $agent->prompt($prompt, provider: 'openai');
 
+                AiUsageLog::fromAgentResponse(
+                    response:  $response,
+                    agent:     'AccountingAgent',
+                    callType:  'chat',
+                    tenantId:  $tenant->id,
+                    userId:    auth()->id(),
+                    toolSteps: $response->steps->count(),
+                    context:   ['history_turns' => count($history), 'channel' => 'api'],
+                );
+
                 $payload = [
                     'type'            => 'reply',
                     'reply'           => (string) $response,
@@ -90,6 +101,15 @@ class TenantChatController extends Controller
                     'tenant' => $tenant->id,
                     'error'  => $e->getMessage(),
                 ]);
+
+                AiUsageLog::fromError(
+                    e:        $e,
+                    agent:    'AccountingAgent',
+                    callType: 'chat',
+                    tenantId: $tenant->id,
+                    userId:   auth()->id(),
+                    context:  ['history_turns' => count($history), 'channel' => 'api'],
+                );
 
                 $payload = [
                     'type'    => 'error',

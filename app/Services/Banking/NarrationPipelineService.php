@@ -5,6 +5,7 @@ namespace App\Services\Banking;
 use App\Agents\Narration\EmailParserAgent;
 use App\Agents\Narration\SmsParserAgent;
 use App\DTOs\Banking\ParsedTransactionDTO;
+use App\Models\AiUsageLog;
 use App\Models\BankTransaction;
 use App\Models\Tenant;
 
@@ -25,7 +26,19 @@ class NarrationPipelineService
 
     public function processFromSms(string $rawSms, Tenant $tenant, string $bankAccountName = ''): BankTransaction
     {
-        $response = SmsParserAgent::make()->prompt("Parse this bank SMS:\n\n{$rawSms}");
+        try {
+            $response = SmsParserAgent::make()->prompt("Parse this bank SMS:\n\n{$rawSms}");
+        } catch (\Throwable $e) {
+            AiUsageLog::fromError(e: $e, agent: 'SmsParserAgent', callType: 'structured', tenantId: $tenant->id);
+            throw $e;
+        }
+
+        AiUsageLog::fromAgentResponse(
+            response: $response,
+            agent:    'SmsParserAgent',
+            callType: 'structured',
+            tenantId: $tenant->id,
+        );
 
         $dto = ParsedTransactionDTO::fromArray([
             'raw_narration'    => $rawSms,
@@ -43,7 +56,19 @@ class NarrationPipelineService
 
     public function processFromEmail(string $rawEmail, Tenant $tenant, string $bankAccountName = ''): BankTransaction
     {
-        $response = EmailParserAgent::make()->prompt("Parse this bank alert email:\n\n{$rawEmail}");
+        try {
+            $response = EmailParserAgent::make()->prompt("Parse this bank alert email:\n\n{$rawEmail}");
+        } catch (\Throwable $e) {
+            AiUsageLog::fromError(e: $e, agent: 'EmailParserAgent', callType: 'structured', tenantId: $tenant->id);
+            throw $e;
+        }
+
+        AiUsageLog::fromAgentResponse(
+            response: $response,
+            agent:    'EmailParserAgent',
+            callType: 'structured',
+            tenantId: $tenant->id,
+        );
 
         $dto = ParsedTransactionDTO::fromArray([
             'raw_narration'    => $rawEmail,

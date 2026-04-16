@@ -4,6 +4,8 @@ namespace App\Services\Banking;
 
 use App\Agents\Narration\StatementDocumentParserAgent;
 use App\DTOs\Banking\ParsedTransactionDTO;
+use App\Models\AiUsageLog;
+use App\Models\Tenant;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -20,10 +22,10 @@ class StatementParserService
      *
      * @return Collection<ParsedTransactionDTO>
      */
-    public function parse(UploadedFile $file): Collection
+    public function parse(UploadedFile $file, ?Tenant $tenant = null): Collection
     {
         return match (strtolower($file->getClientOriginalExtension())) {
-            'pdf', 'jpg', 'jpeg', 'png', 'webp' => $this->parseVisualDocument($file),
+            'pdf', 'jpg', 'jpeg', 'png', 'webp' => $this->parseVisualDocument($file, $tenant),
             'csv', 'xlsx', 'xls', 'xlsm', 'tsv'  => $this->parseTabularFile($file),
             default => throw ValidationException::withMessages([
                 'statement' => 'Unsupported file type. Please upload a PDF, CSV, or Excel file.',
@@ -33,11 +35,30 @@ class StatementParserService
 
     // ── Visual Documents (PDF & Images) ────────────────────────────────────
 
-    private function parseVisualDocument(UploadedFile $file): Collection
+    private function parseVisualDocument(UploadedFile $file, ?Tenant $tenant = null): Collection
     {
-        $response = StatementDocumentParserAgent::make()->prompt(
-            'Extract all transaction rows from this attached bank statement.',
-            attachments: [$file],
+        try {
+            $response = StatementDocumentParserAgent::make()->prompt(
+                'Extract all transaction rows from this attached bank statement.',
+                attachments: [$file],
+            );
+        } catch (\Throwable $e) {
+            AiUsageLog::fromError(
+                e:        $e,
+                agent:    'StatementDocumentParserAgent',
+                callType: 'structured',
+                tenantId: $tenant?->id,
+                context:  ['file_type' => $file->getClientOriginalExtension()],
+            );
+            throw $e;
+        }
+
+        AiUsageLog::fromAgentResponse(
+            response: $response,
+            agent:    'StatementDocumentParserAgent',
+            callType: 'structured',
+            tenantId: $tenant?->id,
+            context:  ['file_type' => $file->getClientOriginalExtension()],
         );
 
         $jsonString = str_replace(['```json', '```'], '', $response->text);

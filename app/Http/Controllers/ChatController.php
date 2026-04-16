@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Agents\AccountingAgent;
+use App\Models\AiUsageLog;
 use App\Models\Tenant;
 use App\Tools\CreateInvoiceTool;
 use App\Tools\GetInvoiceTool;
@@ -54,6 +55,16 @@ class ChatController extends Controller
             $agent    = AccountingAgent::make();
             $response = $agent->prompt($prompt, provider: 'openai');
 
+            AiUsageLog::fromAgentResponse(
+                response:  $response,
+                agent:     'AccountingAgent',
+                callType:  'chat',
+                tenantId:  $tenant->id,
+                userId:    auth()->id(),
+                toolSteps: $response->steps->count(),
+                context:   ['history_turns' => count($history)],
+            );
+
             $clientTool  = app(ManageClientTool::class);
             $productTool = app(ManageProductTool::class);
 
@@ -79,6 +90,16 @@ class ChatController extends Controller
 
         } catch (\Exception $e) {
             Log::error('ChatController error', ['error' => $e->getMessage()]);
+
+            AiUsageLog::fromError(
+                e:        $e,
+                agent:    'AccountingAgent',
+                callType: 'chat',
+                tenantId: $tenant->id,
+                userId:   auth()->id(),
+                context:  ['history_turns' => count($history)],
+            );
+
             return response()->json([
                 'reply'   => "Sorry, I encountered an error: {$e->getMessage()}",
                 'success' => false,

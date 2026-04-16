@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AiUsageController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BankTransactionController;
 use App\Http\Controllers\ChatController;
@@ -46,6 +47,7 @@ Route::middleware('auth')->group(function () {
 // ── Admin (no tenant context) ─────────────────────────────────────────
 Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'adminIndex'])->name('admin.dashboard');
+    Route::get('/admin/ai-usage', [AiUsageController::class, 'index'])->name('admin.ai-usage');
 
     // Impersonation — Super Admin only
     Route::post('/admin/impersonate/{user}', [ImpersonationController::class, 'start'])->name('impersonate.start');

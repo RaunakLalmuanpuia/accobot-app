@@ -121,7 +121,7 @@ class ManageClientTool implements Tool
             return 'A search query is required.';
         }
 
-        $queryEmbedding = $this->embeddingService->embedQuery($query);
+        $queryEmbedding = $this->embeddingService->embedQuery($query, $this->tenantId());
         $vectorLiteral  = '[' . implode(',', $queryEmbedding) . ']';
 
         $rows = DB::select(
@@ -203,7 +203,7 @@ class ManageClientTool implements Tool
         ]);
 
         try {
-            $vector = '[' . implode(',', $this->embeddingService->embed($client->toEmbeddingText())) . ']';
+            $vector = '[' . implode(',', $this->embeddingService->embed($client->toEmbeddingText(), $this->tenantId())) . ']';
             DB::statement('UPDATE clients SET embedding = :vec::vector WHERE id = :id', ['vec' => $vector, 'id' => $client->id]);
         } catch (\Exception $e) {
             Log::warning('ManageClientTool: embedding failed', ['error' => $e->getMessage()]);
@@ -252,7 +252,7 @@ class ManageClientTool implements Tool
 
         try {
             $client->refresh();
-            $vector = '[' . implode(',', $this->embeddingService->embed($client->toEmbeddingText())) . ']';
+            $vector = '[' . implode(',', $this->embeddingService->embed($client->toEmbeddingText(), $this->tenantId())) . ']';
             DB::statement('UPDATE clients SET embedding = :vec::vector WHERE id = :id', ['vec' => $vector, 'id' => $client->id]);
         } catch (\Exception $e) {
             Log::warning('ManageClientTool: re-embedding failed', ['error' => $e->getMessage()]);

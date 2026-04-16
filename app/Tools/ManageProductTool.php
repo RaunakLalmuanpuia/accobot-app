@@ -151,7 +151,7 @@ class ManageProductTool implements Tool
             return 'A search query is required.';
         }
 
-        $queryEmbedding = $this->embeddingService->embedQuery($query);
+        $queryEmbedding = $this->embeddingService->embedQuery($query, $this->tenantId());
         $vectorLiteral  = '[' . implode(',', $queryEmbedding) . ']';
 
         $rows = DB::select(
@@ -250,7 +250,7 @@ class ManageProductTool implements Tool
         ]);
 
         try {
-            $vector = '[' . implode(',', $this->embeddingService->embed($product->toEmbeddingText())) . ']';
+            $vector = '[' . implode(',', $this->embeddingService->embed($product->toEmbeddingText(), $this->tenantId())) . ']';
             DB::statement('UPDATE products SET embedding = :vec::vector WHERE id = :id', ['vec' => $vector, 'id' => $product->id]);
         } catch (\Exception $e) {
             Log::warning('ManageProductTool: embedding failed', ['error' => $e->getMessage()]);
@@ -306,7 +306,7 @@ class ManageProductTool implements Tool
 
         try {
             $product->refresh();
-            $vector = '[' . implode(',', $this->embeddingService->embed($product->toEmbeddingText())) . ']';
+            $vector = '[' . implode(',', $this->embeddingService->embed($product->toEmbeddingText(), $this->tenantId())) . ']';
             DB::statement('UPDATE products SET embedding = :vec::vector WHERE id = :id', ['vec' => $vector, 'id' => $product->id]);
         } catch (\Exception $e) {
             Log::warning('ManageProductTool: re-embedding failed', ['error' => $e->getMessage()]);

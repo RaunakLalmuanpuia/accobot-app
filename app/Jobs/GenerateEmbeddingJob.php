@@ -31,7 +31,7 @@ class GenerateEmbeddingJob implements ShouldQueue
         }
 
         try {
-            $vector = '[' . implode(',', $embeddingService->embed($record->toEmbeddingText())) . ']';
+            $vector = '[' . implode(',', $embeddingService->embed($record->toEmbeddingText(), $record->tenant_id)) . ']';
 
             DB::statement(
                 "UPDATE {$record->getTable()} SET embedding = :vec::vector WHERE id = :id",

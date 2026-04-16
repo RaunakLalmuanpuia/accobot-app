@@ -145,6 +145,7 @@ function stopImpersonation() {
                                 <!-- Admin nav -->
                                 <template v-if="isAdmin() && !currentTenantId()">
                                     <NavLink :href="route('admin.dashboard')" :active="route().current('admin.dashboard')">Dashboard</NavLink>
+                                    <NavLink :href="route('admin.ai-usage')" :active="route().current('admin.ai-usage')">AI Usage</NavLink>
                                 </template>
 
                                 <!-- Tenant nav (shown for both tenant users and admin visiting a tenant) -->

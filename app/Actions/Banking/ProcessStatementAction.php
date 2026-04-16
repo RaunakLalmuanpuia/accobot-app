@@ -23,7 +23,7 @@ class ProcessStatementAction
      */
     public function execute(UploadedFile $file, Tenant $tenant, ?string $bankAccountName = null): array
     {
-        $dtos = $this->parser->parse($file);
+        $dtos = $this->parser->parse($file, $tenant);
 
         if ($dtos->isEmpty()) {
             return [
