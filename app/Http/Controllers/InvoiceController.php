@@ -169,7 +169,7 @@ class InvoiceController extends Controller
 
         $invoice->load('client', 'items.product');
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('invoices.pdf', ['invoice' => $invoice])
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('invoices.pdf', ['invoice' => $invoice, 'tenant' => $tenant])
             ->setPaper('a4', 'portrait');
 
         return $pdf->download("{$invoice->invoice_number}.pdf");

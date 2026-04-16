@@ -35,9 +35,9 @@ class DummyDataSeeder extends Seeder
 
         // ─── Tenants ──────────────────────────────────────────────────
         // Business tenants are shared (is_personal = false).
-        $tili     = Tenant::create(['name' => 'Tili',     'type' => 'business', 'status' => 'active', 'created_by_user_id' => $fela->id]);
-        $awab     = Tenant::create(['name' => 'Awab',     'type' => 'business', 'status' => 'active', 'created_by_user_id' => $fela->id]);
-        $eightsis = Tenant::create(['name' => 'Eightsis', 'type' => 'business', 'status' => 'active', 'created_by_user_id' => $zoa->id]);
+        $tili     = Tenant::create(['name' => 'Tili',     'type' => 'business', 'status' => 'active','is_personal' => true, 'created_by_user_id' => $fela->id]);
+        $awab     = Tenant::create(['name' => 'Awab',     'type' => 'business', 'status' => 'active','is_personal' => true, 'created_by_user_id' => $fela->id]);
+        $eightsis = Tenant::create(['name' => 'Eightsis', 'type' => 'business', 'status' => 'active','is_personal' => true, 'created_by_user_id' => $zoa->id]);
 
         // CA firm tenants are personal to the owning CA (is_personal = true).
         $alphaCA = Tenant::create(['name' => 'Alpha Advisors',  'type' => 'ca_firm', 'status' => 'active', 'is_personal' => true, 'created_by_user_id' => $ca1->id]);
