@@ -34,6 +34,8 @@ const switchTenant = (id) => {
 const currentTenant = () =>
     page.props.auth.tenants.find(t => t.id === page.props.auth.current_tenant_id)
 
+const isPersonalTenant = () => currentTenant()?.is_personal ?? false
+
 function closeDropdowns(e) {
     if (!e.target.closest('[data-dropdown]')) {
         showTenantSwitcher.value = false
@@ -99,7 +101,7 @@ function stopImpersonation() {
                                         @click="showTenantSwitcher = !showTenantSwitcher"
                                         class="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100 transition max-w-[200px]"
                                     >
-                                        <span class="h-2 w-2 rounded-full bg-emerald-400 shrink-0"></span>
+                                        <span :class="['h-2 w-2 rounded-full shrink-0', isPersonalTenant() ? 'bg-green-400' : 'bg-orange-400']"></span>
                                         <span class="truncate">{{ currentTenant()?.name ?? 'Select Tenant' }}</span>
                                         <svg class="h-4 w-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"/>
@@ -127,7 +129,7 @@ function stopImpersonation() {
                                                     class="flex w-full items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition"
                                                 >
                                                     <span
-                                                        :class="['h-2 w-2 rounded-full shrink-0', t.id === page.props.auth.current_tenant_id ? 'bg-emerald-400' : 'bg-transparent border border-gray-300']"
+                                                        :class="['h-2 w-2 rounded-full shrink-0', t.is_personal ? 'bg-green-400' : 'bg-orange-400']"
                                                     ></span>
                                                     <span class="truncate flex-1 text-left">{{ t.name }}</span>
                                                     <span v-if="t.is_personal" class="shrink-0 rounded-full bg-violet-50 px-1.5 py-0.5 text-[10px] font-semibold text-violet-600 leading-none">Mine</span>
