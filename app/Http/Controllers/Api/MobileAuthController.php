@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\AuditEvent;
+use App\Models\TenantRolePermission;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -127,7 +128,40 @@ class MobileAuthController extends Controller
      */
     public function me(Request $request): JsonResponse
     {
-        $user = $request->user()->load('tenants');
+        $user = $request->user()->load([
+            'tenants',
+            'tenantRoles.role.permissions',
+        ]);
+
+        $tenants = $user->tenants->map(function ($t) use ($user) {
+            $tenantRole = $user->tenantRoles->firstWhere('tenant_id', $t->id);
+
+            $role        = null;
+            $permissions = [];
+
+            if ($tenantRole) {
+                $role = $tenantRole->role?->name;
+
+                $overrides = TenantRolePermission::where('tenant_id', $t->id)
+                    ->where('role_id', $tenantRole->role_id)
+                    ->with('permission')
+                    ->get();
+
+                $permissions = ($overrides->isNotEmpty()
+                    ? $overrides->pluck('permission.name')
+                    : $tenantRole->role?->permissions->pluck('name') ?? collect()
+                )->values()->all();
+            }
+
+            return [
+                'id'          => $t->id,
+                'name'        => $t->name,
+                'type'        => $t->type,
+                'status'      => $t->status,
+                'role'        => $role,
+                'permissions' => $permissions,
+            ];
+        });
 
         return response()->json([
             'user'    => [
@@ -137,12 +171,7 @@ class MobileAuthController extends Controller
                 'type'   => $user->type,
                 'status' => $user->status,
             ],
-            'tenants' => $user->tenants->map(fn($t) => [
-                'id'     => $t->id,
-                'name'   => $t->name,
-                'type'   => $t->type,
-                'status' => $t->status,
-            ]),
+            'tenants' => $tenants,
         ]);
     }
 }

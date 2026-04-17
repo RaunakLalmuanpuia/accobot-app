@@ -87,13 +87,17 @@ Returns the authenticated user and their tenant memberships.
       "id": "uuid",
       "name": "Alpha Advisors",
       "type": "ca_firm",
-      "status": "active"
+      "status": "active",
+      "role": "owner",
+      "permissions": ["invoices.view", "invoices.create", "products.view"]
     },
     {
       "id": "uuid",
       "name": "Tili",
       "type": "business",
-      "status": "active"
+      "status": "active",
+      "role": "member",
+      "permissions": ["invoices.view"]
     }
   ]
 }
