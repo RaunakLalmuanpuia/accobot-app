@@ -2,8 +2,13 @@
 
 namespace App\Http\Controllers\Api\Tally;
 
+use App\Models\TallyAttendanceType;
+use App\Models\TallyEmployee;
+use App\Models\TallyEmployeeGroup;
 use App\Models\TallyLedger;
 use App\Models\TallyLedgerGroup;
+use App\Models\TallyPayHead;
+use App\Models\TallyStatutoryMaster;
 use App\Models\TallyStockCategory;
 use App\Models\TallyStockGroup;
 use App\Models\TallyStockItem;
@@ -56,6 +61,51 @@ class TallyConfirmController extends TallyBaseController
     public function creditNoteVoucher(Request $request, string $companyId): JsonResponse
     {
         return $this->handle($request, $companyId, TallyVoucher::class);
+    }
+
+    public function receiptVoucher(Request $request, string $companyId): JsonResponse
+    {
+        return $this->handle($request, $companyId, TallyVoucher::class);
+    }
+
+    public function paymentVoucher(Request $request, string $companyId): JsonResponse
+    {
+        return $this->handle($request, $companyId, TallyVoucher::class);
+    }
+
+    public function contraVoucher(Request $request, string $companyId): JsonResponse
+    {
+        return $this->handle($request, $companyId, TallyVoucher::class);
+    }
+
+    public function journalVoucher(Request $request, string $companyId): JsonResponse
+    {
+        return $this->handle($request, $companyId, TallyVoucher::class);
+    }
+
+    public function statutoryMaster(Request $request, string $companyId): JsonResponse
+    {
+        return $this->handle($request, $companyId, TallyStatutoryMaster::class);
+    }
+
+    public function employeeGroup(Request $request, string $companyId): JsonResponse
+    {
+        return $this->handle($request, $companyId, TallyEmployeeGroup::class);
+    }
+
+    public function employee(Request $request, string $companyId): JsonResponse
+    {
+        return $this->handle($request, $companyId, TallyEmployee::class);
+    }
+
+    public function payHead(Request $request, string $companyId): JsonResponse
+    {
+        return $this->handle($request, $companyId, TallyPayHead::class);
+    }
+
+    public function attendanceType(Request $request, string $companyId): JsonResponse
+    {
+        return $this->handle($request, $companyId, TallyAttendanceType::class);
     }
 
     private function handle(Request $request, string $companyId, string $modelClass): JsonResponse

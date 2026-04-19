@@ -18,7 +18,10 @@ const activeTab = ref('masters')
 const expandedLog = ref(null)
 
 const masterEntities = [
-    'ledger_groups', 'ledgers', 'stock_groups', 'stock_categories', 'stock_items',
+    'ledger_groups', 'ledgers', 'stock_groups', 'stock_categories', 'stock_items', 'statutory_masters',
+]
+const payrollEntities = [
+    'employee_groups', 'employees', 'pay_heads', 'attendance_types',
 ]
 const voucherEntities = [
     'vouchers_sales', 'vouchers_purchase', 'vouchers_creditnote', 'vouchers_debitnote',
@@ -32,6 +35,11 @@ function entityLabel(entity) {
         stock_groups:          'Stock Groups',
         stock_categories:      'Stock Categories',
         stock_items:           'Stock Items',
+        statutory_masters:     'Statutory Masters',
+        employee_groups:       'Employee Groups',
+        employees:             'Employees',
+        pay_heads:             'Pay Heads',
+        attendance_types:      'Attendance Types',
         vouchers_sales:        'Sales Vouchers',
         vouchers_purchase:     'Purchase Vouchers',
         vouchers_creditnote:   'Credit Notes',
@@ -139,12 +147,22 @@ function toggleLog(id) {
                         <p class="text-2xl font-bold text-gray-900">{{ stats.total_vouchers }}</p>
                         <p class="text-xs text-gray-400 mt-0.5 group-hover:text-violet-600 transition">Vouchers →</p>
                     </a>
+                    <a :href="route('tally.statutory-masters.index', { tenant: tenant.id })"
+                       class="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 text-center hover:border-violet-300 hover:shadow-md transition group">
+                        <p class="text-2xl font-bold text-gray-900">{{ stats.total_statutory_masters }}</p>
+                        <p class="text-xs text-gray-400 mt-0.5 group-hover:text-violet-600 transition">Statutory →</p>
+                    </a>
+                    <a :href="route('tally.payroll.index', { tenant: tenant.id })"
+                       class="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 text-center hover:border-violet-300 hover:shadow-md transition group">
+                        <p class="text-2xl font-bold text-gray-900">{{ stats.total_employees }}</p>
+                        <p class="text-xs text-gray-400 mt-0.5 group-hover:text-violet-600 transition">Employees →</p>
+                    </a>
                 </div>
 
                 <!-- Tabs -->
                 <div class="border-b border-gray-200">
                     <nav class="flex gap-6" aria-label="Tabs">
-                        <button v-for="tab in ['masters', 'vouchers', 'reports', 'logs']"
+                        <button v-for="tab in ['masters', 'payroll', 'vouchers', 'reports', 'logs']"
                                 :key="tab"
                                 @click="activeTab = tab"
                                 :class="[
@@ -181,6 +199,36 @@ function toggleLog(id) {
                         <div class="col-span-2 text-center text-sm text-gray-500">{{ latestLog(entity)?.records_updated ?? '—' }}</div>
                         <div class="col-span-2 text-center text-sm text-gray-500">{{ latestLog(entity)?.records_skipped ?? '—' }}</div>
                         <div class="col-span-2 text-xs text-gray-400">{{ formatDate(latestLog(entity)?.completed_at) }}</div>
+                    </div>
+                </div>
+
+                <!-- Payroll tab -->
+                <div v-if="activeTab === 'payroll'" class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                    <div class="grid grid-cols-12 px-6 py-3 bg-gray-50 border-b border-gray-100 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                        <div class="col-span-4">Entity</div>
+                        <div class="col-span-2 text-center">Created</div>
+                        <div class="col-span-2 text-center">Updated</div>
+                        <div class="col-span-2 text-center">Skipped</div>
+                        <div class="col-span-2">Last Synced</div>
+                    </div>
+                    <div v-for="entity in payrollEntities" :key="entity"
+                         class="grid grid-cols-12 items-center px-6 py-4 border-b border-gray-50 last:border-0">
+                        <div class="col-span-4">
+                            <p class="text-sm font-medium text-gray-900">{{ entityLabel(entity) }}</p>
+                            <span v-if="latestLog(entity)"
+                                  :class="['mt-0.5 inline-block text-xs px-2 py-0.5 rounded-full font-medium', statusBadge(latestLog(entity).status)]">
+                                {{ latestLog(entity).status }}
+                            </span>
+                            <span v-else class="text-xs text-gray-400">never</span>
+                        </div>
+                        <div class="col-span-2 text-center text-sm text-gray-500">{{ latestLog(entity)?.records_created ?? '—' }}</div>
+                        <div class="col-span-2 text-center text-sm text-gray-500">{{ latestLog(entity)?.records_updated ?? '—' }}</div>
+                        <div class="col-span-2 text-center text-sm text-gray-500">{{ latestLog(entity)?.records_skipped ?? '—' }}</div>
+                        <div class="col-span-2 text-xs text-gray-400">{{ formatDate(latestLog(entity)?.completed_at) }}</div>
+                    </div>
+                    <div class="px-6 py-3 border-t border-gray-100 bg-gray-50/50">
+                        <a :href="route('tally.payroll.index', { tenant: tenant.id })"
+                           class="text-xs text-violet-600 hover:text-violet-800 font-medium">Browse Payroll Masters →</a>
                     </div>
                 </div>
 

@@ -150,6 +150,113 @@ class TallyOutboundFormatter
         return $this->formatVouchers($vouchers);
     }
 
+    public function formatReceiptVouchers(Collection $vouchers): array
+    {
+        return $this->formatVouchers($vouchers);
+    }
+
+    public function formatPaymentVouchers(Collection $vouchers): array
+    {
+        return $this->formatVouchers($vouchers);
+    }
+
+    public function formatContraVouchers(Collection $vouchers): array
+    {
+        return $this->formatVouchers($vouchers);
+    }
+
+    public function formatJournalVouchers(Collection $vouchers): array
+    {
+        return $this->formatVouchers($vouchers);
+    }
+
+    public function formatStatutoryMasters(Collection $items): array
+    {
+        return $items->map(fn ($s) => [
+            'ID'                 => $s->tally_id,
+            'AlterID'            => $s->alter_id,
+            'Action'             => $s->action,
+            'Name'               => $s->name,
+            'StatutoryType'      => $s->statutory_type,
+            'RegistrationNumber' => $s->registration_number,
+            'StateCode'          => $s->state_code,
+            'RegistrationType'   => $s->registration_type,
+            'PAN'                => $s->pan,
+            'TAN'                => $s->tan,
+            'ApplicableFrom'     => $s->applicable_from?->toDateString(),
+            'Details'            => $s->details ?? [],
+        ])->values()->all();
+    }
+
+    public function formatEmployeeGroups(Collection $groups): array
+    {
+        return $groups->map(fn ($g) => [
+            'ID'         => $g->tally_id,
+            'AlterID'    => $g->alter_id,
+            'Action'     => $g->action,
+            'Name'       => $g->name,
+            'ParentName' => $g->parent_name,
+        ])->values()->all();
+    }
+
+    public function formatEmployees(Collection $employees): array
+    {
+        return $employees->map(fn ($e) => [
+            'ID'                => $e->tally_id,
+            'AlterID'           => $e->alter_id,
+            'Action'            => $e->action,
+            'Name'              => $e->name,
+            'EmployeeNumber'    => $e->employee_number,
+            'GroupName'         => $e->group_name,
+            'Designation'       => $e->designation,
+            'Function'          => $e->employee_function,
+            'Department'        => $e->department,
+            'DateOfJoining'     => $e->date_of_joining?->toDateString(),
+            'DateOfLeaving'     => $e->date_of_leaving?->toDateString(),
+            'DateOfBirth'       => $e->date_of_birth?->toDateString(),
+            'Gender'            => $e->gender,
+            'PAN'               => $e->pan,
+            'AadharNumber'      => $e->aadhar,
+            'PFNumber'          => $e->pf_number,
+            'UANNumber'         => $e->uan_number,
+            'ESINumber'         => $e->esi_number,
+            'BankName'          => $e->bank_name,
+            'BankAccountNumber' => $e->bank_account_number,
+            'BankIFSC'          => $e->bank_ifsc,
+            'Addresses'         => $e->addresses ?? [],
+            'SalaryDetails'     => $e->salary_details ?? [],
+        ])->values()->all();
+    }
+
+    public function formatPayHeads(Collection $payHeads): array
+    {
+        return $payHeads->map(fn ($p) => [
+            'ID'              => $p->tally_id,
+            'AlterID'         => $p->alter_id,
+            'Action'          => $p->action,
+            'Name'            => $p->name,
+            'PayHeadType'     => $p->pay_head_type,
+            'PaySlipName'     => $p->pay_slip_name,
+            'UnderGroup'      => $p->under_group,
+            'LedgerName'      => $p->ledger_name,
+            'CalculationType' => $p->calculation_type,
+            'Rate'            => $p->rate,
+            'RatePeriod'      => $p->rate_period,
+        ])->values()->all();
+    }
+
+    public function formatAttendanceTypes(Collection $types): array
+    {
+        return $types->map(fn ($t) => [
+            'ID'             => $t->tally_id,
+            'AlterID'        => $t->alter_id,
+            'Action'         => $t->action,
+            'Name'           => $t->name,
+            'AttendanceType' => $t->attendance_type,
+            'UnitOfMeasure'  => $t->unit_of_measure,
+        ])->values()->all();
+    }
+
     // ── Private ────────────────────────────────────────────────────────────────
 
     private function formatVouchers(Collection $vouchers): array

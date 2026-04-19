@@ -132,6 +132,8 @@ Route::middleware(['auth', 'verified', 'member'])
         Route::get('/tally/stock-items', [TallyDataController::class, 'stockItems'])->name('tally.stock-items.index')->middleware('tenant.permission:integrations.view');
         Route::get('/tally/vouchers', [TallyDataController::class, 'vouchers'])->name('tally.vouchers.index')->middleware('tenant.permission:integrations.view');
         Route::get('/tally/vouchers/{voucher}', [TallyDataController::class, 'voucherShow'])->name('tally.vouchers.show')->middleware('tenant.permission:integrations.view');
+        Route::get('/tally/statutory-masters', [TallyDataController::class, 'statutoryMasters'])->name('tally.statutory-masters.index')->middleware('tenant.permission:integrations.view');
+        Route::get('/tally/payroll', [TallyDataController::class, 'payroll'])->name('tally.payroll.index')->middleware('tenant.permission:integrations.view');
 
         // ── Banking / Narration ────────────────────────────────────────
         Route::get('/banking', [BankTransactionController::class, 'pending'])

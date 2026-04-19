@@ -2,8 +2,13 @@
 
 namespace App\Http\Controllers\Api\Tally;
 
+use App\Models\TallyAttendanceType;
+use App\Models\TallyEmployee;
+use App\Models\TallyEmployeeGroup;
 use App\Models\TallyLedger;
 use App\Models\TallyLedgerGroup;
+use App\Models\TallyPayHead;
+use App\Models\TallyStatutoryMaster;
 use App\Models\TallyStockCategory;
 use App\Models\TallyStockGroup;
 use App\Models\TallyStockItem;
@@ -96,6 +101,81 @@ class TallyOutboundController extends TallyBaseController
         return $this->voucherResponse($request, 'CreditNote');
     }
 
+    public function receiptVoucher(Request $request): JsonResponse
+    {
+        return $this->voucherResponse($request, 'Receipt');
+    }
+
+    public function paymentVoucher(Request $request): JsonResponse
+    {
+        return $this->voucherResponse($request, 'Payment');
+    }
+
+    public function contraVoucher(Request $request): JsonResponse
+    {
+        return $this->voucherResponse($request, 'Contra');
+    }
+
+    public function journalVoucher(Request $request): JsonResponse
+    {
+        return $this->voucherResponse($request, 'Journal');
+    }
+
+    public function statutoryMaster(Request $request): JsonResponse
+    {
+        $conn  = $this->resolveAndVerify($request);
+        $items = TallyStatutoryMaster::withoutGlobalScope('tenant')
+            ->where('tenant_id', $conn->tenant_id)
+            ->where('is_active', true)
+            ->get();
+
+        return response()->json(['Data' => $this->formatter->formatStatutoryMasters($items)]);
+    }
+
+    public function employeeGroup(Request $request): JsonResponse
+    {
+        $conn   = $this->resolveAndVerify($request);
+        $groups = TallyEmployeeGroup::withoutGlobalScope('tenant')
+            ->where('tenant_id', $conn->tenant_id)
+            ->where('is_active', true)
+            ->get();
+
+        return response()->json(['Data' => $this->formatter->formatEmployeeGroups($groups)]);
+    }
+
+    public function employee(Request $request): JsonResponse
+    {
+        $conn      = $this->resolveAndVerify($request);
+        $employees = TallyEmployee::withoutGlobalScope('tenant')
+            ->where('tenant_id', $conn->tenant_id)
+            ->where('is_active', true)
+            ->get();
+
+        return response()->json(['Data' => $this->formatter->formatEmployees($employees)]);
+    }
+
+    public function payHead(Request $request): JsonResponse
+    {
+        $conn     = $this->resolveAndVerify($request);
+        $payHeads = TallyPayHead::withoutGlobalScope('tenant')
+            ->where('tenant_id', $conn->tenant_id)
+            ->where('is_active', true)
+            ->get();
+
+        return response()->json(['Data' => $this->formatter->formatPayHeads($payHeads)]);
+    }
+
+    public function attendanceType(Request $request): JsonResponse
+    {
+        $conn  = $this->resolveAndVerify($request);
+        $types = TallyAttendanceType::withoutGlobalScope('tenant')
+            ->where('tenant_id', $conn->tenant_id)
+            ->where('is_active', true)
+            ->get();
+
+        return response()->json(['Data' => $this->formatter->formatAttendanceTypes($types)]);
+    }
+
     private function voucherResponse(Request $request, string $type): JsonResponse
     {
         $conn = $this->resolveAndVerify($request);
@@ -112,6 +192,10 @@ class TallyOutboundController extends TallyBaseController
             'Purchase'   => $this->formatter->formatPurchaseVouchers($vouchers),
             'DebitNote'  => $this->formatter->formatDebitNoteVouchers($vouchers),
             'CreditNote' => $this->formatter->formatCreditNoteVouchers($vouchers),
+            'Receipt'    => $this->formatter->formatReceiptVouchers($vouchers),
+            'Payment'    => $this->formatter->formatPaymentVouchers($vouchers),
+            'Contra'     => $this->formatter->formatContraVouchers($vouchers),
+            'Journal'    => $this->formatter->formatJournalVouchers($vouchers),
         };
 
         return response()->json(['Data' => $formatted]);

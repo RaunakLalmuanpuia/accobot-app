@@ -5,13 +5,18 @@ namespace Database\Seeders;
 use App\Models\Client;
 use App\Models\Product;
 use App\Models\Tenant;
+use App\Models\TallyAttendanceType;
 use App\Models\TallyConnection;
+use App\Models\TallyEmployee;
+use App\Models\TallyEmployeeGroup;
 use App\Models\TallyLedger;
 use App\Models\TallyLedgerGroup;
+use App\Models\TallyPayHead;
 use App\Models\TallyReport;
 use App\Models\TallyStockCategory;
 use App\Models\TallyStockGroup;
 use App\Models\TallyStockItem;
+use App\Models\TallyStatutoryMaster;
 use App\Models\TallySyncLog;
 use App\Models\TallyVoucher;
 use App\Models\TallyVoucherInventoryEntry;
@@ -454,6 +459,159 @@ class TallySeeder extends Seeder
             ]);
         }
 
-        $this->command->info('TallySeeder: seeded connection, 8 ledger groups, 14 ledgers, 5 stock groups, 3 categories, 10 stock items, 10 vouchers, reports, and sync logs for Tili.');
+        // ── Statutory Masters ─────────────────────────────────────────────
+        $statutoryData = [
+            // [tally_id, alter_id, name, type, reg_number, state_code, reg_type, pan, tan, applicable_from, details]
+            [5001, 5001, 'GST Registration - Delhi',       'GST', '07AABCT1234A1ZK', '07', 'Regular',      'AABCT1234A', null,         '2017-07-01', ['GSTRate' => 18, 'FilingFrequency' => 'Monthly']],
+            [5002, 5002, 'GST Registration - Karnataka',   'GST', '29AABCT1234A2ZK', '29', 'Regular',      'AABCT1234A', null,         '2017-07-01', ['GSTRate' => 18, 'FilingFrequency' => 'Monthly']],
+            [5003, 5003, 'TDS - Section 194C (Contractor)','TDS', 'TDS-194C',         null, 'TDS Deductor', null,         'DELT12345A', '2023-04-01', ['Section' => '194C', 'Rate' => 1, 'ThresholdLimit' => 30000]],
+            [5004, 5004, 'TDS - Section 194J (Prof. Svc)', 'TDS', 'TDS-194J',         null, 'TDS Deductor', null,         'DELT12345A', '2023-04-01', ['Section' => '194J', 'Rate' => 10, 'ThresholdLimit' => 30000]],
+            [5005, 5005, 'TCS - Section 206C',             'TCS', 'TCS-206C',         null, 'TCS Collector',null,         'DELT12345A', '2023-04-01', ['Section' => '206C', 'Rate' => 0.1]],
+            [5006, 5006, 'PF Registration',                'PF',  'PF/DL/12345/001',  null, 'Employer',     null,         null,         '2020-01-01', ['EmployerRate' => 12, 'EmployeeRate' => 12, 'AdminCharge' => 0.5]],
+            [5007, 5007, 'ESI Registration',               'ESI', 'ESI/31/12345/001', null, 'Employer',     null,         null,         '2020-01-01', ['EmployerRate' => 3.25, 'EmployeeRate' => 0.75]],
+            [5008, 5008, 'Professional Tax - Delhi',       'PT',  'PT/DL/2024/001',   '07', 'PT Deductor',  null,         null,         '2023-04-01', ['MonthlyLimit' => 15000, 'TaxAmount' => 200]],
+        ];
+
+        foreach ($statutoryData as [$tallyId, $alterId, $name, $type, $regNo, $stateCode, $regType, $pan, $tan, $appFrom, $details]) {
+            TallyStatutoryMaster::firstOrCreate(
+                ['tenant_id' => $tid, 'tally_id' => $tallyId],
+                [
+                    'alter_id'            => $alterId,
+                    'name'                => $name,
+                    'statutory_type'      => $type,
+                    'registration_number' => $regNo,
+                    'state_code'          => $stateCode,
+                    'registration_type'   => $regType,
+                    'pan'                 => $pan,
+                    'tan'                 => $tan,
+                    'applicable_from'     => $appFrom,
+                    'details'             => $details,
+                    'is_active'           => true,
+                    'last_synced_at'      => now()->subHours(1),
+                ]
+            );
+        }
+
+        // ── Employee Groups ───────────────────────────────────────────────
+        $empGroupData = [
+            [6001, 6001, 'Management',          null],
+            [6002, 6002, 'Operations',          null],
+            [6003, 6003, 'Sales & Marketing',   null],
+            [6004, 6004, 'Technology',          null],
+            [6005, 6005, 'Finance & Accounts',  null],
+        ];
+
+        $empGroups = [];
+        foreach ($empGroupData as [$tallyId, $alterId, $name, $parentName]) {
+            $empGroups[$tallyId] = TallyEmployeeGroup::firstOrCreate(
+                ['tenant_id' => $tid, 'tally_id' => $tallyId],
+                [
+                    'alter_id'       => $alterId,
+                    'name'           => $name,
+                    'parent_name'    => $parentName,
+                    'is_active'      => true,
+                    'last_synced_at' => now()->subHours(1),
+                ]
+            );
+        }
+
+        // ── Pay Heads ─────────────────────────────────────────────────────
+        $payHeadData = [
+            // [tally_id, alter_id, name, type, pay_slip_name, under_group, ledger_name, calc_type, rate, rate_period]
+            [7001, 7001, 'Basic Salary',              'Earning',                       'Basic',       'Salary Payable', 'Basic Salary Ledger',     'On Attendance',    null,  'Monthly'],
+            [7002, 7002, 'House Rent Allowance',      'Earning',                       'HRA',         'Salary Payable', 'HRA Ledger',              'As Computed Value',40,    'Monthly'],
+            [7003, 7003, 'Conveyance Allowance',      'Earning',                       'Conveyance',  'Salary Payable', 'Conveyance Ledger',        'Fixed',            1600,  'Monthly'],
+            [7004, 7004, 'Special Allowance',         'Earning',                       'Spl Allowance','Salary Payable','Special Allowance Ledger', 'As Computed Value',null,  'Monthly'],
+            [7005, 7005, 'PF - Employee',             'Employees\' Statutory Deductions','PF Emp',   'PF Payable',     'PF Employee Ledger',       'As Computed Value',12,    'Monthly'],
+            [7006, 7006, 'PF - Employer',             'Employer\'s Statutory Contributions','PF Emp\'s','PF Payable',  'PF Employer Ledger',       'As Computed Value',12,    'Monthly'],
+            [7007, 7007, 'ESI - Employee',            'Employees\' Statutory Deductions','ESI Emp',  'ESI Payable',    'ESI Employee Ledger',      'As Computed Value',0.75,  'Monthly'],
+            [7008, 7008, 'ESI - Employer',            'Employer\'s Statutory Contributions','ESI Emp\'s','ESI Payable', 'ESI Employer Ledger',     'As Computed Value',3.25,  'Monthly'],
+            [7009, 7009, 'TDS on Salary',             'Employees\' Statutory Deductions','TDS',      'TDS Payable',    'TDS Salary Ledger',        'As Computed Value',null,  'Monthly'],
+            [7010, 7010, 'Professional Tax',          'Employees\' Statutory Deductions','PT',       'PT Payable',     'Professional Tax Ledger',  'Fixed',            200,   'Monthly'],
+        ];
+
+        foreach ($payHeadData as [$tallyId, $alterId, $name, $type, $slipName, $underGroup, $ledgerName, $calcType, $rate, $ratePeriod]) {
+            TallyPayHead::firstOrCreate(
+                ['tenant_id' => $tid, 'tally_id' => $tallyId],
+                [
+                    'alter_id'         => $alterId,
+                    'name'             => $name,
+                    'pay_head_type'    => $type,
+                    'pay_slip_name'    => $slipName,
+                    'under_group'      => $underGroup,
+                    'ledger_name'      => $ledgerName,
+                    'calculation_type' => $calcType,
+                    'rate'             => $rate,
+                    'rate_period'      => $ratePeriod,
+                    'is_active'        => true,
+                    'last_synced_at'   => now()->subHours(1),
+                ]
+            );
+        }
+
+        // ── Attendance Types ──────────────────────────────────────────────
+        $attendanceData = [
+            [8001, 8001, 'Present',         'Attendance',              'Days'],
+            [8002, 8002, 'Casual Leave',    'Leave with Pay',          'Days'],
+            [8003, 8003, 'Sick Leave',      'Leave with Pay',          'Days'],
+            [8004, 8004, 'Unpaid Leave',    'Leave without Pay',       'Days'],
+            [8005, 8005, 'Holiday',         'Attendance',              'Days'],
+            [8006, 8006, 'Week Off',        'Attendance',              'Days'],
+            [8007, 8007, 'Overtime Hours',  'Productivity',            'Hours'],
+        ];
+
+        foreach ($attendanceData as [$tallyId, $alterId, $name, $type, $uom]) {
+            TallyAttendanceType::firstOrCreate(
+                ['tenant_id' => $tid, 'tally_id' => $tallyId],
+                [
+                    'alter_id'        => $alterId,
+                    'name'            => $name,
+                    'attendance_type' => $type,
+                    'unit_of_measure' => $uom,
+                    'is_active'       => true,
+                    'last_synced_at'  => now()->subHours(1),
+                ]
+            );
+        }
+
+        // ── Employees ─────────────────────────────────────────────────────
+        $employeeData = [
+            // [tally_id, alter_id, name, emp_no, group_id, designation, dept, doj, dob, gender, pan, pf, uan, esi, bank, acct, ifsc]
+            [9001, 9001, 'Arjun Mehta',      'EMP001', 6001, 'Director',         'Management',         '2019-06-01', '1980-03-15', 'Male',   'ABCPM1234E', 'PF/001', 'UAN001234567', null,         'HDFC Bank', '50100012345678', 'HDFC0001234'],
+            [9002, 9002, 'Sunita Sharma',    'EMP002', 6004, 'Senior Developer', 'Technology',         '2021-01-15', '1992-07-22', 'Female', 'BCDPS5678F', 'PF/002', 'UAN001234568', 'ESI0001',    'ICICI Bank','012345678901',   'ICIC0001234'],
+            [9003, 9003, 'Rakesh Gupta',     'EMP003', 6003, 'Sales Manager',    'Sales & Marketing',  '2020-08-10', '1988-11-05', 'Male',   'CDEPT9012G', 'PF/003', 'UAN001234569', 'ESI0002',    'SBI',       '30012345678',    'SBIN0001234'],
+            [9004, 9004, 'Pooja Nair',       'EMP004', 6005, 'Accountant',       'Finance & Accounts', '2022-03-01', '1995-04-18', 'Female', 'DEPQN3456H', 'PF/004', 'UAN001234570', 'ESI0003',    'HDFC Bank', '50100087654321', 'HDFC0005678'],
+            [9005, 9005, 'Vikram Singh',     'EMP005', 6002, 'Operations Lead',  'Operations',         '2020-11-20', '1990-09-30', 'Male',   'EFPVS7890I', 'PF/005', 'UAN001234571', 'ESI0004',    'Kotak Bank','1234567890',     'KKBK0001234'],
+        ];
+
+        foreach ($employeeData as [$tallyId, $alterId, $name, $empNo, $groupId, $designation, $dept, $doj, $dob, $gender, $pan, $pfNo, $uan, $esi, $bank, $acct, $ifsc]) {
+            TallyEmployee::firstOrCreate(
+                ['tenant_id' => $tid, 'tally_id' => $tallyId],
+                [
+                    'alter_id'           => $alterId,
+                    'name'               => $name,
+                    'employee_number'    => $empNo,
+                    'group_name'         => $empGroups[$groupId]?->name,
+                    'designation'        => $designation,
+                    'department'         => $dept,
+                    'date_of_joining'    => $doj,
+                    'date_of_birth'      => $dob,
+                    'gender'             => $gender,
+                    'pan'                => $pan,
+                    'pf_number'          => $pfNo,
+                    'uan_number'         => $uan,
+                    'esi_number'         => $esi,
+                    'bank_name'          => $bank,
+                    'bank_account_number'=> $acct,
+                    'bank_ifsc'          => $ifsc,
+                    'addresses'          => [['address' => 'Delhi NCR', 'state' => 'Delhi', 'country' => 'India']],
+                    'salary_details'     => ['BasicPercent' => 50, 'HRAPercent' => 40, 'PFApplicable' => true],
+                    'is_active'          => true,
+                    'last_synced_at'     => now()->subHours(1),
+                ]
+            );
+        }
+
+        $this->command->info('TallySeeder: seeded connection, 8 ledger groups, 14 ledgers, 5 stock groups, 3 categories, 10 stock items, 10 vouchers, reports, sync logs for Tili.');
     }
 }

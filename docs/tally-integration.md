@@ -8,7 +8,7 @@
 2. [The Three Data Flows](#2-the-three-data-flows)
 3. [Authentication & Tenant Resolution](#3-authentication--tenant-resolution)
 4. [Setting Up a Connection](#4-setting-up-a-connection)
-5. [Database Design — 11 Tables + 4 FK Columns](#5-database-design--11-tables--4-fk-columns)
+5. [Database Design — 16 Tables + 4 FK Columns](#5-database-design--16-tables--4-fk-columns)
 6. [The Two-Table Design Pattern](#6-the-two-table-design-pattern)
 7. [Inbound Sync — How Tally Data Enters Accobot](#7-inbound-sync--how-tally-data-enters-accobot)
 8. [Auto-Mapping — Tally → Accobot Operational Models](#8-auto-mapping--tally--accobot-operational-models)
@@ -17,7 +17,7 @@
 11. [Confirmation POST — Tally Writes Back Its IDs](#11-confirmation-post--tally-writes-back-its-ids)
 12. [Report Snapshots](#12-report-snapshots)
 13. [Sync Logs & Observability](#13-sync-logs--observability)
-14. [All 35 API Endpoints](#14-all-35-api-endpoints)
+14. [All 63 API Endpoints](#14-all-63-api-endpoints)
 15. [Web UI Routes & Pages](#15-web-ui-routes--pages)
 16. [Service & Controller Map](#16-service--controller-map)
 17. [Full File Map](#17-full-file-map)
@@ -92,7 +92,7 @@ After Tally creates an Accobot-originated record (from Flow 2), it POSTs back th
 
 ## 3. Authentication & Tenant Resolution
 
-All 35 API endpoints (inbound, outbound, confirmation) use the same token-based auth. There is **no Sanctum** involved — the Tally connector is not a user.
+All 63 API endpoints (inbound, outbound, confirmation) use the same token-based auth. There is **no Sanctum** involved — the Tally connector is not a user.
 
 ### How it works
 
@@ -145,7 +145,7 @@ If the token is compromised, the tenant can regenerate it from the Connection pa
 
 ---
 
-## 5. Database Design — 11 Tables + 4 FK Columns
+## 5. Database Design — 16 Tables + 4 FK Columns
 
 ### Overview
 
@@ -161,6 +161,11 @@ tally_voucher_inventory_entries  ← line items inside vouchers
 tally_voucher_ledger_entries     ← ledger movements inside vouchers
 tally_reports              ← financial report snapshots
 tally_sync_logs            ← audit log of every sync operation
+tally_statutory_masters    ← GST / TDS / TCS / PF / ESI / PT registrations
+tally_employee_groups      ← payroll group hierarchy
+tally_pay_heads            ← payroll earning / deduction / statutory heads
+tally_attendance_types     ← Tally attendance & leave types
+tally_employees            ← employee master with payroll details
 ```
 
 Plus 4 FK columns added to existing tables:
@@ -312,6 +317,59 @@ Financial report snapshots — insert-only, never updated.
 
 Index on `(tenant_id, report_type, period_to)` for fast retrieval of the latest report of each type.
 
+#### tally_statutory_masters
+Statutory registrations — GST, TDS, TCS, PF, ESI, PT, etc.
+
+| Column | Notes |
+|--------|-------|
+| statutory_type | GST / TDS / TCS / PF / ESI / PT |
+| registration_number | GSTIN, TAN, PF registration number, etc. |
+| state_code | For GST — state code |
+| registration_type | Regular / Composition / etc. |
+| pan | PAN linked to the registration |
+| tan | TAN for TDS/TCS registrations |
+| applicable_from | date — when this registration became effective |
+| details | jsonb — any additional statutory fields from Tally |
+
+#### tally_employee_groups
+| Column | Notes |
+|--------|-------|
+| name | Group name |
+| parent_name | Parent group (nullable) |
+
+#### tally_pay_heads
+Payroll earning, deduction, and statutory heads.
+
+| Column | Notes |
+|--------|-------|
+| pay_head_type | Earning / Deduction / Employer Contributions / Statutory Deductions |
+| pay_slip_name | Name as it appears on the pay slip |
+| under_group | Parent group name |
+| ledger_name | Linked Tally ledger |
+| calculation_type | As Computed Value / Flat Rate / etc. |
+| rate | float nullable — fixed rate if applicable |
+| rate_period | Daily / Monthly / etc. |
+
+#### tally_attendance_types
+| Column | Notes |
+|--------|-------|
+| attendance_type | Attendance / Leave with Pay / Leave without Pay / Productivity |
+| unit_of_measure | Days / Hours / Pieces |
+
+#### tally_employees
+Full employee master with payroll and statutory details.
+
+| Section | Columns |
+|---------|---------|
+| Identity | name, employee_number, group_name, designation, employee_function, department |
+| Dates | date_of_joining, date_of_leaving, date_of_birth |
+| Personal | gender |
+| Statutory | pan, aadhar, pf_number, uan_number, esi_number |
+| Bank | bank_name, bank_account_number, bank_ifsc |
+| Other | addresses (jsonb), salary_details (jsonb) |
+
+> **Note:** The column is named `employee_function` (not `function`) to avoid PostgreSQL and PHP reserved-word conflicts.
+
 #### tally_sync_logs
 Audit trail of every sync operation.
 
@@ -365,7 +423,11 @@ Both sides are nullable FKs. When a ledger is synced and auto-mapped, both are w
 
 ## 7. Inbound Sync — How Tally Data Enters Accobot
 
-All inbound sync runs through `TallyInboundSync` (service) → called by `TallyInboundMastersController` / `TallyInboundVouchersController` / `TallyInboundReportsController`.
+Inbound sync runs through two services:
+- **`TallyInboundSync`** — handles ledgers, stock items, vouchers, statutory masters. Called by `TallyInboundMastersController` / `TallyInboundVouchersController` / `TallyInboundReportsController`.
+- **`TallyPayrollSync`** — handles payroll entities (employee groups, employees, pay heads, attendance types). Called by `TallyInboundPayrollController`.
+
+Both services `use TallySyncHelpers` — a shared PHP trait that provides `startLog()`, `completeLog()`, `failLog()`, `strip()`, and `parseDate()`. This eliminates duplication and ensures consistent counter handling across all sync methods.
 
 ### The sync loop — same for every entity
 
@@ -516,10 +578,19 @@ GET /api/MastersAPI/ledger-master?companyId=
 GET /api/MastersAPI/stock-master?companyId=
 GET /api/MastersAPI/stock-group?companyId=
 GET /api/MastersAPI/stock-category?companyId=
+GET /api/MastersAPI/statutory-master?companyId=
+GET /api/PayrollAPI/employee-group?companyId=
+GET /api/PayrollAPI/employee?companyId=
+GET /api/PayrollAPI/pay-head?companyId=
+GET /api/PayrollAPI/attendance-type?companyId=
 GET /api/VoucherAPI/sales-voucher?companyId=
 GET /api/VoucherAPI/purchase-voucher?companyId=
 GET /api/VoucherAPI/debitNote-voucher?companyId=
 GET /api/VoucherAPI/creditNote-voucher?companyId=
+GET /api/VoucherAPI/receipt-voucher?companyId=
+GET /api/VoucherAPI/payment-voucher?companyId=
+GET /api/VoucherAPI/contra-voucher?companyId=
+GET /api/VoucherAPI/journal-voucher?companyId=
 ```
 
 ---
@@ -550,10 +621,19 @@ POST /api/MastersAPI/update-stock-master/{companyId}
 POST /api/MastersAPI/update-ledger-group/{companyId}
 POST /api/MastersAPI/update-stock-group/{companyId}
 POST /api/MastersAPI/update-stock-category/{companyId}
+POST /api/MastersAPI/update-statutory-master/{companyId}
+POST /api/PayrollAPI/update-employee-group/{companyId}
+POST /api/PayrollAPI/update-employee/{companyId}
+POST /api/PayrollAPI/update-pay-head/{companyId}
+POST /api/PayrollAPI/update-attendance-type/{companyId}
 POST /api/VoucherAPI/update-sales-voucher/{companyId}
 POST /api/VoucherAPI/update-purchase-voucher/{companyId}
 POST /api/VoucherAPI/update-debitnote-voucher/{companyId}
 POST /api/VoucherAPI/update-creditnote-voucher/{companyId}
+POST /api/VoucherAPI/update-receipt-voucher/{companyId}
+POST /api/VoucherAPI/update-payment-voucher/{companyId}
+POST /api/VoucherAPI/update-contra-voucher/{companyId}
+POST /api/VoucherAPI/update-journal-voucher/{companyId}
 ```
 
 ---
@@ -583,22 +663,22 @@ The `data` column stores the complete JSON payload as Tally generated it — no 
 
 Every sync operation — inbound and outbound — creates a `tally_sync_logs` row. The Sync page in the UI displays these in four tabs.
 
-### What each tab shows
+### Stats bar on Sync page
+
+Live counts pulled directly from `tally_*` tables, grouped by category. Each card links to the corresponding browse page:
+- Total active ledger groups / ledgers / stock items / vouchers
+- Total active statutory masters
+- Total active employees (payroll)
+
+### Sync page tabs
 
 | Tab | What it displays |
 |-----|-----------------|
-| Masters | Latest sync status per entity: ledger_groups, ledgers, stock_groups, stock_categories, stock_items |
+| Masters | Latest sync status per entity: ledger_groups, ledgers, stock_groups, stock_categories, stock_items, statutory_masters |
+| Payroll | Latest sync status per payroll entity: employee_groups, employees, pay_heads, attendance_types |
 | Vouchers | Latest sync status per voucher type: sales, purchase, credit_note, debit_note, receipt, payment, contra, journal |
 | Reports | All report snapshots with type, period, and received timestamp |
 | Logs | Full log table (last 200 entries), expandable error messages |
-
-### Stats bar on Sync page
-
-Four live counts pulled directly from `tally_*` tables:
-- Total active ledger groups
-- Total active ledgers
-- Total active stock items
-- Total active vouchers
 
 ### "Sync Now" button
 
@@ -606,64 +686,89 @@ Because Accobot cannot pull from Tally, this button does not trigger a data pull
 
 ---
 
-## 14. All 35 API Endpoints
+## 14. All 63 API Endpoints
 
 All routes are in `routes/api.php`. All are throttled at 120 requests/minute. None require Sanctum — token auth only.
 
-### Inbound POST — 17 endpoints
+### Inbound POST — 22 endpoints
 
-| Endpoint | Controller Method | Entity |
-|----------|------------------|--------|
-| POST /api/tally/inbound/masters/ledger-groups | `ledgerGroups` | tally_ledger_groups |
-| POST /api/tally/inbound/masters/ledgers | `ledgers` | tally_ledgers |
-| POST /api/tally/inbound/masters/stock-items | `stockItems` | tally_stock_items |
-| POST /api/tally/inbound/masters/stock-groups | `stockGroups` | tally_stock_groups |
-| POST /api/tally/inbound/masters/stock-categories | `stockCategories` | tally_stock_categories |
-| POST /api/tally/inbound/vouchers/sales | `sales` | tally_vouchers (Sales) |
-| POST /api/tally/inbound/vouchers/credit-note | `creditNote` | tally_vouchers (CreditNote) |
-| POST /api/tally/inbound/vouchers/purchase | `purchase` | tally_vouchers (Purchase) |
-| POST /api/tally/inbound/vouchers/debit-note | `debitNote` | tally_vouchers (DebitNote) |
-| POST /api/tally/inbound/vouchers/receipt | `receipt` | tally_vouchers (Receipt) |
-| POST /api/tally/inbound/vouchers/payment | `payment` | tally_vouchers (Payment) |
-| POST /api/tally/inbound/vouchers/contra | `contra` | tally_vouchers (Contra) |
-| POST /api/tally/inbound/vouchers/journal | `journal` | tally_vouchers (Journal) |
-| POST /api/tally/inbound/reports/balance-sheet | `balanceSheet` | tally_reports |
-| POST /api/tally/inbound/reports/profit-loss | `profitLoss` | tally_reports |
-| POST /api/tally/inbound/reports/cash-flow | `cashFlow` | tally_reports |
-| POST /api/tally/inbound/reports/ratio-analysis | `ratioAnalysis` | tally_reports |
+| Endpoint | Controller | Entity |
+|----------|-----------|--------|
+| POST /api/tally/inbound/masters/ledger-groups | `TallyInboundMastersController@ledgerGroups` | tally_ledger_groups |
+| POST /api/tally/inbound/masters/ledgers | `@ledgers` | tally_ledgers |
+| POST /api/tally/inbound/masters/stock-items | `@stockItems` | tally_stock_items |
+| POST /api/tally/inbound/masters/stock-groups | `@stockGroups` | tally_stock_groups |
+| POST /api/tally/inbound/masters/stock-categories | `@stockCategories` | tally_stock_categories |
+| POST /api/tally/inbound/masters/statutory | `@statutory` | tally_statutory_masters |
+| POST /api/tally/inbound/payroll/employee-groups | `TallyInboundPayrollController@employeeGroups` | tally_employee_groups |
+| POST /api/tally/inbound/payroll/employees | `@employees` | tally_employees |
+| POST /api/tally/inbound/payroll/pay-heads | `@payHeads` | tally_pay_heads |
+| POST /api/tally/inbound/payroll/attendance-types | `@attendanceTypes` | tally_attendance_types |
+| POST /api/tally/inbound/vouchers/sales | `TallyInboundVouchersController@sales` | tally_vouchers (Sales) |
+| POST /api/tally/inbound/vouchers/credit-note | `@creditNote` | tally_vouchers (CreditNote) |
+| POST /api/tally/inbound/vouchers/purchase | `@purchase` | tally_vouchers (Purchase) |
+| POST /api/tally/inbound/vouchers/debit-note | `@debitNote` | tally_vouchers (DebitNote) |
+| POST /api/tally/inbound/vouchers/receipt | `@receipt` | tally_vouchers (Receipt) |
+| POST /api/tally/inbound/vouchers/payment | `@payment` | tally_vouchers (Payment) |
+| POST /api/tally/inbound/vouchers/contra | `@contra` | tally_vouchers (Contra) |
+| POST /api/tally/inbound/vouchers/journal | `@journal` | tally_vouchers (Journal) |
+| POST /api/tally/inbound/reports/balance-sheet | `TallyInboundReportsController@balanceSheet` | tally_reports |
+| POST /api/tally/inbound/reports/profit-loss | `@profitLoss` | tally_reports |
+| POST /api/tally/inbound/reports/cash-flow | `@cashFlow` | tally_reports |
+| POST /api/tally/inbound/reports/ratio-analysis | `@ratioAnalysis` | tally_reports |
 
-**Request format:** `{ "Data": [...] }` (masters) / `{ "data": [...] }` (vouchers — both cases accepted)  
+**Request format:** `{ "Data": [...] }` (masters/payroll) / `{ "data": [...] }` (vouchers — both cases accepted)  
 **Response format:** `{ "status": "success", "created": N, "updated": N, "skipped": N, "failed": N }`
 
-### Outbound GET — 9 endpoints
+The `employees` endpoint also accepts `"full_sync": true` — after processing, any employee not present in the payload is marked `is_active = false`.
 
-| Endpoint | Controller Method | Returns |
-|----------|------------------|---------|
-| GET /api/MastersAPI/ledger-group?companyId= | `ledgerGroup` | tally_ledger_groups |
-| GET /api/MastersAPI/ledger-master?companyId= | `ledgerMaster` | tally_ledgers |
-| GET /api/MastersAPI/stock-master?companyId= | `stockMaster` | tally_stock_items |
-| GET /api/MastersAPI/stock-group?companyId= | `stockGroup` | tally_stock_groups |
-| GET /api/MastersAPI/stock-category?companyId= | `stockCategory` | tally_stock_categories |
-| GET /api/VoucherAPI/sales-voucher?companyId= | `salesVoucher` | tally_vouchers (Sales) |
-| GET /api/VoucherAPI/purchase-voucher?companyId= | `purchaseVoucher` | tally_vouchers (Purchase) |
-| GET /api/VoucherAPI/debitNote-voucher?companyId= | `debitNoteVoucher` | tally_vouchers (DebitNote) |
-| GET /api/VoucherAPI/creditNote-voucher?companyId= | `creditNoteVoucher` | tally_vouchers (CreditNote) |
+### Outbound GET — 18 endpoints
+
+| Endpoint | Returns |
+|----------|---------|
+| GET /api/MastersAPI/ledger-group?companyId= | tally_ledger_groups |
+| GET /api/MastersAPI/ledger-master?companyId= | tally_ledgers |
+| GET /api/MastersAPI/stock-master?companyId= | tally_stock_items |
+| GET /api/MastersAPI/stock-group?companyId= | tally_stock_groups |
+| GET /api/MastersAPI/stock-category?companyId= | tally_stock_categories |
+| GET /api/MastersAPI/statutory-master?companyId= | tally_statutory_masters |
+| GET /api/PayrollAPI/employee-group?companyId= | tally_employee_groups |
+| GET /api/PayrollAPI/employee?companyId= | tally_employees |
+| GET /api/PayrollAPI/pay-head?companyId= | tally_pay_heads |
+| GET /api/PayrollAPI/attendance-type?companyId= | tally_attendance_types |
+| GET /api/VoucherAPI/sales-voucher?companyId= | tally_vouchers (Sales) |
+| GET /api/VoucherAPI/purchase-voucher?companyId= | tally_vouchers (Purchase) |
+| GET /api/VoucherAPI/debitNote-voucher?companyId= | tally_vouchers (DebitNote) |
+| GET /api/VoucherAPI/creditNote-voucher?companyId= | tally_vouchers (CreditNote) |
+| GET /api/VoucherAPI/receipt-voucher?companyId= | tally_vouchers (Receipt) |
+| GET /api/VoucherAPI/payment-voucher?companyId= | tally_vouchers (Payment) |
+| GET /api/VoucherAPI/contra-voucher?companyId= | tally_vouchers (Contra) |
+| GET /api/VoucherAPI/journal-voucher?companyId= | tally_vouchers (Journal) |
 
 **Response format:** `{ "Data": [...] }` — Tally-compatible field names and casing
 
-### Confirmation POST — 9 endpoints
+### Confirmation POST — 23 endpoints
 
-| Endpoint | Controller Method | Writes TallyId to |
-|----------|------------------|------------------|
-| POST /api/MastersAPI/update-ledger-master/{companyId} | `ledgerMaster` | tally_ledgers.tally_id |
-| POST /api/MastersAPI/update-stock-master/{companyId} | `stockMaster` | tally_stock_items.tally_id |
-| POST /api/MastersAPI/update-ledger-group/{companyId} | `ledgerGroup` | tally_ledger_groups.tally_id |
-| POST /api/MastersAPI/update-stock-group/{companyId} | `stockGroup` | tally_stock_groups.tally_id |
-| POST /api/MastersAPI/update-stock-category/{companyId} | `stockCategory` | tally_stock_categories.tally_id |
-| POST /api/VoucherAPI/update-sales-voucher/{companyId} | `salesVoucher` | tally_vouchers.tally_id |
-| POST /api/VoucherAPI/update-purchase-voucher/{companyId} | `purchaseVoucher` | tally_vouchers.tally_id |
-| POST /api/VoucherAPI/update-debitnote-voucher/{companyId} | `debitNoteVoucher` | tally_vouchers.tally_id |
-| POST /api/VoucherAPI/update-creditnote-voucher/{companyId} | `creditNoteVoucher` | tally_vouchers.tally_id |
+| Endpoint | Writes TallyId to |
+|----------|------------------|
+| POST /api/MastersAPI/update-ledger-master/{companyId} | tally_ledgers.tally_id |
+| POST /api/MastersAPI/update-stock-master/{companyId} | tally_stock_items.tally_id |
+| POST /api/MastersAPI/update-ledger-group/{companyId} | tally_ledger_groups.tally_id |
+| POST /api/MastersAPI/update-stock-group/{companyId} | tally_stock_groups.tally_id |
+| POST /api/MastersAPI/update-stock-category/{companyId} | tally_stock_categories.tally_id |
+| POST /api/MastersAPI/update-statutory-master/{companyId} | tally_statutory_masters.tally_id |
+| POST /api/PayrollAPI/update-employee-group/{companyId} | tally_employee_groups.tally_id |
+| POST /api/PayrollAPI/update-employee/{companyId} | tally_employees.tally_id |
+| POST /api/PayrollAPI/update-pay-head/{companyId} | tally_pay_heads.tally_id |
+| POST /api/PayrollAPI/update-attendance-type/{companyId} | tally_attendance_types.tally_id |
+| POST /api/VoucherAPI/update-sales-voucher/{companyId} | tally_vouchers.tally_id |
+| POST /api/VoucherAPI/update-purchase-voucher/{companyId} | tally_vouchers.tally_id |
+| POST /api/VoucherAPI/update-debitnote-voucher/{companyId} | tally_vouchers.tally_id |
+| POST /api/VoucherAPI/update-creditnote-voucher/{companyId} | tally_vouchers.tally_id |
+| POST /api/VoucherAPI/update-receipt-voucher/{companyId} | tally_vouchers.tally_id |
+| POST /api/VoucherAPI/update-payment-voucher/{companyId} | tally_vouchers.tally_id |
+| POST /api/VoucherAPI/update-contra-voucher/{companyId} | tally_vouchers.tally_id |
+| POST /api/VoucherAPI/update-journal-voucher/{companyId} | tally_vouchers.tally_id |
 
 ---
 
@@ -685,6 +790,8 @@ All web routes are inside the `Route::middleware(['auth', 'verified', 'member'])
 | GET | /t/{tenant}/tally/stock-items | tally.stock-items.index | integrations.view |
 | GET | /t/{tenant}/tally/vouchers | tally.vouchers.index | integrations.view |
 | GET | /t/{tenant}/tally/vouchers/{voucher} | tally.vouchers.show | integrations.view |
+| GET | /t/{tenant}/tally/statutory-masters | tally.statutory-masters.index | integrations.view |
+| GET | /t/{tenant}/tally/payroll | tally.payroll.index | integrations.view |
 
 ### Connection.vue — three sections
 
@@ -692,11 +799,12 @@ All web routes are inside the `Route::middleware(['auth', 'verified', 'member'])
 2. **"Enter These in Tally" table**: The three values the tenant must enter into the connector — Base URL, Token, Company ID — all copyable.
 3. **Settings form**: Company ID input, is_active toggle, Save / Test Connection / Remove buttons.
 
-### Sync.vue — four tabs + stats
+### Sync.vue — five tabs + stats
 
-- **Stats bar**: Live counts of total ledger groups, ledgers, stock items, vouchers. Each card is a link to the corresponding data-browse page.
-- **Masters tab**: Latest sync status per master entity with created/updated/skipped counts and timestamp.
-- **Vouchers tab**: Latest sync status per voucher type.
+- **Stats bar**: Live counts of ledger groups, ledgers, stock items, vouchers, statutory masters, and employees. Each card links to the corresponding data-browse page.
+- **Masters tab**: Latest sync status per master entity — ledger_groups, ledgers, stock_groups, stock_categories, stock_items, statutory_masters.
+- **Payroll tab**: Latest sync status per payroll entity — employee_groups, employees, pay_heads, attendance_types.
+- **Vouchers tab**: Latest sync status per voucher type — sales, purchase, credit_note, debit_note, receipt, payment, contra, journal.
 - **Reports tab**: List of all report snapshots with type, period, generated and received timestamps.
 - **Logs tab**: Full log history (last 200), expandable error messages, colour-coded status badges.
 
@@ -709,6 +817,8 @@ All web routes are inside the `Route::middleware(['auth', 'verified', 'member'])
 | StockItems.vue | tally.stock-items.index | Search + group-filter stock items with Product mapping badges |
 | Vouchers.vue | tally.vouchers.index | Filter by voucher type, click-through to detail |
 | VoucherShow.vue | tally.vouchers.show | Full voucher detail: inventory entries + ledger entries |
+| StatutoryMasters.vue | tally.statutory-masters.index | Searchable table with type-colour badges (GST=blue, TDS=amber, TCS=orange, PF=green, ESI=teal, PT=purple) |
+| Payroll.vue | tally.payroll.index | 4-tab page: Employees (search + group filter), Employee Groups, Pay Heads (type badges), Attendance Types (type badges) |
 
 ### Seeder
 
@@ -718,6 +828,11 @@ All web routes are inside the `Route::middleware(['auth', 'verified', 'member'])
 - 5 StockGroups, 3 StockCategories, 10 StockItems (mapped to first 5 Products)
 - 10 Vouchers (Sales ×2, Purchase ×2, Receipt, Payment, Credit Note, Debit Note, Contra, Journal) with inventory and ledger entries
 - 5 Report snapshots (trial balance, P&L, balance sheet, sales register, purchase register)
+- 8 StatutoryMasters (GST ×3, TDS ×2, PF ×1, ESI ×1, PT ×1)
+- 5 EmployeeGroups (Management, Sales, Engineering, Operations, Finance)
+- 10 PayHeads (Basic Salary, HRA, Travel Allowance, PF Employee, PF Employer, ESI Employee, ESI Employer, Professional Tax, LTA, Performance Bonus)
+- 7 AttendanceTypes (Present, Casual Leave, Sick Leave, Earned Leave, Leave Without Pay, Holiday, Weekly Off)
+- 5 Employees (Arjun Mehta, Sunita Sharma, Rakesh Gupta, Pooja Nair, Vikram Singh) with full PF/UAN/ESI/bank details
 - 20 TallySyncLog entries (two sync runs + a failed attempt + manual trigger)
 
 ### Nav link
@@ -741,27 +856,31 @@ The "Tally" link appears in the top navigation for any user with `integrations.v
 
 | Class | Location | Responsibility |
 |-------|----------|---------------|
-| `TallyInboundSync` | `app/Services/Tally/` | All inbound upsert logic — 6 public methods. Creates sync logs, strips \u0004, runs AlterID check, upserts, runs auto-mapping. |
+| `TallySyncHelpers` | `app/Services/Tally/` | PHP trait — shared helpers used by both sync services: `startLog()`, `completeLog()` (with null-guard `?? 0` on counters), `failLog()`, `strip()`, `parseDate()`. |
+| `TallyInboundSync` | `app/Services/Tally/` | Inbound upsert for ledgers, stock items, vouchers, statutory masters. Uses `TallySyncHelpers`. Runs auto-mapping after each upsert. |
+| `TallyPayrollSync` | `app/Services/Tally/` | Inbound upsert for payroll entities: `syncEmployeeGroups()`, `syncEmployees()` (supports `full_sync`), `syncPayHeads()`, `syncAttendanceTypes()`. Uses `TallySyncHelpers`. |
 | `TallyReportSync` | `app/Services/Tally/` | Report snapshot inserts. 1 public method. |
-| `TallyOutboundFormatter` | `app/Services/Tally/` | Formats Tally mirror records into Tally's exact payload structure. 9 public methods. |
+| `TallyOutboundFormatter` | `app/Services/Tally/` | Formats Tally mirror records into Tally's exact payload structure. 18 public methods covering all masters, payroll, and voucher types. |
 
 ### API Controllers
 
 | Class | Responsibility |
 |-------|---------------|
 | `TallyBaseController` | Resolves `TallyConnection` from Bearer token. Stamps `inbound_token_last_used_at`. Verifies `companyId`. Base class for all Tally API controllers. |
-| `TallyInboundMastersController` | 5 methods: ledgerGroups, ledgers, stockItems, stockGroups, stockCategories. Each reads `Data` array from request and calls `TallyInboundSync`. |
-| `TallyInboundVouchersController` | 8 methods: sales, creditNote, purchase, debitNote, receipt, payment, contra, journal. All delegate to `TallyInboundSync::syncVouchers()` with the appropriate type string. |
-| `TallyInboundReportsController` | 4 methods: balanceSheet, profitLoss, cashFlow, ratioAnalysis. Each calls `TallyReportSync::syncReport()`. |
-| `TallyOutboundController` | 9 methods (5 masters + 4 voucher types). Queries tally_* tables, formats via `TallyOutboundFormatter`, returns `{ "Data": [...] }`. |
-| `TallyConfirmController` | 9 methods. Reads `{ "Data": [{ "Id", "TallyId", "IsSynced" }] }`. Updates `tally_id` on the matching row. |
+| `TallyInboundMastersController` | 6 methods: ledgerGroups, ledgers, stockItems, stockGroups, stockCategories, statutory. |
+| `TallyInboundPayrollController` | 4 methods: employeeGroups, employees, payHeads, attendanceTypes. Injects `TallyPayrollSync`. |
+| `TallyInboundVouchersController` | 8 methods: sales, creditNote, purchase, debitNote, receipt, payment, contra, journal. All delegate to `TallyInboundSync::syncVouchers()`. |
+| `TallyInboundReportsController` | 4 methods: balanceSheet, profitLoss, cashFlow, ratioAnalysis. |
+| `TallyOutboundController` | 18 methods (6 masters + 4 payroll + 8 voucher types). Queries tally_* tables, formats via `TallyOutboundFormatter`, returns `{ "Data": [...] }`. |
+| `TallyConfirmController` | 23 methods. Reads `{ "Data": [{ "Id", "TallyId", "IsSynced" }] }`. Updates `tally_id` on the matching row. All delegates to a shared `handle()` method. |
 
 ### Web Controllers
 
 | Class | Responsibility |
 |-------|---------------|
 | `TallyConnectionController` | show(), save(), regenerateToken(), destroy(), testConnection(). Manages the `tally_connections` row for a tenant. |
-| `TallySyncController` | index() (builds Sync.vue props: latest logs per entity, all logs, report snapshots, stats), trigger() (logs a manual trigger entry). |
+| `TallySyncController` | index() (builds Sync.vue props: latest logs per entity, all logs, report snapshots, stats including statutory_masters + employees counts), trigger() (logs a manual trigger entry). |
+| `TallyDataController` | Data browse: ledgerGroups(), ledgers(), stockItems(), vouchers(), voucherShow(), statutoryMasters(), payroll(). |
 
 ---
 
@@ -781,35 +900,49 @@ database/migrations/
   2026_04_19_000010_create_tally_reports_table.php
   2026_04_19_000011_create_tally_sync_logs_table.php
   2026_04_19_000012_add_tally_fk_to_existing_models.php
+  2026_04_19_000013_create_tally_statutory_masters_table.php
+  2026_04_19_000014_create_tally_employee_groups_table.php
+  2026_04_19_000015_create_tally_pay_heads_table.php
+  2026_04_19_000016_create_tally_attendance_types_table.php
+  2026_04_19_000017_create_tally_employees_table.php
 
 app/Models/
-  TallyConnection.php          — per-tenant auth token, auto-generates on creating()
+  TallyConnection.php           — per-tenant auth token, auto-generates on creating()
   TallyLedgerGroup.php
-  TallyLedger.php              — mapped_client_id / mapped_vendor_id FKs
+  TallyLedger.php               — mapped_client_id / mapped_vendor_id FKs
   TallyStockGroup.php
   TallyStockCategory.php
-  TallyStockItem.php           — mapped_product_id FK
-  TallyVoucher.php             — mapped_invoice_id FK; has inventoryEntries / ledgerEntries relations
+  TallyStockItem.php            — mapped_product_id FK
+  TallyVoucher.php              — mapped_invoice_id FK; has inventoryEntries / ledgerEntries relations
   TallyVoucherInventoryEntry.php
   TallyVoucherLedgerEntry.php
   TallyReport.php
   TallySyncLog.php
-  Client.php                   — added tally_ledger_id FK + tallyLedger() relation
-  Vendor.php                   — added tally_ledger_id FK + tallyLedger() relation
-  Product.php                  — added tally_stock_item_id FK + tallyStockItem() relation
-  Invoice.php                  — added tally_voucher_id FK + tallyVoucher() relation
+  TallyStatutoryMaster.php      — details cast to array, applicable_from cast to date
+  TallyEmployeeGroup.php
+  TallyPayHead.php              — rate cast to float
+  TallyAttendanceType.php
+  TallyEmployee.php             — addresses/salary_details cast to array; date fields cast to date
+  Client.php                    — added tally_ledger_id FK + tallyLedger() relation
+  Vendor.php                    — added tally_ledger_id FK + tallyLedger() relation
+  Product.php                   — added tally_stock_item_id FK + tallyStockItem() relation
+  Invoice.php                   — added tally_voucher_id FK + tallyVoucher() relation
 
 app/Services/Tally/
-  TallyInboundSync.php
+  TallySyncHelpers.php          — PHP trait: startLog, completeLog, failLog, strip, parseDate
+  TallyInboundSync.php          — uses TallySyncHelpers
+  TallyPayrollSync.php          — uses TallySyncHelpers; handles all payroll entities
   TallyReportSync.php
   TallyOutboundFormatter.php
 
 app/Http/Controllers/
   TallyConnectionController.php
   TallySyncController.php
+  TallyDataController.php
   Api/Tally/
     TallyBaseController.php
     TallyInboundMastersController.php
+    TallyInboundPayrollController.php
     TallyInboundVouchersController.php
     TallyInboundReportsController.php
     TallyOutboundController.php
@@ -818,6 +951,16 @@ app/Http/Controllers/
 resources/js/Pages/Tally/
   Connection.vue
   Sync.vue
+  LedgerGroups.vue
+  Ledgers.vue
+  StockItems.vue
+  Vouchers.vue
+  VoucherShow.vue
+  StatutoryMasters.vue
+  Payroll.vue
+
+database/seeders/
+  TallySeeder.php
 ```
 
 ---

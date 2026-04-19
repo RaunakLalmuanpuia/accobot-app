@@ -1,6 +1,6 @@
 # Tally Connector — API Reference
 
-Complete request/response reference for all 35 Accobot-Tally API endpoints.  
+Complete request/response reference for all 63 Accobot-Tally API endpoints.  
 Base URL: `https://<your-accobot-domain>/api`
 
 ---
@@ -386,6 +386,257 @@ Syncs Tally stock items (products/services). Auto-creates/updates a **Product** 
 | `ReorderQuantity` | float | no | Reorder quantity |
 | `MaximumQuantity` | float | no | Maximum stock quantity |
 | `BatchAllocations` | array | no | Batch allocation details |
+
+**Response**
+
+```json
+{ "status": "success", "created": 1, "updated": 0, "skipped": 0, "failed": 0 }
+```
+
+---
+
+### 1.6 POST `/api/tally/inbound/masters/statutory`
+
+Syncs Tally statutory registrations — GST, TDS, TCS, PF, ESI, PT, etc.
+
+**Request Body**
+
+```json
+{
+  "Data": [
+    {
+      "ID": 301,
+      "AlterID": 120,
+      "Action": "Create",
+      "Name": "GST - Maharashtra",
+      "StatutoryType": "GST",
+      "RegistrationNumber": "27AABCT1234A1Z5",
+      "StateCode": "27",
+      "RegistrationType": "Regular",
+      "PAN": "AABCT1234A",
+      "TAN": null,
+      "ApplicableFrom": "2017-07-01"
+    }
+  ]
+}
+```
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `ID` | integer | yes | Tally's internal ID |
+| `AlterID` | integer | yes | Alter/version ID |
+| `Action` | string | no | `"Create"` or `"Delete"` |
+| `Name` | string | yes | Registration name |
+| `StatutoryType` | string | no | `"GST"`, `"TDS"`, `"TCS"`, `"PF"`, `"ESI"`, `"PT"` |
+| `RegistrationNumber` | string | no | GSTIN, TAN, PF reg number, etc. |
+| `StateCode` | string | no | State code (for GST) |
+| `RegistrationType` | string | no | `"Regular"`, `"Composition"`, etc. |
+| `PAN` | string | no | PAN linked to this registration |
+| `TAN` | string | no | TAN (for TDS/TCS) |
+| `ApplicableFrom` | string | no | Date `"YYYY-MM-DD"` — effective from |
+| *(any other fields)* | mixed | no | Stored in `details` jsonb |
+
+**Response**
+
+```json
+{ "status": "success", "created": 1, "updated": 0, "skipped": 0, "failed": 0 }
+```
+
+---
+
+## 1b. Inbound: Payroll (Tally → Accobot)
+
+---
+
+### 1b.1 POST `/api/tally/inbound/payroll/employee-groups`
+
+Syncs Tally employee group hierarchy.
+
+**Request Body**
+
+```json
+{
+  "Data": [
+    {
+      "ID": 401,
+      "AlterID": 10,
+      "Action": "Create",
+      "Name": "Management",
+      "ParentName": null
+    }
+  ]
+}
+```
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `ID` | integer | yes | Tally group ID |
+| `AlterID` | integer | yes | Alter/version ID |
+| `Action` | string | no | `"Create"` or `"Delete"` |
+| `Name` | string | yes | Group name |
+| `ParentName` | string | no | Parent group name |
+
+**Response**
+
+```json
+{ "status": "success", "created": 1, "updated": 0, "skipped": 0, "failed": 0 }
+```
+
+---
+
+### 1b.2 POST `/api/tally/inbound/payroll/employees`
+
+Syncs Tally employee masters with full payroll and statutory details.
+
+**Request Body**
+
+```json
+{
+  "full_sync": false,
+  "Data": [
+    {
+      "ID": 501,
+      "AlterID": 200,
+      "Action": "Create",
+      "Name": "Arjun Mehta",
+      "EmployeeNumber": "EMP001",
+      "GroupName": "Management",
+      "Designation": "General Manager",
+      "Function": "Administration",
+      "Department": "Corporate",
+      "DateOfJoining": "2018-04-01",
+      "DateOfLeaving": null,
+      "DateOfBirth": "1985-06-15",
+      "Gender": "Male",
+      "PAN": "ABCPM1234A",
+      "AadharNumber": "123456789012",
+      "PFNumber": "MH/BAN/0123456/001",
+      "UANNumber": "100123456789",
+      "ESINumber": "1234567890",
+      "BankName": "HDFC Bank",
+      "BankAccountNumber": "50100123456789",
+      "BankIFSC": "HDFC0001234",
+      "Addresses": ["123 Main Street", "Mumbai - 400001"],
+      "SalaryDetails": [
+        { "PayHead": "Basic Salary", "Amount": 50000, "RatePeriod": "Monthly" }
+      ]
+    }
+  ]
+}
+```
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `full_sync` | boolean | no | Mark absent employees inactive |
+| `ID` | integer | yes | Tally employee ID |
+| `AlterID` | integer | yes | Alter/version ID |
+| `Action` | string | no | `"Create"` or `"Delete"` |
+| `Name` | string | yes | Employee name |
+| `EmployeeNumber` | string | no | Employee number / code |
+| `GroupName` | string | no | Employee group |
+| `Designation` | string | no | Job title |
+| `Function` | string | no | Function / role (stored as `employee_function`) |
+| `Department` | string | no | Department |
+| `DateOfJoining` | string | no | `"YYYY-MM-DD"` |
+| `DateOfLeaving` | string | no | `"YYYY-MM-DD"` or null |
+| `DateOfBirth` | string | no | `"YYYY-MM-DD"` |
+| `Gender` | string | no | `"Male"` / `"Female"` / `"Other"` |
+| `PAN` | string | no | PAN number |
+| `AadharNumber` | string | no | Aadhaar number |
+| `PFNumber` | string | no | PF registration number |
+| `UANNumber` | string | no | UAN number |
+| `ESINumber` | string | no | ESI number |
+| `BankName` | string | no | Bank name |
+| `BankAccountNumber` | string | no | Bank account number |
+| `BankIFSC` | string | no | IFSC code |
+| `Addresses` | array | no | Address lines array |
+| `SalaryDetails` | array | no | Pay head / salary structure details |
+
+**Response**
+
+```json
+{ "status": "success", "created": 1, "updated": 0, "skipped": 0, "failed": 0 }
+```
+
+---
+
+### 1b.3 POST `/api/tally/inbound/payroll/pay-heads`
+
+Syncs Tally pay heads (salary components — earnings, deductions, statutory).
+
+**Request Body**
+
+```json
+{
+  "Data": [
+    {
+      "ID": 601,
+      "AlterID": 30,
+      "Action": "Create",
+      "Name": "Basic Salary",
+      "PayHeadType": "Earning",
+      "PaySlipName": "Basic",
+      "UnderGroup": "Indirect Expenses",
+      "LedgerName": "Basic Salary Payable",
+      "CalculationType": "As Computed Value",
+      "Rate": null,
+      "RatePeriod": "Monthly"
+    }
+  ]
+}
+```
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `ID` | integer | yes | Tally pay head ID |
+| `AlterID` | integer | yes | Alter/version ID |
+| `Action` | string | no | `"Create"` or `"Delete"` |
+| `Name` | string | yes | Pay head name |
+| `PayHeadType` | string | no | `"Earning"`, `"Deduction"`, `"Employer Contributions"`, `"Statutory Deductions"` |
+| `PaySlipName` | string | no | Label on pay slip |
+| `UnderGroup` | string | no | Parent ledger group |
+| `LedgerName` | string | no | Linked Tally ledger |
+| `CalculationType` | string | no | `"As Computed Value"`, `"Flat Rate"`, `"On Attendance"`, etc. |
+| `Rate` | float | no | Fixed rate (for Flat Rate type) |
+| `RatePeriod` | string | no | `"Daily"`, `"Monthly"`, `"Annually"` |
+
+**Response**
+
+```json
+{ "status": "success", "created": 1, "updated": 0, "skipped": 0, "failed": 0 }
+```
+
+---
+
+### 1b.4 POST `/api/tally/inbound/payroll/attendance-types`
+
+Syncs Tally attendance and leave type definitions.
+
+**Request Body**
+
+```json
+{
+  "Data": [
+    {
+      "ID": 701,
+      "AlterID": 5,
+      "Action": "Create",
+      "Name": "Present",
+      "AttendanceType": "Attendance",
+      "UnitOfMeasure": "Days"
+    }
+  ]
+}
+```
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `ID` | integer | yes | Tally attendance type ID |
+| `AlterID` | integer | yes | Alter/version ID |
+| `Action` | string | no | `"Create"` or `"Delete"` |
+| `Name` | string | yes | Type name |
+| `AttendanceType` | string | no | `"Attendance"`, `"Leave with Pay"`, `"Leave without Pay"`, `"Productivity"` |
+| `UnitOfMeasure` | string | no | `"Days"`, `"Hours"`, `"Pieces"` |
 
 **Response**
 
@@ -1169,6 +1420,152 @@ Returns all active stock categories.
 
 ---
 
+### 4.6 GET `/api/MastersAPI/statutory-master`
+
+Returns all active statutory masters.
+
+**Response**
+
+```json
+{
+  "Data": [
+    {
+      "ID": 301,
+      "AlterID": 120,
+      "Action": "Create",
+      "Name": "GST - Maharashtra",
+      "StatutoryType": "GST",
+      "RegistrationNumber": "27AABCT1234A1Z5",
+      "StateCode": "27",
+      "RegistrationType": "Regular",
+      "PAN": "AABCT1234A",
+      "TAN": null,
+      "ApplicableFrom": "2017-07-01",
+      "Details": []
+    }
+  ]
+}
+```
+
+---
+
+## 4b. Outbound: Payroll (Tally reads Accobot)
+
+---
+
+### 4b.1 GET `/api/PayrollAPI/employee-group`
+
+Returns all active employee groups.
+
+**Response**
+
+```json
+{
+  "Data": [
+    {
+      "ID": 401,
+      "AlterID": 10,
+      "Action": "Create",
+      "Name": "Management",
+      "ParentName": null
+    }
+  ]
+}
+```
+
+---
+
+### 4b.2 GET `/api/PayrollAPI/employee`
+
+Returns all active employees with full payroll details.
+
+**Response**
+
+```json
+{
+  "Data": [
+    {
+      "ID": 501,
+      "AlterID": 200,
+      "Action": "Create",
+      "Name": "Arjun Mehta",
+      "EmployeeNumber": "EMP001",
+      "GroupName": "Management",
+      "Designation": "General Manager",
+      "Function": "Administration",
+      "Department": "Corporate",
+      "DateOfJoining": "2018-04-01",
+      "DateOfLeaving": null,
+      "DateOfBirth": "1985-06-15",
+      "Gender": "Male",
+      "PAN": "ABCPM1234A",
+      "AadharNumber": "123456789012",
+      "PFNumber": "MH/BAN/0123456/001",
+      "UANNumber": "100123456789",
+      "ESINumber": "1234567890",
+      "BankName": "HDFC Bank",
+      "BankAccountNumber": "50100123456789",
+      "BankIFSC": "HDFC0001234",
+      "Addresses": ["123 Main Street", "Mumbai - 400001"],
+      "SalaryDetails": []
+    }
+  ]
+}
+```
+
+---
+
+### 4b.3 GET `/api/PayrollAPI/pay-head`
+
+Returns all active pay heads.
+
+**Response**
+
+```json
+{
+  "Data": [
+    {
+      "ID": 601,
+      "AlterID": 30,
+      "Action": "Create",
+      "Name": "Basic Salary",
+      "PayHeadType": "Earning",
+      "PaySlipName": "Basic",
+      "UnderGroup": "Indirect Expenses",
+      "LedgerName": "Basic Salary Payable",
+      "CalculationType": "As Computed Value",
+      "Rate": null,
+      "RatePeriod": "Monthly"
+    }
+  ]
+}
+```
+
+---
+
+### 4b.4 GET `/api/PayrollAPI/attendance-type`
+
+Returns all active attendance types.
+
+**Response**
+
+```json
+{
+  "Data": [
+    {
+      "ID": 701,
+      "AlterID": 5,
+      "Action": "Create",
+      "Name": "Present",
+      "AttendanceType": "Attendance",
+      "UnitOfMeasure": "Days"
+    }
+  ]
+}
+```
+
+---
+
 ## 5. Outbound: Vouchers (Tally reads Accobot)
 
 ---
@@ -1262,6 +1659,30 @@ Returns all active Debit Note vouchers. `"VoucherType": "DebitNote"`.
 ### 5.4 GET `/api/VoucherAPI/creditNote-voucher`
 
 Returns all active Credit Note vouchers. `"VoucherType": "CreditNote"`.
+
+---
+
+### 5.5 GET `/api/VoucherAPI/receipt-voucher`
+
+Returns all active Receipt vouchers. `"VoucherType": "Receipt"`. LedgerEntries describe the party and bank/cash accounts; `InventoryEntries` is always `[]`.
+
+---
+
+### 5.6 GET `/api/VoucherAPI/payment-voucher`
+
+Returns all active Payment vouchers. `"VoucherType": "Payment"`. Same structure as Receipt.
+
+---
+
+### 5.7 GET `/api/VoucherAPI/contra-voucher`
+
+Returns all active Contra vouchers. `"VoucherType": "Contra"`. Used for inter-bank / cash-bank transfers.
+
+---
+
+### 5.8 GET `/api/VoucherAPI/journal-voucher`
+
+Returns all active Journal vouchers. `"VoucherType": "Journal"`. Adjustment and expense entries.
 
 ---
 
@@ -1408,6 +1829,100 @@ Updates `tally_vouchers` (CreditNote type).
 
 ---
 
+### 6.10 POST `/api/VoucherAPI/update-receipt-voucher/{companyId}`
+
+Updates `tally_vouchers` (Receipt type).
+
+---
+
+### 6.11 POST `/api/VoucherAPI/update-payment-voucher/{companyId}`
+
+Updates `tally_vouchers` (Payment type).
+
+---
+
+### 6.12 POST `/api/VoucherAPI/update-contra-voucher/{companyId}`
+
+Updates `tally_vouchers` (Contra type).
+
+---
+
+### 6.13 POST `/api/VoucherAPI/update-journal-voucher/{companyId}`
+
+Updates `tally_vouchers` (Journal type).
+
+---
+
+### 6.14 POST `/api/MastersAPI/update-statutory-master/{companyId}`
+
+Updates `tally_statutory_masters` with Tally-assigned ID.
+
+```json
+{
+  "Data": [
+    { "Id": "uuid", "TallyId": 301, "IsSynced": false }
+  ]
+}
+```
+
+---
+
+### 6.15 POST `/api/PayrollAPI/update-employee-group/{companyId}`
+
+Updates `tally_employee_groups` with Tally-assigned ID.
+
+```json
+{
+  "Data": [
+    { "Id": "uuid", "TallyId": 401, "IsSynced": false }
+  ]
+}
+```
+
+---
+
+### 6.16 POST `/api/PayrollAPI/update-employee/{companyId}`
+
+Updates `tally_employees` with Tally-assigned ID.
+
+```json
+{
+  "Data": [
+    { "Id": "uuid", "TallyId": 501, "IsSynced": true }
+  ]
+}
+```
+
+---
+
+### 6.17 POST `/api/PayrollAPI/update-pay-head/{companyId}`
+
+Updates `tally_pay_heads` with Tally-assigned ID.
+
+```json
+{
+  "Data": [
+    { "Id": "uuid", "TallyId": 601, "IsSynced": false }
+  ]
+}
+```
+
+---
+
+### 6.18 POST `/api/PayrollAPI/update-attendance-type/{companyId}`
+
+Updates `tally_attendance_types` with Tally-assigned ID.
+
+```json
+{
+  "Data": [
+    { "Id": "uuid", "TallyId": 701, "IsSynced": false }
+  ]
+}
+```
+
+---
+
 ## 7. Known Limitations
 
 ### Accobot-side edits are invisible to the connector
@@ -1480,7 +1995,7 @@ All Tally API routes are throttled at **120 requests per minute**. Exceeding thi
 
 ---
 
-## 9. Quick Reference — All 35 Endpoints
+## 9. Quick Reference — All 63 Endpoints
 
 ### Inbound POST — `Authorization: Bearer <token>`
 
@@ -1499,6 +2014,11 @@ All Tally API routes are throttled at **120 requests per minute**. Exceeding thi
 | POST | `/api/tally/inbound/vouchers/payment` | Sync Payment vouchers |
 | POST | `/api/tally/inbound/vouchers/contra` | Sync Contra vouchers |
 | POST | `/api/tally/inbound/vouchers/journal` | Sync Journal vouchers |
+| POST | `/api/tally/inbound/masters/statutory` | Sync Statutory masters (GST/TDS/TCS) |
+| POST | `/api/tally/inbound/payroll/employee-groups` | Sync Employee groups |
+| POST | `/api/tally/inbound/payroll/employees` | Sync Employees |
+| POST | `/api/tally/inbound/payroll/pay-heads` | Sync Pay heads (salary components) |
+| POST | `/api/tally/inbound/payroll/attendance-types` | Sync Attendance types |
 | POST | `/api/tally/inbound/reports/balance-sheet` | Store Balance Sheet snapshot |
 | POST | `/api/tally/inbound/reports/profit-loss` | Store P&L snapshot |
 | POST | `/api/tally/inbound/reports/cash-flow` | Store Cash Flow snapshot |
@@ -1517,6 +2037,15 @@ All Tally API routes are throttled at **120 requests per minute**. Exceeding thi
 | GET | `/api/VoucherAPI/purchase-voucher` | Fetch Purchase vouchers |
 | GET | `/api/VoucherAPI/debitNote-voucher` | Fetch Debit Note vouchers |
 | GET | `/api/VoucherAPI/creditNote-voucher` | Fetch Credit Note vouchers |
+| GET | `/api/VoucherAPI/receipt-voucher` | Fetch Receipt vouchers |
+| GET | `/api/VoucherAPI/payment-voucher` | Fetch Payment vouchers |
+| GET | `/api/VoucherAPI/contra-voucher` | Fetch Contra vouchers |
+| GET | `/api/VoucherAPI/journal-voucher` | Fetch Journal vouchers |
+| GET | `/api/MastersAPI/statutory-master` | Fetch Statutory masters |
+| GET | `/api/PayrollAPI/employee-group` | Fetch Employee groups |
+| GET | `/api/PayrollAPI/employee` | Fetch Employees |
+| GET | `/api/PayrollAPI/pay-head` | Fetch Pay heads |
+| GET | `/api/PayrollAPI/attendance-type` | Fetch Attendance types |
 
 ### Confirmation POST — `Authorization: Bearer <token>`
 
@@ -1531,3 +2060,12 @@ All Tally API routes are throttled at **120 requests per minute**. Exceeding thi
 | POST | `/api/VoucherAPI/update-purchase-voucher/{companyId}` | Write back Tally ID to Purchase voucher |
 | POST | `/api/VoucherAPI/update-debitnote-voucher/{companyId}` | Write back Tally ID to Debit Note |
 | POST | `/api/VoucherAPI/update-creditnote-voucher/{companyId}` | Write back Tally ID to Credit Note |
+| POST | `/api/VoucherAPI/update-receipt-voucher/{companyId}` | Write back Tally ID to Receipt voucher |
+| POST | `/api/VoucherAPI/update-payment-voucher/{companyId}` | Write back Tally ID to Payment voucher |
+| POST | `/api/VoucherAPI/update-contra-voucher/{companyId}` | Write back Tally ID to Contra voucher |
+| POST | `/api/VoucherAPI/update-journal-voucher/{companyId}` | Write back Tally ID to Journal voucher |
+| POST | `/api/MastersAPI/update-statutory-master/{companyId}` | Write back Tally ID to Statutory master |
+| POST | `/api/PayrollAPI/update-employee-group/{companyId}` | Write back Tally ID to Employee group |
+| POST | `/api/PayrollAPI/update-employee/{companyId}` | Write back Tally ID to Employee |
+| POST | `/api/PayrollAPI/update-pay-head/{companyId}` | Write back Tally ID to Pay head |
+| POST | `/api/PayrollAPI/update-attendance-type/{companyId}` | Write back Tally ID to Attendance type |

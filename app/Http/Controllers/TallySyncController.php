@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Tenant;
 use App\Models\TallyConnection;
+use App\Models\TallyEmployee;
 use App\Models\TallyLedger;
 use App\Models\TallyLedgerGroup;
 use App\Models\TallyReport;
+use App\Models\TallyStatutoryMaster;
 use App\Models\TallySyncLog;
 use App\Models\TallyStockItem;
 use App\Models\TallyVoucher;
@@ -45,11 +47,13 @@ class TallySyncController extends Controller
 
         // Stats
         $stats = [
-            'total_ledger_groups'    => TallyLedgerGroup::withoutGlobalScope('tenant')->where('tenant_id', $tenant->id)->where('is_active', true)->count(),
-            'total_ledgers'          => TallyLedger::withoutGlobalScope('tenant')->where('tenant_id', $tenant->id)->where('is_active', true)->count(),
-            'total_stock_items'      => TallyStockItem::withoutGlobalScope('tenant')->where('tenant_id', $tenant->id)->where('is_active', true)->count(),
-            'total_vouchers'         => TallyVoucher::withoutGlobalScope('tenant')->where('tenant_id', $tenant->id)->where('is_active', true)->count(),
-            'last_synced_at'         => $connection?->last_synced_at,
+            'total_ledger_groups'     => TallyLedgerGroup::withoutGlobalScope('tenant')->where('tenant_id', $tenant->id)->where('is_active', true)->count(),
+            'total_ledgers'           => TallyLedger::withoutGlobalScope('tenant')->where('tenant_id', $tenant->id)->where('is_active', true)->count(),
+            'total_stock_items'       => TallyStockItem::withoutGlobalScope('tenant')->where('tenant_id', $tenant->id)->where('is_active', true)->count(),
+            'total_vouchers'          => TallyVoucher::withoutGlobalScope('tenant')->where('tenant_id', $tenant->id)->where('is_active', true)->count(),
+            'total_statutory_masters' => TallyStatutoryMaster::withoutGlobalScope('tenant')->where('tenant_id', $tenant->id)->where('is_active', true)->count(),
+            'total_employees'         => TallyEmployee::withoutGlobalScope('tenant')->where('tenant_id', $tenant->id)->where('is_active', true)->count(),
+            'last_synced_at'          => $connection?->last_synced_at,
         ];
 
         return Inertia::render('Tally/Sync', [

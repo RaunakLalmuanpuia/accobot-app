@@ -14,6 +14,7 @@ use App\Models\TallySyncLog;
 use App\Models\TallyStockCategory;
 use App\Models\TallyStockGroup;
 use App\Models\TallyStockItem;
+use App\Models\TallyStatutoryMaster;
 use App\Models\TallyVoucher;
 use App\Models\TallyVoucherInventoryEntry;
 use App\Models\TallyVoucherLedgerEntry;
@@ -581,51 +582,64 @@ class TallyInboundSync
         return $this->completeLog($log, $conn);
     }
 
+    public function syncStatutoryMasters(TallyConnection $conn, array $items): TallySyncLog
+    {
+        $log = $this->startLog($conn, 'statutory_masters');
+
+        try {
+            foreach ($items as $raw) {
+                $item    = $this->strip($raw);
+                $tallyId = (int) ($item['ID'] ?? $item['Id'] ?? 0);
+                if (!$tallyId) { $log->records_failed++; continue; }
+
+                $alterId  = (int) ($item['AlterID'] ?? $item['AlterId'] ?? 0);
+                $existing = TallyStatutoryMaster::withoutGlobalScope('tenant')
+                    ->where('tenant_id', $conn->tenant_id)
+                    ->where('tally_id', $tallyId)->first();
+
+                if ($existing && $existing->alter_id === $alterId) { $log->records_skipped++; continue; }
+
+                $action = $item['Action'] ?? 'Create';
+                if ($action === 'Delete') {
+                    if ($existing) { $existing->update(['is_active' => false]); $log->records_updated++; }
+                    continue;
+                }
+
+                $data = [
+                    'tenant_id'           => $conn->tenant_id,
+                    'tally_id'            => $tallyId,
+                    'alter_id'            => $alterId,
+                    'action'              => $action,
+                    'name'                => $item['Name'] ?? '',
+                    'statutory_type'      => $item['StatutoryType'] ?? null,
+                    'registration_number' => $item['RegistrationNumber'] ?? $item['GSTIN'] ?? null,
+                    'state_code'          => $item['StateCode'] ?? null,
+                    'registration_type'   => $item['RegistrationType'] ?? null,
+                    'pan'                 => $item['PAN'] ?? null,
+                    'tan'                 => $item['TAN'] ?? null,
+                    'applicable_from'     => $this->parseDate($item['ApplicableFrom'] ?? null),
+                    'details'             => array_diff_key($item, array_flip([
+                        'ID', 'Id', 'AlterID', 'AlterId', 'Action', 'Name',
+                        'StatutoryType', 'RegistrationNumber', 'GSTIN',
+                        'StateCode', 'RegistrationType', 'PAN', 'TAN', 'ApplicableFrom',
+                    ])),
+                    'is_active'           => true,
+                    'last_synced_at'      => now(),
+                ];
+
+                if ($existing) { $existing->update($data); $log->records_updated++; }
+                else { TallyStatutoryMaster::create($data); $log->records_created++; }
+            }
+        } catch (\Throwable $e) {
+            return $this->failLog($log, $e->getMessage());
+        }
+
+        return $this->completeLog($log, $conn);
+    }
+
     // ── Private ────────────────────────────────────────────────────────────────
 
-    private function startLog(TallyConnection $conn, string $entity): TallySyncLog
-    {
-        return TallySyncLog::create([
-            'tenant_id'  => $conn->tenant_id,
-            'entity'     => $entity,
-            'direction'  => 'inbound',
-            'status'     => 'running',
-            'started_at' => now(),
-        ]);
-    }
-
-    private function completeLog(TallySyncLog $log, TallyConnection $conn): TallySyncLog
-    {
-        $log->update([
-            'status'       => 'success',
-            'completed_at' => now(),
-            'records_created' => $log->records_created,
-            'records_updated' => $log->records_updated,
-            'records_skipped' => $log->records_skipped,
-            'records_failed'  => $log->records_failed,
-        ]);
-        $conn->update(['last_synced_at' => now()]);
-        return $log->fresh();
-    }
-
-    private function failLog(TallySyncLog $log, string $message): TallySyncLog
-    {
-        $log->update([
-            'status'        => 'failed',
-            'error_message' => $message,
-            'completed_at'  => now(),
-        ]);
-        return $log->fresh();
-    }
-
-    private function strip(array $item): array
-    {
-        return array_map(function ($v) {
-            if (is_string($v)) return ltrim($v, "\u{0004}");
-            if (is_array($v))  return $this->strip($v);
-            return $v;
-        }, $item);
-    }
+    use TallySyncHelpers;
 
     private function parseBool(mixed $v): ?bool
     {
@@ -634,16 +648,6 @@ class TallyInboundSync
         if ($v === 'Yes' || $v === 'true' || $v === '1') return true;
         if ($v === 'No'  || $v === 'false'|| $v === '0') return false;
         return null;
-    }
-
-    private function parseDate(?string $v): ?string
-    {
-        if (!$v) return null;
-        try {
-            return \Carbon\Carbon::parse($v)->toDateString();
-        } catch (\Throwable) {
-            return null;
-        }
     }
 
     private function deriveCategory(?string $groupName, ?string $parentGroup): string
