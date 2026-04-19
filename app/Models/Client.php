@@ -15,6 +15,7 @@ class Client extends Model
     protected $fillable = [
         'tenant_id', 'name', 'email', 'phone',
         'address', 'company', 'tax_id', 'notes', 'embedding',
+        'tally_ledger_id',
     ];
 
     protected $casts = [
@@ -35,6 +36,11 @@ class Client extends Model
     public function invoices(): HasMany
     {
         return $this->hasMany(Invoice::class);
+    }
+
+    public function tallyLedger(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(TallyLedger::class, 'tally_ledger_id');
     }
 
     public function toEmbeddingText(): string

@@ -16,7 +16,7 @@ class Invoice extends Model
         'tenant_id', 'invoice_number', 'client_id',
         'issue_date', 'due_date', 'status',
         'subtotal', 'tax_amount', 'total', 'currency', 'notes',
-        'amount_paid', 'amount_due',
+        'amount_paid', 'amount_due', 'tally_voucher_id',
     ];
 
     protected $casts = [
@@ -45,6 +45,11 @@ class Invoice extends Model
     public function items(): HasMany
     {
         return $this->hasMany(InvoiceItem::class);
+    }
+
+    public function tallyVoucher(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(TallyVoucher::class, 'tally_voucher_id');
     }
 
     // ── Accessors (for invoice matching compatibility) ─────────────────────

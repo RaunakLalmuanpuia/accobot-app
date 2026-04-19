@@ -14,6 +14,7 @@ class Vendor extends Model
     protected $fillable = [
         'tenant_id', 'name', 'email', 'phone',
         'address', 'company', 'tax_id', 'notes', 'embedding',
+        'tally_ledger_id',
     ];
 
     protected $casts = [
@@ -29,6 +30,11 @@ class Vendor extends Model
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);
+    }
+
+    public function tallyLedger(): BelongsTo
+    {
+        return $this->belongsTo(TallyLedger::class, 'tally_ledger_id');
     }
 
     public function toEmbeddingText(): string

@@ -16,6 +16,8 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SmsIngestController;
 use App\Http\Controllers\StatementUploadController;
+use App\Http\Controllers\TallyConnectionController;
+use App\Http\Controllers\TallySyncController;
 use App\Http\Controllers\TeamMemberController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\VendorController;
@@ -115,6 +117,15 @@ Route::middleware(['auth', 'verified', 'member'])
         Route::put('/invoices/{invoice}', [InvoiceController::class, 'update'])->name('invoices.update')->middleware('tenant.permission:invoices.edit');
         Route::delete('/invoices/{invoice}', [InvoiceController::class, 'destroy'])->name('invoices.destroy')->middleware(['tenant.permission:invoices.delete', 'no.impersonate']);
         Route::get('/invoices/{invoice}/download', [InvoiceController::class, 'download'])->name('invoices.download');
+
+        // ── Tally Integration ─────────────────────────────────────────
+        Route::get('/settings/tally', [TallyConnectionController::class, 'show'])->name('tally.connection.show')->middleware('tenant.permission:integrations.view');
+        Route::post('/settings/tally', [TallyConnectionController::class, 'save'])->name('tally.connection.save')->middleware('tenant.permission:integrations.manage');
+        Route::get('/settings/tally/test', [TallyConnectionController::class, 'testConnection'])->name('tally.connection.test')->middleware('tenant.permission:integrations.manage');
+        Route::post('/settings/tally/regenerate-token', [TallyConnectionController::class, 'regenerateToken'])->name('tally.connection.regenerate-token')->middleware('tenant.permission:integrations.manage');
+        Route::delete('/settings/tally', [TallyConnectionController::class, 'destroy'])->name('tally.connection.destroy')->middleware(['tenant.permission:integrations.manage', 'no.impersonate']);
+        Route::get('/tally/sync', [TallySyncController::class, 'index'])->name('tally.sync.index')->middleware('tenant.permission:integrations.view');
+        Route::post('/tally/sync', [TallySyncController::class, 'trigger'])->name('tally.sync.trigger')->middleware('tenant.permission:integrations.manage');
 
         // ── Banking / Narration ────────────────────────────────────────
         Route::get('/banking', [BankTransactionController::class, 'pending'])

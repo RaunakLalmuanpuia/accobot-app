@@ -16,7 +16,7 @@ class Product extends Model
         'tenant_id', 'name', 'description', 'sku', 'unit',
         'unit_price', 'tax_rate', 'stock_quantity',
         'category', 'sub_category', 'main_group', 'sub_group',
-        'is_active', 'embedding',
+        'is_active', 'embedding', 'tally_stock_item_id',
     ];
 
     protected static function booted(): void
@@ -41,6 +41,11 @@ class Product extends Model
     public function invoiceItems(): HasMany
     {
         return $this->hasMany(InvoiceItem::class);
+    }
+
+    public function tallyStockItem(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(TallyStockItem::class, 'tally_stock_item_id');
     }
 
     public function toEmbeddingText(): string

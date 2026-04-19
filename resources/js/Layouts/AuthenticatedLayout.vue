@@ -235,6 +235,14 @@ function stopImpersonation() {
                                             :active="route().current('banking.index')"
                                         >Narration</NavLink>
                                     </template>
+
+                                    <template v-if="hasPermission('integrations.view')">
+                                        <span class="self-center h-5 w-px bg-gray-200"></span>
+                                        <NavLink
+                                            :href="route('tally.sync.index', { tenant: currentTenantId() })"
+                                            :active="route().current('tally.sync.index') || route().current('tally.connection.show')"
+                                        >Tally</NavLink>
+                                    </template>
                                 </template>
                             </div>
                         </div>

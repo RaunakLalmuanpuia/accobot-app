@@ -1,0 +1,638 @@
+ ---
+  Build Tally integration in accobot-app.
+
+  Stack: Laravel 13, Vue 3, Inertia.js, Tailwind CSS (violet-* only, never indigo-*), PostgreSQL. Multi-tenant via BelongsToTenant trait — always
+  withoutGlobalScope('tenant') in API controllers. Permissions: integrations.view / integrations.manage. Flash via page.props.flash.success / page.props.flash.error.
+
+  ---
+  Architecture
+
+  Tally is the source of truth. Accobot replicates the cloud-tally.in connector API so Tally's connector talks directly to Accobot. Three flows — all initiated by the
+  connector, never by Accobot:
+
+  1. Inbound: Connector POSTs Tally data to Accobot. AlterID unchanged → skip. Action: Delete → is_active = false. Tally always wins.
+  2. Outbound GET: Connector GETs Accobot-originated records (Swagger paths). Tally reads and syncs.
+  3. Confirmation POST: Tally sends back TallyId after creating Accobot-originated records (Swagger paths).
+
+  Accobot makes zero outbound HTTP calls to Tally.
+
+  ---
+  Authentication
+
+  Accobot generates per-tenant inbound_token (48-char, auto-generated on TallyConnection::creating()). Token is in $hidden. Tenant enters company_id (Tally company UUID) in
+   Accobot settings. Tenant copies base_url (url('/')), token, and company_id into Tally connector. All connector requests send Authorization: Bearer {inbound_token}.
+  Accobot resolves tenant from token via withoutGlobalScope('tenant'). Returns 401 if missing or inactive. No Sanctum on Tally API routes.
+
+  ---
+  Database — 11 Tables
+
+  tally_connections
+
+  id
+  tenant_id               uuid unique FK
+  company_id              string
+  is_active               bool default true
+  inbound_token           string(48) unique
+  inbound_token_last_used_at  timestamp nullable
+  last_synced_at          timestamp nullable
+  timestamps
+
+  tally_ledger_groups
+
+  id
+  tenant_id               uuid FK
+  tally_id                integer
+  alter_id                integer
+  action                  string
+  name                    string
+  under_id                integer nullable
+  under_name              string nullable
+  nature_of_group         string nullable   (Assets/Liabilities/Income/Expenses)
+  is_revenue              bool nullable
+  affects_gross           bool nullable
+  is_addable              bool nullable
+  is_active               bool default true
+  last_synced_at          timestamp nullable
+  timestamps
+  unique(tenant_id, tally_id)
+
+  tally_ledgers
+
+  id
+  tenant_id               uuid FK
+  tally_id                integer
+  alter_id                integer
+  action                  string
+
+  -- Classification
+  ledger_name             string
+  group_name              string nullable
+  parent_group            string nullable
+  ledger_category         string nullable   (customer/vendor/expense/income/asset/liability/bank/tax/other)
+                                            — derived by Accobot from group_name on inbound
+
+  -- Flags
+  is_bill_wise_on         bool default false
+  inventory_affected      bool default false
+  is_cost_centre_applicable bool default false
+
+  -- GST / Tax
+  gstin_number            string nullable
+  pan_number              string nullable
+  tan_number              string nullable
+  gst_type                string nullable   (Regular/Composition/Unregistered/Consumer)
+  is_rcm_applicable       bool default false
+
+  -- Contact
+  mailing_name            string nullable
+  mobile_number           string nullable
+  contact_person          string nullable
+  contact_person_email    string nullable
+  contact_person_email_cc string nullable
+  contact_person_fax      string nullable
+  contact_person_website  string nullable
+  contact_person_mobile   string nullable
+
+  -- Address
+  addresses               jsonb nullable    [{Address: string}]
+  state_name              string nullable
+  country_name            string nullable
+  pin_code                string nullable
+
+  -- Credit Terms
+  credit_period           integer nullable
+  credit_limit            decimal(15,2) nullable
+
+  -- Opening Balance
+  opening_balance         decimal(15,2) nullable
+  opening_balance_type    string nullable   (Dr/Cr)
+
+  -- Bank Details
+  bank_details            jsonb nullable    [{BankName, IFSCode, AccountNumber, ...}]
+
+  -- Aliases
+  aliases                 jsonb nullable    [{Alias: string}]
+
+  -- Other
+  description             text nullable
+  notes                   text nullable
+
+  is_active               bool default true
+  last_synced_at          timestamp nullable
+
+  -- Accobot mapping
+  mapped_client_id        bigint nullable FK → clients
+  mapped_vendor_id        bigint nullable FK → vendors
+
+  timestamps
+  unique(tenant_id, tally_id)
+
+  tally_stock_items
+
+  id
+  tenant_id               uuid FK
+  tally_id                integer
+  alter_id                integer
+  action                  string
+
+  -- Identity
+  name                    string
+  description             text nullable
+  remarks                 text nullable
+  aliases                 jsonb nullable
+
+  -- Classification
+  stock_group_id          integer nullable
+  stock_group_name        string nullable
+  stock_category_id       integer nullable
+  category_name           string nullable
+
+  -- Units
+  unit_id                 integer nullable
+  unit_name               string nullable
+  alternate_unit          string nullable
+  conversion              decimal(10,4) nullable
+  denominator             integer default 1
+
+  -- GST & Tax
+  is_gst_applicable       bool default false
+  taxability              string nullable   (Taxable/Exempt/Nil Rated/Non-GST)
+  calculation_type        string nullable
+  igst_rate               decimal(5,2) default 0
+  sgst_rate               decimal(5,2) default 0
+  cgst_rate               decimal(5,2) default 0
+  cess_rate               decimal(5,2) default 0
+  hsn_code                string nullable
+
+  -- Pricing
+  mrp_rate                decimal(12,2) nullable
+  standard_cost           decimal(12,2) nullable
+  standard_price          decimal(12,2) nullable
+
+  -- Stock Levels
+  opening_balance         decimal(15,4) default 0
+  opening_rate            decimal(12,2) default 0
+  opening_value           decimal(15,2) default 0
+  closing_balance         decimal(15,4) default 0
+  closing_rate            decimal(12,2) default 0
+  closing_value           decimal(15,2) default 0
+
+  -- Inventory Behaviour
+  costing_method          string nullable
+  is_batch_applicable     bool default false
+  is_expiry_date_applicable bool default false
+  reorder_level           decimal(15,4) nullable
+  reorder_quantity        decimal(15,4) nullable
+  maximum_quantity        decimal(15,4) nullable
+
+  -- Batch / Godown
+  batch_allocations       jsonb nullable
+
+  is_active               bool default true
+  last_synced_at          timestamp nullable
+
+  -- Accobot mapping
+  mapped_product_id       bigint nullable FK → products
+
+  timestamps
+  unique(tenant_id, tally_id)
+
+  tally_stock_groups
+
+  id
+  tenant_id               uuid FK
+  tally_id                integer
+  alter_id                integer
+  action                  string
+  name                    string
+  parent_id               integer nullable
+  parent_name             string nullable
+  nature_of_group         string nullable
+  should_add_quantities   bool default false
+  is_active               bool default true
+  last_synced_at          timestamp nullable
+  timestamps
+  unique(tenant_id, tally_id)
+
+  tally_stock_categories
+
+  id
+  tenant_id               uuid FK
+  tally_id                integer
+  alter_id                integer
+  action                  string
+  name                    string
+  parent_name             string nullable
+  is_active               bool default true
+  last_synced_at          timestamp nullable
+  timestamps
+  unique(tenant_id, tally_id)
+
+  tally_vouchers
+
+  id
+  tenant_id               uuid FK
+  tally_id                integer             (MasterID from payload)
+  alter_id                integer
+  action                  string
+  voucher_type            string              (Sales/CreditNote/Purchase/DebitNote/Receipt/Payment/Contra/Journal)
+  voucher_number          string nullable
+  voucher_date            date nullable
+  reference               string nullable
+  reference_date          string nullable
+
+  -- Party
+  party_name              string nullable
+  party_tally_ledger_id   bigint nullable FK → tally_ledgers
+  voucher_total           decimal(15,2) nullable
+
+  -- Flags
+  is_invoice              bool default false
+  is_deleted              bool default false
+
+  -- Dispatch / Shipping
+  place_of_supply         string nullable
+  delivery_note_no        string nullable
+  delivery_note_date      string nullable
+  dispatch_doc_no         string nullable
+  dispatch_through        string nullable
+  destination             string nullable
+  carrier_name            string nullable
+  lr_no                   string nullable
+  lr_date                 string nullable
+  motor_vehicle_no        string nullable
+
+  -- Order
+  order_no                string nullable
+  order_date              string nullable
+  terms_of_payment        string nullable
+  terms_of_delivery       string nullable
+  other_references        string nullable
+
+  -- Buyer (Sales)
+  buyer_name              string nullable
+  buyer_alias             string nullable
+  buyer_gstin             string nullable
+  buyer_pin_code          string nullable
+  buyer_state             string nullable
+  buyer_country           string nullable
+  buyer_gst_registration_type string nullable
+  buyer_email             string nullable
+  buyer_mobile            string nullable
+  buyer_address           jsonb nullable
+
+  -- Consignee (Sales)
+  consignee_name          string nullable
+  consignee_gstin         string nullable
+  consignee_tally_group   string nullable
+  consignee_pin_code      string nullable
+  consignee_state         string nullable
+  consignee_country       string nullable
+  consignee_gst_registration_type string nullable
+
+  -- e-Invoice (GST mandate)
+  irn                     string nullable
+  acknowledgement_no      string nullable
+  acknowledgement_date    string nullable
+  qr_code                 text nullable
+
+  -- Other
+  narration               text nullable
+  cost_centre             string nullable
+
+  is_active               bool default true
+  last_synced_at          timestamp nullable
+
+  -- Accobot mapping
+  mapped_invoice_id       bigint nullable FK → invoices
+
+  timestamps
+  unique(tenant_id, tally_id)
+
+  tally_voucher_inventory_entries
+
+  id
+  tenant_id               uuid FK
+  tally_voucher_id        bigint FK → tally_vouchers
+  tally_stock_item_id     bigint nullable FK → tally_stock_items
+  stock_item_name         string nullable
+  item_code               string nullable
+  group_name              string nullable
+  hsn_code                string nullable
+  unit                    string nullable
+  igst_rate               decimal(5,2) nullable
+  cess_rate               decimal(5,2) nullable
+  is_deemed_positive      bool default false
+  actual_qty              decimal(15,4) default 0
+  billed_qty              decimal(15,4) default 0
+  rate                    decimal(12,2) default 0
+  discount_percent        decimal(5,2) default 0
+  amount                  decimal(15,2) default 0
+  tax_amount              decimal(15,2) default 0
+  mrp                     decimal(12,2) nullable
+  sales_ledger            string nullable
+  godown_name             string nullable
+  batch_name              string nullable
+  batch_allocations       jsonb nullable
+  accounting_allocations  jsonb nullable
+  timestamps
+
+  tally_voucher_ledger_entries
+
+  id
+  tenant_id               uuid FK
+  tally_voucher_id        bigint FK → tally_vouchers
+  tally_ledger_id         bigint nullable FK → tally_ledgers
+  ledger_name             string nullable
+  ledger_group            string nullable
+  ledger_amount           decimal(15,2) default 0
+  is_deemed_positive      bool default false
+  is_party_ledger         bool default false
+  igst_rate               string nullable
+  hsn_code                string nullable
+  cess_rate               string nullable
+  bills_allocation        jsonb nullable
+  timestamps
+
+  tally_reports
+
+  id
+  tenant_id               uuid FK
+  report_type             string              (balance_sheet/profit_loss/cash_flow/ratio_analysis)
+  period_from             date nullable       (null for balance sheet)
+  period_to               date
+  data                    jsonb               full report JSON as Tally generates it
+  generated_at            timestamp nullable  when Tally produced this report
+  synced_at               timestamp
+  timestamps
+  index(tenant_id, report_type, period_to)
+
+  tally_sync_logs
+
+  id
+  tenant_id               uuid FK
+  entity                  string              (ledger_groups/ledgers/stock_items/stock_groups/stock_categories/vouchers_sales/vouchers_purchase/vouchers_credit_note/voucher
+  s_debit_note/vouchers_receipt/vouchers_payment/vouchers_contra/vouchers_journal/reports_balance_sheet/etc.)
+  direction               enum(inbound/outbound)
+  status                  enum(running/success/failed)
+  triggered_manually      bool default false
+  records_created         integer default 0
+  records_updated         integer default 0
+  records_skipped         integer default 0
+  records_failed          integer default 0
+  error_message           text nullable
+  started_at              timestamp nullable
+  completed_at            timestamp nullable
+  timestamps
+
+  ---
+  Existing Model Changes (FK columns only)
+
+  products  → add tally_stock_item_id (bigint nullable FK → tally_stock_items)
+  clients   → add tally_ledger_id (bigint nullable FK → tally_ledgers)
+  vendors   → add tally_ledger_id (bigint nullable FK → tally_ledgers)
+  invoices  → add tally_voucher_id (bigint nullable FK → tally_vouchers)
+
+  ---
+  API Endpoints
+
+  Inbound POST (connector → Accobot) — custom paths
+
+  POST /api/tally/inbound/masters/ledger-groups
+  POST /api/tally/inbound/masters/ledgers
+  POST /api/tally/inbound/masters/stock-items
+  POST /api/tally/inbound/masters/stock-groups
+  POST /api/tally/inbound/masters/stock-categories
+  POST /api/tally/inbound/vouchers/sales
+  POST /api/tally/inbound/vouchers/credit-note
+  POST /api/tally/inbound/vouchers/purchase
+  POST /api/tally/inbound/vouchers/debit-note
+  POST /api/tally/inbound/vouchers/receipt
+  POST /api/tally/inbound/vouchers/payment
+  POST /api/tally/inbound/vouchers/contra
+  POST /api/tally/inbound/vouchers/journal
+  POST /api/tally/inbound/reports/balance-sheet
+  POST /api/tally/inbound/reports/profit-loss
+  POST /api/tally/inbound/reports/cash-flow
+  POST /api/tally/inbound/reports/ratio-analysis
+
+  All master/voucher endpoints: accept { "Data": [...] } (vouchers lowercase "data"). Strip \u0004 prefix from all string fields. Process: upsert on (tenant_id, tally_id).
+  AlterID unchanged → skip. Action: Delete → is_active = false. full_sync: true in payload → mark absent records inactive.
+
+  Report endpoints: accept { "report_type": "...", "period_from": "...", "period_to": "...", "generated_at": "...", "data": {...} }. Insert new row into tally_reports (do
+  not update — keep history of all report snapshots).
+
+  Ledger categorization (run during syncLedgers): derive ledger_category from group_name / parent_group:
+  - contains "Debtor" → customer → auto-create/update clients
+  - contains "Creditor" or "Supplier" → vendor → auto-create/update vendors
+  - contains "Bank" or "Cash-in-Hand" or "Cash" → bank
+  - group under Expenses → expense
+  - group under Income or "Sales" → income
+  - group under Fixed Assets / Current Assets / Investments → asset
+  - group under Loans / Capital / Current Liabilities / Provisions → liability
+  - group = "Duties & Taxes" or contains "GST" or "TDS" or "TCS" → tax
+  - else → other
+
+  Outbound GET (exact Swagger paths — Tally reads Accobot data)
+
+  GET /api/MastersAPI/ledger-group?companyId=
+  GET /api/MastersAPI/ledger-master?companyId=
+  GET /api/MastersAPI/stock-master?companyId=
+  GET /api/MastersAPI/stock-group?companyId=
+  GET /api/MastersAPI/stock-category?companyId=
+  GET /api/VoucherAPI/sales-voucher?companyId=
+  GET /api/VoucherAPI/purchase-voucher?companyId=
+  GET /api/VoucherAPI/debitNote-voucher?companyId=
+  GET /api/VoucherAPI/creditNote-voucher?companyId=
+
+  Resolve tenant from Bearer. Verify companyId. Return all active records formatted in Tally's exact payload structure. Response: { "Data": [...] }.
+
+  Confirmation POST (exact Swagger paths — Tally sends back TallyIds)
+
+  POST /api/MastersAPI/update-ledger-master/{companyId}
+  POST /api/MastersAPI/update-stock-master/{companyId}
+  POST /api/MastersAPI/update-ledger-group/{companyId}
+  POST /api/MastersAPI/update-stock-group/{companyId}
+  POST /api/MastersAPI/update-stock-category/{companyId}
+  POST /api/VoucherAPI/update-sales-voucher/{companyId}
+  POST /api/VoucherAPI/update-purchase-voucher/{companyId}
+  POST /api/VoucherAPI/update-debitnote-voucher/{companyId}
+  POST /api/VoucherAPI/update-creditnote-voucher/{companyId}
+
+  Body: { "Data": [{ "Id": accobot_tally_table_id, "TallyId": "string", "IsSynced": true }] }. Store TallyId. Set is_synced = true on mapped Accobot model
+  (client/vendor/product/invoice).
+
+  ---
+  Service Layer
+
+  app/Services/Tally/TallyInboundSync.php
+
+  syncLedgerGroups(TallyConnection $conn, array $items): TallySyncLog
+  syncLedgers(TallyConnection $conn, array $items, bool $fullSync = false): TallySyncLog
+  syncStockItems(TallyConnection $conn, array $items, bool $fullSync = false): TallySyncLog
+  syncStockGroups(TallyConnection $conn, array $items): TallySyncLog
+  syncStockCategories(TallyConnection $conn, array $items): TallySyncLog
+  syncVouchers(TallyConnection $conn, array $items, string $type, bool $fullSync = false): TallySyncLog
+
+  Each method: create log → strip \u0004 → loop items → check AlterID → upsert → auto-map → mark log done.
+
+  syncLedgers auto-map: derive ledger_category, if customer → Client::updateOrCreate(['tally_ledger_id' => $ledger->id], [...fields]), if vendor →
+  Vendor::updateOrCreate(...).
+
+  syncStockItems auto-map: Product::updateOrCreate(['tally_stock_item_id' => $item->id], [...fields]).
+
+  syncVouchers: upsert tally_vouchers → delete + re-insert tally_voucher_inventory_entries and tally_voucher_ledger_entries → if type = Sales:
+  Invoice::updateOrCreate(['tally_voucher_id' => $voucher->id], [...fields]).
+
+  app/Services/Tally/TallyReportSync.php
+
+  syncReport(TallyConnection $conn, string $type, array $payload): TallySyncLog
+
+  Inserts a new tally_reports row. Never updates — keeps full history of snapshots.
+
+  app/Services/Tally/TallyOutboundFormatter.php
+
+  formatLedgerGroups(Collection $groups): array
+  formatLedgers(Collection $ledgers): array
+  formatStockItems(Collection $items): array
+  formatStockGroups(Collection $groups): array
+  formatStockCategories(Collection $cats): array
+  formatSalesVouchers(Collection $vouchers): array
+  formatPurchaseVouchers(Collection $vouchers): array
+  formatDebitNoteVouchers(Collection $vouchers): array
+  formatCreditNoteVouchers(Collection $vouchers): array
+
+  Each method returns array in exact Tally payload structure (field names, casing, \u0004 prefix on system units).
+
+  ---
+  Controllers
+
+  app/Http/Controllers/Api/Tally/TallyBaseController.php — resolves TallyConnection from Bearer token. Stamps inbound_token_last_used_at. Returns 401 if missing/inactive.
+
+  app/Http/Controllers/Api/Tally/TallyInboundMastersController.php — methods: ledgerGroups, ledgers, stockItems, stockGroups, stockCategories. Each calls TallyInboundSync,
+  returns { status, created, updated, skipped, failed }.
+
+  app/Http/Controllers/Api/Tally/TallyInboundVouchersController.php — methods: sales, creditNote, purchase, debitNote, receipt, payment, contra, journal.
+
+  app/Http/Controllers/Api/Tally/TallyInboundReportsController.php — methods: balanceSheet, profitLoss, cashFlow, ratioAnalysis. Each calls TallyReportSync::syncReport().
+
+  app/Http/Controllers/Api/Tally/TallyOutboundController.php — all GET Swagger endpoints. Resolves connection, verifies companyId, returns formatted data.
+
+  app/Http/Controllers/Api/Tally/TallyConfirmController.php — all POST update-* Swagger endpoints.
+
+  app/Http/Controllers/TallyConnectionController.php — show(), save(), regenerateToken(), destroy(), testConnection() (GET, calls GET /api/MastersAPI/stock-master on self).
+
+  app/Http/Controllers/TallySyncController.php — index() (logs + report snapshots + stats), trigger().
+
+  ---
+  Web Routes (/t/{tenant}/, auth + verified + member)
+
+  GET    /settings/tally                   tally.connection.show            integrations.view
+  POST   /settings/tally                   tally.connection.save            integrations.manage
+  GET    /settings/tally/test              tally.connection.test            integrations.manage
+  POST   /settings/tally/regenerate-token  tally.connection.regenerate-token integrations.manage
+  DELETE /settings/tally                   tally.connection.destroy         integrations.manage
+  GET    /tally/sync                       tally.sync.index                 integrations.view
+  POST   /tally/sync                       tally.sync.trigger               integrations.manage
+
+  API Routes (throttle:120,1)
+
+  // Inbound
+  Route::prefix('tally/inbound')->group(function () {
+      Route::post('masters/ledger-groups',    [TallyInboundMastersController::class, 'ledgerGroups']);
+      Route::post('masters/ledgers',          [TallyInboundMastersController::class, 'ledgers']);
+      Route::post('masters/stock-items',      [TallyInboundMastersController::class, 'stockItems']);
+      Route::post('masters/stock-groups',     [TallyInboundMastersController::class, 'stockGroups']);
+      Route::post('masters/stock-categories', [TallyInboundMastersController::class, 'stockCategories']);
+      Route::post('vouchers/sales',           [TallyInboundVouchersController::class, 'sales']);
+      Route::post('vouchers/credit-note',     [TallyInboundVouchersController::class, 'creditNote']);
+      Route::post('vouchers/purchase',        [TallyInboundVouchersController::class, 'purchase']);
+      Route::post('vouchers/debit-note',      [TallyInboundVouchersController::class, 'debitNote']);
+      Route::post('vouchers/receipt',         [TallyInboundVouchersController::class, 'receipt']);
+      Route::post('vouchers/payment',         [TallyInboundVouchersController::class, 'payment']);
+      Route::post('vouchers/contra',          [TallyInboundVouchersController::class, 'contra']);
+      Route::post('vouchers/journal',         [TallyInboundVouchersController::class, 'journal']);
+      Route::post('reports/balance-sheet',    [TallyInboundReportsController::class, 'balanceSheet']);
+      Route::post('reports/profit-loss',      [TallyInboundReportsController::class, 'profitLoss']);
+      Route::post('reports/cash-flow',        [TallyInboundReportsController::class, 'cashFlow']);
+      Route::post('reports/ratio-analysis',   [TallyInboundReportsController::class, 'ratioAnalysis']);
+  });
+
+  // Outbound GET — exact Swagger paths
+  Route::prefix('MastersAPI')->group(function () {
+      Route::get('ledger-group',    [TallyOutboundController::class, 'ledgerGroup']);
+      Route::get('ledger-master',   [TallyOutboundController::class, 'ledgerMaster']);
+      Route::get('stock-master',    [TallyOutboundController::class, 'stockMaster']);
+      Route::get('stock-group',     [TallyOutboundController::class, 'stockGroup']);
+      Route::get('stock-category',  [TallyOutboundController::class, 'stockCategory']);
+      Route::post('update-ledger-master/{companyId}',  [TallyConfirmController::class, 'ledgerMaster']);
+      Route::post('update-stock-master/{companyId}',   [TallyConfirmController::class, 'stockMaster']);
+      Route::post('update-ledger-group/{companyId}',   [TallyConfirmController::class, 'ledgerGroup']);
+      Route::post('update-stock-group/{companyId}',    [TallyConfirmController::class, 'stockGroup']);
+      Route::post('update-stock-category/{companyId}', [TallyConfirmController::class, 'stockCategory']);
+  });
+
+  Route::prefix('VoucherAPI')->group(function () {
+      Route::get('sales-voucher',      [TallyOutboundController::class, 'salesVoucher']);
+      Route::get('purchase-voucher',   [TallyOutboundController::class, 'purchaseVoucher']);
+      Route::get('debitNote-voucher',  [TallyOutboundController::class, 'debitNoteVoucher']);
+      Route::get('creditNote-voucher', [TallyOutboundController::class, 'creditNoteVoucher']);
+      Route::post('update-sales-voucher/{companyId}',     [TallyConfirmController::class, 'salesVoucher']);
+      Route::post('update-purchase-voucher/{companyId}',  [TallyConfirmController::class, 'purchaseVoucher']);
+      Route::post('update-debitnote-voucher/{companyId}', [TallyConfirmController::class, 'debitNoteVoucher']);
+      Route::post('update-creditnote-voucher/{companyId}',[TallyConfirmController::class, 'creditNoteVoucher']);
+  });
+
+  ---
+  Vue Pages
+
+  Connection.vue — 3 sections
+
+  1. Token card (after first save): Base URL (copy), Token (masked + show/hide + copy), last used timestamp, Regenerate button
+  2. "Enter These in Tally" table: Base URL / Token / Company ID — all copyable
+  3. Settings form: company_id input, is_active checkbox, Save / Test Connection / Remove
+
+  Sync.vue — 4 tabs
+
+  - Masters: table of last sync per entity (ledger groups / ledgers / stock items / stock groups / stock categories), record counts, last synced timestamp, status badge
+  - Vouchers: same for all 8 voucher types
+  - Reports: list of report snapshots (type / period / synced at / view button)
+  - Logs: full sync log table with entity / direction / status / counts / error (expandable) — use <template v-for> for error rows
+
+  Sync Now button top-right. Flash banners at top.
+
+  ---
+  Nav Link (AuthenticatedLayout.vue)
+
+  <template v-if="hasPermission('integrations.view')">
+      <NavLink
+          :href="route('tally.sync.index', { tenant: currentTenantId() })"
+          :active="route().current('tally.sync.index') || route().current('tally.connection.show')"
+      >Tally</NavLink>
+  </template>
+
+  ---
+  Docs
+
+  Create docs/tally-integration.md covering: full architecture, all 35 API endpoints, 11-table schema with complete field list, ledger categorization rules, sync order
+  (ledger-groups → ledgers → stock-groups → stock-categories → stock-items → vouchers), AlterID conflict rules, auto-mapping rules (ledger → client/vendor, stock-item →
+  product, sales voucher → invoice), report snapshot design.
+
+  ---
+  Build Order
+
+  1. 13 migrations (connection → ledger_groups → ledgers → stock_items → stock_groups → stock_categories → vouchers → inventory_entries → ledger_entries → reports →
+  sync_logs → FK columns on products/clients/vendors/invoices)
+  2. 11 models + relation updates on Product/Client/Vendor/Invoice
+  3. TallyBaseController
+  4. TallyInboundSync — syncLedgerGroups + syncLedgers + syncStockItems (with auto-mapping)
+  5. TallyInboundMastersController (all 5 master endpoints)
+  6. TallyInboundVouchersController — sales first, then rest
+  7. TallyInboundReportsController
+  8. TallyReportSync service
+  9. TallyConnectionController + Connection.vue
+  10. TallyOutboundFormatter + TallyOutboundController
+  11. TallyConfirmController
+  12. TallySyncController + Sync.vue
+  13. Nav link
+  14. docs/tally-integration.md

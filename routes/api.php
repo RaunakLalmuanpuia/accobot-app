@@ -1,6 +1,11 @@
 <?php
 
 use App\Http\Controllers\Api\MobileAuthController;
+use App\Http\Controllers\Api\Tally\TallyConfirmController;
+use App\Http\Controllers\Api\Tally\TallyInboundMastersController;
+use App\Http\Controllers\Api\Tally\TallyInboundReportsController;
+use App\Http\Controllers\Api\Tally\TallyInboundVouchersController;
+use App\Http\Controllers\Api\Tally\TallyOutboundController;
 use App\Http\Controllers\Api\TenantBankingController;
 use App\Http\Controllers\Api\TenantChatController;
 use Illuminate\Support\Facades\Route;
@@ -69,3 +74,49 @@ Route::prefix('mobile/tenants/{tenant}')
             Route::post('correct', [TenantBankingController::class, 'correct'])->name('correct');
         });
     });
+
+// ── Tally: Inbound (connector → Accobot) ──────────────────────────────────
+Route::prefix('tally/inbound')->middleware('throttle:120,1')->group(function () {
+    Route::post('masters/ledger-groups',    [TallyInboundMastersController::class, 'ledgerGroups']);
+    Route::post('masters/ledgers',          [TallyInboundMastersController::class, 'ledgers']);
+    Route::post('masters/stock-items',      [TallyInboundMastersController::class, 'stockItems']);
+    Route::post('masters/stock-groups',     [TallyInboundMastersController::class, 'stockGroups']);
+    Route::post('masters/stock-categories', [TallyInboundMastersController::class, 'stockCategories']);
+    Route::post('vouchers/sales',           [TallyInboundVouchersController::class, 'sales']);
+    Route::post('vouchers/credit-note',     [TallyInboundVouchersController::class, 'creditNote']);
+    Route::post('vouchers/purchase',        [TallyInboundVouchersController::class, 'purchase']);
+    Route::post('vouchers/debit-note',      [TallyInboundVouchersController::class, 'debitNote']);
+    Route::post('vouchers/receipt',         [TallyInboundVouchersController::class, 'receipt']);
+    Route::post('vouchers/payment',         [TallyInboundVouchersController::class, 'payment']);
+    Route::post('vouchers/contra',          [TallyInboundVouchersController::class, 'contra']);
+    Route::post('vouchers/journal',         [TallyInboundVouchersController::class, 'journal']);
+    Route::post('reports/balance-sheet',    [TallyInboundReportsController::class, 'balanceSheet']);
+    Route::post('reports/profit-loss',      [TallyInboundReportsController::class, 'profitLoss']);
+    Route::post('reports/cash-flow',        [TallyInboundReportsController::class, 'cashFlow']);
+    Route::post('reports/ratio-analysis',   [TallyInboundReportsController::class, 'ratioAnalysis']);
+});
+
+// ── Tally: Outbound GET (exact Swagger paths — Tally reads Accobot data) ──
+Route::prefix('MastersAPI')->middleware('throttle:120,1')->group(function () {
+    Route::get('ledger-group',    [TallyOutboundController::class, 'ledgerGroup']);
+    Route::get('ledger-master',   [TallyOutboundController::class, 'ledgerMaster']);
+    Route::get('stock-master',    [TallyOutboundController::class, 'stockMaster']);
+    Route::get('stock-group',     [TallyOutboundController::class, 'stockGroup']);
+    Route::get('stock-category',  [TallyOutboundController::class, 'stockCategory']);
+    Route::post('update-ledger-master/{companyId}',  [TallyConfirmController::class, 'ledgerMaster']);
+    Route::post('update-stock-master/{companyId}',   [TallyConfirmController::class, 'stockMaster']);
+    Route::post('update-ledger-group/{companyId}',   [TallyConfirmController::class, 'ledgerGroup']);
+    Route::post('update-stock-group/{companyId}',    [TallyConfirmController::class, 'stockGroup']);
+    Route::post('update-stock-category/{companyId}', [TallyConfirmController::class, 'stockCategory']);
+});
+
+Route::prefix('VoucherAPI')->middleware('throttle:120,1')->group(function () {
+    Route::get('sales-voucher',      [TallyOutboundController::class, 'salesVoucher']);
+    Route::get('purchase-voucher',   [TallyOutboundController::class, 'purchaseVoucher']);
+    Route::get('debitNote-voucher',  [TallyOutboundController::class, 'debitNoteVoucher']);
+    Route::get('creditNote-voucher', [TallyOutboundController::class, 'creditNoteVoucher']);
+    Route::post('update-sales-voucher/{companyId}',      [TallyConfirmController::class, 'salesVoucher']);
+    Route::post('update-purchase-voucher/{companyId}',   [TallyConfirmController::class, 'purchaseVoucher']);
+    Route::post('update-debitnote-voucher/{companyId}',  [TallyConfirmController::class, 'debitNoteVoucher']);
+    Route::post('update-creditnote-voucher/{companyId}', [TallyConfirmController::class, 'creditNoteVoucher']);
+});
