@@ -436,6 +436,12 @@ class TallySeeder extends Seeder
             ['stock_items',         'inbound', 'success', false, 0,  4, 6, 0, null],
             ['vouchers_sales',      'inbound', 'success', false, 1,  1, 0, 0, null],
             ['vouchers_purchase',   'inbound', 'success', false, 0,  2, 0, 0, null],
+            // Statutory & payroll masters
+            ['statutory_masters',   'inbound', 'success', false, 8,  0, 0, 0, null],
+            ['employee_groups',     'inbound', 'success', false, 5,  0, 0, 0, null],
+            ['pay_heads',           'inbound', 'success', false, 10, 0, 0, 0, null],
+            ['attendance_types',    'inbound', 'success', false, 7,  0, 0, 0, null],
+            ['employees',           'inbound', 'success', false, 5,  0, 0, 0, null],
             // Manual trigger
             ['manual_trigger',      'inbound', 'success', true,  0,  0, 0, 0, null],
             // Failed attempt
@@ -612,6 +618,6 @@ class TallySeeder extends Seeder
             );
         }
 
-        $this->command->info('TallySeeder: seeded connection, 8 ledger groups, 14 ledgers, 5 stock groups, 3 categories, 10 stock items, 10 vouchers, reports, sync logs for Tili.');
+        $this->command->info('TallySeeder: seeded connection, 8 ledger groups, 14 ledgers, 5 stock groups, 3 categories, 10 stock items, 10 vouchers, 8 statutory masters, 5 employee groups, 10 pay heads, 7 attendance types, 5 employees, reports, sync logs for Tili.');
     }
 }
