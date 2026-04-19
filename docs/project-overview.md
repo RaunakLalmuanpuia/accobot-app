@@ -139,7 +139,9 @@ Every tenant has a UUID primary key. All tenant-scoped models carry `tenant_id` 
 Web routes use the prefix `/t/{tenant}` — the `{tenant}` segment is resolved via route model binding and verified by the `member` middleware before any controller runs.
 
 **Models with `BelongsToTenant` (auto-scoped):**
-`Client`, `Vendor`, `Product`, `Invoice`, `NarrationHead`, `BankTransaction`, `NarrationRule`
+`Client`, `Vendor`, `Product`, `Invoice`, `NarrationHead`, `BankTransaction`, `NarrationRule`,
+`TallyLedgerGroup`, `TallyLedger`, `TallyStockGroup`, `TallyStockCategory`, `TallyStockItem`,
+`TallyVoucher`, `TallyVoucherInventoryEntry`, `TallyVoucherLedgerEntry`, `TallyReport`, `TallySyncLog`
 
 **Models without global scope (manually scoped or app-wide):**
 `User`, `Tenant`, `Invitation` (token-based), `InvoiceItem` (scoped via parent invoice), `NarrationSubHead` (scoped via parent head), `TenantUserRole`, `TenantRolePermission`, `AuditEvent`
@@ -317,6 +319,52 @@ A conversational AI agent powered by `laravel/ai` (OpenAI). Available on web (SS
 
 ---
 
+### 7. Tally ERP Integration
+
+A full sync integration with Tally ERP, replicating the `cloud-tally.in` connector API. Accobot acts as the server — the Tally connector always initiates, Accobot makes zero outbound calls.
+
+**Three data flows:**
+
+| Flow | Direction | How |
+|---|---|---|
+| Inbound sync | Tally → Accobot | Connector POSTs masters/vouchers/reports |
+| Outbound read | Tally reads Accobot | Connector GETs ledgers/stock/vouchers |
+| Confirmation | Tally → Accobot | Connector POSTs back Tally-assigned IDs |
+
+**Authentication:** Per-tenant 48-char `inbound_token` in `Authorization: Bearer` header. No Sanctum. Token resolves the tenant automatically.
+
+**Auto-mapping (Tally mirror → Accobot operational):**
+
+| Tally record | Condition | Accobot record created/updated |
+|---|---|---|
+| `TallyLedger` | group = Debtor | `Client` |
+| `TallyLedger` | group = Creditor/Supplier | `Vendor` |
+| `TallyStockItem` | any | `Product` |
+| `TallyVoucher` | type = Sales + party resolves to Client | `Invoice` |
+
+**Key design decisions:**
+- AlterID-based dedup — same AlterID = skip, no DB write
+- `Action: Delete` → `is_active = false` (soft delete only)
+- Voucher upsert + child entries wrapped in `DB::transaction()` — atomic
+- All endpoints process in chunks of 250 — safe for large initial syncs
+- Reports are insert-only snapshots (never updated)
+- 35 API routes total across 5 controllers
+
+**Key files:**
+- `app/Services/Tally/TallyInboundSync.php` — core sync logic
+- `app/Services/Tally/TallyOutboundFormatter.php` — Tally-compatible response formatting
+- `app/Services/Tally/TallyReportSync.php` — report snapshots
+- `app/Http/Controllers/Api/Tally/` — 5 API controllers
+- `app/Http/Controllers/TallyConnectionController.php` — connection settings UI
+- `app/Http/Controllers/TallySyncController.php` — sync dashboard UI
+- `resources/js/Pages/Tally/Connection.vue` + `Sync.vue`
+
+**Documentation:**
+- `docs/tally-integration.md` — full architecture, two-table design, auto-mapping rules
+- `docs/tally-api-reference.md` — all 35 endpoints with request/response examples
+
+---
+
 ## Permissions System
 
 Two-layer system:
@@ -373,8 +421,12 @@ Admin visiting a tenant (`/t/{tenant}/...`) sees the full tenant nav identical t
 | Mobile auth (public) | `/api/mobile` | `throttle:10,1` |
 | Mobile auth (authenticated) | `/api/mobile` | `auth:sanctum` |
 | Tenant-scoped | `/api/mobile/tenants/{tenant}` | `auth:sanctum + member` |
+| Tally inbound | `/api/tally/inbound/...` | `throttle:120,1` (Bearer token auth inside controller) |
+| Tally outbound GET | `/api/MastersAPI/...`, `/api/VoucherAPI/...` | `throttle:120,1` |
+| Tally confirmation | `/api/MastersAPI/update-*/`, `/api/VoucherAPI/update-*/` | `throttle:120,1` |
 
-See [`api-mobile.md`](api-mobile.md) for the full mobile API reference.
+See [`api-mobile.md`](api-mobile.md) for the mobile API reference.  
+See [`tally-api-reference.md`](tally-api-reference.md) for the full Tally connector API reference.
 
 ---
 
@@ -403,14 +455,22 @@ app/
 ├── Actions/Banking/          ← ingest + review actions (single-responsibility)
 ├── Agents/                   ← AccountingAgent + 4 narration parser agents
 ├── Http/
-│   ├── Controllers/          ← web controllers
+│   ├── Controllers/          ← web controllers (incl. TallyConnectionController, TallySyncController)
 │   ├── Controllers/Admin/    ← AiUsageController (platform admin only)
 │   ├── Controllers/Api/      ← mobile API controllers
+│   ├── Controllers/Api/Tally/← 5 Tally API controllers (Base, InboundMasters, InboundVouchers, InboundReports, Outbound, Confirm)
 │   └── Middleware/           ← EnsureBelongsToTenant, TenantPermission, BlockImpersonationDestructive
 ├── Models/
 │   ├── AiUsageLog.php        ← logs all AI calls; PRICING table + cost computation
-│   └── Concerns/BelongsToTenant.php
+│   ├── Concerns/BelongsToTenant.php
+│   ├── TallyConnection.php   ← per-tenant token, auto-generated on creating()
+│   ├── TallyLedger.php + TallyLedgerGroup.php
+│   ├── TallyStockItem.php + TallyStockGroup.php + TallyStockCategory.php
+│   ├── TallyVoucher.php + TallyVoucherInventoryEntry.php + TallyVoucherLedgerEntry.php
+│   ├── TallyReport.php       ← insert-only snapshots
+│   └── TallySyncLog.php      ← per-sync audit trail
 ├── Services/Banking/         ← NarrationPipelineService, RuleEngine, AiService, InvoiceMatchingService
+├── Services/Tally/           ← TallyInboundSync, TallyOutboundFormatter, TallyReportSync
 └── Tools/                    ← 8 AI agent tools
 
 database/
@@ -430,7 +490,9 @@ config/
 docs/
 ├── project-overview.md       ← this file
 ├── roles-and-permissions.md  ← full role/permission matrix + seeded users
-└── api-mobile.md             ← mobile API reference
+├── api-mobile.md             ← mobile API reference
+├── tally-integration.md      ← full Tally architecture, data flows, two-table design, auto-mapping rules
+└── tally-api-reference.md    ← all 35 Tally endpoints with request/response examples
 ```
 
 ---
