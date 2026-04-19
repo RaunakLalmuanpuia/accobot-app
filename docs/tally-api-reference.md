@@ -164,9 +164,9 @@ Syncs Tally ledgers (accounts). Debtors → auto-creates/updates **Client**. Cre
 | `LedgerName` | string | yes | Ledger name (also accepted as `Name`) |
 | `GroupName` | string | no | Immediate group — used to derive category |
 | `ParentGroup` | string | no | Top-level group — used to derive category |
-| `IsBillWiseOn` | string | no | Bill-by-bill tracking on |
-| `InventoryAffected` | string | no | Affects inventory |
-| `IsCostCentreApplicable` | string | no | Cost centre on |
+| `IsBillWiseOn` | string | no | Bill-by-bill tracking on. Defaults to `false` if omitted |
+| `InventoryAffected` | string | no | Affects inventory. Defaults to `false` if omitted |
+| `IsCostCentreApplicable` | string | no | Cost centre on. Defaults to `false` if omitted |
 | `GSTINNumber` | string | no | GST registration number |
 | `PANNumber` | string | no | PAN |
 | `TANNumber` | string | no | TAN |
