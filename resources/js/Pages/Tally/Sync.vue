@@ -86,8 +86,12 @@ function toggleLog(id) {
                        class="text-sm text-violet-600 hover:text-violet-800 font-medium">
                         Settings
                     </a>
+                    <!-- Sync Now is a reminder only — Accobot cannot pull from Tally.
+                         Data flows exclusively from the Tally connector (inbound push).
+                         This button logs a manual_trigger entry and shows a notice. -->
                     <button v-if="canManage"
                             @click="triggerSync"
+                            title="Tally connector pushes data automatically. This logs a reminder only."
                             class="inline-flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 transition">
                         Sync Now
                     </button>

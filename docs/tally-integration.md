@@ -804,6 +804,11 @@ resources/js/Pages/Tally/
 - Accobot-side edits (renaming a ledger group, changing a ledger's address) do **not** bump AlterID — the connector has no signal that anything changed and will skip the record on the next inbound sync.
 - Deletions in Accobot are **not** propagated to Tally.
 - No queue — the connector should send max ~500 items per request to avoid PHP timeout.
+- **"Sync Now" button is a no-op.** Because Accobot cannot pull from Tally (the connector always initiates), the button only logs a `manual_trigger` entry and shows a reminder message. It does not trigger any actual data transfer. To sync, the Tally connector must be running and pushing data on its own schedule.
+- **`tax_amount` is always `0` on auto-mapped invoices.** Tax breakdown is available in `tally_voucher_ledger_entries` (IGST/SGST/CGST lines) but is not summed into `invoices.tax_amount` during auto-mapping.
+- **`due_date` defaults to `voucher_date`.** Tally ledgers carry a `CreditPeriod` field but it is not applied when computing the invoice due date.
+- **Invoice status is always `unpaid` after auto-mapping.** No cross-check is done against Receipt vouchers that may have already settled the sales voucher in Tally.
+- **Placeholder claim is name-match only.** When `autoMapLedger()` or `autoMapStockItem()` claims a placeholder Client/Product created from a voucher, it matches on `name` alone. If two clients or products share the same name, the wrong placeholder could be claimed.
 
 ### Pending — Accobot-created Invoices → Tally
 
