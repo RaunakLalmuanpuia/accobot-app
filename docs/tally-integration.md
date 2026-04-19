@@ -967,28 +967,92 @@ database/seeders/
 
 ## 18. Known Limitations & Pending Design Decisions
 
-### Implemented
+---
 
-- Accobot-side edits (renaming a ledger group, changing a ledger's address) do **not** bump AlterID — the connector has no signal that anything changed and will skip the record on the next inbound sync.
-- Deletions in Accobot are **not** propagated to Tally.
-- No queue — the connector should send max ~500 items per request to avoid PHP timeout.
-- **"Sync Now" button is a no-op.** Because Accobot cannot pull from Tally (the connector always initiates), the button only logs a `manual_trigger` entry and shows a reminder message. It does not trigger any actual data transfer. To sync, the Tally connector must be running and pushing data on its own schedule.
-- **`tax_amount` is always `0` on auto-mapped invoices.** Tax breakdown is available in `tally_voucher_ledger_entries` (IGST/SGST/CGST lines) but is not summed into `invoices.tax_amount` during auto-mapping.
-- **`due_date` defaults to `voucher_date`.** Tally ledgers carry a `CreditPeriod` field but it is not applied when computing the invoice due date.
-- **Invoice status is always `unpaid` after auto-mapping.** No cross-check is done against Receipt vouchers that may have already settled the sales voucher in Tally.
-- **Placeholder claim is name-match only.** When `autoMapLedger()` or `autoMapStockItem()` claims a placeholder Client/Product created from a voucher, it matches on `name` alone. If two clients or products share the same name, the wrong placeholder could be claimed.
+### L1 — Accobot edits to Tally-received data do NOT reach Tally
 
-### Pending — Accobot-created Invoices → Tally
+This is the most important limitation to understand. When Tally pushes data into Accobot, the data is stored in `tally_*` mirror tables. If you then edit that data inside Accobot, Tally has no way to learn about the change.
 
-When an Invoice is created directly in Accobot (not synced from Tally), the following questions are **not yet resolved** and will require a design decision before implementation:
+There are two distinct cases depending on the table type:
 
-1. **Flow direction** — The current architecture is Tally-pulls-only (connector GETs Accobot data). Should Accobot-created invoices appear in `GET /api/VoucherAPI/sales-voucher` for Tally to pick up on its next poll, or should Accobot push proactively?
+#### Case A — Pure mirror tables (no operational counterpart)
 
-2. **Unmapped client** — If the invoice's `Client` has no `tally_ledger_id` (created in Accobot, never came from Tally):
-   - Include in outbound response so Tally creates a new ledger on its end?
-   - Block/skip the invoice until the client is manually mapped to a Tally ledger?
-   - Auto-create a stub `TallyLedger` row so the confirmation POST can link it up?
+These tables have no separate Accobot operational table. The outbound GET reads directly from them, so an edit to the mirror row WILL appear in the next outbound response — but `alter_id` is not bumped. Most connectors use `AlterID` for change detection and will skip a record whose `AlterID` hasn't changed, so the update is effectively invisible to Tally.
 
-3. **Unmapped product** — Same question for line items whose `Product` has no `tally_stock_item_id`.
+Affected tables:
 
-4. **Invoice line items** — Currently `autoMapSalesVoucher()` only creates the Invoice header; line items from `tally_voucher_inventory_entries` are not reflected as `InvoiceItem` rows. Should this be addressed as part of the Accobot→Tally work?
+| Table | Outbound GET endpoint |
+|-------|-----------------------|
+| `tally_ledger_groups` | `GET /api/MastersAPI/ledger-group` |
+| `tally_stock_groups` | `GET /api/MastersAPI/stock-group` |
+| `tally_stock_categories` | `GET /api/MastersAPI/stock-category` |
+| `tally_statutory_masters` | `GET /api/MastersAPI/statutory-master` |
+| `tally_employee_groups` | `GET /api/PayrollAPI/employee-group` |
+| `tally_employees` | `GET /api/PayrollAPI/employee` |
+| `tally_pay_heads` | `GET /api/PayrollAPI/pay-head` |
+| `tally_attendance_types` | `GET /api/PayrollAPI/attendance-type` |
+
+Additionally, **there is currently no edit UI** for any of these entities in Accobot. The browse pages (LedgerGroups.vue, Payroll.vue, StatutoryMasters.vue, etc.) are read-only. Any edit would need to be done directly in the database.
+
+**Fix required:** Add an `accobot_alter_id` integer column to each of these tables. Increment it on every Accobot-side save. The outbound formatter should expose `accobot_alter_id` as the `AlterID` field (falling back to `alter_id` when `accobot_alter_id` is zero) so the connector detects the change. Edit UI also needs to be built.
+
+#### Case B — Split tables (mirror + operational counterpart)
+
+These tables have a paired Accobot operational table. When Tally data arrives inbound, both the mirror row and the operational row are written. But if you then edit the **operational** row in Accobot (e.g. rename a Client, change a Product's price), only that operational table is updated — the mirror row in `tally_*` is completely untouched.
+
+Since the outbound GET reads from the mirror table (not the operational table), the change never appears in the outbound response at all — Tally sees nothing.
+
+| Accobot edit | Mirror table (not updated) | Outbound GET (returns stale data) |
+|---|---|---|
+| Edit a `Client` | `tally_ledgers` | `GET /api/MastersAPI/ledger-master` |
+| Edit a `Vendor` | `tally_ledgers` | `GET /api/MastersAPI/ledger-master` |
+| Edit a `Product` | `tally_stock_items` | `GET /api/MastersAPI/stock-master` |
+| Edit an `Invoice` | `tally_vouchers` | `GET /api/VoucherAPI/sales-voucher` |
+
+**Fix required:** Model observers on `Client`, `Vendor`, `Product`, `Invoice`. When a model that has a `tally_ledger_id` / `tally_stock_item_id` / `tally_voucher_id` FK is updated, the observer writes the changed fields back into the mirror row and increments `accobot_alter_id`. Only the subset of fields that exist in both tables can be synced back (e.g. name, email, phone, GSTIN for a Client — not GST rate details, bank info, or other Tally-only fields).
+
+---
+
+### L2 — Deletions in Accobot are NOT propagated to Tally
+
+Deleting or deactivating any record in Accobot (Client, Vendor, Product, Invoice, or any `tally_*` row directly) sends no signal to Tally. The record continues to exist in Tally unchanged. The only way to delete something in Tally is to do it in Tally itself, which will then send `"Action": "Delete"` inbound and Accobot will set `is_active = false`.
+
+---
+
+### L3 — Accobot-created records are NOT sent to Tally
+
+If a record is created directly in Accobot (a new Client, Product, or Invoice that never came from Tally), it has no row in the `tally_*` mirror tables. The outbound GET endpoints only query mirror tables, so these records are never returned to the connector and Tally never learns about them.
+
+**Pending design decisions before this can be implemented:**
+
+1. **New Client / Vendor (no `tally_ledger_id`)** — Should Accobot auto-create a stub `tally_ledgers` row so the outbound GET picks it up? Or should the user manually map the Client to a Tally ledger first? Or block the record entirely until it's mapped?
+
+2. **New Product (no `tally_stock_item_id`)** — Same question for `tally_stock_items`.
+
+3. **New Invoice (no `tally_voucher_id`)** — An invoice created in Accobot needs its client and all line-item products to already be in Tally before a meaningful `tally_vouchers` row can be constructed. What happens if they aren't?
+
+4. **Invoice line items** — `autoMapSalesVoucher()` only creates the Invoice header today; `InvoiceItem` rows from `tally_voucher_inventory_entries` are not mapped. This would need to be addressed as part of any Accobot→Tally invoice flow.
+
+---
+
+### L4 — No queue; large payloads may time out
+
+Inbound sync is synchronous — the connector waits for the HTTP response. There is no queue or background processing. The connector should send a maximum of ~500 records per request to avoid hitting PHP's execution time limit. Very large companies (thousands of ledgers or vouchers) should send data in batches.
+
+---
+
+### L5 — "Sync Now" button is a no-op
+
+Because Accobot cannot initiate contact with Tally (the connector always calls Accobot, never the other way around), the "Sync Now" button on the Sync page does not transfer any data. It only logs a `manual_trigger` entry and shows a reminder message. To trigger a sync, the Tally connector must be running and will push data on its own configured schedule.
+
+---
+
+### L6 — Auto-mapping quality limitations
+
+**`tax_amount` is always `0` on auto-mapped invoices.** The GST breakdown (IGST/SGST/CGST lines) is stored in `tally_voucher_ledger_entries` but is not summed into `invoices.tax_amount` during `autoMapSalesVoucher()`.
+
+**`due_date` defaults to `voucher_date`.** Tally ledgers carry a `CreditPeriod` field but it is not applied when computing the invoice due date during auto-mapping.
+
+**Invoice status is always `unpaid` after auto-mapping.** No cross-check is done against Receipt vouchers that may have already settled the sales voucher in Tally.
+
+**Placeholder claim is name-match only.** When `autoMapLedger()` or `autoMapStockItem()` claims a placeholder Client/Product (created from a voucher before the master arrived), it matches on `name` alone. If two clients or products share the same name, the wrong placeholder could be claimed.
