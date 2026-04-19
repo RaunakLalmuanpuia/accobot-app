@@ -398,7 +398,7 @@ Syncs Tally stock items (products/services). Auto-creates/updates a **Product** 
 ## 2. Inbound: Vouchers (Tally → Accobot)
 
 All voucher endpoints share the same request structure and response. The key differences are:
-- **Sales** vouchers: auto-creates/updates an **Invoice** in Accobot (if party ledger resolves to a Client)
+- **Sales** vouchers: auto-creates/updates an **Invoice** in Accobot. Client is resolved via the party ledger; if the ledger hasn't synced yet, a placeholder Client is created from the voucher's buyer fields and linked later when the ledger arrives. Inventory entry products are similarly auto-created if no matching stock item exists yet.
 - **Receipt / Payment / Contra / Journal**: stored in `tally_vouchers` only, no Accobot operational record created
 
 ### Common Voucher Fields
@@ -502,7 +502,7 @@ Every voucher object supports:
 
 ### 2.1 POST `/api/tally/inbound/vouchers/sales`
 
-**Sales invoice** — also auto-creates an Accobot Invoice when the party ledger maps to a Client.
+**Sales invoice** — auto-creates an Accobot Invoice. If the party ledger hasn't synced yet, a placeholder Client is created from buyer fields (`BuyerName`/`PartyName`, GSTIN, email, mobile, address) and linked later. Missing stock items are similarly auto-created as placeholder Products.
 
 **Request Body**
 

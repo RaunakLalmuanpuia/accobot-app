@@ -21,6 +21,7 @@
 15. [Web UI Routes & Pages](#15-web-ui-routes--pages)
 16. [Service & Controller Map](#16-service--controller-map)
 17. [Full File Map](#17-full-file-map)
+18. [Known Limitations & Pending Design Decisions](#18-known-limitations--pending-design-decisions)
 
 ---
 
@@ -438,44 +439,25 @@ After each upsert, the sync service checks whether the record should be reflecte
 
 **Trigger:** `syncLedgers()` → `autoMapLedger()` — runs for every ledger whose `ledger_category` is `customer`.
 
-```php
-Client::withoutGlobalScope('tenant')->updateOrCreate(
-    ['tally_ledger_id' => $ledger->id, 'tenant_id' => $tenantId],
-    [
-        'name'    => $ledger->mailing_name ?? $ledger->ledger_name,
-        'email'   => $ledger->contact_person_email,
-        'phone'   => $ledger->mobile_number ?? $ledger->contact_person_mobile,
-        'company' => $ledger->ledger_name,
-        'tax_id'  => $ledger->gstin_number ?? $ledger->pan_number,
-    ]
-);
-// Then: $ledger->mapped_client_id = $client->id
-```
+Resolution order:
+1. Look for a `clients` row already linked by `tally_ledger_id` — update it.
+2. If not found, look for a **placeholder** `Client` with the same name and `tally_ledger_id = null` (created earlier from a voucher's buyer fields) — claim it by writing `tally_ledger_id` and updating all fields.
+3. If still not found — create a new `Client`.
 
 What gets mapped: name (prefers mailing name), email, phone (prefers mobile), company name, and tax ID (prefers GSTIN, falls back to PAN). Everything else (bank details, credit terms, addresses, aliases) stays in `tally_ledgers`.
 
 ### Ledger → Vendor (category = vendor)
 
-Identical logic. Same fields mapped, stored in `vendors` table with `tally_ledger_id` link.
+Identical resolution order. Same fields mapped, stored in `vendors` table with `tally_ledger_id` link.
 
 ### Stock Item → Product
 
 **Trigger:** `syncStockItems()` → `autoMapStockItem()` — runs for every stock item.
 
-```php
-Product::withoutGlobalScope('tenant')->updateOrCreate(
-    ['tally_stock_item_id' => $item->id, 'tenant_id' => $tenantId],
-    [
-        'name'        => $item->name,
-        'description' => $item->description,
-        'unit'        => $item->unit_name ?? 'pcs',
-        'unit_price'  => $item->standard_price ?? $item->standard_cost ?? 0,
-        'tax_rate'    => $item->igst_rate ?? 0,
-        'is_active'   => true,
-    ]
-);
-// Then: $item->mapped_product_id = $product->id
-```
+Resolution order:
+1. Look for a `products` row already linked by `tally_stock_item_id` — update it.
+2. If not found, look for a **placeholder** `Product` with the same name and `tally_stock_item_id = null` (created earlier from a voucher inventory entry) — claim it by writing `tally_stock_item_id` and updating all fields.
+3. If still not found — create a new `Product`.
 
 What gets mapped: name, description, unit (falls back to "pcs"), price (prefers standard price, falls back to cost), tax rate (IGST rate). HSN code, batch info, stock levels, costing method stay in `tally_stock_items`.
 
@@ -483,36 +465,9 @@ What gets mapped: name, description, unit (falls back to "pcs"), price (prefers 
 
 **Trigger:** `syncVouchers()` → `autoMapSalesVoucher()` — only runs when `$type === 'Sales'`.
 
-This one has a prerequisite: the voucher's `party_tally_ledger_id` must resolve to a mapped `clients` row. If the party ledger hasn't been synced yet, or isn't a customer ledger, mapping is skipped silently.
+**Client resolution (with auto-create fallback):** The sync first tries to find a `clients` row via `party_tally_ledger_id`. If the party ledger hasn't been synced yet, it falls back to creating a placeholder `Client` from the voucher's buyer fields (`BuyerName`/`PartyName`, `BuyerGSTIN`, `BuyerEmail`, `BuyerMobile`, `BuyerAddress`). When the ledger syncs later, `autoMapLedger()` will `updateOrCreate` on `tally_ledger_id` and link up automatically. The only case where invoice mapping is skipped is if neither `BuyerName` nor `PartyName` is present in the voucher.
 
-```php
-// Resolve client via the party ledger link
-$clientId = Client::withoutGlobalScope('tenant')
-    ->where('tally_ledger_id', $voucher->party_tally_ledger_id)
-    ->where('tenant_id', $tenantId)
-    ->value('id');
-
-if (!$clientId) return; // skip if party not yet mapped
-
-Invoice::withoutGlobalScope('tenant')->updateOrCreate(
-    ['tally_voucher_id' => $voucher->id, 'tenant_id' => $tenantId],
-    [
-        'invoice_number' => $voucher->voucher_number ?? Invoice::generateNumber($tenantId),
-        'client_id'      => $clientId,
-        'issue_date'     => $voucher->voucher_date,
-        'due_date'       => $voucher->voucher_date,
-        'status'         => 'unpaid',
-        'subtotal'       => $voucher->voucher_total,
-        'tax_amount'     => 0,
-        'total'          => $voucher->voucher_total,
-        'currency'       => 'INR',
-        'notes'          => $voucher->narration,
-        'amount_paid'    => 0,
-        'amount_due'     => $voucher->voucher_total,
-    ]
-);
-// Then: $voucher->mapped_invoice_id = $invoice->id
-```
+**Product resolution (with auto-create fallback):** For each `InventoryEntry`, if no `TallyStockItem` row matches `StockItemName`, a placeholder `Product` is created from the entry's `StockItemName`, `Rate`, `Unit`, and `IGSTRate`. When stock items sync later, `autoMapStockItem()` will update the product via `tally_stock_item_id`.
 
 What gets mapped: voucher number as invoice number, client, date, total, narration as notes. The GST breakdown, e-invoice IRN/QR code, buyer/consignee details, dispatch info, and line items all stay in `tally_vouchers` and its child tables.
 
@@ -839,3 +794,28 @@ resources/js/Pages/Tally/
   Connection.vue
   Sync.vue
 ```
+
+---
+
+## 18. Known Limitations & Pending Design Decisions
+
+### Implemented
+
+- Accobot-side edits (renaming a ledger group, changing a ledger's address) do **not** bump AlterID — the connector has no signal that anything changed and will skip the record on the next inbound sync.
+- Deletions in Accobot are **not** propagated to Tally.
+- No queue — the connector should send max ~500 items per request to avoid PHP timeout.
+
+### Pending — Accobot-created Invoices → Tally
+
+When an Invoice is created directly in Accobot (not synced from Tally), the following questions are **not yet resolved** and will require a design decision before implementation:
+
+1. **Flow direction** — The current architecture is Tally-pulls-only (connector GETs Accobot data). Should Accobot-created invoices appear in `GET /api/VoucherAPI/sales-voucher` for Tally to pick up on its next poll, or should Accobot push proactively?
+
+2. **Unmapped client** — If the invoice's `Client` has no `tally_ledger_id` (created in Accobot, never came from Tally):
+   - Include in outbound response so Tally creates a new ledger on its end?
+   - Block/skip the invoice until the client is manually mapped to a Tally ledger?
+   - Auto-create a stub `TallyLedger` row so the confirmation POST can link it up?
+
+3. **Unmapped product** — Same question for line items whose `Product` has no `tally_stock_item_id`.
+
+4. **Invoice line items** — Currently `autoMapSalesVoucher()` only creates the Invoice header; line items from `tally_voucher_inventory_entries` are not reflected as `InvoiceItem` rows. Should this be addressed as part of the Accobot→Tally work?

@@ -480,10 +480,27 @@ class TallyInboundSync
                             $ie = $this->strip($ie);
                             $stockItemId = null;
                             if (!empty($ie['StockItemName'])) {
-                                $stockItemId = TallyStockItem::withoutGlobalScope('tenant')
+                                $stockItem = TallyStockItem::withoutGlobalScope('tenant')
                                     ->where('tenant_id', $conn->tenant_id)
                                     ->where('name', $ie['StockItemName'])
-                                    ->value('id');
+                                    ->first();
+
+                                if (!$stockItem) {
+                                    $product = Product::withoutGlobalScope('tenant')
+                                        ->updateOrCreate(
+                                            ['name' => $ie['StockItemName'], 'tenant_id' => $conn->tenant_id],
+                                            [
+                                                'unit'       => $ie['Unit'] ?? 'pcs',
+                                                'unit_price' => (float) ($ie['Rate'] ?? 0),
+                                                'tax_rate'   => (float) ($ie['IGSTRate'] ?? 0),
+                                                'is_active'  => true,
+                                                'tenant_id'  => $conn->tenant_id,
+                                            ]
+                                        );
+                                    $stockItemId = null; // no TallyStockItem row yet; will link when masters sync
+                                } else {
+                                    $stockItemId = $stockItem->id;
+                                }
                             }
                             TallyVoucherInventoryEntry::create([
                                 'tenant_id'          => $conn->tenant_id,
@@ -652,52 +669,93 @@ class TallyInboundSync
 
     private function autoMapLedger(TallyLedger $ledger, string $tenantId): void
     {
+        $canonicalName = $ledger->mailing_name ?? $ledger->ledger_name;
+        $fields = [
+            'name'      => $canonicalName,
+            'email'     => $ledger->contact_person_email,
+            'phone'     => $ledger->mobile_number ?? $ledger->contact_person_mobile,
+            'company'   => $ledger->ledger_name,
+            'tax_id'    => $ledger->gstin_number ?? $ledger->pan_number,
+            'tenant_id' => $tenantId,
+        ];
+
         if ($ledger->ledger_category === 'customer') {
             $client = Client::withoutGlobalScope('tenant')
-                ->updateOrCreate(
-                    ['tally_ledger_id' => $ledger->id, 'tenant_id' => $tenantId],
-                    [
-                        'name'    => $ledger->mailing_name ?? $ledger->ledger_name,
-                        'email'   => $ledger->contact_person_email,
-                        'phone'   => $ledger->mobile_number ?? $ledger->contact_person_mobile,
-                        'company' => $ledger->ledger_name,
-                        'tax_id'  => $ledger->gstin_number ?? $ledger->pan_number,
-                        'tenant_id' => $tenantId,
-                    ]
-                );
+                ->where('tenant_id', $tenantId)
+                ->where('tally_ledger_id', $ledger->id)
+                ->first();
+
+            if (!$client) {
+                // Claim placeholder created from a voucher if names match
+                $client = Client::withoutGlobalScope('tenant')
+                    ->where('tenant_id', $tenantId)
+                    ->whereNull('tally_ledger_id')
+                    ->where('name', $canonicalName)
+                    ->first();
+            }
+
+            if ($client) {
+                $client->update(array_merge($fields, ['tally_ledger_id' => $ledger->id]));
+            } else {
+                $client = Client::create(array_merge($fields, ['tally_ledger_id' => $ledger->id]));
+            }
+
             $ledger->update(['mapped_client_id' => $client->id]);
         } elseif ($ledger->ledger_category === 'vendor') {
             $vendor = Vendor::withoutGlobalScope('tenant')
-                ->updateOrCreate(
-                    ['tally_ledger_id' => $ledger->id, 'tenant_id' => $tenantId],
-                    [
-                        'name'    => $ledger->mailing_name ?? $ledger->ledger_name,
-                        'email'   => $ledger->contact_person_email,
-                        'phone'   => $ledger->mobile_number ?? $ledger->contact_person_mobile,
-                        'company' => $ledger->ledger_name,
-                        'tax_id'  => $ledger->gstin_number ?? $ledger->pan_number,
-                        'tenant_id' => $tenantId,
-                    ]
-                );
+                ->where('tenant_id', $tenantId)
+                ->where('tally_ledger_id', $ledger->id)
+                ->first();
+
+            if (!$vendor) {
+                $vendor = Vendor::withoutGlobalScope('tenant')
+                    ->where('tenant_id', $tenantId)
+                    ->whereNull('tally_ledger_id')
+                    ->where('name', $canonicalName)
+                    ->first();
+            }
+
+            if ($vendor) {
+                $vendor->update(array_merge($fields, ['tally_ledger_id' => $ledger->id]));
+            } else {
+                $vendor = Vendor::create(array_merge($fields, ['tally_ledger_id' => $ledger->id]));
+            }
+
             $ledger->update(['mapped_vendor_id' => $vendor->id]);
         }
     }
 
     private function autoMapStockItem(TallyStockItem $item, string $tenantId): void
     {
+        $fields = [
+            'name'        => $item->name,
+            'description' => $item->description,
+            'unit'        => $item->unit_name ?? 'pcs',
+            'unit_price'  => $item->standard_price ?? $item->standard_cost ?? 0,
+            'tax_rate'    => $item->igst_rate ?? 0,
+            'is_active'   => true,
+            'tenant_id'   => $tenantId,
+        ];
+
         $product = Product::withoutGlobalScope('tenant')
-            ->updateOrCreate(
-                ['tally_stock_item_id' => $item->id, 'tenant_id' => $tenantId],
-                [
-                    'name'        => $item->name,
-                    'description' => $item->description,
-                    'unit'        => $item->unit_name ?? 'pcs',
-                    'unit_price'  => $item->standard_price ?? $item->standard_cost ?? 0,
-                    'tax_rate'    => $item->igst_rate ?? 0,
-                    'is_active'   => true,
-                    'tenant_id'   => $tenantId,
-                ]
-            );
+            ->where('tenant_id', $tenantId)
+            ->where('tally_stock_item_id', $item->id)
+            ->first();
+
+        if (!$product) {
+            // Claim placeholder created from a voucher inventory entry if names match
+            $product = Product::withoutGlobalScope('tenant')
+                ->where('tenant_id', $tenantId)
+                ->whereNull('tally_stock_item_id')
+                ->where('name', $item->name)
+                ->first();
+        }
+
+        if ($product) {
+            $product->update(array_merge($fields, ['tally_stock_item_id' => $item->id]));
+        } else {
+            $product = Product::create(array_merge($fields, ['tally_stock_item_id' => $item->id]));
+        }
         $item->update(['mapped_product_id' => $product->id]);
     }
 
@@ -715,8 +773,24 @@ class TallyInboundSync
         }
 
         if (!$clientId) {
-            Log::warning("Tally automap: Sales voucher #{$voucher->voucher_number} (tally_id={$voucher->tally_id}) skipped Invoice mapping — no Client found for party_tally_ledger_id={$voucher->party_tally_ledger_id}. Ensure ledgers are synced before vouchers.");
-            return;
+            // Party ledger not yet synced — create a placeholder Client from voucher buyer fields.
+            // When the ledger syncs later, autoMapLedger() will updateOrCreate on tally_ledger_id and link up.
+            $partyName = $voucher->buyer_name ?? $voucher->party_name;
+            if (!$partyName) return;
+
+            $client = Client::withoutGlobalScope('tenant')
+                ->updateOrCreate(
+                    ['name' => $partyName, 'tenant_id' => $tenantId],
+                    [
+                        'email'     => $voucher->buyer_email,
+                        'phone'     => $voucher->buyer_mobile,
+                        'company'   => $voucher->party_name,
+                        'tax_id'    => $voucher->buyer_gstin,
+                        'address'   => $voucher->buyer_address,
+                        'tenant_id' => $tenantId,
+                    ]
+                );
+            $clientId = $client->id;
         }
 
         $invoice = Invoice::withoutGlobalScope('tenant')
