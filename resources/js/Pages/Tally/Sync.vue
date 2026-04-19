@@ -119,16 +119,26 @@ function toggleLog(id) {
 
                 <!-- Stats bar -->
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    <div v-for="(s, label) in {
-                        'Ledger Groups':  stats.total_ledger_groups,
-                        'Ledgers':        stats.total_ledgers,
-                        'Stock Items':    stats.total_stock_items,
-                        'Vouchers':       stats.total_vouchers,
-                    }" :key="label"
-                         class="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 text-center">
-                        <p class="text-2xl font-bold text-gray-900">{{ s }}</p>
-                        <p class="text-xs text-gray-400 mt-0.5">{{ label }}</p>
-                    </div>
+                    <a :href="route('tally.ledger-groups.index', { tenant: tenant.id })"
+                       class="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 text-center hover:border-violet-300 hover:shadow-md transition group">
+                        <p class="text-2xl font-bold text-gray-900">{{ stats.total_ledger_groups }}</p>
+                        <p class="text-xs text-gray-400 mt-0.5 group-hover:text-violet-600 transition">Ledger Groups →</p>
+                    </a>
+                    <a :href="route('tally.ledgers.index', { tenant: tenant.id })"
+                       class="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 text-center hover:border-violet-300 hover:shadow-md transition group">
+                        <p class="text-2xl font-bold text-gray-900">{{ stats.total_ledgers }}</p>
+                        <p class="text-xs text-gray-400 mt-0.5 group-hover:text-violet-600 transition">Ledgers →</p>
+                    </a>
+                    <a :href="route('tally.stock-items.index', { tenant: tenant.id })"
+                       class="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 text-center hover:border-violet-300 hover:shadow-md transition group">
+                        <p class="text-2xl font-bold text-gray-900">{{ stats.total_stock_items }}</p>
+                        <p class="text-xs text-gray-400 mt-0.5 group-hover:text-violet-600 transition">Stock Items →</p>
+                    </a>
+                    <a :href="route('tally.vouchers.index', { tenant: tenant.id })"
+                       class="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 text-center hover:border-violet-300 hover:shadow-md transition group">
+                        <p class="text-2xl font-bold text-gray-900">{{ stats.total_vouchers }}</p>
+                        <p class="text-xs text-gray-400 mt-0.5 group-hover:text-violet-600 transition">Vouchers →</p>
+                    </a>
                 </div>
 
                 <!-- Tabs -->

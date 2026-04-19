@@ -17,6 +17,7 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SmsIngestController;
 use App\Http\Controllers\StatementUploadController;
 use App\Http\Controllers\TallyConnectionController;
+use App\Http\Controllers\TallyDataController;
 use App\Http\Controllers\TallySyncController;
 use App\Http\Controllers\TeamMemberController;
 use App\Http\Controllers\ProductController;
@@ -126,6 +127,11 @@ Route::middleware(['auth', 'verified', 'member'])
         Route::delete('/settings/tally', [TallyConnectionController::class, 'destroy'])->name('tally.connection.destroy')->middleware(['tenant.permission:integrations.manage', 'no.impersonate']);
         Route::get('/tally/sync', [TallySyncController::class, 'index'])->name('tally.sync.index')->middleware('tenant.permission:integrations.view');
         Route::post('/tally/sync', [TallySyncController::class, 'trigger'])->name('tally.sync.trigger')->middleware('tenant.permission:integrations.manage');
+        Route::get('/tally/ledger-groups', [TallyDataController::class, 'ledgerGroups'])->name('tally.ledger-groups.index')->middleware('tenant.permission:integrations.view');
+        Route::get('/tally/ledgers', [TallyDataController::class, 'ledgers'])->name('tally.ledgers.index')->middleware('tenant.permission:integrations.view');
+        Route::get('/tally/stock-items', [TallyDataController::class, 'stockItems'])->name('tally.stock-items.index')->middleware('tenant.permission:integrations.view');
+        Route::get('/tally/vouchers', [TallyDataController::class, 'vouchers'])->name('tally.vouchers.index')->middleware('tenant.permission:integrations.view');
+        Route::get('/tally/vouchers/{voucher}', [TallyDataController::class, 'voucherShow'])->name('tally.vouchers.show')->middleware('tenant.permission:integrations.view');
 
         // ── Banking / Narration ────────────────────────────────────────
         Route::get('/banking', [BankTransactionController::class, 'pending'])

@@ -680,6 +680,11 @@ All web routes are inside the `Route::middleware(['auth', 'verified', 'member'])
 | DELETE | /t/{tenant}/settings/tally | tally.connection.destroy | integrations.manage |
 | GET | /t/{tenant}/tally/sync | tally.sync.index | integrations.view |
 | POST | /t/{tenant}/tally/sync | tally.sync.trigger | integrations.manage |
+| GET | /t/{tenant}/tally/ledger-groups | tally.ledger-groups.index | integrations.view |
+| GET | /t/{tenant}/tally/ledgers | tally.ledgers.index | integrations.view |
+| GET | /t/{tenant}/tally/stock-items | tally.stock-items.index | integrations.view |
+| GET | /t/{tenant}/tally/vouchers | tally.vouchers.index | integrations.view |
+| GET | /t/{tenant}/tally/vouchers/{voucher} | tally.vouchers.show | integrations.view |
 
 ### Connection.vue — three sections
 
@@ -689,11 +694,31 @@ All web routes are inside the `Route::middleware(['auth', 'verified', 'member'])
 
 ### Sync.vue — four tabs + stats
 
-- **Stats bar**: Live counts of total ledger groups, ledgers, stock items, vouchers.
+- **Stats bar**: Live counts of total ledger groups, ledgers, stock items, vouchers. Each card is a link to the corresponding data-browse page.
 - **Masters tab**: Latest sync status per master entity with created/updated/skipped counts and timestamp.
 - **Vouchers tab**: Latest sync status per voucher type.
 - **Reports tab**: List of all report snapshots with type, period, generated and received timestamps.
 - **Logs tab**: Full log history (last 200), expandable error messages, colour-coded status badges.
+
+### Data browse pages (TallyDataController)
+
+| Page | Route | Description |
+|------|-------|-------------|
+| LedgerGroups.vue | tally.ledger-groups.index | Search + filter all synced ledger groups |
+| Ledgers.vue | tally.ledgers.index | Search + group-filter ledgers with Client/Vendor mapping badges |
+| StockItems.vue | tally.stock-items.index | Search + group-filter stock items with Product mapping badges |
+| Vouchers.vue | tally.vouchers.index | Filter by voucher type, click-through to detail |
+| VoucherShow.vue | tally.vouchers.show | Full voucher detail: inventory entries + ledger entries |
+
+### Seeder
+
+`database/seeders/TallySeeder.php` seeds the **Tili** tenant with:
+- 1 TallyConnection
+- 8 LedgerGroups, 14 Ledgers (3 Debtors mapped to Clients, 2 Creditors mapped to Vendors, sales/purchase/bank/cash/GST accounts)
+- 5 StockGroups, 3 StockCategories, 10 StockItems (mapped to first 5 Products)
+- 10 Vouchers (Sales ×2, Purchase ×2, Receipt, Payment, Credit Note, Debit Note, Contra, Journal) with inventory and ledger entries
+- 5 Report snapshots (trial balance, P&L, balance sheet, sales register, purchase register)
+- 20 TallySyncLog entries (two sync runs + a failed attempt + manual trigger)
 
 ### Nav link
 
