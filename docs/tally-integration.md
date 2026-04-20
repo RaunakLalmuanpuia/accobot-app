@@ -204,7 +204,7 @@ invoices.tally_voucher_id  → tally_vouchers.id
 |--------|------|-------|
 | tally_id | integer | Tally's assigned ID |
 | alter_id | integer | Skip-check key |
-| action | string | Create / Delete |
+| action | string | Create / Alter / Delete (stored as-is; only Delete changes behaviour) |
 | name | string | Group name |
 | under_id / under_name | integer / string | Parent group |
 | nature_of_group | string | Assets / Liabilities / Income / Expenses |
@@ -440,8 +440,11 @@ For each item in payload:
      - Same → skip (records_skipped++)
      - Different → proceed
   5. If Action = "Delete" → set is_active = false, stop
-  6. Upsert all fields
+  6. Otherwise (Action = "Create" OR "Alter" OR anything else) → upsert all fields
+     - "Alter" is NOT handled separately — it falls through to the same upsert path as "Create".
+       The string value ("Create" or "Alter") is stored as-is in the action column for audit purposes.
   7. Run auto-mapping (ledger → client/vendor, stock item → product, sales voucher → invoice)
+     (auto-mapping re-runs on every upsert, whether the action was Create or Alter)
 
 After loop (if full_sync = true):
   Mark all rows NOT in the payload as is_active = false
