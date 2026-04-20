@@ -506,7 +506,7 @@ After each upsert, the sync service checks whether the record should be reflecte
 
 Resolution order:
 1. Look for a `clients` row already linked by `tally_ledger_id` — update it.
-2. If not found, look for a **placeholder** `Client` with the same name and `tally_ledger_id = null` (created earlier from a voucher's buyer fields) — claim it by writing `tally_ledger_id` and updating all fields.
+2. If not found, look for a **placeholder** `Client` with `tally_ledger_id = null` — try matching by GSTIN/PAN (`tax_id`) first, then fall back to name. This handles the case where `buyer_name` on the voucher differs from `mailing_name` on the ledger.
 3. If still not found — create a new `Client`.
 
 What gets mapped: name (prefers mailing name), email, phone (prefers mobile), company name, and tax ID (prefers GSTIN, falls back to PAN). Everything else (bank details, credit terms, addresses, aliases) stays in `tally_ledgers`.
@@ -830,6 +830,7 @@ All web routes are inside the `Route::middleware(['auth', 'verified', 'member'])
 - 8 LedgerGroups, 14 Ledgers (3 Debtors mapped to Clients, 2 Creditors mapped to Vendors, sales/purchase/bank/cash/GST accounts)
 - 5 StockGroups, 3 StockCategories, 10 StockItems (mapped to first 5 Products)
 - 10 Vouchers (Sales ×2, Purchase ×2, Receipt, Payment, Credit Note, Debit Note, Contra, Journal) with inventory and ledger entries
+- **ISP / Lease Line dataset** (mirrors Postman test session): BlueStar Technologies ledger + Client, Sales - Lease Line ledger, Network Equipment stock group, Lease Line Services stock category, 30Mbps Lease Line stock item + Product, 2 Sales vouchers (INV/001 + INV/002) with inventory entries, ledger entries, auto-mapped Invoices, and InvoiceItem rows linked to the Product
 - 5 Report snapshots (trial balance, P&L, balance sheet, sales register, purchase register)
 - 8 StatutoryMasters (GST ×3, TDS ×2, PF ×1, ESI ×1, PT ×1)
 - 5 EmployeeGroups (Management, Sales, Engineering, Operations, Finance)
@@ -1058,4 +1059,4 @@ Because Accobot cannot initiate contact with Tally (the connector always calls A
 
 **Invoice status is always `unpaid` after auto-mapping.** No cross-check is done against Receipt vouchers that may have already settled the sales voucher in Tally.
 
-**Placeholder claim is name-match only.** When `autoMapLedger()` or `autoMapStockItem()` claims a placeholder Client/Product (created from a voucher before the master arrived), it matches on `name` alone. If two clients or products share the same name, the wrong placeholder could be claimed.
+**Placeholder claim for Products is name-match only.** When `autoMapStockItem()` claims a placeholder Product, it matches on `name` alone. If two products share the same name, the wrong placeholder could be claimed. Client placeholder claim now uses GSTIN/PAN first (more reliable), falling back to name.

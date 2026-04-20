@@ -30,7 +30,7 @@ class TallyVoucher extends Model
         'irn', 'acknowledgement_no', 'acknowledgement_date', 'qr_code',
         'narration', 'cost_centre',
         'is_active', 'last_synced_at',
-        'mapped_invoice_id',
+        'mapped_invoice_id', 'mapped_vendor_id',
     ];
 
     protected $casts = [
@@ -66,5 +66,10 @@ class TallyVoucher extends Model
     public function mappedInvoice(): BelongsTo
     {
         return $this->belongsTo(Invoice::class, 'mapped_invoice_id');
+    }
+
+    public function mappedVendor(): BelongsTo
+    {
+        return $this->belongsTo(Vendor::class, 'mapped_vendor_id');
     }
 }

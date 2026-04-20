@@ -3,6 +3,8 @@
 namespace Database\Seeders;
 
 use App\Models\Client;
+use App\Models\Invoice;
+use App\Models\InvoiceItem;
 use App\Models\Product;
 use App\Models\Tenant;
 use App\Models\TallyAttendanceType;
@@ -614,6 +616,257 @@ class TallySeeder extends Seeder
                     'salary_details'     => ['BasicPercent' => 50, 'HRAPercent' => 40, 'PFApplicable' => true],
                     'is_active'          => true,
                     'last_synced_at'     => now()->subHours(1),
+                ]
+            );
+        }
+
+        // ── ISP / Lease Line dataset (mirrors Postman test session) ──────────
+
+        // Ledger: BlueStar Technologies (customer)
+        $bluestarLedger = TallyLedger::firstOrCreate(
+            ['tenant_id' => $tid, 'tally_id' => 105],
+            [
+                'alter_id'                  => 205,
+                'ledger_name'               => 'BlueStar Technologies',
+                'group_name'                => 'Sundry Debtors',
+                'parent_group'              => 'Current Assets',
+                'ledger_category'           => 'customer',
+                'gstin_number'              => '27AABCT1234A1Z5',
+                'gst_type'                  => 'Regular',
+                'is_bill_wise_on'           => true,
+                'inventory_affected'        => false,
+                'is_cost_centre_applicable' => false,
+                'is_rcm_applicable'         => false,
+                'mailing_name'              => 'BlueStar Technologies Pvt Ltd',
+                'mobile_number'             => '9876543210',
+                'contact_person'            => 'Rajesh Kumar',
+                'contact_person_email'      => 'rajesh@bluestar.in',
+                'contact_person_mobile'     => '9876543210',
+                'addresses'                 => ['123 MG Road', 'Bangalore - 560001'],
+                'state_name'                => 'Karnataka',
+                'country_name'              => 'India',
+                'pin_code'                  => '560001',
+                'credit_period'             => 30,
+                'credit_limit'              => 500000,
+                'opening_balance'           => 125000,
+                'opening_balance_type'      => 'Dr',
+                'is_active'                 => true,
+                'last_synced_at'            => now()->subHours(1),
+            ]
+        );
+        $ledgers[105] = $bluestarLedger;
+
+        // Client auto-map for BlueStar
+        $bluestarClient = Client::firstOrCreate(
+            ['tenant_id' => $tid, 'tally_ledger_id' => $bluestarLedger->id],
+            [
+                'name'      => 'BlueStar Technologies Pvt Ltd',
+                'email'     => 'rajesh@bluestar.in',
+                'phone'     => '9876543210',
+                'company'   => 'BlueStar Technologies',
+                'tax_id'    => '27AABCT1234A1Z5',
+                'tenant_id' => $tid,
+            ]
+        );
+        $bluestarLedger->update(['mapped_client_id' => $bluestarClient->id]);
+
+        // Ledger: Sales - Lease Line
+        $salesLeaseLedger = TallyLedger::firstOrCreate(
+            ['tenant_id' => $tid, 'tally_id' => 305],
+            [
+                'alter_id'                  => 305,
+                'ledger_name'               => 'Sales - Lease Line',
+                'group_name'                => 'Sales Accounts',
+                'parent_group'              => 'Income',
+                'ledger_category'           => 'income',
+                'is_bill_wise_on'           => false,
+                'inventory_affected'        => false,
+                'is_cost_centre_applicable' => false,
+                'is_rcm_applicable'         => false,
+                'is_active'                 => true,
+                'last_synced_at'            => now()->subHours(1),
+            ]
+        );
+        $ledgers[305] = $salesLeaseLedger;
+
+        // Stock Group: Network Equipment
+        TallyStockGroup::firstOrCreate(
+            ['tenant_id' => $tid, 'tally_id' => 10],
+            [
+                'alter_id'              => 55,
+                'name'                  => 'Network Equipment',
+                'parent_name'           => 'Primary',
+                'nature_of_group'       => 'Stock-in-Hand',
+                'should_add_quantities' => true,
+                'is_active'             => true,
+                'last_synced_at'        => now()->subHours(1),
+            ]
+        );
+
+        // Stock Category: Lease Line Services
+        TallyStockCategory::firstOrCreate(
+            ['tenant_id' => $tid, 'tally_id' => 5],
+            [
+                'alter_id'       => 11,
+                'name'           => 'Lease Line Services',
+                'parent_name'    => 'Primary',
+                'is_active'      => true,
+                'last_synced_at' => now()->subHours(1),
+            ]
+        );
+
+        // Stock Item: 30Mbps Lease Line
+        $leaseLineItem = TallyStockItem::firstOrCreate(
+            ['tenant_id' => $tid, 'tally_id' => 201],
+            [
+                'alter_id'                   => 88,
+                'name'                       => '30Mbps Lease Line',
+                'description'                => 'Dedicated internet lease line 30Mbps',
+                'stock_group_id'             => 10,
+                'stock_group_name'           => 'Network Equipment',
+                'stock_category_id'          => 5,
+                'category_name'              => 'Lease Line Services',
+                'unit_id'                    => 3,
+                'unit_name'                  => 'Nos',
+                'denominator'                => 1,
+                'is_gst_applicable'          => true,
+                'taxability'                 => 'Taxable',
+                'calculation_type'           => 'On Value',
+                'igst_rate'                  => 18,
+                'sgst_rate'                  => 9,
+                'cgst_rate'                  => 9,
+                'cess_rate'                  => 0,
+                'hsn_code'                   => '998422',
+                'standard_cost'              => 0,
+                'standard_price'             => 15000,
+                'opening_balance'            => 0,
+                'opening_rate'               => 0,
+                'opening_value'              => 0,
+                'closing_balance'            => 0,
+                'closing_rate'               => 0,
+                'closing_value'              => 0,
+                'costing_method'             => 'FIFO',
+                'is_batch_applicable'        => false,
+                'is_expiry_date_applicable'  => false,
+                'is_active'                  => true,
+                'last_synced_at'             => now()->subHours(1),
+            ]
+        );
+        $stockItems[201] = $leaseLineItem;
+
+        // Product auto-map for 30Mbps Lease Line
+        $leaseLineProduct = Product::firstOrCreate(
+            ['tenant_id' => $tid, 'tally_stock_item_id' => $leaseLineItem->id],
+            [
+                'name'        => '30Mbps Lease Line',
+                'description' => 'Dedicated internet lease line 30Mbps',
+                'unit'        => 'Nos',
+                'unit_price'  => 15000,
+                'tax_rate'    => 18,
+                'is_active'   => true,
+                'tenant_id'   => $tid,
+            ]
+        );
+        $leaseLineItem->update(['mapped_product_id' => $leaseLineProduct->id]);
+
+        // Sales Vouchers + Invoices for BlueStar
+        $igstLedger = $ledgers[701];
+        foreach ([
+            [5001, 300, '2024-25/INV/001', '2024-04-01', 'Monthly lease line charges for April 2024'],
+            [5002, 301, '2024-25/INV/002', '2024-05-01', 'Monthly lease line charges for May 2024'],
+        ] as [$tallyId, $alterId, $number, $date, $narration]) {
+            $voucher = TallyVoucher::firstOrCreate(
+                ['tenant_id' => $tid, 'tally_id' => $tallyId],
+                [
+                    'alter_id'              => $alterId,
+                    'voucher_type'          => 'Sales',
+                    'voucher_number'        => $number,
+                    'voucher_date'          => $date,
+                    'party_name'            => 'BlueStar Technologies',
+                    'party_tally_ledger_id' => $bluestarLedger->id,
+                    'voucher_total'         => 17700,
+                    'is_invoice'            => true,
+                    'is_deleted'            => false,
+                    'place_of_supply'       => 'Karnataka',
+                    'buyer_name'            => 'BlueStar Technologies Pvt Ltd',
+                    'buyer_gstin'           => '27AABCT1234A1Z5',
+                    'buyer_state'           => 'Karnataka',
+                    'buyer_address'         => '123 MG Road, Bangalore',
+                    'buyer_email'           => 'rajesh@bluestar.in',
+                    'buyer_mobile'          => '9876543210',
+                    'narration'             => $narration,
+                    'is_active'             => true,
+                    'last_synced_at'        => now()->subMinutes(30),
+                ]
+            );
+
+            TallyVoucherInventoryEntry::firstOrCreate(
+                ['tally_voucher_id' => $voucher->id, 'tally_stock_item_id' => $leaseLineItem->id],
+                [
+                    'tenant_id'          => $tid,
+                    'stock_item_name'    => '30Mbps Lease Line',
+                    'hsn_code'           => '998422',
+                    'unit'               => 'Nos',
+                    'igst_rate'          => 18,
+                    'is_deemed_positive' => true,
+                    'actual_qty'         => 1,
+                    'billed_qty'         => 1,
+                    'rate'               => 15000,
+                    'discount_percent'   => 0,
+                    'amount'             => 15000,
+                    'tax_amount'         => 2700,
+                    'sales_ledger'       => 'Sales - Lease Line',
+                ]
+            );
+
+            foreach ([
+                [$bluestarLedger,   'BlueStar Technologies', 'Sundry Debtors',   17700,   true,  true],
+                [$salesLeaseLedger, 'Sales - Lease Line',    'Sales Accounts',   -15000,  false, false],
+                [$igstLedger,       'IGST @18%',             'Duties & Taxes',   -2700,   false, false],
+            ] as [$ledger, $name, $group, $amount, $deemed, $isParty]) {
+                TallyVoucherLedgerEntry::firstOrCreate(
+                    ['tally_voucher_id' => $voucher->id, 'tally_ledger_id' => $ledger->id],
+                    [
+                        'tenant_id'          => $tid,
+                        'ledger_name'        => $name,
+                        'ledger_group'       => $group,
+                        'ledger_amount'      => $amount,
+                        'is_deemed_positive' => $deemed,
+                        'is_party_ledger'    => $isParty,
+                    ]
+                );
+            }
+
+            $invoice = Invoice::firstOrCreate(
+                ['tally_voucher_id' => $voucher->id, 'tenant_id' => $tid],
+                [
+                    'tenant_id'      => $tid,
+                    'client_id'      => $bluestarClient->id,
+                    'invoice_number' => $number,
+                    'issue_date'     => $date,
+                    'due_date'       => $date,
+                    'status'         => 'sent',
+                    'subtotal'       => 15000,
+                    'tax_amount'     => 2700,
+                    'total'          => 17700,
+                    'currency'       => 'INR',
+                    'notes'          => $narration,
+                    'amount_paid'    => 0,
+                    'amount_due'     => 17700,
+                ]
+            );
+            $voucher->update(['mapped_invoice_id' => $invoice->id]);
+
+            InvoiceItem::firstOrCreate(
+                ['invoice_id' => $invoice->id, 'product_id' => $leaseLineProduct->id],
+                [
+                    'description' => '30Mbps Lease Line',
+                    'unit'        => 'Nos',
+                    'quantity'    => 1,
+                    'unit_price'  => 15000,
+                    'tax_rate'    => 18,
+                    'tax_amount'  => 2700,
+                    'total'       => 17700,
                 ]
             );
         }

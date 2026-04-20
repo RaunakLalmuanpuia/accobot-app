@@ -561,9 +561,11 @@ class TallyInboundSync
                     continue;
                 }
 
-                // Auto-map Sales vouchers to Invoice — outside transaction, best-effort
+                // Auto-map outside transaction, best-effort
                 if ($voucher && $type === 'Sales') {
                     $this->autoMapSalesVoucher($voucher, $conn->tenant_id);
+                } elseif ($voucher && $type === 'Purchase') {
+                    $this->autoMapPurchaseVoucher($voucher, $conn->tenant_id);
                 }
             }
             } // end chunk
@@ -690,12 +692,21 @@ class TallyInboundSync
                 ->first();
 
             if (!$client) {
-                // Claim placeholder created from a voucher if names match
-                $client = Client::withoutGlobalScope('tenant')
+                // Claim placeholder created from a voucher — try GSTIN first, then mailing_name, then ledger_name.
+                // Voucher buyer_name and ledger mailing_name can differ, so GSTIN is more reliable.
+                $placeholder = fn() => Client::withoutGlobalScope('tenant')
                     ->where('tenant_id', $tenantId)
-                    ->whereNull('tally_ledger_id')
-                    ->where('name', $canonicalName)
-                    ->first();
+                    ->whereNull('tally_ledger_id');
+
+                $gstin = $ledger->gstin_number ?? $ledger->pan_number;
+                $client = $gstin ? $placeholder()->where('tax_id', $gstin)->first() : null;
+
+                if (!$client) {
+                    $client = $placeholder()->where('name', $canonicalName)->first();
+                }
+                if (!$client && $ledger->ledger_name !== $canonicalName) {
+                    $client = $placeholder()->where('name', $ledger->ledger_name)->first();
+                }
             }
 
             if ($client) {
@@ -712,11 +723,21 @@ class TallyInboundSync
                 ->first();
 
             if (!$vendor) {
-                $vendor = Vendor::withoutGlobalScope('tenant')
+                // Try GSTIN/PAN first, then mailing_name, then ledger_name.
+                // Placeholder from a voucher uses party_name (= ledger_name); mailing_name may differ.
+                $placeholder = fn() => Vendor::withoutGlobalScope('tenant')
                     ->where('tenant_id', $tenantId)
-                    ->whereNull('tally_ledger_id')
-                    ->where('name', $canonicalName)
-                    ->first();
+                    ->whereNull('tally_ledger_id');
+
+                $gstin = $ledger->gstin_number ?? $ledger->pan_number;
+                $vendor = $gstin ? $placeholder()->where('tax_id', $gstin)->first() : null;
+
+                if (!$vendor) {
+                    $vendor = $placeholder()->where('name', $canonicalName)->first();
+                }
+                if (!$vendor && $ledger->ledger_name !== $canonicalName) {
+                    $vendor = $placeholder()->where('name', $ledger->ledger_name)->first();
+                }
             }
 
             if ($vendor) {
@@ -818,5 +839,34 @@ class TallyInboundSync
             );
 
         $voucher->update(['mapped_invoice_id' => $invoice->id]);
+    }
+
+    private function autoMapPurchaseVoucher(TallyVoucher $voucher, string $tenantId): void
+    {
+        // Resolve vendor via mapped party ledger
+        $vendorId = null;
+        if ($voucher->party_tally_ledger_id) {
+            $vendorId = Vendor::withoutGlobalScope('tenant')
+                ->where('tally_ledger_id', $voucher->party_tally_ledger_id)
+                ->where('tenant_id', $tenantId)
+                ->value('id');
+        }
+
+        if (!$vendorId) {
+            $partyName = $voucher->party_name;
+            if (!$partyName) return;
+
+            $vendor = Vendor::withoutGlobalScope('tenant')
+                ->updateOrCreate(
+                    ['name' => $partyName, 'tenant_id' => $tenantId],
+                    [
+                        'company'   => $partyName,
+                        'tenant_id' => $tenantId,
+                    ]
+                );
+            $vendorId = $vendor->id;
+        }
+
+        $voucher->update(['mapped_vendor_id' => $vendorId]);
     }
 }
