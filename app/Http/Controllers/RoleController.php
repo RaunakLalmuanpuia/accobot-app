@@ -43,6 +43,24 @@ class RoleController extends Controller
                 'vendors.edit',
                 'vendors.delete',
             ],
+            'Inventory' => [
+                'products.view',
+                'products.create',
+                'products.edit',
+                'products.delete',
+            ],
+            'Narration Heads' => [
+                'narration_heads.view',
+                'narration_heads.create',
+                'narration_heads.edit',
+                'narration_heads.delete',
+            ],
+            'Banking' => [
+                'transactions.view',
+                'transactions.review',
+                'transactions.edit',
+                'transactions.import',
+            ],
             'Accounting' => [
                 'invoices.view',
                 'invoices.create',
