@@ -16,7 +16,7 @@ class Invoice extends Model
         'tenant_id', 'invoice_number', 'client_id',
         'issue_date', 'due_date', 'status',
         'subtotal', 'tax_amount', 'total', 'currency', 'notes',
-        'amount_paid', 'amount_due', 'tally_voucher_id',
+        'amount_paid', 'amount_due', 'tally_voucher_id', 'tally_synced_at',
     ];
 
     protected $casts = [

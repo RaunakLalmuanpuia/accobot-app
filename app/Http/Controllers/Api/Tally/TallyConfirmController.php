@@ -142,17 +142,19 @@ class TallyConfirmController extends TallyBaseController
     {
         if (!$synced) return;
 
+        $now = now();
+
         if ($record instanceof TallyLedger) {
-            $record->mappedClient?->touch();
-            $record->mappedVendor?->touch();
+            $record->mappedClient?->update(['tally_synced_at' => $now]);
+            $record->mappedVendor?->update(['tally_synced_at' => $now]);
         }
 
         if ($record instanceof TallyStockItem) {
-            $record->mappedProduct?->touch();
+            $record->mappedProduct?->update(['tally_synced_at' => $now]);
         }
 
         if ($record instanceof TallyVoucher) {
-            $record->mappedInvoice?->touch();
+            $record->mappedInvoice?->update(['tally_synced_at' => $now]);
         }
     }
 }

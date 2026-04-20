@@ -16,7 +16,7 @@ class Product extends Model
         'tenant_id', 'name', 'description', 'sku', 'unit',
         'unit_price', 'tax_rate', 'stock_quantity',
         'category', 'sub_category', 'main_group', 'sub_group',
-        'is_active', 'embedding', 'tally_stock_item_id',
+        'is_active', 'embedding', 'tally_stock_item_id', 'tally_synced_at',
     ];
 
     protected static function booted(): void

@@ -613,9 +613,9 @@ After Tally creates an Accobot-originated record, it confirms the creation by PO
 
 - `Id` = Accobot's primary key in the tally_* table
 - `TallyId` = the integer ID Tally assigned
-- `IsSynced` = confirmation flag
+- `IsSynced` = when `true`, stamps `tally_synced_at` on the mapped Accobot model (Client, Vendor, Product, or Invoice)
 
-`TallyConfirmController` looks up the record by `Id` and `tenant_id`, then updates its `tally_id` column with the value Tally assigned. This ensures the record can be deduped correctly on future inbound syncs.
+`TallyConfirmController` looks up the record by `Id` and `tenant_id`, then updates its `tally_id` column with the value Tally assigned. This ensures the record can be deduped correctly on future inbound syncs. When `IsSynced: true`, the corresponding auto-mapped model (e.g. the Client created from a Ledger) gets its `tally_synced_at` timestamp set, recording when Tally last confirmed it as synced.
 
 **Endpoints:**
 ```

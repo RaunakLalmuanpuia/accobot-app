@@ -15,7 +15,7 @@ class Client extends Model
     protected $fillable = [
         'tenant_id', 'name', 'email', 'phone',
         'address', 'company', 'tax_id', 'notes', 'embedding',
-        'tally_ledger_id',
+        'tally_ledger_id', 'tally_synced_at',
     ];
 
     protected $casts = [

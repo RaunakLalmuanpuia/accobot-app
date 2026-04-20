@@ -278,6 +278,8 @@ class TallyOutboundFormatter
                 'BuyerGSTIN'    => $v->buyer_gstin,
                 'BuyerState'    => $v->buyer_state,
                 'BuyerAddress'  => $v->buyer_address,
+                'BuyerEmail'    => $v->buyer_email,
+                'BuyerMobile'   => $v->buyer_mobile,
                 'Narration'     => $v->narration,
                 'IRN'           => $v->irn,
                 'AcknowledgementNo'   => $v->acknowledgement_no,
@@ -299,11 +301,12 @@ class TallyOutboundFormatter
             ])->values()->all();
 
             $base['LedgerEntries'] = $v->ledgerEntries->map(fn ($le) => [
-                'LedgerName'      => $le->ledger_name,
-                'LedgerGroup'     => $le->ledger_group,
-                'LedgerAmount'    => $le->ledger_amount,
-                'IsDeemedPositive'=> $this->boolStr($le->is_deemed_positive),
-                'IsPartyLedger'   => $this->boolStr($le->is_party_ledger),
+                'LedgerName'       => $le->ledger_name,
+                'LedgerGroup'      => $le->ledger_group,
+                'LedgerAmount'     => $le->ledger_amount,
+                'IsDeemedPositive' => $this->boolStr($le->is_deemed_positive),
+                'IsPartyLedger'    => $this->boolStr($le->is_party_ledger),
+                'BillsAllocation'  => $le->bills_allocation ?? [],
             ])->values()->all();
 
             return $base;
