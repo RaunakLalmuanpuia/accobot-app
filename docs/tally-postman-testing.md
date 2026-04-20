@@ -43,14 +43,14 @@ Accept: application/json
 | 8 | POST | `/api/tally/inbound/payroll/employees` | ✅ Tested |
 | 9 | POST | `/api/tally/inbound/payroll/pay-heads` | ✅ Tested |
 | 10 | POST | `/api/tally/inbound/payroll/attendance-types` | ✅ Tested |
-| 11 | POST | `/api/tally/inbound/vouchers/sales` | ⬜ Pending |
-| 12 | POST | `/api/tally/inbound/vouchers/purchase` | ⬜ Pending |
-| 13 | POST | `/api/tally/inbound/vouchers/credit-note` | ⬜ Pending |
-| 14 | POST | `/api/tally/inbound/vouchers/debit-note` | ⬜ Pending |
-| 15 | POST | `/api/tally/inbound/vouchers/receipt` | ⬜ Pending |
-| 16 | POST | `/api/tally/inbound/vouchers/payment` | ⬜ Pending |
-| 17 | POST | `/api/tally/inbound/vouchers/contra` | ⬜ Pending |
-| 18 | POST | `/api/tally/inbound/vouchers/journal` | ⬜ Pending |
+| 11 | POST | `/api/tally/inbound/vouchers/sales` | ✅ Tested |
+| 12 | POST | `/api/tally/inbound/vouchers/purchase` | ✅ Tested |
+| 13 | POST | `/api/tally/inbound/vouchers/credit-note` | ✅ Tested |
+| 14 | POST | `/api/tally/inbound/vouchers/debit-note` | ✅ Tested |
+| 15 | POST | `/api/tally/inbound/vouchers/receipt` | ✅ Tested |
+| 16 | POST | `/api/tally/inbound/vouchers/payment` | ✅ Tested |
+| 17 | POST | `/api/tally/inbound/vouchers/contra` | ✅ Tested |
+| 18 | POST | `/api/tally/inbound/vouchers/journal` | ✅ Tested |
 | 19 | POST | `/api/tally/inbound/reports/balance-sheet` | ⬜ Pending |
 | 20 | POST | `/api/tally/inbound/reports/profit-loss` | ⬜ Pending |
 | 21 | POST | `/api/tally/inbound/reports/cash-flow` | ⬜ Pending |
@@ -546,6 +546,518 @@ Accept: application/json
   "failed": 0
 }
 ```
+
+---
+
+---
+
+### 11. POST `/api/tally/inbound/vouchers/sales` ✅
+
+**Request**
+```json
+{
+  "full_sync": false,
+  "Data": [
+    {
+      "MasterID": 5001,
+      "AlterID": 300,
+      "Action": "Create",
+      "VoucherNumber": "2024-25/INV/001",
+      "VoucherDate": "2024-04-01",
+      "PartyName": "BlueStar Technologies",
+      "VoucherTotal": 17700,
+      "IsInvoice": "Yes",
+      "PlaceOfSupply": "Karnataka",
+      "BuyerName": "BlueStar Technologies Pvt Ltd",
+      "BuyerGSTIN": "27AABCT1234A1Z5",
+      "BuyerState": "Karnataka",
+      "BuyerAddress": "123 MG Road, Bangalore",
+      "BuyerEmail": "rajesh@bluestar.in",
+      "BuyerMobile": "9876543210",
+      "Narration": "Monthly lease line charges for April 2024",
+      "IRN": null,
+      "AcknowledgementNo": null,
+      "AcknowledgementDate": null,
+      "QRCode": null,
+      "InventoryEntries": [
+        {
+          "StockItemName": "30Mbps Lease Line",
+          "HSNCode": "998422",
+          "Unit": "Nos",
+          "IGSTRate": 18,
+          "ActualQty": 1,
+          "BilledQty": 1,
+          "Rate": 15000,
+          "DiscountPercent": 0,
+          "Amount": 15000,
+          "TaxAmount": 2700
+        }
+      ],
+      "LedgerEntries": [
+        {
+          "LedgerName": "BlueStar Technologies",
+          "LedgerGroup": "Sundry Debtors",
+          "LedgerAmount": 17700,
+          "IsDeemedPositive": "Yes",
+          "IsPartyLedger": "Yes"
+        },
+        {
+          "LedgerName": "Sales - Lease Line",
+          "LedgerGroup": "Sales Accounts",
+          "LedgerAmount": -15000,
+          "IsDeemedPositive": "No",
+          "IsPartyLedger": "No"
+        },
+        {
+          "LedgerName": "IGST @18%",
+          "LedgerGroup": "Duties & Taxes",
+          "LedgerAmount": -2700,
+          "IsDeemedPositive": "No",
+          "IsPartyLedger": "No"
+        }
+      ]
+    }
+  ]
+}
+```
+
+**Response** — `200 OK`
+```json
+{
+  "status": "success",
+  "created": 1,
+  "updated": 0,
+  "skipped": 0,
+  "failed": 0
+}
+```
+
+**Bug fixed:** `autoMapSalesVoucher()` was inserting `status = "unpaid"` into `invoices`, which violates the `invoices_status_check` constraint. Valid values are `draft/sent/paid/partial/overdue/cancelled`. Fixed to use `"sent"`.
+
+**Behaviours verified:**
+- Voucher created in `tally_vouchers` with `voucher_type = "Sales"`, `tally_id = 5001`
+- 1 `tally_voucher_inventory_entries` row linked to stock item "30Mbps Lease Line"
+- 3 `tally_voucher_ledger_entries` rows
+- Auto-map: `invoices` row created with `status = "sent"`, linked to client "BlueStar Technologies Pvt Ltd"
+- Same payload again → `skipped: 1`
+
+---
+
+---
+
+### 12. POST `/api/tally/inbound/vouchers/purchase` ✅
+
+**Request**
+```json
+{
+  "full_sync": false,
+  "Data": [
+    {
+      "MasterID": 6001,
+      "AlterID": 410,
+      "Action": "Create",
+      "VoucherNumber": "PUR/2024-25/001",
+      "VoucherDate": "2024-04-05",
+      "PartyName": "Punjab National Bank",
+      "VoucherTotal": 50000,
+      "IsInvoice": "Yes",
+      "Narration": "Bandwidth purchase April 2024",
+      "InventoryEntries": [],
+      "LedgerEntries": [
+        {
+          "LedgerName": "Punjab National Bank",
+          "LedgerGroup": "Sundry Creditors",
+          "LedgerAmount": -50000,
+          "IsDeemedPositive": "No",
+          "IsPartyLedger": "Yes"
+        },
+        {
+          "LedgerName": "Purchase - Bandwidth",
+          "LedgerGroup": "Purchase Accounts",
+          "LedgerAmount": 50000,
+          "IsDeemedPositive": "Yes",
+          "IsPartyLedger": "No"
+        }
+      ]
+    }
+  ]
+}
+```
+
+**Response** — `200 OK`
+```json
+{
+  "status": "success",
+  "created": 1,
+  "updated": 0,
+  "skipped": 0,
+  "failed": 0
+}
+```
+
+**Behaviours verified:**
+- Voucher created with `voucher_type = "Purchase"`, `tally_id = 6001`
+- 2 `tally_voucher_ledger_entries` rows, 0 inventory entries
+- No invoice auto-created (Purchase type is not mapped)
+- Same payload → `skipped: 1`
+
+---
+
+---
+
+### 13. POST `/api/tally/inbound/vouchers/credit-note` ✅
+
+**Request**
+```json
+{
+  "Data": [
+    {
+      "MasterID": 7001,
+      "AlterID": 500,
+      "Action": "Create",
+      "VoucherNumber": "CN/2024-25/001",
+      "VoucherDate": "2024-04-10",
+      "PartyName": "BlueStar Technologies",
+      "VoucherTotal": 5900,
+      "IsInvoice": "No",
+      "Narration": "Partial credit for service downtime",
+      "InventoryEntries": [],
+      "LedgerEntries": [
+        {
+          "LedgerName": "BlueStar Technologies",
+          "LedgerGroup": "Sundry Debtors",
+          "LedgerAmount": -5900,
+          "IsDeemedPositive": "No",
+          "IsPartyLedger": "Yes"
+        },
+        {
+          "LedgerName": "Sales - Lease Line",
+          "LedgerGroup": "Sales Accounts",
+          "LedgerAmount": 5000,
+          "IsDeemedPositive": "Yes",
+          "IsPartyLedger": "No"
+        }
+      ]
+    }
+  ]
+}
+```
+
+**Response** — `200 OK`
+```json
+{
+  "status": "success",
+  "created": 1,
+  "updated": 0,
+  "skipped": 0,
+  "failed": 0
+}
+```
+
+**Behaviours verified:**
+- Voucher created with `voucher_type = "CreditNote"`, `tally_id = 7001`
+- 2 `tally_voucher_ledger_entries`, 0 inventory entries
+- No invoice auto-created
+- Same payload → `skipped: 1`
+
+---
+
+---
+
+### 14. POST `/api/tally/inbound/vouchers/debit-note` ✅
+
+**Request**
+```json
+{
+  "Data": [
+    {
+      "MasterID": 8001,
+      "AlterID": 600,
+      "Action": "Create",
+      "VoucherNumber": "DN/2024-25/001",
+      "VoucherDate": "2024-04-12",
+      "PartyName": "Punjab National Bank",
+      "VoucherTotal": 10000,
+      "IsInvoice": "No",
+      "Narration": "Debit note for purchase return",
+      "InventoryEntries": [],
+      "LedgerEntries": [
+        {
+          "LedgerName": "Punjab National Bank",
+          "LedgerGroup": "Sundry Creditors",
+          "LedgerAmount": 10000,
+          "IsDeemedPositive": "Yes",
+          "IsPartyLedger": "Yes"
+        },
+        {
+          "LedgerName": "Purchase - Bandwidth",
+          "LedgerGroup": "Purchase Accounts",
+          "LedgerAmount": -10000,
+          "IsDeemedPositive": "No",
+          "IsPartyLedger": "No"
+        }
+      ]
+    }
+  ]
+}
+```
+
+**Response** — `200 OK`
+```json
+{
+  "status": "success",
+  "created": 1,
+  "updated": 0,
+  "skipped": 0,
+  "failed": 0
+}
+```
+
+**Behaviours verified:**
+- Voucher created with `voucher_type = "DebitNote"`, `tally_id = 8001`
+- 2 `tally_voucher_ledger_entries`, 0 inventory entries
+- Same payload → `skipped: 1`
+
+---
+
+---
+
+### 15. POST `/api/tally/inbound/vouchers/receipt` ✅
+
+**Request**
+```json
+{
+  "Data": [
+    {
+      "MasterID": 9001,
+      "AlterID": 601,
+      "Action": "Create",
+      "VoucherNumber": "RCT/2024-25/001",
+      "VoucherDate": "2024-04-15",
+      "PartyName": "BlueStar Technologies",
+      "VoucherTotal": 17700,
+      "IsInvoice": "No",
+      "Narration": "Receipt against INV/001",
+      "InventoryEntries": [],
+      "LedgerEntries": [
+        {
+          "LedgerName": "HDFC Bank",
+          "LedgerGroup": "Bank Accounts",
+          "LedgerAmount": 17700,
+          "IsDeemedPositive": "Yes",
+          "IsPartyLedger": "No"
+        },
+        {
+          "LedgerName": "BlueStar Technologies",
+          "LedgerGroup": "Sundry Debtors",
+          "LedgerAmount": -17700,
+          "IsDeemedPositive": "No",
+          "IsPartyLedger": "Yes",
+          "BillsAllocation": [
+            { "Name": "2024-25/INV/001", "Amount": 17700 }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+**Response** — `200 OK`
+```json
+{
+  "status": "success",
+  "created": 1,
+  "updated": 0,
+  "skipped": 0,
+  "failed": 0
+}
+```
+
+**Note:** API reference uses `MasterID: 8001` which conflicts with debit-note. Use `9001` (or any unique ID) in tests.
+
+**Behaviours verified:**
+- Voucher created with `voucher_type = "Receipt"`, `tally_id = 9001`
+- 2 `tally_voucher_ledger_entries` — party entry has `bills_allocation` JSON stored
+- Same payload → `skipped: 1`
+
+---
+
+---
+
+### 16. POST `/api/tally/inbound/vouchers/payment` ✅
+
+**Request**
+```json
+{
+  "Data": [
+    {
+      "MasterID": 10001,
+      "AlterID": 700,
+      "Action": "Create",
+      "VoucherNumber": "PAY/2024-25/001",
+      "VoucherDate": "2024-04-20",
+      "PartyName": "Punjab National Bank",
+      "VoucherTotal": 50000,
+      "IsInvoice": "No",
+      "Narration": "Payment for bandwidth purchase",
+      "InventoryEntries": [],
+      "LedgerEntries": [
+        {
+          "LedgerName": "Punjab National Bank",
+          "LedgerGroup": "Sundry Creditors",
+          "LedgerAmount": 50000,
+          "IsDeemedPositive": "Yes",
+          "IsPartyLedger": "Yes"
+        },
+        {
+          "LedgerName": "HDFC Bank",
+          "LedgerGroup": "Bank Accounts",
+          "LedgerAmount": -50000,
+          "IsDeemedPositive": "No",
+          "IsPartyLedger": "No"
+        }
+      ]
+    }
+  ]
+}
+```
+
+**Response** — `200 OK`
+```json
+{
+  "status": "success",
+  "created": 1,
+  "updated": 0,
+  "skipped": 0,
+  "failed": 0
+}
+```
+
+**Note:** API reference uses `MasterID: 9001` which conflicts with receipt. Use `10001` (or any unique ID).
+
+**Behaviours verified:**
+- Voucher created with `voucher_type = "Payment"`, `tally_id = 10001`
+- 2 `tally_voucher_ledger_entries`, 0 inventory entries
+- Same payload → `skipped: 1`
+
+---
+
+---
+
+### 17. POST `/api/tally/inbound/vouchers/contra` ✅
+
+**Request**
+```json
+{
+  "Data": [
+    {
+      "MasterID": 11001,
+      "AlterID": 800,
+      "Action": "Create",
+      "VoucherNumber": "CON/2024-25/001",
+      "VoucherDate": "2024-04-25",
+      "VoucherTotal": 100000,
+      "IsInvoice": "No",
+      "Narration": "Transfer from cash to HDFC bank",
+      "InventoryEntries": [],
+      "LedgerEntries": [
+        {
+          "LedgerName": "HDFC Bank",
+          "LedgerGroup": "Bank Accounts",
+          "LedgerAmount": 100000,
+          "IsDeemedPositive": "Yes",
+          "IsPartyLedger": "No"
+        },
+        {
+          "LedgerName": "Cash",
+          "LedgerGroup": "Cash-in-Hand",
+          "LedgerAmount": -100000,
+          "IsDeemedPositive": "No",
+          "IsPartyLedger": "No"
+        }
+      ]
+    }
+  ]
+}
+```
+
+**Response** — `200 OK`
+```json
+{
+  "status": "success",
+  "created": 1,
+  "updated": 0,
+  "skipped": 0,
+  "failed": 0
+}
+```
+
+**Note:** API reference uses `MasterID: 10001` which conflicts with payment. Use `11001` (or any unique ID).
+
+**Behaviours verified:**
+- Voucher created with `voucher_type = "Contra"`, `tally_id = 11001`
+- 2 `tally_voucher_ledger_entries`, 0 inventory entries, no `PartyName`
+- Same payload → `skipped: 1`
+
+---
+
+---
+
+### 18. POST `/api/tally/inbound/vouchers/journal` ✅
+
+**Request**
+```json
+{
+  "Data": [
+    {
+      "MasterID": 12001,
+      "AlterID": 900,
+      "Action": "Create",
+      "VoucherNumber": "JV/2024-25/001",
+      "VoucherDate": "2024-03-31",
+      "VoucherTotal": 12000,
+      "IsInvoice": "No",
+      "Narration": "Depreciation for FY 2024-25",
+      "InventoryEntries": [],
+      "LedgerEntries": [
+        {
+          "LedgerName": "Depreciation",
+          "LedgerGroup": "Indirect Expenses",
+          "LedgerAmount": 12000,
+          "IsDeemedPositive": "Yes",
+          "IsPartyLedger": "No"
+        },
+        {
+          "LedgerName": "Fixed Assets",
+          "LedgerGroup": "Fixed Assets",
+          "LedgerAmount": -12000,
+          "IsDeemedPositive": "No",
+          "IsPartyLedger": "No"
+        }
+      ]
+    }
+  ]
+}
+```
+
+**Response** — `200 OK`
+```json
+{
+  "status": "success",
+  "created": 1,
+  "updated": 0,
+  "skipped": 0,
+  "failed": 0
+}
+```
+
+**Note:** API reference uses `MasterID: 11001` which conflicts with contra. Use `12001` (or any unique ID).
+
+**Behaviours verified:**
+- Voucher created with `voucher_type = "Journal"`, `tally_id = 12001`
+- 2 `tally_voucher_ledger_entries`, 0 inventory entries
+- Same payload → `skipped: 1`
 
 ---
 

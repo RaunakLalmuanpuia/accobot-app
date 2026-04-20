@@ -806,7 +806,7 @@ class TallyInboundSync
                     'invoice_number' => $voucher->voucher_number ?? \App\Models\Invoice::generateNumber($tenantId),
                     'issue_date'     => $voucher->voucher_date,
                     'due_date'       => $voucher->voucher_date,
-                    'status'         => 'unpaid',
+                    'status'         => 'sent',
                     'subtotal'       => $voucher->voucher_total,
                     'tax_amount'     => 0,
                     'total'          => $voucher->voucher_total,
