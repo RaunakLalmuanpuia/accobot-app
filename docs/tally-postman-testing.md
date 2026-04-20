@@ -51,10 +51,10 @@ Accept: application/json
 | 16 | POST | `/api/tally/inbound/vouchers/payment` | ✅ Tested |
 | 17 | POST | `/api/tally/inbound/vouchers/contra` | ✅ Tested |
 | 18 | POST | `/api/tally/inbound/vouchers/journal` | ✅ Tested |
-| 19 | POST | `/api/tally/inbound/reports/balance-sheet` | ⬜ Pending |
-| 20 | POST | `/api/tally/inbound/reports/profit-loss` | ⬜ Pending |
-| 21 | POST | `/api/tally/inbound/reports/cash-flow` | ⬜ Pending |
-| 22 | POST | `/api/tally/inbound/reports/ratio-analysis` | ⬜ Pending |
+| 19 | POST | `/api/tally/inbound/reports/balance-sheet` | ✅ Tested |
+| 20 | POST | `/api/tally/inbound/reports/profit-loss` | ✅ Tested |
+| 21 | POST | `/api/tally/inbound/reports/cash-flow` | ✅ Tested |
+| 22 | POST | `/api/tally/inbound/reports/ratio-analysis` | ✅ Tested |
 | 23 | GET | `/api/MastersAPI/ledger-group` | ⬜ Pending |
 | 24 | GET | `/api/MastersAPI/ledger-master` | ⬜ Pending |
 | 25 | GET | `/api/MastersAPI/stock-master` | ⬜ Pending |
@@ -1058,6 +1058,147 @@ Accept: application/json
 - Voucher created with `voucher_type = "Journal"`, `tally_id = 12001`
 - 2 `tally_voucher_ledger_entries`, 0 inventory entries
 - Same payload → `skipped: 1`
+
+---
+
+---
+
+### 19. POST `/api/tally/inbound/reports/balance-sheet` ✅
+
+**Request**
+```json
+{
+  "period_from": "2024-04-01",
+  "period_to": "2025-03-31",
+  "generated_at": "2025-04-01T10:00:00",
+  "data": {
+    "Assets": {
+      "FixedAssets": 500000,
+      "CurrentAssets": {
+        "SundryDebtors": 250000,
+        "Cash": 45000,
+        "BankAccounts": 300000
+      }
+    },
+    "Liabilities": {
+      "CapitalAccount": 800000,
+      "SundryCreditors": 150000,
+      "Loans": 145000
+    }
+  }
+}
+```
+
+**Response** — `200 OK`
+```json
+{ "status": "success" }
+```
+
+**Note:** The `data` key is not formally defined in the Tally connector output. Same behaviour as all 4 report endpoints.
+
+**Behaviours verified:**
+- New snapshot row inserted in `tally_reports` with `report_type = "balance_sheet"`
+- Insert-only: sending same payload again creates a second snapshot row (no deduplication)
+
+---
+
+---
+
+### 20. POST `/api/tally/inbound/reports/profit-loss` ✅
+
+**Request**
+```json
+{
+  "period_from": "2024-04-01",
+  "period_to": "2025-03-31",
+  "generated_at": "2025-04-01T10:00:00",
+  "data": {
+    "Income": {
+      "SalesAccounts": 1200000,
+      "OtherIncome": 15000
+    },
+    "Expenditure": {
+      "PurchaseAccounts": 600000,
+      "IndirectExpenses": 180000,
+      "Depreciation": 12000
+    },
+    "NetProfit": 423000
+  }
+}
+```
+
+**Response** — `200 OK`
+```json
+{ "status": "success" }
+```
+
+**Note:** The `data` key is not formally defined in the Tally connector output. Same behaviour as all 4 report endpoints.
+
+**Behaviours verified:**
+- New snapshot row inserted in `tally_reports` with `report_type = "profit_loss"`
+
+---
+
+---
+
+### 21. POST `/api/tally/inbound/reports/cash-flow` ✅
+
+**Request**
+```json
+{
+  "period_from": "2024-04-01",
+  "period_to": "2025-03-31",
+  "generated_at": "2025-04-01T10:00:00",
+  "data": {
+    "OperatingActivities": 350000,
+    "InvestingActivities": -80000,
+    "FinancingActivities": -50000,
+    "NetCashFlow": 220000
+  }
+}
+```
+
+**Response** — `200 OK`
+```json
+{ "status": "success" }
+```
+
+**Note:** The `data` key is not formally defined in the Tally connector output. Same behaviour as all 4 report endpoints.
+
+**Behaviours verified:**
+- New snapshot row inserted in `tally_reports` with `report_type = "cash_flow"`
+
+---
+
+---
+
+### 22. POST `/api/tally/inbound/reports/ratio-analysis` ✅
+
+**Request**
+```json
+{
+  "period_from": "2024-04-01",
+  "period_to": "2025-03-31",
+  "generated_at": "2025-04-01T10:00:00",
+  "data": {
+    "CurrentRatio": 2.1,
+    "QuickRatio": 1.8,
+    "DebtEquityRatio": 0.18,
+    "GrossProfitRatio": 50.0,
+    "NetProfitRatio": 35.25
+  }
+}
+```
+
+**Response** — `200 OK`
+```json
+{ "status": "success" }
+```
+
+**Note:** The `data` key is not formally defined in the Tally connector output. Same behaviour as all 4 report endpoints.
+
+**Behaviours verified:**
+- New snapshot row inserted in `tally_reports` with `report_type = "ratio_analysis"`
 
 ---
 
