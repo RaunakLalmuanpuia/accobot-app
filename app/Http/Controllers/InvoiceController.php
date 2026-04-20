@@ -172,7 +172,8 @@ class InvoiceController extends Controller
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('invoices.pdf', ['invoice' => $invoice, 'tenant' => $tenant])
             ->setPaper('a4', 'portrait');
 
-        return $pdf->download("{$invoice->invoice_number}.pdf");
+        $filename = str_replace(['/', '\\'], '-', $invoice->invoice_number);
+        return $pdf->download("{$filename}.pdf");
     }
 
     // ── Helpers ───────────────────────────────────────────────────
