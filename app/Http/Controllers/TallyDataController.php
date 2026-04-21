@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Tenant;
 use App\Models\TallyAttendanceType;
+use App\Models\TallyGodown;
+use App\Models\TallyStockCategory;
+use App\Models\TallyStockGroup;
 use App\Models\TallyEmployee;
 use App\Models\TallyEmployeeGroup;
 use App\Models\TallyLedger;
@@ -41,6 +44,22 @@ class TallyDataController extends Controller
                     'opening_balance_type', 'credit_limit', 'is_active', 'last_synced_at',
                     'mapped_client_id', 'mapped_vendor_id',
                 ]),
+        ]);
+    }
+
+    public function stockMasters(Tenant $tenant)
+    {
+        return inertia('Tally/StockMasters', [
+            'tenant'          => $tenant,
+            'stockGroups'     => TallyStockGroup::where('tenant_id', $tenant->id)
+                ->orderBy('name')
+                ->get(['id', 'name', 'parent_name', 'aliases', 'nature_of_group', 'should_add_quantities', 'is_active', 'last_synced_at']),
+            'stockCategories' => TallyStockCategory::where('tenant_id', $tenant->id)
+                ->orderBy('name')
+                ->get(['id', 'name', 'parent_name', 'aliases', 'is_active', 'last_synced_at']),
+            'godowns'         => TallyGodown::where('tenant_id', $tenant->id)
+                ->orderBy('name')
+                ->get(['id', 'name', 'under', 'guid', 'is_active', 'last_synced_at']),
         ]);
     }
 

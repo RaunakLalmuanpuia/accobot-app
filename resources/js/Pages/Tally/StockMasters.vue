@@ -1,0 +1,239 @@
+<script setup>
+import { ref, computed } from 'vue'
+import { Link } from '@inertiajs/vue3'
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+
+const props = defineProps({
+    tenant:          Object,
+    stockGroups:     Array,
+    stockCategories: Array,
+    godowns:         Array,
+})
+
+const activeTab = ref('stockGroups')
+
+const tabs = [
+    { key: 'stockGroups',     label: 'Stock Groups' },
+    { key: 'stockCategories', label: 'Stock Categories' },
+    { key: 'godowns',         label: 'Godowns' },
+]
+
+// ── Stock Groups ───────────────────────────────────────────────────────────
+
+const groupSearch = ref('')
+
+const filteredGroups = computed(() => {
+    const q = groupSearch.value.toLowerCase()
+    if (!q) return props.stockGroups
+    return props.stockGroups.filter(g =>
+        g.name.toLowerCase().includes(q) ||
+        (g.parent_name ?? '').toLowerCase().includes(q) ||
+        (g.nature_of_group ?? '').toLowerCase().includes(q)
+    )
+})
+
+// ── Stock Categories ───────────────────────────────────────────────────────
+
+const catSearch = ref('')
+
+const filteredCategories = computed(() => {
+    const q = catSearch.value.toLowerCase()
+    if (!q) return props.stockCategories
+    return props.stockCategories.filter(c =>
+        c.name.toLowerCase().includes(q) ||
+        (c.parent_name ?? '').toLowerCase().includes(q)
+    )
+})
+
+// ── Godowns ────────────────────────────────────────────────────────────────
+
+const godownSearch = ref('')
+
+const filteredGodowns = computed(() => {
+    const q = godownSearch.value.toLowerCase()
+    if (!q) return props.godowns
+    return props.godowns.filter(g =>
+        g.name.toLowerCase().includes(q) ||
+        (g.under ?? '').toLowerCase().includes(q)
+    )
+})
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+
+function formatDate(d) {
+    if (!d) return '—'
+    return new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+}
+
+function aliasText(aliases) {
+    if (!aliases || !aliases.length) return null
+    return aliases.map(a => a.Alias).filter(Boolean).join(', ')
+}
+</script>
+
+<template>
+    <AuthenticatedLayout>
+        <template #header>
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-xl font-semibold text-gray-900">Stock Masters</h1>
+                    <p class="text-sm text-gray-500 mt-0.5">
+                        {{ stockGroups.length }} groups · {{ stockCategories.length }} categories · {{ godowns.length }} godowns
+                    </p>
+                </div>
+                <div class="flex items-center gap-4">
+                    <Link :href="route('tally.stock-items.index', { tenant: tenant.id })"
+                          class="text-sm text-violet-600 hover:text-violet-800 font-medium">
+                        View Stock Items →
+                    </Link>
+                    <Link :href="route('tally.sync.index', { tenant: tenant.id })"
+                          class="text-sm text-gray-500 hover:text-gray-700">
+                        ← Back to Sync
+                    </Link>
+                </div>
+            </div>
+        </template>
+
+        <div class="py-8">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-4">
+
+                <!-- Tabs -->
+                <div class="flex gap-1 border-b border-gray-200">
+                    <button v-for="tab in tabs" :key="tab.key"
+                            @click="activeTab = tab.key"
+                            :class="activeTab === tab.key
+                                ? 'border-violet-600 text-violet-700 font-semibold'
+                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                            class="px-4 py-2.5 text-sm border-b-2 transition -mb-px">
+                        {{ tab.label }}
+                        <span class="ml-1.5 text-xs rounded-full px-1.5 py-0.5"
+                              :class="activeTab === tab.key ? 'bg-violet-100 text-violet-700' : 'bg-gray-100 text-gray-500'">
+                            {{ tab.key === 'stockGroups' ? stockGroups.length
+                               : tab.key === 'stockCategories' ? stockCategories.length
+                               : godowns.length }}
+                        </span>
+                    </button>
+                </div>
+
+                <!-- ── Stock Groups tab ── -->
+                <template v-if="activeTab === 'stockGroups'">
+                    <div class="flex items-center gap-3">
+                        <input v-model="groupSearch" type="text" placeholder="Search groups…"
+                               class="w-64 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent" />
+                        <span class="text-sm text-gray-400">{{ filteredGroups.length }} result{{ filteredGroups.length !== 1 ? 's' : '' }}</span>
+                    </div>
+
+                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                        <div class="grid grid-cols-12 px-6 py-3 bg-gray-50 border-b border-gray-100 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                            <div class="col-span-4">Name</div>
+                            <div class="col-span-3">Parent</div>
+                            <div class="col-span-2">Nature</div>
+                            <div class="col-span-1 text-center">Add Qty</div>
+                            <div class="col-span-1 text-center">Status</div>
+                            <div class="col-span-1">Last Synced</div>
+                        </div>
+
+                        <div v-for="group in filteredGroups" :key="group.id"
+                             class="grid grid-cols-12 items-center px-6 py-4 border-b border-gray-50 last:border-0 hover:bg-gray-50/60 transition">
+                            <div class="col-span-4">
+                                <p class="text-sm font-medium text-gray-900">{{ group.name }}</p>
+                                <p v-if="aliasText(group.aliases)" class="text-xs text-gray-400 mt-0.5 truncate">
+                                    {{ aliasText(group.aliases) }}
+                                </p>
+                            </div>
+                            <div class="col-span-3 text-sm text-gray-500 truncate">{{ group.parent_name ?? '—' }}</div>
+                            <div class="col-span-2 text-sm text-gray-500">{{ group.nature_of_group ?? '—' }}</div>
+                            <div class="col-span-1 text-center">
+                                <span v-if="group.should_add_quantities" class="text-xs text-green-600 font-medium">Yes</span>
+                                <span v-else class="text-xs text-gray-400">No</span>
+                            </div>
+                            <div class="col-span-1 text-center">
+                                <span :class="group.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'"
+                                      class="text-xs px-2 py-0.5 rounded-full font-medium">
+                                    {{ group.is_active ? 'Active' : 'Inactive' }}
+                                </span>
+                            </div>
+                            <div class="col-span-1 text-xs text-gray-400">{{ formatDate(group.last_synced_at) }}</div>
+                        </div>
+
+                        <p v-if="!filteredGroups.length" class="text-center text-gray-400 py-12 text-sm">No stock groups found.</p>
+                    </div>
+                </template>
+
+                <!-- ── Stock Categories tab ── -->
+                <template v-if="activeTab === 'stockCategories'">
+                    <div class="flex items-center gap-3">
+                        <input v-model="catSearch" type="text" placeholder="Search categories…"
+                               class="w-64 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent" />
+                        <span class="text-sm text-gray-400">{{ filteredCategories.length }} result{{ filteredCategories.length !== 1 ? 's' : '' }}</span>
+                    </div>
+
+                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                        <div class="grid grid-cols-12 px-6 py-3 bg-gray-50 border-b border-gray-100 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                            <div class="col-span-5">Name</div>
+                            <div class="col-span-4">Parent</div>
+                            <div class="col-span-2 text-center">Status</div>
+                            <div class="col-span-1">Last Synced</div>
+                        </div>
+
+                        <div v-for="cat in filteredCategories" :key="cat.id"
+                             class="grid grid-cols-12 items-center px-6 py-4 border-b border-gray-50 last:border-0 hover:bg-gray-50/60 transition">
+                            <div class="col-span-5">
+                                <p class="text-sm font-medium text-gray-900">{{ cat.name }}</p>
+                                <p v-if="aliasText(cat.aliases)" class="text-xs text-gray-400 mt-0.5 truncate">
+                                    {{ aliasText(cat.aliases) }}
+                                </p>
+                            </div>
+                            <div class="col-span-4 text-sm text-gray-500">{{ cat.parent_name ?? '—' }}</div>
+                            <div class="col-span-2 text-center">
+                                <span :class="cat.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'"
+                                      class="text-xs px-2 py-0.5 rounded-full font-medium">
+                                    {{ cat.is_active ? 'Active' : 'Inactive' }}
+                                </span>
+                            </div>
+                            <div class="col-span-1 text-xs text-gray-400">{{ formatDate(cat.last_synced_at) }}</div>
+                        </div>
+
+                        <p v-if="!filteredCategories.length" class="text-center text-gray-400 py-12 text-sm">No stock categories found.</p>
+                    </div>
+                </template>
+
+                <!-- ── Godowns tab ── -->
+                <template v-if="activeTab === 'godowns'">
+                    <div class="flex items-center gap-3">
+                        <input v-model="godownSearch" type="text" placeholder="Search godowns…"
+                               class="w-64 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent" />
+                        <span class="text-sm text-gray-400">{{ filteredGodowns.length }} result{{ filteredGodowns.length !== 1 ? 's' : '' }}</span>
+                    </div>
+
+                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                        <div class="grid grid-cols-12 px-6 py-3 bg-gray-50 border-b border-gray-100 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                            <div class="col-span-4">Name</div>
+                            <div class="col-span-3">Under</div>
+                            <div class="col-span-3">GUID</div>
+                            <div class="col-span-1 text-center">Status</div>
+                            <div class="col-span-1">Last Synced</div>
+                        </div>
+
+                        <div v-for="godown in filteredGodowns" :key="godown.id"
+                             class="grid grid-cols-12 items-center px-6 py-4 border-b border-gray-50 last:border-0 hover:bg-gray-50/60 transition">
+                            <div class="col-span-4 text-sm font-medium text-gray-900">{{ godown.name }}</div>
+                            <div class="col-span-3 text-sm text-gray-500">{{ godown.under ?? '—' }}</div>
+                            <div class="col-span-3 text-xs text-gray-400 font-mono truncate">{{ godown.guid ?? '—' }}</div>
+                            <div class="col-span-1 text-center">
+                                <span :class="godown.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'"
+                                      class="text-xs px-2 py-0.5 rounded-full font-medium">
+                                    {{ godown.is_active ? 'Active' : 'Inactive' }}
+                                </span>
+                            </div>
+                            <div class="col-span-1 text-xs text-gray-400">{{ formatDate(godown.last_synced_at) }}</div>
+                        </div>
+
+                        <p v-if="!filteredGodowns.length" class="text-center text-gray-400 py-12 text-sm">No godowns found.</p>
+                    </div>
+                </template>
+
+            </div>
+        </div>
+    </AuthenticatedLayout>
+</template>

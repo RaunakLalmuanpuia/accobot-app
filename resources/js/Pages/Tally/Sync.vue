@@ -18,7 +18,7 @@ const activeTab = ref('masters')
 const expandedLog = ref(null)
 
 const masterEntities = [
-    'ledger_groups', 'ledgers', 'stock_groups', 'stock_categories', 'stock_items', 'statutory_masters',
+    'ledger_groups', 'ledgers', 'stock_groups', 'stock_categories', 'stock_items', 'godowns', 'statutory_masters',
 ]
 const payrollEntities = [
     'employee_groups', 'employees', 'pay_heads', 'attendance_types',
@@ -35,6 +35,7 @@ function entityLabel(entity) {
         stock_groups:          'Stock Groups',
         stock_categories:      'Stock Categories',
         stock_items:           'Stock Items',
+        godowns:               'Godowns',
         statutory_masters:     'Statutory Masters',
         employee_groups:       'Employee Groups',
         employees:             'Employees',
@@ -137,10 +138,25 @@ function toggleLog(id) {
                         <p class="text-2xl font-bold text-gray-900">{{ stats.total_ledgers }}</p>
                         <p class="text-xs text-gray-400 mt-0.5 group-hover:text-violet-600 transition">Ledgers →</p>
                     </a>
+                    <a :href="route('tally.stock-masters.index', { tenant: tenant.id })"
+                       class="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 text-center hover:border-violet-300 hover:shadow-md transition group">
+                        <p class="text-2xl font-bold text-gray-900">{{ stats.total_stock_groups }}</p>
+                        <p class="text-xs text-gray-400 mt-0.5 group-hover:text-violet-600 transition">Stock Groups →</p>
+                    </a>
+                    <a :href="route('tally.stock-masters.index', { tenant: tenant.id })"
+                       class="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 text-center hover:border-violet-300 hover:shadow-md transition group">
+                        <p class="text-2xl font-bold text-gray-900">{{ stats.total_stock_categories }}</p>
+                        <p class="text-xs text-gray-400 mt-0.5 group-hover:text-violet-600 transition">Stock Categories →</p>
+                    </a>
                     <a :href="route('tally.stock-items.index', { tenant: tenant.id })"
                        class="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 text-center hover:border-violet-300 hover:shadow-md transition group">
                         <p class="text-2xl font-bold text-gray-900">{{ stats.total_stock_items }}</p>
                         <p class="text-xs text-gray-400 mt-0.5 group-hover:text-violet-600 transition">Stock Items →</p>
+                    </a>
+                    <a :href="route('tally.stock-masters.index', { tenant: tenant.id })"
+                       class="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 text-center hover:border-violet-300 hover:shadow-md transition group">
+                        <p class="text-2xl font-bold text-gray-900">{{ stats.total_godowns }}</p>
+                        <p class="text-xs text-gray-400 mt-0.5 group-hover:text-violet-600 transition">Godowns →</p>
                     </a>
                     <a :href="route('tally.vouchers.index', { tenant: tenant.id })"
                        class="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 text-center hover:border-violet-300 hover:shadow-md transition group">
