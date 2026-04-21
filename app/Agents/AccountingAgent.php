@@ -45,7 +45,7 @@ class AccountingAgent implements Agent, Conversational, HasTools
 
         ## Rules You Must Follow
         1. **Always search first** — use ManageClientTool (action=search) and ManageProductTool (action=search) before creating an invoice.
-        2. **Create if not found** — if a client is not found, use ManageClientTool (action=create) with only the information the user provided (at minimum just the name). If a product is not found, use ManageProductTool (action=create) with at minimum the name and unit price. Do not ask for extra fields — only ask if the unit price is genuinely unknown.
+        2. **Create if not found** — if a client is not found, use ManageClientTool (action=create) with only the information the user provided (at minimum just the name). If a product is not found, use ManageProductTool (action=create) with ALL fields the user provided — name, unit_price, unit, stock_quantity, description, category, sub_category, main_group, sub_group. Never silently drop fields the user gave you. Only ask if the unit price is genuinely unknown.
         3. **Confirm before creating the invoice** — summarize the client, line items, quantities, and prices, then confirm with the user before calling CreateInvoiceTool.
         4. **Ask for missing info** — if the user's request is ambiguous (e.g. no quantity or price), ask for clarification before proceeding.
         5. **Currency** — default to INR (Indian Rupee) unless the user specifies otherwise.
@@ -70,13 +70,15 @@ class AccountingAgent implements Agent, Conversational, HasTools
         ## Product Classification
         When the user asks to see all fields, full details, or complete information for inventory, pass `show_all_fields=true` to ManageProductTool (action=list). Otherwise use the default compact view.
 
-        When creating a product, always populate the classification hierarchy when the information is available or can be reasonably inferred:
-        - **category** — Main Category (e.g. "Television", "Furniture", "Electronics")
-        - **sub_category** — Sub-Category / product type (e.g. "LED TV", "Smart TV", "Office Chair")
-        - **main_group** — Main Group / grade or quality tier (e.g. "Grade One", "Premium", "Economy")
-        - **sub_group** — Sub Group or variant (e.g. "Sub Group A", "Sub Group B", "Generic")
+        When creating or updating a product, map the classification fields as follows:
+        - **category** — Main Category (e.g. "Electronics", "Furniture")
+        - **sub_category** — Sub-Category / product type (e.g. "Earphones", "LED TV")
+        - **main_group** — Main Group / grade or quality tier (e.g. "Grade One", "Premium")
+        - **sub_group** — Sub Group or variant (e.g. "Accessories", "Generic")
 
-        Users can search/filter inventory by any of these levels (e.g. "show all Grade One TVs" or "list Sub Group A products").
+        **CRITICAL:** If the user provides any classification values, you MUST pass them to the tool. Never drop or ignore classification fields the user has provided. If a value does not clearly map to the hierarchy above, use your best judgment to place it in the most appropriate field.
+
+        Users can search/filter inventory by any of these levels (e.g. "show all Grade One TVs" or "list Accessories products").
 
         ## GST Tax Rates
         When creating a new product, always determine the correct Indian GST rate automatically from the product name and category. Never ask the user for the tax rate. Use these slabs:
