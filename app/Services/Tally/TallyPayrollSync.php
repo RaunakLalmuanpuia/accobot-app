@@ -19,7 +19,7 @@ class TallyPayrollSync
         try {
             foreach ($items as $raw) {
                 $item    = $this->strip($raw);
-                $tallyId = (int) ($item['ID'] ?? $item['Id'] ?? 0);
+                $tallyId = (int) ($item['TallyId'] ?? $item['ID'] ?? $item['Id'] ?? 0);
                 if (!$tallyId) { $log->records_failed++; continue; }
 
                 $alterId  = (int) ($item['AlterID'] ?? $item['AlterId'] ?? 0);
@@ -36,14 +36,16 @@ class TallyPayrollSync
                 }
 
                 $data = [
-                    'tenant_id'      => $conn->tenant_id,
-                    'tally_id'       => $tallyId,
-                    'alter_id'       => $alterId,
-                    'action'         => $action,
-                    'name'           => $item['Name'] ?? '',
-                    'parent_name'    => $item['ParentName'] ?? null,
-                    'is_active'      => true,
-                    'last_synced_at' => now(),
+                    'tenant_id'           => $conn->tenant_id,
+                    'tally_id'            => $tallyId,
+                    'alter_id'            => $alterId,
+                    'action'              => $action,
+                    'name'                => $item['Name'] ?? '',
+                    'guid'                => $item['Guid'] ?? null,
+                    'parent_name'         => $item['Under'] ?? $item['ParentName'] ?? null,
+                    'cost_centre_category'=> $item['CostCentreCategory'] ?? null,
+                    'is_active'           => true,
+                    'last_synced_at'      => now(),
                 ];
 
                 if ($existing) { $existing->update($data); $log->records_updated++; }
@@ -66,7 +68,7 @@ class TallyPayrollSync
             foreach (array_chunk($items, 250) as $chunk) {
             foreach ($chunk as $raw) {
                 $item    = $this->strip($raw);
-                $tallyId = (int) ($item['ID'] ?? $item['Id'] ?? 0);
+                $tallyId = (int) ($item['TallyId'] ?? $item['ID'] ?? $item['Id'] ?? 0);
                 if (!$tallyId) { $log->records_failed++; continue; }
 
                 $seenIds[] = $tallyId;
@@ -90,14 +92,17 @@ class TallyPayrollSync
                     'action'              => $action,
                     'name'                => $item['Name'] ?? '',
                     'employee_number'     => $item['EmployeeNumber'] ?? null,
-                    'group_name'          => $item['GroupName'] ?? null,
+                    'group_name'          => $item['Parent'] ?? $item['GroupName'] ?? null,
                     'designation'         => $item['Designation'] ?? null,
                     'employee_function'   => $item['Function'] ?? null,
                     'department'          => $item['Department'] ?? null,
-                    'date_of_joining'     => $this->parseDate($item['DateOfJoining'] ?? null),
-                    'date_of_leaving'     => $this->parseDate($item['DateOfLeaving'] ?? null),
-                    'date_of_birth'       => $this->parseDate($item['DateOfBirth'] ?? null),
+                    'location'            => $item['Location'] ?? null,
+                    'date_of_joining'     => $this->parseDate($item['JoiningDate'] ?? $item['DateOfJoining'] ?? null),
+                    'date_of_leaving'     => $this->parseDate($item['ResignationDate'] ?? $item['DateOfLeaving'] ?? null),
+                    'date_of_birth'       => $this->parseDate($item['DOB'] ?? $item['DateOfBirth'] ?? null),
                     'gender'              => $item['Gender'] ?? null,
+                    'father_name'         => $item['FatherName'] ?? null,
+                    'spouse_name'         => $item['SpouseName'] ?? null,
                     'pan'                 => $item['PAN'] ?? null,
                     'aadhar'              => $item['AadharNumber'] ?? $item['Aadhar'] ?? null,
                     'pf_number'           => $item['PFNumber'] ?? null,
@@ -108,6 +113,7 @@ class TallyPayrollSync
                     'bank_ifsc'           => $item['BankIFSC'] ?? null,
                     'addresses'           => $item['Addresses'] ?? null,
                     'salary_details'      => $item['SalaryDetails'] ?? null,
+                    'aliases'             => isset($item['Aliases']) ? array_column($item['Aliases'], 'Alias') : null,
                     'is_active'           => true,
                     'last_synced_at'      => now(),
                 ];
@@ -137,7 +143,7 @@ class TallyPayrollSync
         try {
             foreach ($items as $raw) {
                 $item    = $this->strip($raw);
-                $tallyId = (int) ($item['ID'] ?? $item['Id'] ?? 0);
+                $tallyId = (int) ($item['TallyId'] ?? $item['ID'] ?? $item['Id'] ?? 0);
                 if (!$tallyId) { $log->records_failed++; continue; }
 
                 $alterId  = (int) ($item['AlterID'] ?? $item['AlterId'] ?? 0);
@@ -159,13 +165,15 @@ class TallyPayrollSync
                     'alter_id'         => $alterId,
                     'action'           => $action,
                     'name'             => $item['Name'] ?? '',
-                    'pay_head_type'    => $item['PayHeadType'] ?? null,
+                    'pay_head_type'    => $item['PayType'] ?? $item['PayHeadType'] ?? null,
+                    'income_type'      => $item['IncomeType'] ?? null,
                     'pay_slip_name'    => $item['PaySlipName'] ?? null,
-                    'under_group'      => $item['UnderGroup'] ?? null,
+                    'under_group'      => $item['ParentGroup'] ?? $item['UnderGroup'] ?? null,
                     'ledger_name'      => $item['LedgerName'] ?? null,
                     'calculation_type' => $item['CalculationType'] ?? null,
+                    'leave_type'       => $item['LeaveType'] ?? null,
                     'rate'             => isset($item['Rate']) ? (float) $item['Rate'] : null,
-                    'rate_period'      => $item['RatePeriod'] ?? null,
+                    'rate_period'      => $item['CalculationPeriod'] ?? $item['RatePeriod'] ?? null,
                     'is_active'        => true,
                     'last_synced_at'   => now(),
                 ];
@@ -187,7 +195,7 @@ class TallyPayrollSync
         try {
             foreach ($items as $raw) {
                 $item    = $this->strip($raw);
-                $tallyId = (int) ($item['ID'] ?? $item['Id'] ?? 0);
+                $tallyId = (int) ($item['TallyId'] ?? $item['ID'] ?? $item['Id'] ?? 0);
                 if (!$tallyId) { $log->records_failed++; continue; }
 
                 $alterId  = (int) ($item['AlterID'] ?? $item['AlterId'] ?? 0);
@@ -209,8 +217,10 @@ class TallyPayrollSync
                     'alter_id'        => $alterId,
                     'action'          => $action,
                     'name'            => $item['Name'] ?? '',
+                    'guid'            => $item['Guid'] ?? null,
                     'attendance_type' => $item['AttendanceType'] ?? null,
-                    'unit_of_measure' => $item['UnitOfMeasure'] ?? null,
+                    'under'           => $item['Under'] ?? null,
+                    'unit_of_measure' => $item['AttendancePeriod'] ?? $item['UnitOfMeasure'] ?? null,
                     'is_active'       => true,
                     'last_synced_at'  => now(),
                 ];

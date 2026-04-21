@@ -462,36 +462,30 @@ Accept: application/json
 
 ### 8. POST `/api/tally/inbound/payroll/employees` ✅
 
-**Request**
+**Request** (real connector payload format)
 ```json
 {
   "full_sync": false,
   "Data": [
     {
-      "TallyId": 501,
-      "AlterID": 200,
-      "Action": "Create",
-      "Name": "Arjun Mehta",
-      "EmployeeNumber": "EMP001",
-      "GroupName": "Management",
-      "Designation": "General Manager",
-      "Function": "Administration",
-      "Department": "Corporate",
-      "DateOfJoining": "2018-04-01",
-      "DateOfLeaving": null,
-      "DateOfBirth": "1985-06-15",
-      "Gender": "Male",
-      "PAN": "ABCPM1234A",
-      "AadharNumber": "123456789012",
-      "PFNumber": "MH/BAN/0123456/001",
-      "UANNumber": "100123456789",
-      "ESINumber": "1234567890",
-      "BankName": "HDFC Bank",
-      "BankAccountNumber": "50100123456789",
-      "BankIFSC": "HDFC0001234",
-      "Addresses": ["123 Main Street", "Mumbai - 400001"],
-      "SalaryDetails": [
-        { "PayHead": "Basic Salary", "Amount": 50000, "RatePeriod": "Monthly" }
+      "TallyId": 4588,
+      "Action": "Update",
+      "Name": "Akash",
+      "Parent": "Employee Group",
+      "JoiningDate": "1-4-2024",
+      "ResignationDate": "1-4-2025",
+      "EmployeeNumber": "536546",
+      "Designation": "Designation",
+      "Function": "Function",
+      "Location": "Location",
+      "Gender": "Female",
+      "DOB": "1-Mar-1991",
+      "FatherName": "Father",
+      "SpouseName": "Spouse",
+      "Aliases": [
+        { "Alias": "Akash" },
+        { "Alias": "A" },
+        { "Alias": "B" }
       ]
     }
   ]
@@ -508,6 +502,16 @@ Accept: application/json
   "failed": 0
 }
 ```
+
+**Field mappings (real connector → DB column):**
+- `Parent` → `group_name` (also accepts legacy `GroupName`)
+- `JoiningDate` → `date_of_joining` (also accepts `DateOfJoining`)
+- `ResignationDate` → `date_of_leaving` (also accepts `DateOfLeaving`)
+- `DOB` → `date_of_birth` (also accepts `DateOfBirth`)
+- `Location` → `location` (new)
+- `FatherName` → `father_name` (new)
+- `SpouseName` → `spouse_name` (new)
+- `Aliases[].Alias` → `aliases` json array (new)
 
 ---
 
