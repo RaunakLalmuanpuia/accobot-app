@@ -83,6 +83,7 @@ Route::prefix('tally/inbound')->middleware('throttle:120,1')->group(function () 
     Route::post('masters/stock-items',      [TallyInboundMastersController::class, 'stockItems']);
     Route::post('masters/stock-groups',     [TallyInboundMastersController::class, 'stockGroups']);
     Route::post('masters/stock-categories', [TallyInboundMastersController::class, 'stockCategories']);
+    Route::post('masters/godowns',          [TallyInboundMastersController::class, 'godowns']);
     Route::post('masters/statutory',        [TallyInboundMastersController::class, 'statutory']);
     Route::post('payroll/employee-groups',  [TallyInboundPayrollController::class, 'employeeGroups']);
     Route::post('payroll/employees',        [TallyInboundPayrollController::class, 'employees']);

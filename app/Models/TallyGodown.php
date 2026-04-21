@@ -6,22 +6,19 @@ use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class TallyStockGroup extends Model
+class TallyGodown extends Model
 {
     use BelongsToTenant;
 
     protected $fillable = [
         'tenant_id', 'tally_id', 'alter_id', 'action',
-        'name', 'parent_id', 'parent_name', 'aliases',
-        'nature_of_group', 'should_add_quantities',
+        'guid', 'name', 'under',
         'is_active', 'last_synced_at',
     ];
 
     protected $casts = [
-        'aliases'               => 'array',
-        'should_add_quantities' => 'boolean',
-        'is_active'             => 'boolean',
-        'last_synced_at'        => 'datetime',
+        'is_active'      => 'boolean',
+        'last_synced_at' => 'datetime',
     ];
 
     public function tenant(): BelongsTo

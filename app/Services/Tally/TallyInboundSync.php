@@ -15,6 +15,7 @@ use App\Models\TallySyncLog;
 use App\Models\TallyStockCategory;
 use App\Models\TallyStockGroup;
 use App\Models\TallyStockItem;
+use App\Models\TallyGodown;
 use App\Models\TallyStatutoryMaster;
 use App\Models\TallyVoucher;
 use App\Models\TallyVoucherInventoryEntry;
@@ -205,7 +206,8 @@ class TallyInboundSync
                     'action'               => $action,
                     'name'                 => $item['Name'] ?? '',
                     'parent_id'            => isset($item['ParentID']) ? (int) $item['ParentID'] : null,
-                    'parent_name'          => $item['ParentName'] ?? null,
+                    'parent_name'          => $item['ParentName'] ?? $item['Parent'] ?? null,
+                    'aliases'              => $item['Aliases'] ?? null,
                     'nature_of_group'      => $item['NatureOfGroup'] ?? null,
                     'should_add_quantities'=> $this->parseBool($item['ShouldAddQuantities'] ?? null) ?? false,
                     'is_active'            => true,
@@ -251,7 +253,8 @@ class TallyInboundSync
                     'alter_id'     => $alterId,
                     'action'       => $action,
                     'name'         => $item['Name'] ?? '',
-                    'parent_name'  => $item['ParentName'] ?? null,
+                    'parent_name'  => $item['ParentName'] ?? $item['Parent'] ?? null,
+                    'aliases'      => $item['Aliases'] ?? null,
                     'is_active'    => true,
                     'last_synced_at' => now(),
                 ];
@@ -577,6 +580,51 @@ class TallyInboundSync
                     ->where('voucher_type', $type)
                     ->whereNotIn('tally_id', $seenIds)
                     ->update(['is_active' => false]);
+            }
+        } catch (\Throwable $e) {
+            return $this->failLog($log, $e->getMessage());
+        }
+
+        return $this->completeLog($log, $conn);
+    }
+
+    public function syncGodowns(TallyConnection $conn, array $items): TallySyncLog
+    {
+        $log = $this->startLog($conn, 'godowns');
+
+        try {
+            foreach ($items as $raw) {
+                $item    = $this->strip($raw);
+                $tallyId = (int) ($item['TallyId'] ?? $item['ID'] ?? $item['Id'] ?? 0);
+                if (!$tallyId) { $log->records_failed++; continue; }
+
+                $alterId  = (int) ($item['AlterID'] ?? $item['AlterId'] ?? 0);
+                $existing = TallyGodown::withoutGlobalScope('tenant')
+                    ->where('tenant_id', $conn->tenant_id)
+                    ->where('tally_id', $tallyId)->first();
+
+                if ($existing && $existing->alter_id === $alterId) { $log->records_skipped++; continue; }
+
+                $action = $item['Action'] ?? 'Create';
+                if ($action === 'Delete') {
+                    if ($existing) { $existing->update(['is_active' => false]); $log->records_updated++; }
+                    continue;
+                }
+
+                $data = [
+                    'tenant_id'      => $conn->tenant_id,
+                    'tally_id'       => $tallyId,
+                    'alter_id'       => $alterId,
+                    'action'         => $action,
+                    'guid'           => $item['Guid'] ?? null,
+                    'name'           => $item['Name'] ?? '',
+                    'under'          => $item['Under'] ?? $item['UnderName'] ?? null,
+                    'is_active'      => true,
+                    'last_synced_at' => now(),
+                ];
+
+                if ($existing) { $existing->update($data); $log->records_updated++; }
+                else { TallyGodown::create($data); $log->records_created++; }
             }
         } catch (\Throwable $e) {
             return $this->failLog($log, $e->getMessage());

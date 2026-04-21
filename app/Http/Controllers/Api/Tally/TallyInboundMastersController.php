@@ -57,6 +57,15 @@ class TallyInboundMastersController extends TallyBaseController
         return response()->json($this->logResponse($log));
     }
 
+    public function godowns(Request $request): JsonResponse
+    {
+        $conn  = $this->resolveAndLog($request);
+        $items = $request->input('Data', []);
+        $log   = $this->sync->syncGodowns($conn, $items);
+
+        return response()->json($this->logResponse($log));
+    }
+
     public function statutory(Request $request): JsonResponse
     {
         $conn  = $this->resolveAndLog($request);

@@ -55,42 +55,43 @@ Accept: application/json
 | 20 | POST | `/api/tally/inbound/reports/profit-loss` | ✅ Tested |
 | 21 | POST | `/api/tally/inbound/reports/cash-flow` | ✅ Tested |
 | 22 | POST | `/api/tally/inbound/reports/ratio-analysis` | ✅ Tested |
-| 23 | GET | `/api/MastersAPI/ledger-group` | ⬜ Pending |
-| 24 | GET | `/api/MastersAPI/ledger-master` | ⬜ Pending |
-| 25 | GET | `/api/MastersAPI/stock-master` | ⬜ Pending |
-| 26 | GET | `/api/MastersAPI/stock-group` | ⬜ Pending |
-| 27 | GET | `/api/MastersAPI/stock-category` | ⬜ Pending |
-| 28 | GET | `/api/MastersAPI/statutory-master` | ⬜ Pending |
-| 29 | GET | `/api/PayrollAPI/employee-group` | ⬜ Pending |
-| 30 | GET | `/api/PayrollAPI/employee` | ⬜ Pending |
-| 31 | GET | `/api/PayrollAPI/pay-head` | ⬜ Pending |
-| 32 | GET | `/api/PayrollAPI/attendance-type` | ⬜ Pending |
-| 33 | GET | `/api/VoucherAPI/sales-voucher` | ⬜ Pending |
-| 34 | GET | `/api/VoucherAPI/purchase-voucher` | ⬜ Pending |
-| 35 | GET | `/api/VoucherAPI/debitNote-voucher` | ⬜ Pending |
-| 36 | GET | `/api/VoucherAPI/creditNote-voucher` | ⬜ Pending |
-| 37 | GET | `/api/VoucherAPI/receipt-voucher` | ⬜ Pending |
-| 38 | GET | `/api/VoucherAPI/payment-voucher` | ⬜ Pending |
-| 39 | GET | `/api/VoucherAPI/contra-voucher` | ⬜ Pending |
-| 40 | GET | `/api/VoucherAPI/journal-voucher` | ⬜ Pending |
-| 41 | POST | `/api/MastersAPI/update-ledger-group/{companyId}` | ⬜ Pending |
-| 42 | POST | `/api/MastersAPI/update-ledger-master/{companyId}` | ⬜ Pending |
-| 43 | POST | `/api/MastersAPI/update-stock-master/{companyId}` | ⬜ Pending |
-| 44 | POST | `/api/MastersAPI/update-stock-group/{companyId}` | ⬜ Pending |
-| 45 | POST | `/api/MastersAPI/update-stock-category/{companyId}` | ⬜ Pending |
-| 46 | POST | `/api/MastersAPI/update-statutory-master/{companyId}` | ⬜ Pending |
-| 47 | POST | `/api/PayrollAPI/update-employee-group/{companyId}` | ⬜ Pending |
-| 48 | POST | `/api/PayrollAPI/update-employee/{companyId}` | ⬜ Pending |
-| 49 | POST | `/api/PayrollAPI/update-pay-head/{companyId}` | ⬜ Pending |
-| 50 | POST | `/api/PayrollAPI/update-attendance-type/{companyId}` | ⬜ Pending |
-| 51 | POST | `/api/VoucherAPI/update-sales-voucher/{companyId}` | ⬜ Pending |
-| 52 | POST | `/api/VoucherAPI/update-purchase-voucher/{companyId}` | ⬜ Pending |
-| 53 | POST | `/api/VoucherAPI/update-debitnote-voucher/{companyId}` | ⬜ Pending |
-| 54 | POST | `/api/VoucherAPI/update-creditnote-voucher/{companyId}` | ⬜ Pending |
-| 55 | POST | `/api/VoucherAPI/update-receipt-voucher/{companyId}` | ⬜ Pending |
-| 56 | POST | `/api/VoucherAPI/update-payment-voucher/{companyId}` | ⬜ Pending |
-| 57 | POST | `/api/VoucherAPI/update-contra-voucher/{companyId}` | ⬜ Pending |
-| 58 | POST | `/api/VoucherAPI/update-journal-voucher/{companyId}` | ⬜ Pending |
+| 23 | POST | `/api/tally/inbound/masters/godowns` | ✅ Tested |
+| 24 | GET | `/api/MastersAPI/ledger-group` | ⬜ Pending |
+| 25 | GET | `/api/MastersAPI/ledger-master` | ⬜ Pending |
+| 26 | GET | `/api/MastersAPI/stock-master` | ⬜ Pending |
+| 27 | GET | `/api/MastersAPI/stock-group` | ⬜ Pending |
+| 28 | GET | `/api/MastersAPI/stock-category` | ⬜ Pending |
+| 29 | GET | `/api/MastersAPI/statutory-master` | ⬜ Pending |
+| 30 | GET | `/api/PayrollAPI/employee-group` | ⬜ Pending |
+| 31 | GET | `/api/PayrollAPI/employee` | ⬜ Pending |
+| 32 | GET | `/api/PayrollAPI/pay-head` | ⬜ Pending |
+| 33 | GET | `/api/PayrollAPI/attendance-type` | ⬜ Pending |
+| 34 | GET | `/api/VoucherAPI/sales-voucher` | ⬜ Pending |
+| 35 | GET | `/api/VoucherAPI/purchase-voucher` | ⬜ Pending |
+| 36 | GET | `/api/VoucherAPI/debitNote-voucher` | ⬜ Pending |
+| 37 | GET | `/api/VoucherAPI/creditNote-voucher` | ⬜ Pending |
+| 38 | GET | `/api/VoucherAPI/receipt-voucher` | ⬜ Pending |
+| 39 | GET | `/api/VoucherAPI/payment-voucher` | ⬜ Pending |
+| 40 | GET | `/api/VoucherAPI/contra-voucher` | ⬜ Pending |
+| 41 | GET | `/api/VoucherAPI/journal-voucher` | ⬜ Pending |
+| 42 | POST | `/api/MastersAPI/update-ledger-group/{companyId}` | ⬜ Pending |
+| 43 | POST | `/api/MastersAPI/update-ledger-master/{companyId}` | ⬜ Pending |
+| 44 | POST | `/api/MastersAPI/update-stock-master/{companyId}` | ⬜ Pending |
+| 45 | POST | `/api/MastersAPI/update-stock-group/{companyId}` | ⬜ Pending |
+| 46 | POST | `/api/MastersAPI/update-stock-category/{companyId}` | ⬜ Pending |
+| 47 | POST | `/api/MastersAPI/update-statutory-master/{companyId}` | ⬜ Pending |
+| 48 | POST | `/api/PayrollAPI/update-employee-group/{companyId}` | ⬜ Pending |
+| 49 | POST | `/api/PayrollAPI/update-employee/{companyId}` | ⬜ Pending |
+| 50 | POST | `/api/PayrollAPI/update-pay-head/{companyId}` | ⬜ Pending |
+| 51 | POST | `/api/PayrollAPI/update-attendance-type/{companyId}` | ⬜ Pending |
+| 52 | POST | `/api/VoucherAPI/update-sales-voucher/{companyId}` | ⬜ Pending |
+| 53 | POST | `/api/VoucherAPI/update-purchase-voucher/{companyId}` | ⬜ Pending |
+| 54 | POST | `/api/VoucherAPI/update-debitnote-voucher/{companyId}` | ⬜ Pending |
+| 55 | POST | `/api/VoucherAPI/update-creditnote-voucher/{companyId}` | ⬜ Pending |
+| 56 | POST | `/api/VoucherAPI/update-receipt-voucher/{companyId}` | ⬜ Pending |
+| 57 | POST | `/api/VoucherAPI/update-payment-voucher/{companyId}` | ⬜ Pending |
+| 58 | POST | `/api/VoucherAPI/update-contra-voucher/{companyId}` | ⬜ Pending |
+| 59 | POST | `/api/VoucherAPI/update-journal-voucher/{companyId}` | ⬜ Pending |
 
 ---
 
@@ -234,14 +235,13 @@ Accept: application/json
 {
   "Data": [
     {
-      "TallyId": 10,
-      "AlterID": 55,
-      "Action": "Create",
-      "Name": "Network Equipment",
-      "ParentID": 0,
-      "ParentName": "Primary",
-      "NatureOfGroup": "Stock-in-Hand",
-      "ShouldAddQuantities": "Yes"
+      "TallyId": 4599,
+      "Action": "Update",
+      "Name": "Adaf",
+      "Parent": "Primary",
+      "Aliases": [
+        { "Alias": "Adaf" }
+      ]
     }
   ]
 }
@@ -258,7 +258,7 @@ Accept: application/json
 }
 ```
 
-**Note:** `ID` must be all-caps in the request — the code checks `$item['ID'] ?? $item['Id']`. Lowercase `"id"` resolves to 0 and counts as failed.
+**Note:** Real connector sends `Parent` (not `ParentName`) and `Aliases` array. Both `Parent` and `ParentName` are accepted. `AlterID` is optional — omitting it sets `alter_id = 0` and deduplication still works.
 
 ---
 
@@ -271,11 +271,14 @@ Accept: application/json
 {
   "Data": [
     {
-      "TallyId": 5,
-      "AlterID": 11,
-      "Action": "Create",
-      "Name": "Lease Line Services",
-      "ParentName": "Primary"
+      "TallyId": 4591,
+      "Action": "Update",
+      "Name": "Category1",
+      "Parent": "Primary",
+      "Aliases": [
+        { "Alias": "Category1" },
+        { "Alias": "A" }
+      ]
     }
   ]
 }
@@ -291,6 +294,8 @@ Accept: application/json
   "failed": 0
 }
 ```
+
+**Note:** Real connector sends `Parent` (not `ParentName`) and `Aliases` array. Both forms accepted.
 
 ---
 
@@ -1372,6 +1377,44 @@ Accept: application/json
 
 **Behaviours verified:**
 - New snapshot row inserted in `tally_reports` with `report_type = "ratio_analysis"`
+
+---
+
+---
+
+### 23. POST `/api/tally/inbound/masters/godowns` ✅
+
+**Request**
+```json
+{
+  "Data": [
+    {
+      "TallyId": 4608,
+      "AlterID": 11964,
+      "Action": "Create",
+      "Guid": "248b1a3e-7f9f-443c-ae33-1984824e53f7-00001200",
+      "Name": "Delhi",
+      "Under": "Primary"
+    }
+  ]
+}
+```
+
+**Response** — `200 OK`
+```json
+{
+  "status": "success",
+  "created": 1,
+  "updated": 0,
+  "skipped": 0,
+  "failed": 0
+}
+```
+
+**Behaviours verified:**
+- Record created in `tally_godowns` with `name = "Delhi"`, `under = "Primary"`, `guid` stored
+- Same payload again → `skipped: 1` (AlterID match)
+- `Action: "Delete"` → sets `is_active: false`
 
 ---
 

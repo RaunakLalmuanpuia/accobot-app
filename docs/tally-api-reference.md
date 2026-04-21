@@ -239,12 +239,14 @@ Syncs Tally stock groups.
 {
   "Data": [
     {
-      "ID": 10,
+      "TallyId": 4599,
       "AlterID": 55,
-      "Action": "Create",
-      "Name": "Network Equipment",
-      "ParentID": 0,
-      "ParentName": "Primary",
+      "Action": "Update",
+      "Name": "Adaf",
+      "Parent": "Primary",
+      "Aliases": [
+        { "Alias": "Adaf" }
+      ],
       "NatureOfGroup": "Stock-in-Hand",
       "ShouldAddQuantities": "Yes"
     }
@@ -254,12 +256,13 @@ Syncs Tally stock groups.
 
 | Field | Type | Required | Description |
 |---|---|---|---|
-| `ID` | integer | yes | Tally stock group ID |
-| `AlterID` | integer | yes | Alter/version ID |
+| `TallyId` | integer | yes | Tally stock group ID (`ID`/`Id` also accepted) |
+| `AlterID` | integer | no | Alter/version ID |
 | `Action` | string | no | `"Create"` or `"Delete"` |
 | `Name` | string | yes | Group name |
+| `Parent` | string | no | Parent group name (`ParentName` also accepted) |
 | `ParentID` | integer | no | Parent group Tally ID |
-| `ParentName` | string | no | Parent group name |
+| `Aliases` | array | no | Array of `{ "Alias": "..." }` objects |
 | `NatureOfGroup` | string | no | Nature of the group |
 | `ShouldAddQuantities` | string | no | `"Yes"` / `"No"` |
 
@@ -281,11 +284,15 @@ Syncs Tally stock categories.
 {
   "Data": [
     {
-      "ID": 5,
+      "TallyId": 4591,
       "AlterID": 11,
-      "Action": "Create",
-      "Name": "Lease Line Services",
-      "ParentName": "Primary"
+      "Action": "Update",
+      "Name": "Category1",
+      "Parent": "Primary",
+      "Aliases": [
+        { "Alias": "Category1" },
+        { "Alias": "A" }
+      ]
     }
   ]
 }
@@ -293,11 +300,12 @@ Syncs Tally stock categories.
 
 | Field | Type | Required | Description |
 |---|---|---|---|
-| `ID` | integer | yes | Tally category ID |
-| `AlterID` | integer | yes | Alter/version ID |
+| `TallyId` | integer | yes | Tally category ID (`ID`/`Id` also accepted) |
+| `AlterID` | integer | no | Alter/version ID |
 | `Action` | string | no | `"Create"` or `"Delete"` |
 | `Name` | string | yes | Category name |
-| `ParentName` | string | no | Parent category name |
+| `Parent` | string | no | Parent category name (`ParentName` also accepted) |
+| `Aliases` | array | no | Array of `{ "Alias": "..." }` objects |
 
 **Response**
 
@@ -307,7 +315,45 @@ Syncs Tally stock categories.
 
 ---
 
-### 1.5 POST `/api/tally/inbound/masters/stock-items`
+### 1.5 POST `/api/tally/inbound/masters/godowns`
+
+Syncs Tally godowns (warehouses / storage locations).
+
+**Request Body**
+
+```json
+{
+  "Data": [
+    {
+      "TallyId": 4608,
+      "AlterID": 11964,
+      "Action": "Create",
+      "Guid": "248b1a3e-7f9f-443c-ae33-1984824e53f7-00001200",
+      "Name": "Delhi",
+      "Under": "Primary"
+    }
+  ]
+}
+```
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `TallyId` | integer | yes | Tally godown ID (`ID`/`Id` also accepted) |
+| `AlterID` | integer | no | Alter/version ID |
+| `Action` | string | no | `"Create"` or `"Delete"` |
+| `Guid` | string | no | Tally GUID |
+| `Name` | string | yes | Godown name |
+| `Under` | string | no | Parent godown name (`UnderName` also accepted) |
+
+**Response**
+
+```json
+{ "status": "success", "created": 1, "updated": 0, "skipped": 0, "failed": 0 }
+```
+
+---
+
+### 1.6 POST `/api/tally/inbound/masters/stock-items`
 
 Syncs Tally stock items (products/services). Auto-creates/updates a **Product** record for every stock item.
 
