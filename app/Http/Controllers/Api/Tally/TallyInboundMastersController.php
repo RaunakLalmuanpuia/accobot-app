@@ -12,7 +12,7 @@ class TallyInboundMastersController extends TallyBaseController
 
     public function ledgerGroups(Request $request): JsonResponse
     {
-        $conn  = $this->resolveConnection($request);
+        $conn  = $this->resolveAndLog($request);
         $items = $request->input('Data', []);
         $log   = $this->sync->syncLedgerGroups($conn, $items);
 
@@ -21,7 +21,7 @@ class TallyInboundMastersController extends TallyBaseController
 
     public function ledgers(Request $request): JsonResponse
     {
-        $conn      = $this->resolveConnection($request);
+        $conn      = $this->resolveAndLog($request);
         $items     = $request->input('Data', []);
         $fullSync  = (bool) $request->input('full_sync', false);
         $log       = $this->sync->syncLedgers($conn, $items, $fullSync);
@@ -31,7 +31,7 @@ class TallyInboundMastersController extends TallyBaseController
 
     public function stockItems(Request $request): JsonResponse
     {
-        $conn     = $this->resolveConnection($request);
+        $conn     = $this->resolveAndLog($request);
         $items    = $request->input('Data', []);
         $fullSync = (bool) $request->input('full_sync', false);
         $log      = $this->sync->syncStockItems($conn, $items, $fullSync);
@@ -41,7 +41,7 @@ class TallyInboundMastersController extends TallyBaseController
 
     public function stockGroups(Request $request): JsonResponse
     {
-        $conn  = $this->resolveConnection($request);
+        $conn  = $this->resolveAndLog($request);
         $items = $request->input('Data', []);
         $log   = $this->sync->syncStockGroups($conn, $items);
 
@@ -50,7 +50,7 @@ class TallyInboundMastersController extends TallyBaseController
 
     public function stockCategories(Request $request): JsonResponse
     {
-        $conn  = $this->resolveConnection($request);
+        $conn  = $this->resolveAndLog($request);
         $items = $request->input('Data', []);
         $log   = $this->sync->syncStockCategories($conn, $items);
 
@@ -59,7 +59,7 @@ class TallyInboundMastersController extends TallyBaseController
 
     public function statutory(Request $request): JsonResponse
     {
-        $conn  = $this->resolveConnection($request);
+        $conn  = $this->resolveAndLog($request);
         $items = $request->input('Data', []);
         $log   = $this->sync->syncStatutoryMasters($conn, $items);
 

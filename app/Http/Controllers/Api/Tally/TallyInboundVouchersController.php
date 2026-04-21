@@ -52,7 +52,7 @@ class TallyInboundVouchersController extends TallyBaseController
 
     private function handle(Request $request, string $type): JsonResponse
     {
-        $conn     = $this->resolveConnection($request);
+        $conn     = $this->resolveAndLog($request);
         $items    = $request->input('data', $request->input('Data', []));
         $fullSync = (bool) $request->input('full_sync', false);
         $log      = $this->sync->syncVouchers($conn, $items, $type, $fullSync);

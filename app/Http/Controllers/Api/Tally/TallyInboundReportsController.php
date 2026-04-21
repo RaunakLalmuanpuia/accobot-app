@@ -32,7 +32,7 @@ class TallyInboundReportsController extends TallyBaseController
 
     private function handle(Request $request, string $type): JsonResponse
     {
-        $conn    = $this->resolveConnection($request);
+        $conn    = $this->resolveAndLog($request);
         $payload = $request->all();
         $log     = $this->sync->syncReport($conn, $type, $payload);
 

@@ -12,7 +12,7 @@ class TallyInboundPayrollController extends TallyBaseController
 
     public function employeeGroups(Request $request): JsonResponse
     {
-        $conn  = $this->resolveConnection($request);
+        $conn  = $this->resolveAndLog($request);
         $items = $request->input('Data', []);
         $log   = $this->sync->syncEmployeeGroups($conn, $items);
 
@@ -21,7 +21,7 @@ class TallyInboundPayrollController extends TallyBaseController
 
     public function employees(Request $request): JsonResponse
     {
-        $conn     = $this->resolveConnection($request);
+        $conn     = $this->resolveAndLog($request);
         $items    = $request->input('Data', []);
         $fullSync = (bool) $request->input('full_sync', false);
         $log      = $this->sync->syncEmployees($conn, $items, $fullSync);
@@ -31,7 +31,7 @@ class TallyInboundPayrollController extends TallyBaseController
 
     public function payHeads(Request $request): JsonResponse
     {
-        $conn  = $this->resolveConnection($request);
+        $conn  = $this->resolveAndLog($request);
         $items = $request->input('Data', []);
         $log   = $this->sync->syncPayHeads($conn, $items);
 
@@ -40,7 +40,7 @@ class TallyInboundPayrollController extends TallyBaseController
 
     public function attendanceTypes(Request $request): JsonResponse
     {
-        $conn  = $this->resolveConnection($request);
+        $conn  = $this->resolveAndLog($request);
         $items = $request->input('Data', []);
         $log   = $this->sync->syncAttendanceTypes($conn, $items);
 

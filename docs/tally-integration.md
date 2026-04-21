@@ -666,6 +666,18 @@ The `data` column stores the complete JSON payload as Tally generated it — no 
 
 Every sync operation — inbound and outbound — creates a `tally_sync_logs` row. The Sync page in the UI displays these in four tabs.
 
+### Inbound request log
+
+Every inbound POST (all 22 endpoints across masters, payroll, vouchers, reports) also writes a raw copy of the full JSON body to `tally_inbound_logs` before any processing. This is separate from `tally_sync_logs` (which records the outcome). The inbound log is useful for debugging and replaying requests.
+
+| Column | Notes |
+|--------|-------|
+| `tenant_id` | UUID FK → tenants |
+| `tally_connection_id` | FK → tally_connections |
+| `endpoint` | Request path e.g. `api/tally/inbound/masters/ledgers` |
+| `payload` | Full JSON body (jsonb) |
+| `created_at` | When the request arrived |
+
 ### Stats bar on Sync page
 
 Live counts pulled directly from `tally_*` tables, grouped by category. Each card links to the corresponding browse page:
@@ -909,6 +921,7 @@ database/migrations/
   2026_04_19_000015_create_tally_pay_heads_table.php
   2026_04_19_000016_create_tally_attendance_types_table.php
   2026_04_19_000017_create_tally_employees_table.php
+  2026_04_21_121802_create_tally_inbound_logs_table.php
 
 app/Models/
   TallyConnection.php           — per-tenant auth token, auto-generates on creating()
@@ -922,6 +935,7 @@ app/Models/
   TallyVoucherLedgerEntry.php
   TallyReport.php
   TallySyncLog.php
+  TallyInboundLog.php            — raw JSON of every inbound POST, stored before processing
   TallyStatutoryMaster.php      — details cast to array, applicable_from cast to date
   TallyEmployeeGroup.php
   TallyPayHead.php              — rate cast to float

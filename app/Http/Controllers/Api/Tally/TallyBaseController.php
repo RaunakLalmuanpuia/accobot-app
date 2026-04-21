@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Tally;
 
 use App\Http\Controllers\Controller;
 use App\Models\TallyConnection;
+use App\Models\TallyInboundLog;
 use Illuminate\Http\Request;
 
 class TallyBaseController extends Controller
@@ -22,6 +23,20 @@ class TallyBaseController extends Controller
         abort_if(is_null($conn), 401, 'Invalid or inactive token.');
 
         $conn->update(['inbound_token_last_used_at' => now()]);
+
+        return $conn;
+    }
+
+    protected function resolveAndLog(Request $request): TallyConnection
+    {
+        $conn = $this->resolveConnection($request);
+
+        TallyInboundLog::create([
+            'tenant_id'           => $conn->tenant_id,
+            'tally_connection_id' => $conn->id,
+            'endpoint'            => $request->path(),
+            'payload'             => $request->all(),
+        ]);
 
         return $conn;
     }
