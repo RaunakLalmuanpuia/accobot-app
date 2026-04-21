@@ -105,11 +105,11 @@ Accept: application/json
 {
   "Data": [
     {
-      "ID": 1,
+      "TallyId": 1,
       "AlterID": 101,
       "Action": "Create",
       "Name": "Sundry Debtors",
-      "UnderID": 0,
+      "UnderId": 0,
       "UnderName": "Current Assets",
       "NatureOfGroup": "Assets",
       "IsRevenue": "No",
@@ -149,40 +149,57 @@ Accept: application/json
   "full_sync": false,
   "Data": [
     {
-      "ID": 101,
-      "AlterID": 205,
+      "TallyId": 214,
+      "AlterID": 522,
       "Action": "Create",
-      "LedgerName": "BlueStar Technologies",
-      "GroupName": "Sundry Debtors",
+      "LedgerName": "BLUE STAR LIMITED",
+      "Group": "Sundry Debtors",
       "ParentGroup": "Current Assets",
       "IsBillWiseOn": "Yes",
-      "InventoryAffected": "No",
+      "InventoryAffected": false,
       "IsCostCentreApplicable": "No",
-      "GSTINNumber": "27AABCT1234A1Z5",
-      "PANNumber": "AABCT1234A",
-      "TANNumber": null,
-      "GSTType": "Regular",
+      "GSTIN_Number": "21AAACB4487D1Z4",
+      "PAN_Number": "AAACB4487D",
+      "TAN_Number": null,
+      "GST_Type": "Regular",
       "IsRCMApplicable": "No",
-      "MailingName": "BlueStar Technologies Pvt Ltd",
-      "MobileNumber": "9876543210",
-      "ContactPerson": "Rajesh Kumar",
-      "ContactPersonEmail": "rajesh@bluestar.in",
-      "ContactPersonEmailCC": null,
-      "ContactPersonFax": null,
-      "ContactPersonWebsite": null,
-      "ContactPersonMobile": "9876543210",
-      "Addresses": ["123 MG Road", "Bangalore - 560001"],
-      "StateName": "Karnataka",
+      "MailingName": "BLUE STAR LIMITED",
+      "Mobile_Number": "9358444502",
+      "ContactPerson": "Akash",
+      "ContactPerson_Email": "abc@gmail.com",
+      "ContactPerson_EmailCC": null,
+      "ContactPerson_Fax": null,
+      "ContactPerson_Website": null,
+      "ContactPerson_Mobile": "9358444502",
+      "LedgerAddress": [
+        { "Address": "Add1" },
+        { "Address": "Add2" },
+        { "Address": "Add3" }
+      ],
+      "StateName": "Odisha",
       "CountryName": "India",
-      "PinCode": "560001",
-      "CreditPeriod": 30,
-      "CreditLimit": 500000,
-      "OpeningBalance": 125000,
-      "OpeningBalanceType": "Dr",
-      "BankDetails": [],
-      "Aliases": [],
-      "Description": null,
-      "Notes": null
+      "PinCode": "752101",
+      "CreditPeriod": 120,
+      "CreditLimit": 120000,
+      "Opening_Balance": 100000.00,
+      "Opening_Balance_Type": "Dr",
+      "BankDetails": [
+        {
+          "BankName": "Icici Bank",
+          "IFSCode": "ICIC0001234",
+          "AccountNumber": "1234567890",
+          "PaymentFavouring": "BLUE STAR LIMITED",
+          "TransactionName": "Primary",
+          "TransactionType": "Inter Bank Transfer"
+        }
+      ],
+      "Aliases": [
+        { "Alias": "BLUE STAR LIMITED" },
+        { "Alias": "Ledger Alias" },
+        { "Alias": "Ledger Alias 2" }
+      ],
+      "Description": "Ledger desc",
+      "Notes": "Ledger notes"
     }
   ]
 }
@@ -217,7 +234,7 @@ Accept: application/json
 {
   "Data": [
     {
-      "ID": 10,
+      "TallyId": 10,
       "AlterID": 55,
       "Action": "Create",
       "Name": "Network Equipment",
@@ -254,7 +271,7 @@ Accept: application/json
 {
   "Data": [
     {
-      "ID": 5,
+      "TallyId": 5,
       "AlterID": 11,
       "Action": "Create",
       "Name": "Lease Line Services",
@@ -287,46 +304,57 @@ Accept: application/json
   "full_sync": false,
   "Data": [
     {
-      "ID": 201,
-      "AlterID": 88,
-      "Action": "Create",
+      "TallyId": 241,
+      "AlterID": 533,
+      "Action": "Update",
       "Name": "30Mbps Lease Line",
-      "Description": "Dedicated internet lease line 30Mbps",
+      "Description": "Item desc",
       "Remarks": null,
-      "Aliases": [],
-      "StockGroupID": 10,
-      "StockGroupName": "Network Equipment",
-      "StockCategoryID": 5,
-      "CategoryName": "Lease Line Services",
-      "UnitID": 3,
-      "UnitName": "Nos",
+      "Aliases": [
+        { "Alias": "30Mbps Lease Line" },
+        { "Alias": "Item Alias" }
+      ],
+      "StockGroupID": 0,
+      "StockGroupName": "Stock Group Test1",
+      "StockCategoryID": 0,
+      "Category": "Stock Category Test 1",
+      "UnitID": 234,
+      "Unit": "NOS",
       "AlternateUnit": null,
-      "Conversion": null,
+      "Conversion": 0,
       "Denominator": 1,
-      "IsGSTApplicable": "Yes",
-      "Taxability": "Taxable",
-      "CalculationType": "On Value",
-      "IGSTRate": 18,
-      "SGSTRate": 9,
-      "CGSTRate": 9,
-      "CessRate": 0,
-      "HSNCode": "998422",
-      "MRPRate": null,
+      "IsGSTApplicable": "Applicable",
+      "Taxablity": "Taxable",
+      "CalculationType": "",
+      "IGST_Rate": 18,
+      "SGST_Rate": 9,
+      "CGST_Rate": 9,
+      "CESS_Rate": 0,
+      "HSNCode": 998415,
+      "MRPRate": 0,
       "StandardCost": 0,
       "StandardPrice": 15000,
-      "OpeningBalance": 0,
-      "OpeningRate": 0,
-      "OpeningValue": 0,
-      "ClosingBalance": 0,
-      "ClosingRate": 0,
-      "ClosingValue": 0,
+      "Opening_Balance": 25,
+      "Opening_Rate": 12.00,
+      "Opening_Value": 300.00,
+      "Closing_Balance": 26,
+      "Closing_Rate": 93.02,
+      "Closing_Value": 2418.64,
       "CostingMethod": "FIFO",
       "IsBatchApplicable": "No",
       "IsExpiryDateApplicable": "No",
       "ReorderLevel": null,
       "ReorderQuantity": null,
       "MaximumQuantity": null,
-      "BatchAllocations": []
+      "BatchAllocations": [
+        {
+          "GodownName": "Main Location",
+          "GodownID": 99,
+          "OpeningBalnace": 25,
+          "Rate": 12,
+          "OpeningValue": 300
+        }
+      ]
     }
   ]
 }
@@ -358,7 +386,7 @@ Accept: application/json
 {
   "Data": [
     {
-      "ID": 301,
+      "TallyId": 301,
       "AlterID": 120,
       "Action": "Create",
       "Name": "GST - Maharashtra",
@@ -402,7 +430,7 @@ Accept: application/json
 {
   "Data": [
     {
-      "ID": 401,
+      "TallyId": 401,
       "AlterID": 10,
       "Action": "Create",
       "Name": "Management",
@@ -435,7 +463,7 @@ Accept: application/json
   "full_sync": false,
   "Data": [
     {
-      "ID": 501,
+      "TallyId": 501,
       "AlterID": 200,
       "Action": "Create",
       "Name": "Arjun Mehta",
@@ -487,7 +515,7 @@ Accept: application/json
 {
   "Data": [
     {
-      "ID": 601,
+      "TallyId": 601,
       "AlterID": 30,
       "Action": "Create",
       "Name": "Basic Salary",
@@ -525,7 +553,7 @@ Accept: application/json
 {
   "Data": [
     {
-      "ID": 701,
+      "TallyId": 701,
       "AlterID": 5,
       "Action": "Create",
       "Name": "Present",
@@ -557,63 +585,110 @@ Accept: application/json
 ```json
 {
   "full_sync": false,
-  "Data": [
+  "data": [
     {
-      "MasterID": 5001,
-      "AlterID": 300,
-      "Action": "Create",
-      "VoucherNumber": "2024-25/INV/001",
-      "VoucherDate": "2024-04-01",
-      "PartyName": "BlueStar Technologies",
-      "VoucherTotal": 17700,
+      "MasterID": 1,
+      "AlterID": 31,
+      "Action": "Update",
+      "VoucherNumber": "1",
+      "VoucherDate": "20250401",
+      "PartyName": "BLUE STAR LIMITED",
+      "VoucherType": "Sales",
+      "Voucher_Total": 35964.04,
       "IsInvoice": "Yes",
-      "PlaceOfSupply": "Karnataka",
-      "BuyerName": "BlueStar Technologies Pvt Ltd",
-      "BuyerGSTIN": "27AABCT1234A1Z5",
-      "BuyerState": "Karnataka",
-      "BuyerAddress": "123 MG Road, Bangalore",
-      "BuyerEmail": "rajesh@bluestar.in",
-      "BuyerMobile": "9876543210",
-      "Narration": "Monthly lease line charges for April 2024",
-      "IRN": null,
-      "AcknowledgementNo": null,
-      "AcknowledgementDate": null,
-      "QRCode": null,
+      "IsDeleted": "No",
+      "PlaceOfSupply": "Odisha",
+      "BuyerName": "BLUE STAR LIMITED",
+      "BuyerAlias": "Ledger Alias",
+      "BuyerGSTIN": "21AAACB4487D1Z4",
+      "BuyerPinCode": "752101",
+      "BuyerState": "Odisha",
+      "BuyerCountryName": "India",
+      "BuyerGSTRegistrationType": "Regular",
+      "BuyerEmail": "abc@gmail.com",
+      "BuyerMobile": "9358444502",
+      "BuyerAddress": [{ "BuyerAddress": "" }],
+      "Narration": "",
+      "VoucherCostCentre": "",
       "InventoryEntries": [
         {
-          "StockItemName": "30Mbps Lease Line",
-          "HSNCode": "998422",
-          "Unit": "Nos",
+          "StockItemName": "Supply of Goods Transport Service",
+          "ItemCode": "",
+          "GroupName": "Primary",
+          "HSNCode": "996511",
+          "Unit": "Not Applicable",
           "IGSTRate": 18,
-          "ActualQty": 1,
-          "BilledQty": 1,
-          "Rate": 15000,
+          "CessRate": 0.00,
+          "IsDeemedPositive": "No",
+          "ActualQty": 0,
+          "BilledQty": 0,
+          "Rate": 0,
           "DiscountPercent": 0,
-          "Amount": 15000,
-          "TaxAmount": 2700
+          "Amount": 30478.00,
+          "TaxAmount": 5486.04,
+          "SalesLedger": "Transportation Charges",
+          "GodownName": "Main Location",
+          "BatchName": "Primary Batch",
+          "BatchAllocations": [
+            {
+              "BatchName": "Primary Batch",
+              "GodownName": "Main Location",
+              "ActualQty": 0.00,
+              "BilledQty": 0.00,
+              "Rate": 0.00,
+              "DiscountPercent": 0.00,
+              "Amount": 30478.00
+            }
+          ],
+          "AccountingAllocations": [
+            {
+              "LedgerName": "Transportation Charges",
+              "LedgerGroup": "Sales Accounts",
+              "IGSTRate": 0,
+              "Amount": 30478.00
+            }
+          ]
         }
       ],
-      "LedgerEntries": [
+      "ledgerentries": [
         {
-          "LedgerName": "BlueStar Technologies",
-          "LedgerGroup": "Sundry Debtors",
-          "LedgerAmount": 17700,
+          "LedgerName": "BLUE STAR LIMITED",
+          "LedgerAmount": 35964.04,
+          "LedgerGroup": "",
           "IsDeemedPositive": "Yes",
-          "IsPartyLedger": "Yes"
+          "IsPartyLedger": "Yes",
+          "IGSTRate": "",
+          "HSNCode": "",
+          "Cess_Rate": "",
+          "BillsAllocation": [
+            { "AgstType": "New Ref", "Reference": "1", "CreditPeriod": "120 Days", "Amount": -35964.04 }
+          ]
         },
         {
-          "LedgerName": "Sales - Lease Line",
-          "LedgerGroup": "Sales Accounts",
-          "LedgerAmount": -15000,
+          "LedgerName": "CGST OUTPUT",
+          "LedgerAmount": 2743.02,
+          "LedgerGroup": "",
           "IsDeemedPositive": "No",
-          "IsPartyLedger": "No"
+          "IsPartyLedger": "No",
+          "IGSTRate": "",
+          "HSNCode": "",
+          "Cess_Rate": "",
+          "BillsAllocation": [
+            { "AgstType": "On Account", "Reference": "", "CreditPeriod": "", "Amount": 2743.02 }
+          ]
         },
         {
-          "LedgerName": "IGST @18%",
-          "LedgerGroup": "Duties & Taxes",
-          "LedgerAmount": -2700,
+          "LedgerName": "SGST OUTPUT",
+          "LedgerAmount": 2743.02,
+          "LedgerGroup": "",
           "IsDeemedPositive": "No",
-          "IsPartyLedger": "No"
+          "IsPartyLedger": "No",
+          "IGSTRate": "",
+          "HSNCode": "",
+          "Cess_Rate": "",
+          "BillsAllocation": [
+            { "AgstType": "On Account", "Reference": "", "CreditPeriod": "", "Amount": 2743.02 }
+          ]
         }
       ]
     }
@@ -651,32 +726,42 @@ Accept: application/json
 ```json
 {
   "full_sync": false,
-  "Data": [
+  "data": [
     {
       "MasterID": 6001,
       "AlterID": 410,
       "Action": "Create",
       "VoucherNumber": "PUR/2024-25/001",
-      "VoucherDate": "2024-04-05",
-      "PartyName": "Punjab National Bank",
-      "VoucherTotal": 50000,
+      "VoucherDate": "20240405",
+      "PartyName": "PUNJAB NATIONAL BANK",
+      "VoucherType": "Purchase",
+      "Voucher_Total": 50000,
       "IsInvoice": "Yes",
+      "IsDeleted": "No",
       "Narration": "Bandwidth purchase April 2024",
+      "VoucherCostCentre": "",
+      "BuyerAddress": [{ "BuyerAddress": "" }],
       "InventoryEntries": [],
-      "LedgerEntries": [
+      "ledgerentries": [
         {
-          "LedgerName": "Punjab National Bank",
-          "LedgerGroup": "Sundry Creditors",
+          "LedgerName": "PUNJAB NATIONAL BANK",
           "LedgerAmount": -50000,
+          "LedgerGroup": "",
           "IsDeemedPositive": "No",
-          "IsPartyLedger": "Yes"
+          "IsPartyLedger": "Yes",
+          "IGSTRate": "",
+          "HSNCode": "",
+          "Cess_Rate": ""
         },
         {
           "LedgerName": "Purchase - Bandwidth",
-          "LedgerGroup": "Purchase Accounts",
           "LedgerAmount": 50000,
+          "LedgerGroup": "",
           "IsDeemedPositive": "Yes",
-          "IsPartyLedger": "No"
+          "IsPartyLedger": "No",
+          "IGSTRate": "",
+          "HSNCode": "",
+          "Cess_Rate": ""
         }
       ]
     }
@@ -710,32 +795,42 @@ Accept: application/json
 **Request**
 ```json
 {
-  "Data": [
+  "data": [
     {
       "MasterID": 7001,
       "AlterID": 500,
       "Action": "Create",
       "VoucherNumber": "CN/2024-25/001",
-      "VoucherDate": "2024-04-10",
-      "PartyName": "BlueStar Technologies",
-      "VoucherTotal": 5900,
+      "VoucherDate": "20240410",
+      "PartyName": "BLUE STAR LIMITED",
+      "VoucherType": "Credit Note",
+      "Voucher_Total": 5900,
       "IsInvoice": "No",
+      "IsDeleted": "No",
       "Narration": "Partial credit for service downtime",
+      "VoucherCostCentre": "",
+      "BuyerAddress": [{ "BuyerAddress": "" }],
       "InventoryEntries": [],
-      "LedgerEntries": [
+      "ledgerentries": [
         {
-          "LedgerName": "BlueStar Technologies",
-          "LedgerGroup": "Sundry Debtors",
+          "LedgerName": "BLUE STAR LIMITED",
           "LedgerAmount": -5900,
+          "LedgerGroup": "",
           "IsDeemedPositive": "No",
-          "IsPartyLedger": "Yes"
+          "IsPartyLedger": "Yes",
+          "IGSTRate": "",
+          "HSNCode": "",
+          "Cess_Rate": ""
         },
         {
           "LedgerName": "Sales - Lease Line",
-          "LedgerGroup": "Sales Accounts",
           "LedgerAmount": 5000,
+          "LedgerGroup": "",
           "IsDeemedPositive": "Yes",
-          "IsPartyLedger": "No"
+          "IsPartyLedger": "No",
+          "IGSTRate": "",
+          "HSNCode": "",
+          "Cess_Rate": ""
         }
       ]
     }
@@ -769,32 +864,42 @@ Accept: application/json
 **Request**
 ```json
 {
-  "Data": [
+  "data": [
     {
       "MasterID": 8001,
       "AlterID": 600,
       "Action": "Create",
       "VoucherNumber": "DN/2024-25/001",
-      "VoucherDate": "2024-04-12",
-      "PartyName": "Punjab National Bank",
-      "VoucherTotal": 10000,
+      "VoucherDate": "20240412",
+      "PartyName": "PUNJAB NATIONAL BANK",
+      "VoucherType": "Debit Note",
+      "Voucher_Total": 10000,
       "IsInvoice": "No",
+      "IsDeleted": "No",
       "Narration": "Debit note for purchase return",
+      "VoucherCostCentre": "",
+      "BuyerAddress": [{ "BuyerAddress": "" }],
       "InventoryEntries": [],
-      "LedgerEntries": [
+      "ledgerentries": [
         {
-          "LedgerName": "Punjab National Bank",
-          "LedgerGroup": "Sundry Creditors",
+          "LedgerName": "PUNJAB NATIONAL BANK",
           "LedgerAmount": 10000,
+          "LedgerGroup": "",
           "IsDeemedPositive": "Yes",
-          "IsPartyLedger": "Yes"
+          "IsPartyLedger": "Yes",
+          "IGSTRate": "",
+          "HSNCode": "",
+          "Cess_Rate": ""
         },
         {
           "LedgerName": "Purchase - Bandwidth",
-          "LedgerGroup": "Purchase Accounts",
           "LedgerAmount": -10000,
+          "LedgerGroup": "",
           "IsDeemedPositive": "No",
-          "IsPartyLedger": "No"
+          "IsPartyLedger": "No",
+          "IGSTRate": "",
+          "HSNCode": "",
+          "Cess_Rate": ""
         }
       ]
     }
@@ -827,34 +932,54 @@ Accept: application/json
 **Request**
 ```json
 {
-  "Data": [
+  "data": [
     {
-      "MasterID": 9001,
-      "AlterID": 601,
-      "Action": "Create",
-      "VoucherNumber": "RCT/2024-25/001",
-      "VoucherDate": "2024-04-15",
-      "PartyName": "BlueStar Technologies",
-      "VoucherTotal": 17700,
+      "MasterID": 13,
+      "AlterID": 35,
+      "Action": "Update",
+      "VoucherNumber": "3",
+      "VoucherDate": "20250502",
+      "PartyName": "LXPANTOS LOGISTIC SOLUTION INDIA PVT LTD",
+      "VoucherType": "Receipt",
+      "Voucher_Total": 1288538.00,
       "IsInvoice": "No",
-      "Narration": "Receipt against INV/001",
+      "IsDeleted": "No",
+      "Narration": "BEING AMOUNT RECEIVED",
+      "VoucherCostCentre": "",
+      "BuyerAddress": [{ "BuyerAddress": "" }],
       "InventoryEntries": [],
-      "LedgerEntries": [
+      "ledgerentries": [
         {
-          "LedgerName": "HDFC Bank",
-          "LedgerGroup": "Bank Accounts",
-          "LedgerAmount": 17700,
-          "IsDeemedPositive": "Yes",
-          "IsPartyLedger": "No"
-        },
-        {
-          "LedgerName": "BlueStar Technologies",
-          "LedgerGroup": "Sundry Debtors",
-          "LedgerAmount": -17700,
+          "LedgerName": "LXPANTOS LOGISTIC SOLUTION INDIA PVT LTD",
+          "LedgerAmount": 1288538,
+          "LedgerGroup": "",
           "IsDeemedPositive": "No",
           "IsPartyLedger": "Yes",
+          "IGSTRate": "",
+          "HSNCode": "",
+          "Cess_Rate": "",
           "BillsAllocation": [
-            { "Name": "2024-25/INV/001", "Amount": 17700 }
+            { "AgstType": "Agst Ref", "Reference": "3", "CreditPeriod": "", "Amount": 1288538 }
+          ]
+        },
+        {
+          "LedgerName": "PUNJAB NATIONAL BANK STARLINE EXPRESS CC ACCOUNT (19194025001909)",
+          "LedgerAmount": 1288538,
+          "LedgerGroup": "",
+          "IsDeemedPositive": "Yes",
+          "IsPartyLedger": "Yes",
+          "IGSTRate": "",
+          "HSNCode": "",
+          "Cess_Rate": "",
+          "BankAllocationDetails": [
+            {
+              "Date": "2025-05-02",
+              "InstrumentDate": "2025-05-02",
+              "TRANSACTIONTYPE": "Same Bank Transfer",
+              "PAYMENTFAVOURING": "LXPANTOS LOGISTIC SOLUTION INDIA PVT LTD",
+              "AMOUNT": "12,88,538.00",
+              "BankersDate": ""
+            }
           ]
         }
       ]
@@ -890,32 +1015,42 @@ Accept: application/json
 **Request**
 ```json
 {
-  "Data": [
+  "data": [
     {
-      "MasterID": 10001,
-      "AlterID": 700,
-      "Action": "Create",
-      "VoucherNumber": "PAY/2024-25/001",
-      "VoucherDate": "2024-04-20",
-      "PartyName": "Punjab National Bank",
-      "VoucherTotal": 50000,
+      "MasterID": 25,
+      "AlterID": 30,
+      "Action": "Update",
+      "VoucherNumber": "7",
+      "VoucherDate": "20250401",
+      "PartyName": "Cash",
+      "VoucherType": "Payment",
+      "Voucher_Total": 10500.00,
       "IsInvoice": "No",
-      "Narration": "Payment for bandwidth purchase",
+      "IsDeleted": "No",
+      "Narration": "BEING CASH PAID FOR GROCERY MESS",
+      "VoucherCostCentre": "",
+      "BuyerAddress": [{ "BuyerAddress": "" }],
       "InventoryEntries": [],
-      "LedgerEntries": [
+      "ledgerentries": [
         {
-          "LedgerName": "Punjab National Bank",
-          "LedgerGroup": "Sundry Creditors",
-          "LedgerAmount": 50000,
+          "LedgerName": "STAFF FOODING STARLINE CUTTACK BRANCH",
+          "LedgerAmount": 10500,
+          "LedgerGroup": "",
           "IsDeemedPositive": "Yes",
-          "IsPartyLedger": "Yes"
+          "IsPartyLedger": "No",
+          "IGSTRate": "",
+          "HSNCode": "",
+          "Cess_Rate": "0"
         },
         {
-          "LedgerName": "HDFC Bank",
-          "LedgerGroup": "Bank Accounts",
-          "LedgerAmount": -50000,
+          "LedgerName": "Cash",
+          "LedgerAmount": 10500,
+          "LedgerGroup": "",
           "IsDeemedPositive": "No",
-          "IsPartyLedger": "No"
+          "IsPartyLedger": "Yes",
+          "IGSTRate": "",
+          "HSNCode": "",
+          "Cess_Rate": ""
         }
       ]
     }
@@ -950,31 +1085,52 @@ Accept: application/json
 **Request**
 ```json
 {
-  "Data": [
+  "data": [
     {
-      "MasterID": 11001,
-      "AlterID": 800,
+      "MasterID": 27,
+      "AlterID": 29,
       "Action": "Create",
-      "VoucherNumber": "CON/2024-25/001",
-      "VoucherDate": "2024-04-25",
-      "VoucherTotal": 100000,
+      "VoucherNumber": "2",
+      "VoucherDate": "20250402",
+      "PartyName": "PUNJAB NATIONAL BANK STARLINE EXPRESS CC ACCOUNT (19194025001909)",
+      "VoucherType": "Contra",
+      "Voucher_Total": 50000.00,
       "IsInvoice": "No",
-      "Narration": "Transfer from cash to HDFC bank",
+      "IsDeleted": "No",
+      "Narration": "BEING AMOUNT CASH WDL",
+      "VoucherCostCentre": "",
+      "BuyerAddress": [{ "BuyerAddress": "" }],
       "InventoryEntries": [],
-      "LedgerEntries": [
+      "ledgerentries": [
         {
-          "LedgerName": "HDFC Bank",
-          "LedgerGroup": "Bank Accounts",
-          "LedgerAmount": 100000,
-          "IsDeemedPositive": "Yes",
-          "IsPartyLedger": "No"
+          "LedgerName": "PUNJAB NATIONAL BANK STARLINE EXPRESS CC ACCOUNT (19194025001909)",
+          "LedgerAmount": 50000,
+          "LedgerGroup": "",
+          "IsDeemedPositive": "No",
+          "IsPartyLedger": "Yes",
+          "IGSTRate": "",
+          "HSNCode": "",
+          "Cess_Rate": "",
+          "BankAllocationDetails": [
+            {
+              "Date": "2025-04-02",
+              "InstrumentDate": "2025-04-02",
+              "TRANSACTIONTYPE": "Same Bank Transfer",
+              "PAYMENTFAVOURING": "Self",
+              "AMOUNT": "50,000.00",
+              "BankersDate": ""
+            }
+          ]
         },
         {
           "LedgerName": "Cash",
-          "LedgerGroup": "Cash-in-Hand",
-          "LedgerAmount": -100000,
-          "IsDeemedPositive": "No",
-          "IsPartyLedger": "No"
+          "LedgerAmount": 50000,
+          "LedgerGroup": "",
+          "IsDeemedPositive": "Yes",
+          "IsPartyLedger": "Yes",
+          "IGSTRate": "",
+          "HSNCode": "",
+          "Cess_Rate": ""
         }
       ]
     }
@@ -1009,31 +1165,48 @@ Accept: application/json
 **Request**
 ```json
 {
-  "Data": [
+  "data": [
     {
-      "MasterID": 12001,
-      "AlterID": 900,
-      "Action": "Create",
-      "VoucherNumber": "JV/2024-25/001",
-      "VoucherDate": "2024-03-31",
-      "VoucherTotal": 12000,
+      "MasterID": 17,
+      "AlterID": 38,
+      "Action": "Update",
+      "VoucherNumber": "5",
+      "VoucherDate": "20250401",
+      "PartyName": "",
+      "VoucherType": "Journal",
+      "Voucher_Total": 15000.00,
       "IsInvoice": "No",
-      "Narration": "Depreciation for FY 2024-25",
+      "IsDeleted": "No",
+      "Narration": "BEING DAILY WAGES FOR THE MONTH OF APRIL-25",
+      "VoucherCostCentre": "",
+      "BuyerAddress": [{ "BuyerAddress": "" }],
       "InventoryEntries": [],
-      "LedgerEntries": [
+      "ledgerentries": [
         {
-          "LedgerName": "Depreciation",
-          "LedgerGroup": "Indirect Expenses",
-          "LedgerAmount": 12000,
+          "LedgerName": "Daily Wages",
+          "LedgerAmount": 15000,
+          "LedgerGroup": "",
           "IsDeemedPositive": "Yes",
-          "IsPartyLedger": "No"
+          "IsPartyLedger": "No",
+          "IGSTRate": "",
+          "HSNCode": "",
+          "Cess_Rate": "",
+          "BillsAllocation": [
+            { "AgstType": "On Account", "Reference": "", "CreditPeriod": "", "Amount": -15000 }
+          ]
         },
         {
-          "LedgerName": "Fixed Assets",
-          "LedgerGroup": "Fixed Assets",
-          "LedgerAmount": -12000,
+          "LedgerName": "SATYAJIT DAS",
+          "LedgerAmount": 15000,
+          "LedgerGroup": "",
           "IsDeemedPositive": "No",
-          "IsPartyLedger": "No"
+          "IsPartyLedger": "No",
+          "IGSTRate": "",
+          "HSNCode": "",
+          "Cess_Rate": "",
+          "BillsAllocation": [
+            { "AgstType": "On Account", "Reference": "", "CreditPeriod": "", "Amount": 15000 }
+          ]
         }
       ]
     }

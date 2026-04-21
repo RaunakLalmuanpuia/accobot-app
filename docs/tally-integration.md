@@ -1060,3 +1060,38 @@ Because Accobot cannot initiate contact with Tally (the connector always calls A
 **Invoice status is always `unpaid` after auto-mapping.** No cross-check is done against Receipt vouchers that may have already settled the sales voucher in Tally.
 
 **Placeholder claim for Products is name-match only.** When `autoMapStockItem()` claims a placeholder Product, it matches on `name` alone. If two products share the same name, the wrong placeholder could be claimed. Client placeholder claim now uses GSTIN/PAN first (more reliable), falling back to name.
+
+---
+
+### ~~L7 — Real Tally connector field name variants~~ ✅ Fixed
+
+The real Tally connector uses different field name conventions from the simplified examples in `tally-api-reference.md`. `TallyInboundSync.php` now accepts both variants for full compatibility:
+
+| Real connector field | Alternative accepted |
+|---|---|
+| `TallyId` | `ID` / `Id` |
+| `UnderId` | `UnderID` |
+| `Group` (ledger) | `GroupName` |
+| `GSTIN_Number` | `GSTINNumber` |
+| `PAN_Number` | `PANNumber` |
+| `Mobile_Number` | `MobileNumber` |
+| `ContactPerson_Email` | `ContactPersonEmail` |
+| `GST_Type` | `GSTType` |
+| `Opening_Balance` | `OpeningBalance` |
+| `Opening_Balance_Type` | `OpeningBalanceType` |
+| `LedgerAddress` | `Addresses` |
+| `IGST_Rate` | `IGSTRate` |
+| `SGST_Rate` | `SGSTRate` |
+| `CGST_Rate` | `CGSTRate` |
+| `CESS_Rate` | `CessRate` |
+| `Taxablity` (Tally typo) | `Taxability` |
+| `Category` (stock item) | `CategoryName` |
+| `Unit` (stock item) | `UnitName` |
+| `Closing_Balance` | `ClosingBalance` |
+| `Voucher_Total` | `VoucherTotal` |
+| `ledgerentries` (lowercase) | `LedgerEntries` |
+| `BuyerCountryName` | `BuyerCountry` |
+| `ConsigneeCountryName` | `ConsigneeCountry` |
+| `VoucherCostCentre` | `CostCentre` |
+| `Cess_Rate` (ledger entry) | `CessRate` |
+| `"Applicable"` for IsGSTApplicable | `"Yes"` |

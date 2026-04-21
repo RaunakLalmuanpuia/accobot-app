@@ -22,13 +22,15 @@ The token resolves the tenant automatically — no company ID needed in headers 
 
 | Convention | Detail |
 |---|---|
-| Boolean fields | `"Yes"` / `"No"` strings (Tally format). Also accepts `true`/`false`/`"1"`/`"0"` |
-| Dates | `"YYYY-MM-DD"` string |
+| Boolean fields | `"Yes"` / `"No"` strings. `"Applicable"` / `"Not Applicable"` also accepted (Tally's GST field format). Also accepts `true`/`false`/`"1"`/`"0"` |
+| Dates | `"YYYYMMDD"` (real connector format, e.g. `"20250401"`) or `"YYYY-MM-DD"` — both accepted |
 | Numeric | Plain number or numeric string |
-| `ID` / `AlterID` | Tally's internal integer IDs. Both `ID`/`Id` and `AlterID`/`AlterId` are accepted |
+| ID field | Real connector sends `TallyId` for masters and `MasterID` for vouchers. `ID`/`Id` also accepted |
+| `AlterID` | Tally's alter/version ID. `AlterId` also accepted |
 | `Action` | `"Create"` (default) or `"Delete"` (soft-deletes the record) |
 | `full_sync` | When `true`, any record **not** present in the payload is marked inactive |
 | EOT prefix | Tally prefixes some strings with ASCII `\u0004` (EOT). Accobot strips this automatically |
+| Field name variants | Real connector uses underscored variants (`GSTIN_Number`, `Mobile_Number`, `Voucher_Total`, etc.) and lowercase keys (`ledgerentries`). Both forms accepted — see L7 in `tally-integration.md` |
 
 ---
 
@@ -70,11 +72,11 @@ Syncs Tally ledger groups (account group hierarchy).
 {
   "Data": [
     {
-      "ID": 1,
+      "TallyId": 1,
       "AlterID": 42,
       "Action": "Create",
       "Name": "Sundry Debtors",
-      "UnderID": 0,
+      "UnderId": 0,
       "UnderName": "Current Assets",
       "NatureOfGroup": "Assets",
       "IsRevenue": "No",
@@ -88,11 +90,11 @@ Syncs Tally ledger groups (account group hierarchy).
 | Field | Type | Required | Description |
 |---|---|---|---|
 | `Data` | array | yes | Array of ledger group objects |
-| `ID` | integer | yes | Tally's internal group ID |
-| `AlterID` | integer | yes | Tally's alter/version ID — used for skip logic |
+| `TallyId` | integer | yes | Tally's internal group ID (also accepted as `ID`/`Id`) |
+| `AlterID` | integer | yes | Tally's alter/version ID — used for skip logic (also `AlterId`) |
 | `Action` | string | no | `"Create"` (default) or `"Delete"` |
 | `Name` | string | yes | Group name |
-| `UnderID` | integer | no | Parent group's Tally ID |
+| `UnderId` | integer | no | Parent group's Tally ID (also `UnderID`) |
 | `UnderName` | string | no | Parent group name |
 | `NatureOfGroup` | string | no | e.g. `"Assets"`, `"Liabilities"` |
 | `IsRevenue` | string | no | `"Yes"` / `"No"` |
@@ -118,37 +120,55 @@ Syncs Tally ledgers (accounts). Debtors → auto-creates/updates **Client**. Cre
   "full_sync": false,
   "Data": [
     {
-      "ID": 101,
+      "TallyId": 101,
       "AlterID": 205,
       "Action": "Create",
-      "LedgerName": "BlueStar Technologies",
-      "GroupName": "Sundry Debtors",
+      "LedgerName": "BLUE STAR LIMITED",
+      "Group": "Sundry Debtors",
       "ParentGroup": "Current Assets",
       "IsBillWiseOn": "Yes",
-      "InventoryAffected": "No",
+      "InventoryAffected": false,
       "IsCostCentreApplicable": "No",
-      "GSTINNumber": "27AABCT1234A1Z5",
-      "PANNumber": "AABCT1234A",
-      "TANNumber": null,
-      "GSTType": "Regular",
+      "GSTIN_Number": "21AAACB4487D1Z4",
+      "PAN_Number": "AAACB4487D",
+      "TAN_Number": null,
+      "GST_Type": "Regular",
       "IsRCMApplicable": "No",
-      "MailingName": "BlueStar Technologies Pvt Ltd",
-      "MobileNumber": "9876543210",
-      "ContactPerson": "Rajesh Kumar",
-      "ContactPersonEmail": "rajesh@bluestar.in",
-      "ContactPersonMobile": "9876543210",
-      "Addresses": ["123 MG Road", "Bangalore - 560001"],
-      "StateName": "Karnataka",
+      "MailingName": "BLUE STAR LIMITED",
+      "Mobile_Number": "9358444502",
+      "ContactPerson": "Akash",
+      "ContactPerson_Email": "abc@gmail.com",
+      "ContactPerson_EmailCC": null,
+      "ContactPerson_Fax": null,
+      "ContactPerson_Website": null,
+      "ContactPerson_Mobile": "9358444502",
+      "LedgerAddress": [
+        { "Address": "Add1" },
+        { "Address": "Add2" }
+      ],
+      "StateName": "Odisha",
       "CountryName": "India",
-      "PinCode": "560001",
-      "CreditPeriod": 30,
-      "CreditLimit": 500000,
-      "OpeningBalance": 125000,
-      "OpeningBalanceType": "Dr",
-      "BankDetails": [],
-      "Aliases": [],
-      "Description": null,
-      "Notes": null
+      "PinCode": "752101",
+      "CreditPeriod": 120,
+      "CreditLimit": 120000,
+      "Opening_Balance": 100000.00,
+      "Opening_Balance_Type": "Dr",
+      "BankDetails": [
+        {
+          "BankName": "Icici Bank",
+          "IFSCode": "ICIC0001234",
+          "AccountNumber": "1234567890",
+          "PaymentFavouring": "BLUE STAR LIMITED",
+          "TransactionName": "Primary",
+          "TransactionType": "Inter Bank Transfer"
+        }
+      ],
+      "Aliases": [
+        { "Alias": "BLUE STAR LIMITED" },
+        { "Alias": "Ledger Alias" }
+      ],
+      "Description": "Ledger desc",
+      "Notes": "Ledger notes"
     }
   ]
 }
@@ -158,38 +178,38 @@ Syncs Tally ledgers (accounts). Debtors → auto-creates/updates **Client**. Cre
 |---|---|---|---|
 | `full_sync` | boolean | no | If `true`, ledgers absent from payload are marked inactive |
 | `Data` | array | yes | Array of ledger objects |
-| `ID` | integer | yes | Tally ledger ID |
+| `TallyId` | integer | yes | Tally ledger ID (also accepted as `ID`/`Id`) |
 | `AlterID` | integer | yes | Alter/version ID |
 | `Action` | string | no | `"Create"` or `"Delete"` |
 | `LedgerName` | string | yes | Ledger name (also accepted as `Name`) |
-| `GroupName` | string | no | Immediate group — used to derive category |
+| `Group` | string | no | Immediate group — used to derive category (also `GroupName`) |
 | `ParentGroup` | string | no | Top-level group — used to derive category |
-| `IsBillWiseOn` | string | no | Bill-by-bill tracking on. Defaults to `false` if omitted |
-| `InventoryAffected` | string | no | Affects inventory. Defaults to `false` if omitted |
+| `IsBillWiseOn` | string | no | Bill-by-bill tracking. Defaults to `false` if omitted |
+| `InventoryAffected` | string/bool | no | Affects inventory. Defaults to `false` if omitted |
 | `IsCostCentreApplicable` | string | no | Cost centre on. Defaults to `false` if omitted |
-| `GSTINNumber` | string | no | GST registration number |
-| `PANNumber` | string | no | PAN |
-| `TANNumber` | string | no | TAN |
-| `GSTType` | string | no | `"Regular"`, `"Composition"`, `"Unregistered"`, etc. |
+| `GSTIN_Number` | string | no | GST registration number (also `GSTINNumber`) |
+| `PAN_Number` | string | no | PAN (also `PANNumber`) |
+| `TAN_Number` | string | no | TAN (also `TANNumber`) |
+| `GST_Type` | string | no | `"Regular"`, `"Composition"`, `"Unregistered"`, etc. (also `GSTType`) |
 | `IsRCMApplicable` | string | no | Reverse Charge Mechanism |
 | `MailingName` | string | no | Display / mailing name |
-| `MobileNumber` | string | no | Primary mobile |
+| `Mobile_Number` | string | no | Primary mobile (also `MobileNumber`) |
 | `ContactPerson` | string | no | Contact name |
-| `ContactPersonEmail` | string | no | Contact email |
-| `ContactPersonEmailCC` | string | no | CC email |
-| `ContactPersonFax` | string | no | Fax |
-| `ContactPersonWebsite` | string | no | Website |
-| `ContactPersonMobile` | string | no | Contact mobile |
-| `Addresses` | array | no | Array of address lines |
+| `ContactPerson_Email` | string | no | Contact email (also `ContactPersonEmail`) |
+| `ContactPerson_EmailCC` | string | no | CC email (also `ContactPersonEmailCC`) |
+| `ContactPerson_Fax` | string | no | Fax (also `ContactPersonFax`) |
+| `ContactPerson_Website` | string | no | Website (also `ContactPersonWebsite`) |
+| `ContactPerson_Mobile` | string | no | Contact mobile (also `ContactPersonMobile`) |
+| `LedgerAddress` | array | no | Array of `{"Address": "..."}` objects (also `Addresses`) |
 | `StateName` | string | no | State |
 | `CountryName` | string | no | Country |
 | `PinCode` | string | no | PIN / postal code |
 | `CreditPeriod` | integer | no | Credit period in days |
 | `CreditLimit` | float | no | Credit limit amount |
-| `OpeningBalance` | float | no | Opening balance value |
-| `OpeningBalanceType` | string | no | `"Dr"` or `"Cr"` |
+| `Opening_Balance` | float | no | Opening balance value (also `OpeningBalance`) |
+| `Opening_Balance_Type` | string | no | `"Dr"` or `"Cr"` (also `OpeningBalanceType`) |
 | `BankDetails` | array | no | Bank account array |
-| `Aliases` | array | no | Alternate names |
+| `Aliases` | array | no | Array of `{"Alias": "..."}` objects |
 | `Description` | string | no | Description |
 | `Notes` | string | no | Internal notes |
 
@@ -298,46 +318,57 @@ Syncs Tally stock items (products/services). Auto-creates/updates a **Product** 
   "full_sync": false,
   "Data": [
     {
-      "ID": 201,
+      "TallyId": 201,
       "AlterID": 88,
       "Action": "Create",
       "Name": "30Mbps Lease Line",
-      "Description": "Dedicated internet lease line 30Mbps",
+      "Description": "Item desc",
       "Remarks": null,
-      "Aliases": [],
+      "Aliases": [
+        { "Alias": "30Mbps Lease Line" },
+        { "Alias": "Item Alias" }
+      ],
       "StockGroupID": 10,
       "StockGroupName": "Network Equipment",
       "StockCategoryID": 5,
-      "CategoryName": "Lease Line Services",
-      "UnitID": 3,
-      "UnitName": "Nos",
+      "Category": "Lease Line Services",
+      "UnitID": 234,
+      "Unit": "NOS",
       "AlternateUnit": null,
-      "Conversion": null,
+      "Conversion": 0,
       "Denominator": 1,
-      "IsGSTApplicable": "Yes",
-      "Taxability": "Taxable",
-      "CalculationType": "On Value",
-      "IGSTRate": 18,
-      "SGSTRate": 9,
-      "CGSTRate": 9,
-      "CessRate": 0,
-      "HSNCode": "998422",
-      "MRPRate": null,
+      "IsGSTApplicable": "Applicable",
+      "Taxablity": "Taxable",
+      "CalculationType": "",
+      "IGST_Rate": 18,
+      "SGST_Rate": 9,
+      "CGST_Rate": 9,
+      "CESS_Rate": 0,
+      "HSNCode": 998415,
+      "MRPRate": 0,
       "StandardCost": 0,
       "StandardPrice": 15000,
-      "OpeningBalance": 0,
-      "OpeningRate": 0,
-      "OpeningValue": 0,
-      "ClosingBalance": 0,
-      "ClosingRate": 0,
-      "ClosingValue": 0,
+      "Opening_Balance": 25,
+      "Opening_Rate": 12.00,
+      "Opening_Value": 300.00,
+      "Closing_Balance": 26,
+      "Closing_Rate": 93.02,
+      "Closing_Value": 2418.64,
       "CostingMethod": "FIFO",
       "IsBatchApplicable": "No",
       "IsExpiryDateApplicable": "No",
       "ReorderLevel": null,
       "ReorderQuantity": null,
       "MaximumQuantity": null,
-      "BatchAllocations": []
+      "BatchAllocations": [
+        {
+          "GodownName": "Main Location",
+          "GodownID": 99,
+          "OpeningBalnace": 25,
+          "Rate": 12,
+          "OpeningValue": 300
+        }
+      ]
     }
   ]
 }
@@ -346,39 +377,39 @@ Syncs Tally stock items (products/services). Auto-creates/updates a **Product** 
 | Field | Type | Required | Description |
 |---|---|---|---|
 | `full_sync` | boolean | no | Mark absent items inactive |
-| `ID` | integer | yes | Tally stock item ID |
+| `TallyId` | integer | yes | Tally stock item ID (also `ID`/`Id`) |
 | `AlterID` | integer | yes | Alter/version ID |
 | `Action` | string | no | `"Create"` or `"Delete"` |
 | `Name` | string | yes | Item name |
 | `Description` | string | no | Description |
 | `Remarks` | string | no | Remarks |
-| `Aliases` | array | no | Alternate names |
+| `Aliases` | array | no | Array of `{"Alias": "..."}` objects |
 | `StockGroupID` | integer | no | Tally stock group ID |
 | `StockGroupName` | string | no | Stock group name |
 | `StockCategoryID` | integer | no | Tally category ID |
-| `CategoryName` | string | no | Category name |
+| `Category` | string | no | Category name (also `CategoryName`) |
 | `UnitID` | integer | no | Unit of measure ID |
-| `UnitName` | string | no | Unit name e.g. `"Nos"`, `"Kgs"` |
+| `Unit` | string | no | Unit name e.g. `"NOS"`, `"KGS"` (also `UnitName`) |
 | `AlternateUnit` | string | no | Alternate unit |
 | `Conversion` | float | no | Conversion factor |
 | `Denominator` | integer | no | Denominator for conversion |
-| `IsGSTApplicable` | string | no | `"Yes"` / `"No"` |
-| `Taxability` | string | no | `"Taxable"`, `"Exempt"`, `"Nil Rated"` |
+| `IsGSTApplicable` | string | no | `"Applicable"` / `"Not Applicable"` (also `"Yes"` / `"No"`) |
+| `Taxablity` | string | no | `"Taxable"`, `"Exempt"`, `"Nil Rated"` — note Tally's spelling (also `Taxability`) |
 | `CalculationType` | string | no | GST calculation method |
-| `IGSTRate` | float | no | IGST % |
-| `SGSTRate` | float | no | SGST % |
-| `CGSTRate` | float | no | CGST % |
-| `CessRate` | float | no | Cess % |
-| `HSNCode` | string | no | HSN / SAC code |
+| `IGST_Rate` | float | no | IGST % (also `IGSTRate`) |
+| `SGST_Rate` | float | no | SGST % (also `SGSTRate`) |
+| `CGST_Rate` | float | no | CGST % (also `CGSTRate`) |
+| `CESS_Rate` | float | no | Cess % (also `CessRate`) |
+| `HSNCode` | string/integer | no | HSN / SAC code |
 | `MRPRate` | float | no | MRP |
 | `StandardCost` | float | no | Standard cost |
 | `StandardPrice` | float | no | Standard selling price |
-| `OpeningBalance` | float | no | Opening stock quantity |
-| `OpeningRate` | float | no | Opening rate |
-| `OpeningValue` | float | no | Opening value |
-| `ClosingBalance` | float | no | Closing stock quantity |
-| `ClosingRate` | float | no | Closing rate |
-| `ClosingValue` | float | no | Closing value |
+| `Opening_Balance` | float | no | Opening stock quantity (also `OpeningBalance`) |
+| `Opening_Rate` | float | no | Opening rate (also `OpeningRate`) |
+| `Opening_Value` | float | no | Opening value (also `OpeningValue`) |
+| `Closing_Balance` | float | no | Closing stock quantity (also `ClosingBalance`) |
+| `Closing_Rate` | float | no | Closing rate (also `ClosingRate`) |
+| `Closing_Value` | float | no | Closing value (also `ClosingValue`) |
 | `CostingMethod` | string | no | `"FIFO"`, `"Avg Cost"`, etc. |
 | `IsBatchApplicable` | string | no | `"Yes"` / `"No"` |
 | `IsExpiryDateApplicable` | string | no | `"Yes"` / `"No"` |
@@ -662,13 +693,14 @@ Every voucher object supports:
 | `AlterID` | integer | Alter/version ID |
 | `Action` | string | `"Create"` or `"Delete"` |
 | `VoucherType` | string | Set automatically by endpoint (`"Sales"`, `"Receipt"`, etc.) |
-| `VoucherNumber` | string | Voucher number (e.g. `"2024-25/001"`) |
-| `VoucherDate` | string | Date `"YYYY-MM-DD"` |
+| `VoucherNumber` | string | Voucher number (e.g. `"1"`, `"2024-25/001"`) |
+| `VoucherDate` | string | Date in `"YYYYMMDD"` format (also `"YYYY-MM-DD"`) |
 | `Reference` | string | Reference number |
 | `ReferenceDate` | string | Reference date |
 | `PartyName` | string | Party ledger name — resolved to `TallyLedger` FK |
-| `VoucherTotal` | float | Total voucher amount |
+| `Voucher_Total` | float | Total voucher amount (also `VoucherTotal`) |
 | `IsInvoice` | string | `"Yes"` / `"No"` |
+| `IsDeleted` | string | `"Yes"` / `"No"` — Tally deletion flag |
 | `PlaceOfSupply` | string | State / place of supply |
 | `DeliveryNoteNo` | string | Delivery note number |
 | `DeliveryNoteDate` | string | Delivery note date |
@@ -689,26 +721,26 @@ Every voucher object supports:
 | `BuyerGSTIN` | string | Buyer GST number |
 | `BuyerPinCode` | string | Buyer PIN |
 | `BuyerState` | string | Buyer state |
-| `BuyerCountry` | string | Buyer country |
+| `BuyerCountryName` | string | Buyer country (also `BuyerCountry`) |
 | `BuyerGSTRegistrationType` | string | GST reg type |
 | `BuyerEmail` | string | Buyer email |
 | `BuyerMobile` | string | Buyer mobile |
-| `BuyerAddress` | string | Buyer address |
+| `BuyerAddress` | array | Array of `{"BuyerAddress": "..."}` objects |
 | `ConsigneeName` | string | Consignee name |
 | `ConsigneeGSTIN` | string | Consignee GSTIN |
 | `ConsigneeTallyGroup` | string | Consignee group |
 | `ConsigneePinCode` | string | Consignee PIN |
 | `ConsigneeState` | string | Consignee state |
-| `ConsigneeCountry` | string | Consignee country |
+| `ConsigneeCountryName` | string | Consignee country (also `ConsigneeCountry`) |
 | `ConsigneeGSTRegistrationType` | string | Consignee GST reg type |
 | `IRN` | string | Invoice Reference Number (e-invoice) |
 | `AcknowledgementNo` | string | IRN acknowledgement number |
 | `AcknowledgementDate` | string | Acknowledgement date |
 | `QRCode` | string | QR code string |
 | `Narration` | string | Voucher narration |
-| `CostCentre` | string | Cost centre |
+| `VoucherCostCentre` | string | Cost centre (also `CostCentre`) |
 | `InventoryEntries` | array | Line items — see below |
-| `LedgerEntries` | array | Accounting entries — see below |
+| `ledgerentries` | array | Accounting entries — see below (also `LedgerEntries`) |
 
 ### InventoryEntries (line items)
 
@@ -735,19 +767,22 @@ Every voucher object supports:
 | `BatchAllocations` | array | Batch details |
 | `AccountingAllocations` | array | Accounting allocations |
 
-### LedgerEntries (accounting entries)
+### ledgerentries (accounting entries)
+
+The real connector sends this key as lowercase `ledgerentries`. `LedgerEntries` is also accepted.
 
 | Field | Type | Description |
 |---|---|---|
 | `LedgerName` | string | Ledger name — resolved to `TallyLedger` FK |
 | `LedgerGroup` | string | Ledger group |
-| `LedgerAmount` | float | Amount (positive = Dr, negative = Cr by convention) |
+| `LedgerAmount` | float | Amount |
 | `IsDeemedPositive` | string | `"Yes"` / `"No"` |
 | `IsPartyLedger` | string | `"Yes"` / `"No"` |
 | `IGSTRate` | string | IGST rate |
 | `HSNCode` | string | HSN code |
-| `CessRate` | string | Cess rate |
-| `BillsAllocation` | array | Bill-wise allocation details |
+| `Cess_Rate` | string | Cess rate (also `CessRate`) |
+| `BillsAllocation` | array | Bill-wise allocation details (agst ref / on account) |
+| `BankAllocationDetails` | array | Bank transfer details — stored alongside `BillsAllocation` |
 
 ---
 
@@ -760,61 +795,110 @@ Every voucher object supports:
 ```json
 {
   "full_sync": false,
-  "Data": [
+  "data": [
     {
       "MasterID": 5001,
       "AlterID": 300,
       "Action": "Create",
-      "VoucherNumber": "2024-25/INV/001",
-      "VoucherDate": "2024-04-01",
-      "PartyName": "BlueStar Technologies",
-      "VoucherTotal": 17700,
+      "VoucherNumber": "1",
+      "VoucherDate": "20250401",
+      "PartyName": "BLUE STAR LIMITED",
+      "VoucherType": "Sales",
+      "Voucher_Total": 35964.04,
       "IsInvoice": "Yes",
-      "PlaceOfSupply": "Karnataka",
-      "BuyerName": "BlueStar Technologies Pvt Ltd",
-      "BuyerGSTIN": "27AABCT1234A1Z5",
-      "BuyerState": "Karnataka",
-      "BuyerAddress": "123 MG Road, Bangalore",
-      "Narration": "Monthly lease line charges for April 2024",
-      "IRN": null,
-      "AcknowledgementNo": null,
-      "AcknowledgementDate": null,
-      "QRCode": null,
+      "IsDeleted": "No",
+      "PlaceOfSupply": "Odisha",
+      "BuyerName": "BLUE STAR LIMITED",
+      "BuyerAlias": "Ledger Alias",
+      "BuyerGSTIN": "21AAACB4487D1Z4",
+      "BuyerPinCode": "752101",
+      "BuyerState": "Odisha",
+      "BuyerCountryName": "India",
+      "BuyerGSTRegistrationType": "Regular",
+      "BuyerEmail": "abc@gmail.com",
+      "BuyerMobile": "9358444502",
+      "BuyerAddress": [{ "BuyerAddress": "" }],
+      "Narration": "",
+      "VoucherCostCentre": "",
       "InventoryEntries": [
         {
-          "StockItemName": "30Mbps Lease Line",
-          "HSNCode": "998422",
-          "Unit": "Nos",
+          "StockItemName": "Supply of Goods Transport Service",
+          "ItemCode": "",
+          "GroupName": "Primary",
+          "HSNCode": "996511",
+          "Unit": "Not Applicable",
           "IGSTRate": 18,
-          "ActualQty": 1,
-          "BilledQty": 1,
-          "Rate": 15000,
+          "CessRate": 0.00,
+          "IsDeemedPositive": "No",
+          "ActualQty": 0,
+          "BilledQty": 0,
+          "Rate": 0,
           "DiscountPercent": 0,
-          "Amount": 15000,
-          "TaxAmount": 2700
+          "Amount": 30478.00,
+          "TaxAmount": 5486.04,
+          "SalesLedger": "Transportation Charges",
+          "GodownName": "Main Location",
+          "BatchName": "Primary Batch",
+          "BatchAllocations": [
+            {
+              "BatchName": "Primary Batch",
+              "GodownName": "Main Location",
+              "ActualQty": 0,
+              "BilledQty": 0,
+              "Rate": 0,
+              "DiscountPercent": 0,
+              "Amount": 30478.00
+            }
+          ],
+          "AccountingAllocations": [
+            {
+              "LedgerName": "Transportation Charges",
+              "LedgerGroup": "Sales Accounts",
+              "IGSTRate": 0,
+              "Amount": 30478.00
+            }
+          ]
         }
       ],
-      "LedgerEntries": [
+      "ledgerentries": [
         {
-          "LedgerName": "BlueStar Technologies",
-          "LedgerGroup": "Sundry Debtors",
-          "LedgerAmount": 17700,
+          "LedgerName": "BLUE STAR LIMITED",
+          "LedgerAmount": 35964.04,
+          "LedgerGroup": "",
           "IsDeemedPositive": "Yes",
-          "IsPartyLedger": "Yes"
+          "IsPartyLedger": "Yes",
+          "IGSTRate": "",
+          "HSNCode": "",
+          "Cess_Rate": "",
+          "BillsAllocation": [
+            { "AgstType": "New Ref", "Reference": "1", "CreditPeriod": "120 Days", "Amount": -35964.04 }
+          ]
         },
         {
-          "LedgerName": "Sales - Lease Line",
-          "LedgerGroup": "Sales Accounts",
-          "LedgerAmount": -15000,
+          "LedgerName": "CGST OUTPUT",
+          "LedgerAmount": 2743.02,
+          "LedgerGroup": "",
           "IsDeemedPositive": "No",
-          "IsPartyLedger": "No"
+          "IsPartyLedger": "No",
+          "IGSTRate": "",
+          "HSNCode": "",
+          "Cess_Rate": "",
+          "BillsAllocation": [
+            { "AgstType": "On Account", "Reference": "", "CreditPeriod": "", "Amount": 2743.02 }
+          ]
         },
         {
-          "LedgerName": "IGST @18%",
-          "LedgerGroup": "Duties & Taxes",
-          "LedgerAmount": -2700,
+          "LedgerName": "SGST OUTPUT",
+          "LedgerAmount": 2743.02,
+          "LedgerGroup": "",
           "IsDeemedPositive": "No",
-          "IsPartyLedger": "No"
+          "IsPartyLedger": "No",
+          "IGSTRate": "",
+          "HSNCode": "",
+          "Cess_Rate": "",
+          "BillsAllocation": [
+            { "AgstType": "On Account", "Reference": "", "CreditPeriod": "", "Amount": 2743.02 }
+          ]
         }
       ]
     }
@@ -838,32 +922,42 @@ Purchase invoice. Stored in `tally_vouchers` with `voucher_type = "Purchase"`. N
 
 ```json
 {
-  "Data": [
+  "data": [
     {
       "MasterID": 6001,
       "AlterID": 410,
       "Action": "Create",
       "VoucherNumber": "PUR/2024-25/001",
-      "VoucherDate": "2024-04-05",
-      "PartyName": "Punjab National Bank",
-      "VoucherTotal": 50000,
+      "VoucherDate": "20240405",
+      "PartyName": "PUNJAB NATIONAL BANK",
+      "VoucherType": "Purchase",
+      "Voucher_Total": 50000.00,
       "IsInvoice": "Yes",
+      "IsDeleted": "No",
       "Narration": "Bandwidth purchase",
+      "VoucherCostCentre": "",
+      "BuyerAddress": [{ "BuyerAddress": "" }],
       "InventoryEntries": [],
-      "LedgerEntries": [
+      "ledgerentries": [
         {
-          "LedgerName": "Punjab National Bank",
-          "LedgerGroup": "Sundry Creditors",
+          "LedgerName": "PUNJAB NATIONAL BANK",
           "LedgerAmount": -50000,
+          "LedgerGroup": "",
           "IsDeemedPositive": "No",
-          "IsPartyLedger": "Yes"
+          "IsPartyLedger": "Yes",
+          "IGSTRate": "",
+          "HSNCode": "",
+          "Cess_Rate": ""
         },
         {
           "LedgerName": "Purchase - Bandwidth",
-          "LedgerGroup": "Purchase Accounts",
           "LedgerAmount": 50000,
+          "LedgerGroup": "",
           "IsDeemedPositive": "Yes",
-          "IsPartyLedger": "No"
+          "IsPartyLedger": "No",
+          "IGSTRate": "",
+          "HSNCode": "",
+          "Cess_Rate": ""
         }
       ]
     }
@@ -881,32 +975,42 @@ Credit note (sales return). `voucher_type = "CreditNote"`.
 
 ```json
 {
-  "Data": [
+  "data": [
     {
       "MasterID": 7001,
       "AlterID": 500,
       "Action": "Create",
       "VoucherNumber": "CN/2024-25/001",
-      "VoucherDate": "2024-04-10",
-      "PartyName": "BlueStar Technologies",
-      "VoucherTotal": 5900,
+      "VoucherDate": "20240410",
+      "PartyName": "BLUE STAR LIMITED",
+      "VoucherType": "Credit Note",
+      "Voucher_Total": 5900,
       "IsInvoice": "No",
+      "IsDeleted": "No",
       "Narration": "Partial credit for service downtime",
+      "VoucherCostCentre": "",
+      "BuyerAddress": [{ "BuyerAddress": "" }],
       "InventoryEntries": [],
-      "LedgerEntries": [
+      "ledgerentries": [
         {
-          "LedgerName": "BlueStar Technologies",
-          "LedgerGroup": "Sundry Debtors",
+          "LedgerName": "BLUE STAR LIMITED",
           "LedgerAmount": -5900,
+          "LedgerGroup": "",
           "IsDeemedPositive": "No",
-          "IsPartyLedger": "Yes"
+          "IsPartyLedger": "Yes",
+          "IGSTRate": "",
+          "HSNCode": "",
+          "Cess_Rate": ""
         },
         {
           "LedgerName": "Sales - Lease Line",
-          "LedgerGroup": "Sales Accounts",
           "LedgerAmount": 5000,
+          "LedgerGroup": "",
           "IsDeemedPositive": "Yes",
-          "IsPartyLedger": "No"
+          "IsPartyLedger": "No",
+          "IGSTRate": "",
+          "HSNCode": "",
+          "Cess_Rate": ""
         }
       ]
     }
@@ -930,34 +1034,59 @@ Receipt voucher — money received from party. `voucher_type = "Receipt"`.
 
 ```json
 {
-  "Data": [
+  "data": [
     {
-      "MasterID": 8001,
-      "AlterID": 601,
-      "Action": "Create",
-      "VoucherNumber": "RCT/2024-25/001",
-      "VoucherDate": "2024-04-15",
-      "PartyName": "BlueStar Technologies",
-      "VoucherTotal": 17700,
+      "MasterID": 13,
+      "AlterID": 35,
+      "Action": "Update",
+      "VoucherNumber": "3",
+      "VoucherDate": "20250502",
+      "PartyName": "LXPANTOS LOGISTIC SOLUTION INDIA PVT LTD",
+      "VoucherType": "Receipt",
+      "Voucher_Total": 1288538.00,
       "IsInvoice": "No",
-      "Narration": "Receipt against INV/001",
+      "IsDeleted": "No",
+      "Narration": "BEING AMOUNT RECEIVED",
+      "VoucherCostCentre": "",
+      "BuyerAddress": [{ "BuyerAddress": "" }],
       "InventoryEntries": [],
-      "LedgerEntries": [
+      "ledgerentries": [
         {
-          "LedgerName": "HDFC Bank",
-          "LedgerGroup": "Bank Accounts",
-          "LedgerAmount": 17700,
-          "IsDeemedPositive": "Yes",
-          "IsPartyLedger": "No"
-        },
-        {
-          "LedgerName": "BlueStar Technologies",
-          "LedgerGroup": "Sundry Debtors",
-          "LedgerAmount": -17700,
+          "LedgerName": "LXPANTOS LOGISTIC SOLUTION INDIA PVT LTD",
+          "LedgerAmount": 1288538,
+          "LedgerGroup": "",
           "IsDeemedPositive": "No",
           "IsPartyLedger": "Yes",
+          "IGSTRate": "",
+          "HSNCode": "",
+          "Cess_Rate": "",
           "BillsAllocation": [
-            { "Name": "2024-25/INV/001", "Amount": 17700 }
+            { "AgstType": "Agst Ref", "Reference": "3", "CreditPeriod": "", "Amount": 1288538 }
+          ]
+        },
+        {
+          "LedgerName": "PUNJAB NATIONAL BANK STARLINE EXPRESS CC ACCOUNT (19194025001909)",
+          "LedgerAmount": 1288538,
+          "LedgerGroup": "",
+          "IsDeemedPositive": "Yes",
+          "IsPartyLedger": "Yes",
+          "IGSTRate": "",
+          "HSNCode": "",
+          "Cess_Rate": "",
+          "BankAllocationDetails": [
+            {
+              "Date": "2025-05-02",
+              "InstrumentDate": "2025-05-02",
+              "TRANSACTIONTYPE": "Same Bank Transfer",
+              "IFSCODE": "",
+              "BANKNAME": "",
+              "ACCOUNTNUMBER": "",
+              "PAYMENTFAVOURING": "LXPANTOS LOGISTIC SOLUTION INDIA PVT LTD",
+              "TRANSFERMODE": "",
+              "INSTRUMENTNUMBER": "",
+              "AMOUNT": "12,88,538.00",
+              "BankersDate": ""
+            }
           ]
         }
       ]
@@ -976,32 +1105,42 @@ Payment voucher — money paid to party. `voucher_type = "Payment"`.
 
 ```json
 {
-  "Data": [
+  "data": [
     {
-      "MasterID": 9001,
-      "AlterID": 700,
-      "Action": "Create",
-      "VoucherNumber": "PAY/2024-25/001",
-      "VoucherDate": "2024-04-20",
-      "PartyName": "Punjab National Bank",
-      "VoucherTotal": 50000,
+      "MasterID": 25,
+      "AlterID": 30,
+      "Action": "Update",
+      "VoucherNumber": "7",
+      "VoucherDate": "20250401",
+      "PartyName": "Cash",
+      "VoucherType": "Payment",
+      "Voucher_Total": 10500.00,
       "IsInvoice": "No",
-      "Narration": "Payment for bandwidth purchase",
+      "IsDeleted": "No",
+      "Narration": "BEING CASH PAID FOR GROCERY MESS",
+      "VoucherCostCentre": "",
+      "BuyerAddress": [{ "BuyerAddress": "" }],
       "InventoryEntries": [],
-      "LedgerEntries": [
+      "ledgerentries": [
         {
-          "LedgerName": "Punjab National Bank",
-          "LedgerGroup": "Sundry Creditors",
-          "LedgerAmount": 50000,
+          "LedgerName": "STAFF FOODING STARLINE CUTTACK BRANCH",
+          "LedgerAmount": 10500,
+          "LedgerGroup": "",
           "IsDeemedPositive": "Yes",
-          "IsPartyLedger": "Yes"
+          "IsPartyLedger": "No",
+          "IGSTRate": "",
+          "HSNCode": "",
+          "Cess_Rate": "0"
         },
         {
-          "LedgerName": "HDFC Bank",
-          "LedgerGroup": "Bank Accounts",
-          "LedgerAmount": -50000,
+          "LedgerName": "Cash",
+          "LedgerAmount": 10500,
+          "LedgerGroup": "",
           "IsDeemedPositive": "No",
-          "IsPartyLedger": "No"
+          "IsPartyLedger": "Yes",
+          "IGSTRate": "",
+          "HSNCode": "",
+          "Cess_Rate": ""
         }
       ]
     }
@@ -1019,31 +1158,57 @@ Contra voucher — inter-bank / cash-bank transfers. `voucher_type = "Contra"`.
 
 ```json
 {
-  "Data": [
+  "data": [
     {
-      "MasterID": 10001,
-      "AlterID": 800,
+      "MasterID": 27,
+      "AlterID": 29,
       "Action": "Create",
-      "VoucherNumber": "CON/2024-25/001",
-      "VoucherDate": "2024-04-25",
-      "VoucherTotal": 100000,
+      "VoucherNumber": "2",
+      "VoucherDate": "20250402",
+      "PartyName": "PUNJAB NATIONAL BANK STARLINE EXPRESS CC ACCOUNT (19194025001909)",
+      "VoucherType": "Contra",
+      "Voucher_Total": 50000.00,
       "IsInvoice": "No",
-      "Narration": "Transfer from cash to HDFC bank",
+      "IsDeleted": "No",
+      "Narration": "BEING AMOUNT CASH WDL",
+      "VoucherCostCentre": "",
+      "BuyerAddress": [{ "BuyerAddress": "" }],
       "InventoryEntries": [],
-      "LedgerEntries": [
+      "ledgerentries": [
         {
-          "LedgerName": "HDFC Bank",
-          "LedgerGroup": "Bank Accounts",
-          "LedgerAmount": 100000,
-          "IsDeemedPositive": "Yes",
-          "IsPartyLedger": "No"
+          "LedgerName": "PUNJAB NATIONAL BANK STARLINE EXPRESS CC ACCOUNT (19194025001909)",
+          "LedgerAmount": 50000,
+          "LedgerGroup": "",
+          "IsDeemedPositive": "No",
+          "IsPartyLedger": "Yes",
+          "IGSTRate": "",
+          "HSNCode": "",
+          "Cess_Rate": "",
+          "BankAllocationDetails": [
+            {
+              "Date": "2025-04-02",
+              "InstrumentDate": "2025-04-02",
+              "TRANSACTIONTYPE": "Same Bank Transfer",
+              "IFSCODE": "",
+              "BANKNAME": "",
+              "ACCOUNTNUMBER": "",
+              "PAYMENTFAVOURING": "Self",
+              "TRANSFERMODE": "",
+              "INSTRUMENTNUMBER": "",
+              "AMOUNT": "50,000.00",
+              "BankersDate": ""
+            }
+          ]
         },
         {
           "LedgerName": "Cash",
-          "LedgerGroup": "Cash-in-Hand",
-          "LedgerAmount": -100000,
-          "IsDeemedPositive": "No",
-          "IsPartyLedger": "No"
+          "LedgerAmount": 50000,
+          "LedgerGroup": "",
+          "IsDeemedPositive": "Yes",
+          "IsPartyLedger": "Yes",
+          "IGSTRate": "",
+          "HSNCode": "",
+          "Cess_Rate": ""
         }
       ]
     }
@@ -1061,31 +1226,48 @@ Journal voucher — adjustment entries. `voucher_type = "Journal"`.
 
 ```json
 {
-  "Data": [
+  "data": [
     {
-      "MasterID": 11001,
-      "AlterID": 900,
-      "Action": "Create",
-      "VoucherNumber": "JV/2024-25/001",
-      "VoucherDate": "2024-03-31",
-      "VoucherTotal": 12000,
+      "MasterID": 17,
+      "AlterID": 38,
+      "Action": "Update",
+      "VoucherNumber": "5",
+      "VoucherDate": "20250401",
+      "PartyName": "",
+      "VoucherType": "Journal",
+      "Voucher_Total": 15000.00,
       "IsInvoice": "No",
-      "Narration": "Depreciation for FY 2024-25",
+      "IsDeleted": "No",
+      "Narration": "BEING DAILY WAGES FOR THE MONTH OF APRIL-25",
+      "VoucherCostCentre": "",
+      "BuyerAddress": [{ "BuyerAddress": "" }],
       "InventoryEntries": [],
-      "LedgerEntries": [
+      "ledgerentries": [
         {
-          "LedgerName": "Depreciation",
-          "LedgerGroup": "Indirect Expenses",
-          "LedgerAmount": 12000,
+          "LedgerName": "Daily Wages",
+          "LedgerAmount": 15000,
+          "LedgerGroup": "",
           "IsDeemedPositive": "Yes",
-          "IsPartyLedger": "No"
+          "IsPartyLedger": "No",
+          "IGSTRate": "",
+          "HSNCode": "",
+          "Cess_Rate": "",
+          "BillsAllocation": [
+            { "AgstType": "On Account", "Reference": "", "CreditPeriod": "", "Amount": -15000 }
+          ]
         },
         {
-          "LedgerName": "Fixed Assets",
-          "LedgerGroup": "Fixed Assets",
-          "LedgerAmount": -12000,
+          "LedgerName": "SATYAJIT DAS",
+          "LedgerAmount": 15000,
+          "LedgerGroup": "",
           "IsDeemedPositive": "No",
-          "IsPartyLedger": "No"
+          "IsPartyLedger": "No",
+          "IGSTRate": "",
+          "HSNCode": "",
+          "Cess_Rate": "",
+          "BillsAllocation": [
+            { "AgstType": "On Account", "Reference": "", "CreditPeriod": "", "Amount": 15000 }
+          ]
         }
       ]
     }
@@ -1101,7 +1283,7 @@ To soft-delete a voucher, send `"Action": "Delete"` with the same `MasterID`:
 
 ```json
 {
-  "Data": [
+  "data": [
     {
       "MasterID": 5001,
       "AlterID": 301,

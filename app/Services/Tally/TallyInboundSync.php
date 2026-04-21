@@ -4,6 +4,7 @@ namespace App\Services\Tally;
 
 use App\Models\Client;
 use App\Models\Invoice;
+use App\Models\InvoiceItem;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Models\Product;
@@ -29,7 +30,7 @@ class TallyInboundSync
         try {
             foreach ($items as $raw) {
                 $item = $this->strip($raw);
-                $tallyId = (int) ($item['ID'] ?? $item['Id'] ?? 0);
+                $tallyId = (int) ($item['TallyId'] ?? $item['ID'] ?? $item['Id'] ?? 0);
                 if (!$tallyId) { $log->records_failed++; continue; }
 
                 $alterId = (int) ($item['AlterID'] ?? $item['AlterId'] ?? 0);
@@ -53,7 +54,7 @@ class TallyInboundSync
                     'alter_id'         => $alterId,
                     'action'           => $action,
                     'name'             => $item['Name'] ?? '',
-                    'under_id'         => isset($item['UnderID']) ? (int) $item['UnderID'] : null,
+                    'under_id'         => isset($item['UnderID']) ? (int) $item['UnderID'] : (isset($item['UnderId']) ? (int) $item['UnderId'] : null),
                     'under_name'       => $item['UnderName'] ?? null,
                     'nature_of_group'  => $item['NatureOfGroup'] ?? null,
                     'is_revenue'       => $this->parseBool($item['IsRevenue'] ?? null),
@@ -83,7 +84,7 @@ class TallyInboundSync
             foreach (array_chunk($items, 250) as $chunk) {
             foreach ($chunk as $raw) {
                 $item = $this->strip($raw);
-                $tallyId = (int) ($item['ID'] ?? $item['Id'] ?? 0);
+                $tallyId = (int) ($item['TallyId'] ?? $item['ID'] ?? $item['Id'] ?? 0);
                 if (!$tallyId) { $log->records_failed++; continue; }
 
                 $seenIds[] = $tallyId;
@@ -102,7 +103,7 @@ class TallyInboundSync
                     continue;
                 }
 
-                $groupName  = $item['GroupName'] ?? null;
+                $groupName  = $item['Group'] ?? $item['GroupName'] ?? null;
                 $parentGroup = $item['ParentGroup'] ?? null;
                 $category   = $this->deriveCategory($groupName, $parentGroup);
 
@@ -118,27 +119,27 @@ class TallyInboundSync
                     'is_bill_wise_on'            => $this->parseBool($item['IsBillWiseOn'] ?? null) ?? false,
                     'inventory_affected'         => $this->parseBool($item['InventoryAffected'] ?? null) ?? false,
                     'is_cost_centre_applicable'  => $this->parseBool($item['IsCostCentreApplicable'] ?? null) ?? false,
-                    'gstin_number'               => $item['GSTINNumber'] ?? null,
-                    'pan_number'                 => $item['PANNumber'] ?? null,
-                    'tan_number'                 => $item['TANNumber'] ?? null,
-                    'gst_type'                   => $item['GSTType'] ?? null,
+                    'gstin_number'               => $item['GSTIN_Number'] ?? $item['GSTINNumber'] ?? null,
+                    'pan_number'                 => $item['PAN_Number'] ?? $item['PANNumber'] ?? null,
+                    'tan_number'                 => $item['TAN_Number'] ?? $item['TANNumber'] ?? null,
+                    'gst_type'                   => $item['GST_Type'] ?? $item['GSTType'] ?? null,
                     'is_rcm_applicable'          => $this->parseBool($item['IsRCMApplicable'] ?? null) ?? false,
                     'mailing_name'               => $item['MailingName'] ?? null,
-                    'mobile_number'              => $item['MobileNumber'] ?? null,
+                    'mobile_number'              => $item['Mobile_Number'] ?? $item['MobileNumber'] ?? null,
                     'contact_person'             => $item['ContactPerson'] ?? null,
-                    'contact_person_email'       => $item['ContactPersonEmail'] ?? null,
-                    'contact_person_email_cc'    => $item['ContactPersonEmailCC'] ?? null,
-                    'contact_person_fax'         => $item['ContactPersonFax'] ?? null,
-                    'contact_person_website'     => $item['ContactPersonWebsite'] ?? null,
-                    'contact_person_mobile'      => $item['ContactPersonMobile'] ?? null,
-                    'addresses'                  => $item['Addresses'] ?? null,
+                    'contact_person_email'       => $item['ContactPerson_Email'] ?? $item['ContactPersonEmail'] ?? null,
+                    'contact_person_email_cc'    => $item['ContactPerson_EmailCC'] ?? $item['ContactPersonEmailCC'] ?? null,
+                    'contact_person_fax'         => $item['ContactPerson_Fax'] ?? $item['ContactPersonFax'] ?? null,
+                    'contact_person_website'     => $item['ContactPerson_Website'] ?? $item['ContactPersonWebsite'] ?? null,
+                    'contact_person_mobile'      => $item['ContactPerson_Mobile'] ?? $item['ContactPersonMobile'] ?? null,
+                    'addresses'                  => $item['LedgerAddress'] ?? $item['Addresses'] ?? null,
                     'state_name'                 => $item['StateName'] ?? null,
                     'country_name'               => $item['CountryName'] ?? null,
                     'pin_code'                   => $item['PinCode'] ?? null,
                     'credit_period'              => isset($item['CreditPeriod']) ? (int) $item['CreditPeriod'] : null,
                     'credit_limit'               => isset($item['CreditLimit']) ? (float) $item['CreditLimit'] : null,
-                    'opening_balance'            => isset($item['OpeningBalance']) ? (float) $item['OpeningBalance'] : null,
-                    'opening_balance_type'       => $item['OpeningBalanceType'] ?? null,
+                    'opening_balance'            => isset($item['Opening_Balance']) ? (float) $item['Opening_Balance'] : (isset($item['OpeningBalance']) ? (float) $item['OpeningBalance'] : null),
+                    'opening_balance_type'       => $item['Opening_Balance_Type'] ?? $item['OpeningBalanceType'] ?? null,
                     'bank_details'               => $item['BankDetails'] ?? null,
                     'aliases'                    => $item['Aliases'] ?? null,
                     'description'                => $item['Description'] ?? null,
@@ -181,7 +182,7 @@ class TallyInboundSync
         try {
             foreach ($items as $raw) {
                 $item = $this->strip($raw);
-                $tallyId = (int) ($item['ID'] ?? $item['Id'] ?? 0);
+                $tallyId = (int) ($item['TallyId'] ?? $item['ID'] ?? $item['Id'] ?? 0);
                 if (!$tallyId) { $log->records_failed++; continue; }
 
                 $alterId  = (int) ($item['AlterID'] ?? $item['AlterId'] ?? 0);
@@ -228,7 +229,7 @@ class TallyInboundSync
         try {
             foreach ($items as $raw) {
                 $item    = $this->strip($raw);
-                $tallyId = (int) ($item['ID'] ?? $item['Id'] ?? 0);
+                $tallyId = (int) ($item['TallyId'] ?? $item['ID'] ?? $item['Id'] ?? 0);
                 if (!$tallyId) { $log->records_failed++; continue; }
 
                 $alterId  = (int) ($item['AlterID'] ?? $item['AlterId'] ?? 0);
@@ -275,7 +276,7 @@ class TallyInboundSync
             foreach (array_chunk($items, 250) as $chunk) {
             foreach ($chunk as $raw) {
                 $item    = $this->strip($raw);
-                $tallyId = (int) ($item['ID'] ?? $item['Id'] ?? 0);
+                $tallyId = (int) ($item['TallyId'] ?? $item['ID'] ?? $item['Id'] ?? 0);
                 if (!$tallyId) { $log->records_failed++; continue; }
 
                 $seenIds[] = $tallyId;
@@ -304,29 +305,29 @@ class TallyInboundSync
                     'stock_group_id'          => isset($item['StockGroupID']) ? (int) $item['StockGroupID'] : null,
                     'stock_group_name'        => $item['StockGroupName'] ?? null,
                     'stock_category_id'       => isset($item['StockCategoryID']) ? (int) $item['StockCategoryID'] : null,
-                    'category_name'           => $item['CategoryName'] ?? null,
+                    'category_name'           => $item['Category'] ?? $item['CategoryName'] ?? null,
                     'unit_id'                 => isset($item['UnitID']) ? (int) $item['UnitID'] : null,
-                    'unit_name'               => $item['UnitName'] ?? null,
+                    'unit_name'               => $item['Unit'] ?? $item['UnitName'] ?? null,
                     'alternate_unit'          => $item['AlternateUnit'] ?? null,
                     'conversion'              => isset($item['Conversion']) ? (float) $item['Conversion'] : null,
                     'denominator'             => isset($item['Denominator']) ? (int) $item['Denominator'] : 1,
                     'is_gst_applicable'       => $this->parseBool($item['IsGSTApplicable'] ?? null) ?? false,
-                    'taxability'              => $item['Taxability'] ?? null,
+                    'taxability'              => $item['Taxablity'] ?? $item['Taxability'] ?? null,
                     'calculation_type'        => $item['CalculationType'] ?? null,
-                    'igst_rate'               => (float) ($item['IGSTRate'] ?? 0),
-                    'sgst_rate'               => (float) ($item['SGSTRate'] ?? 0),
-                    'cgst_rate'               => (float) ($item['CGSTRate'] ?? 0),
-                    'cess_rate'               => (float) ($item['CessRate'] ?? 0),
+                    'igst_rate'               => (float) ($item['IGST_Rate'] ?? $item['IGSTRate'] ?? 0),
+                    'sgst_rate'               => (float) ($item['SGST_Rate'] ?? $item['SGSTRate'] ?? 0),
+                    'cgst_rate'               => (float) ($item['CGST_Rate'] ?? $item['CGSTRate'] ?? 0),
+                    'cess_rate'               => (float) ($item['CESS_Rate'] ?? $item['CessRate'] ?? 0),
                     'hsn_code'                => $item['HSNCode'] ?? null,
                     'mrp_rate'                => isset($item['MRPRate']) ? (float) $item['MRPRate'] : null,
                     'standard_cost'           => isset($item['StandardCost']) ? (float) $item['StandardCost'] : null,
                     'standard_price'          => isset($item['StandardPrice']) ? (float) $item['StandardPrice'] : null,
-                    'opening_balance'         => (float) ($item['OpeningBalance'] ?? 0),
-                    'opening_rate'            => (float) ($item['OpeningRate'] ?? 0),
-                    'opening_value'           => (float) ($item['OpeningValue'] ?? 0),
-                    'closing_balance'         => (float) ($item['ClosingBalance'] ?? 0),
-                    'closing_rate'            => (float) ($item['ClosingRate'] ?? 0),
-                    'closing_value'           => (float) ($item['ClosingValue'] ?? 0),
+                    'opening_balance'         => (float) ($item['Opening_Balance'] ?? $item['OpeningBalance'] ?? 0),
+                    'opening_rate'            => (float) ($item['Opening_Rate'] ?? $item['OpeningRate'] ?? 0),
+                    'opening_value'           => (float) ($item['Opening_Value'] ?? $item['OpeningValue'] ?? 0),
+                    'closing_balance'         => (float) ($item['Closing_Balance'] ?? $item['ClosingBalance'] ?? 0),
+                    'closing_rate'            => (float) ($item['Closing_Rate'] ?? $item['ClosingRate'] ?? 0),
+                    'closing_value'           => (float) ($item['Closing_Value'] ?? $item['ClosingValue'] ?? 0),
                     'costing_method'          => $item['CostingMethod'] ?? null,
                     'is_batch_applicable'     => $this->parseBool($item['IsBatchApplicable'] ?? null) ?? false,
                     'is_expiry_date_applicable' => $this->parseBool($item['IsExpiryDateApplicable'] ?? null) ?? false,
@@ -415,7 +416,7 @@ class TallyInboundSync
                     'reference_date'          => $item['ReferenceDate'] ?? null,
                     'party_name'              => $item['PartyName'] ?? null,
                     'party_tally_ledger_id'   => $partyLedgerId,
-                    'voucher_total'           => isset($item['VoucherTotal']) ? (float) $item['VoucherTotal'] : null,
+                    'voucher_total'           => isset($item['Voucher_Total']) ? (float) $item['Voucher_Total'] : (isset($item['VoucherTotal']) ? (float) $item['VoucherTotal'] : null),
                     'is_invoice'              => $this->parseBool($item['IsInvoice'] ?? null) ?? false,
                     'is_deleted'              => false,
                     'place_of_supply'         => $item['PlaceOfSupply'] ?? null,
@@ -438,7 +439,7 @@ class TallyInboundSync
                     'buyer_gstin'             => $item['BuyerGSTIN'] ?? null,
                     'buyer_pin_code'          => $item['BuyerPinCode'] ?? null,
                     'buyer_state'             => $item['BuyerState'] ?? null,
-                    'buyer_country'           => $item['BuyerCountry'] ?? null,
+                    'buyer_country'           => $item['BuyerCountryName'] ?? $item['BuyerCountry'] ?? null,
                     'buyer_gst_registration_type' => $item['BuyerGSTRegistrationType'] ?? null,
                     'buyer_email'             => $item['BuyerEmail'] ?? null,
                     'buyer_mobile'            => $item['BuyerMobile'] ?? null,
@@ -448,14 +449,14 @@ class TallyInboundSync
                     'consignee_tally_group'   => $item['ConsigneeTallyGroup'] ?? null,
                     'consignee_pin_code'      => $item['ConsigneePinCode'] ?? null,
                     'consignee_state'         => $item['ConsigneeState'] ?? null,
-                    'consignee_country'       => $item['ConsigneeCountry'] ?? null,
+                    'consignee_country'       => $item['ConsigneeCountryName'] ?? $item['ConsigneeCountry'] ?? null,
                     'consignee_gst_registration_type' => $item['ConsigneeGSTRegistrationType'] ?? null,
                     'irn'                     => $item['IRN'] ?? null,
                     'acknowledgement_no'      => $item['AcknowledgementNo'] ?? null,
                     'acknowledgement_date'    => $item['AcknowledgementDate'] ?? null,
                     'qr_code'                 => $item['QRCode'] ?? null,
                     'narration'               => $item['Narration'] ?? null,
-                    'cost_centre'             => $item['CostCentre'] ?? null,
+                    'cost_centre'             => $item['VoucherCostCentre'] ?? $item['CostCentre'] ?? null,
                     'is_active'               => true,
                     'last_synced_at'          => now(),
                 ];
@@ -477,7 +478,7 @@ class TallyInboundSync
                         TallyVoucherInventoryEntry::withoutGlobalScope('tenant')->where('tally_voucher_id', $voucher->id)->delete();
                         TallyVoucherLedgerEntry::withoutGlobalScope('tenant')->where('tally_voucher_id', $voucher->id)->delete();
 
-                        foreach ($item['InventoryEntries'] ?? [] as $ie) {
+                        foreach ($item['InventoryEntries'] ?? $item['inventoryentries'] ?? [] as $ie) {
                             $ie = $this->strip($ie);
                             $stockItemId = null;
                             if (!empty($ie['StockItemName'])) {
@@ -530,7 +531,7 @@ class TallyInboundSync
                             ]);
                         }
 
-                        foreach ($item['LedgerEntries'] ?? [] as $le) {
+                        foreach ($item['LedgerEntries'] ?? $item['ledgerentries'] ?? [] as $le) {
                             $le = $this->strip($le);
                             $ledgerId = null;
                             if (!empty($le['LedgerName'])) {
@@ -550,8 +551,8 @@ class TallyInboundSync
                                 'is_party_ledger'    => $this->parseBool($le['IsPartyLedger'] ?? null) ?? false,
                                 'igst_rate'          => $le['IGSTRate'] ?? null,
                                 'hsn_code'           => $le['HSNCode'] ?? null,
-                                'cess_rate'          => $le['CessRate'] ?? null,
-                                'bills_allocation'   => $le['BillsAllocation'] ?? null,
+                                'cess_rate'          => $le['Cess_Rate'] ?? $le['CessRate'] ?? null,
+                                'bills_allocation'   => $le['BillsAllocation'] ?? $le['BankAllocationDetails'] ?? null,
                             ]);
                         }
                     });
@@ -591,7 +592,7 @@ class TallyInboundSync
         try {
             foreach ($items as $raw) {
                 $item    = $this->strip($raw);
-                $tallyId = (int) ($item['ID'] ?? $item['Id'] ?? 0);
+                $tallyId = (int) ($item['TallyId'] ?? $item['ID'] ?? $item['Id'] ?? 0);
                 if (!$tallyId) { $log->records_failed++; continue; }
 
                 $alterId  = (int) ($item['AlterID'] ?? $item['AlterId'] ?? 0);
@@ -647,8 +648,8 @@ class TallyInboundSync
     {
         if (is_null($v))    return null;
         if (is_bool($v))    return $v;
-        if ($v === 'Yes' || $v === 'true' || $v === '1') return true;
-        if ($v === 'No'  || $v === 'false'|| $v === '0') return false;
+        if ($v === 'Yes' || $v === 'Applicable' || $v === 'true' || $v === '1') return true;
+        if ($v === 'No'  || $v === 'Not Applicable' || $v === 'false'|| $v === '0') return false;
         return null;
     }
 
@@ -811,7 +812,9 @@ class TallyInboundSync
                         'phone'     => $voucher->buyer_mobile,
                         'company'   => $voucher->party_name,
                         'tax_id'    => $voucher->buyer_gstin,
-                        'address'   => $voucher->buyer_address,
+                        'address'   => is_array($voucher->buyer_address)
+                            ? collect($voucher->buyer_address)->pluck('BuyerAddress')->filter()->implode(', ')
+                            : $voucher->buyer_address,
                         'tenant_id' => $tenantId,
                     ]
                 );
@@ -839,6 +842,44 @@ class TallyInboundSync
             );
 
         $voucher->update(['mapped_invoice_id' => $invoice->id]);
+
+        // Sync invoice line items from inventory entries
+        InvoiceItem::where('invoice_id', $invoice->id)->delete();
+
+        $entries = TallyVoucherInventoryEntry::withoutGlobalScope('tenant')
+            ->where('tally_voucher_id', $voucher->id)
+            ->get();
+
+        foreach ($entries as $entry) {
+            $productId = null;
+            if ($entry->tally_stock_item_id) {
+                $productId = TallyStockItem::withoutGlobalScope('tenant')
+                    ->where('id', $entry->tally_stock_item_id)
+                    ->value('mapped_product_id');
+            }
+            if (!$productId && $entry->stock_item_name) {
+                $productId = Product::withoutGlobalScope('tenant')
+                    ->where('tenant_id', $tenantId)
+                    ->where('name', $entry->stock_item_name)
+                    ->value('id');
+            }
+
+            $qty       = max((float) $entry->billed_qty, (float) $entry->actual_qty, 1);
+            $unitPrice = $qty > 0 ? ((float) $entry->amount / $qty) : (float) $entry->amount;
+            $taxAmt    = (float) $entry->tax_amount;
+
+            InvoiceItem::create([
+                'invoice_id'  => $invoice->id,
+                'product_id'  => $productId,
+                'description' => $entry->stock_item_name,
+                'unit'        => $entry->unit,
+                'quantity'    => $qty,
+                'unit_price'  => $unitPrice,
+                'tax_rate'    => (float) ($entry->igst_rate ?? 0),
+                'tax_amount'  => $taxAmt,
+                'total'       => (float) $entry->amount + $taxAmt,
+            ]);
+        }
     }
 
     private function autoMapPurchaseVoucher(TallyVoucher $voucher, string $tenantId): void
