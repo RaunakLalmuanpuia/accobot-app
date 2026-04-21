@@ -43,7 +43,7 @@ class TallyInboundSync
 
                 $action = $item['Action'] ?? 'Create';
                 if ($action === 'Delete') {
-                    if ($existing) { $existing->update(['is_active' => false]); $log->records_updated++; }
+                    if ($existing) { $existing->update(['is_active' => false]); $log->records_deleted++; }
                     continue;
                 }
 
@@ -96,7 +96,7 @@ class TallyInboundSync
 
                 $action = $item['Action'] ?? 'Create';
                 if ($action === 'Delete') {
-                    if ($existing) { $existing->update(['is_active' => false]); $log->records_updated++; }
+                    if ($existing) { $existing->update(['is_active' => false]); $log->records_deleted++; }
                     continue;
                 }
 
@@ -189,7 +189,7 @@ class TallyInboundSync
 
                 $action = $item['Action'] ?? 'Create';
                 if ($action === 'Delete') {
-                    if ($existing) { $existing->update(['is_active' => false]); $log->records_updated++; }
+                    if ($existing) { $existing->update(['is_active' => false]); $log->records_deleted++; }
                     continue;
                 }
 
@@ -235,7 +235,7 @@ class TallyInboundSync
 
                 $action = $item['Action'] ?? 'Create';
                 if ($action === 'Delete') {
-                    if ($existing) { $existing->update(['is_active' => false]); $log->records_updated++; }
+                    if ($existing) { $existing->update(['is_active' => false]); $log->records_deleted++; }
                     continue;
                 }
 
@@ -282,7 +282,7 @@ class TallyInboundSync
 
                 $action = $item['Action'] ?? 'Create';
                 if ($action === 'Delete') {
-                    if ($existing) { $existing->update(['is_active' => false]); $log->records_updated++; }
+                    if ($existing) { $existing->update(['is_active' => false]); $log->records_deleted++; }
                     continue;
                 }
 
@@ -381,7 +381,7 @@ class TallyInboundSync
 
                 $action = $item['Action'] ?? 'Create';
                 if ($action === 'Delete') {
-                    if ($existing) { $existing->update(['is_active' => false, 'is_deleted' => true]); $log->records_updated++; }
+                    if ($existing) { $existing->update(['is_active' => false, 'is_deleted' => true]); $log->records_deleted++; }
                     continue;
                 }
 
@@ -593,7 +593,7 @@ class TallyInboundSync
 
                 $action = $item['Action'] ?? 'Create';
                 if ($action === 'Delete') {
-                    if ($existing) { $existing->update(['is_active' => false]); $log->records_updated++; }
+                    if ($existing) { $existing->update(['is_active' => false]); $log->records_deleted++; }
                     continue;
                 }
 
@@ -636,7 +636,7 @@ class TallyInboundSync
 
                 $action = $item['Action'] ?? 'Create';
                 if ($action === 'Delete') {
-                    if ($existing) { $existing->update(['is_active' => false]); $log->records_updated++; }
+                    if ($existing) { $existing->update(['is_active' => false]); $log->records_deleted++; }
                     continue;
                 }
 

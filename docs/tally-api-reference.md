@@ -104,7 +104,7 @@ Syncs Tally ledger groups (account group hierarchy).
 **Response**
 
 ```json
-{ "status": "success", "created": 1, "updated": 0, "skipped": 0, "failed": 0 }
+{ "status": "success", "created": 1, "updated": 0, "deleted": 0, "skipped": 0, "failed": 0 }
 ```
 
 ---
@@ -224,7 +224,7 @@ Syncs Tally ledgers (accounts). Debtors → auto-creates/updates **Client**. Cre
 **Response**
 
 ```json
-{ "status": "success", "created": 1, "updated": 0, "skipped": 0, "failed": 0 }
+{ "status": "success", "created": 1, "updated": 0, "deleted": 0, "skipped": 0, "failed": 0 }
 ```
 
 ---
@@ -269,7 +269,7 @@ Syncs Tally stock groups.
 **Response**
 
 ```json
-{ "status": "success", "created": 1, "updated": 0, "skipped": 0, "failed": 0 }
+{ "status": "success", "created": 1, "updated": 0, "deleted": 0, "skipped": 0, "failed": 0 }
 ```
 
 ---
@@ -310,7 +310,7 @@ Syncs Tally stock categories.
 **Response**
 
 ```json
-{ "status": "success", "created": 1, "updated": 0, "skipped": 0, "failed": 0 }
+{ "status": "success", "created": 1, "updated": 0, "deleted": 0, "skipped": 0, "failed": 0 }
 ```
 
 ---
@@ -348,7 +348,7 @@ Syncs Tally godowns (warehouses / storage locations).
 **Response**
 
 ```json
-{ "status": "success", "created": 1, "updated": 0, "skipped": 0, "failed": 0 }
+{ "status": "success", "created": 1, "updated": 0, "deleted": 0, "skipped": 0, "failed": 0 }
 ```
 
 ---
@@ -467,7 +467,7 @@ Syncs Tally stock items (products/services). Auto-creates/updates a **Product** 
 **Response**
 
 ```json
-{ "status": "success", "created": 1, "updated": 0, "skipped": 0, "failed": 0 }
+{ "status": "success", "created": 1, "updated": 0, "deleted": 0, "skipped": 0, "failed": 0 }
 ```
 
 ---
@@ -516,7 +516,7 @@ Syncs Tally statutory registrations — GST, TDS, TCS, PF, ESI, PT, etc.
 **Response**
 
 ```json
-{ "status": "success", "created": 1, "updated": 0, "skipped": 0, "failed": 0 }
+{ "status": "success", "created": 1, "updated": 0, "deleted": 0, "skipped": 0, "failed": 0 }
 ```
 
 ---
@@ -556,7 +556,7 @@ Syncs Tally employee group hierarchy.
 **Response**
 
 ```json
-{ "status": "success", "created": 1, "updated": 0, "skipped": 0, "failed": 0 }
+{ "status": "success", "created": 1, "updated": 0, "deleted": 0, "skipped": 0, "failed": 0 }
 ```
 
 ---
@@ -632,7 +632,7 @@ Syncs Tally employee masters with full payroll and statutory details.
 **Response**
 
 ```json
-{ "status": "success", "created": 1, "updated": 0, "skipped": 0, "failed": 0 }
+{ "status": "success", "created": 1, "updated": 0, "deleted": 0, "skipped": 0, "failed": 0 }
 ```
 
 ---
@@ -680,7 +680,7 @@ Syncs Tally pay heads (salary components — earnings, deductions, statutory).
 **Response**
 
 ```json
-{ "status": "success", "created": 1, "updated": 0, "skipped": 0, "failed": 0 }
+{ "status": "success", "created": 1, "updated": 0, "deleted": 0, "skipped": 0, "failed": 0 }
 ```
 
 ---
@@ -718,7 +718,7 @@ Syncs Tally attendance and leave type definitions.
 **Response**
 
 ```json
-{ "status": "success", "created": 1, "updated": 0, "skipped": 0, "failed": 0 }
+{ "status": "success", "created": 1, "updated": 0, "deleted": 0, "skipped": 0, "failed": 0 }
 ```
 
 ---
@@ -955,7 +955,7 @@ The real connector sends this key as lowercase `ledgerentries`. `LedgerEntries` 
 **Response**
 
 ```json
-{ "status": "success", "created": 1, "updated": 0, "skipped": 0, "failed": 0 }
+{ "status": "success", "created": 1, "updated": 0, "deleted": 0, "skipped": 0, "failed": 0 }
 ```
 
 ---
@@ -1339,7 +1339,7 @@ To soft-delete a voucher, send `"Action": "Delete"` with the same `MasterID`:
 }
 ```
 
-Response: `{ "status": "success", "created": 0, "updated": 1, "skipped": 0, "failed": 0 }`
+Response: `{ "status": "success", "created": 0, "updated": 1, "deleted": 0, "skipped": 0, "failed": 0 }`
 
 ---
 

@@ -61,6 +61,7 @@ class TallyInboundVouchersController extends TallyBaseController
             'status'  => $log->status,
             'created' => $log->records_created,
             'updated' => $log->records_updated,
+            'deleted' => $log->records_deleted,
             'skipped' => $log->records_skipped,
             'failed'  => $log->records_failed,
         ]);

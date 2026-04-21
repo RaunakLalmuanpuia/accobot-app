@@ -13,7 +13,7 @@ class TallySyncLog extends Model
     protected $fillable = [
         'tenant_id', 'entity', 'direction', 'status',
         'triggered_manually',
-        'records_created', 'records_updated', 'records_skipped', 'records_failed',
+        'records_created', 'records_updated', 'records_skipped', 'records_deleted', 'records_failed',
         'error_message', 'started_at', 'completed_at',
     ];
 

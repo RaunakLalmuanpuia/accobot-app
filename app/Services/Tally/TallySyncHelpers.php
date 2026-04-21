@@ -26,6 +26,7 @@ trait TallySyncHelpers
             'records_created' => $log->records_created ?? 0,
             'records_updated' => $log->records_updated ?? 0,
             'records_skipped' => $log->records_skipped ?? 0,
+            'records_deleted' => $log->records_deleted ?? 0,
             'records_failed'  => $log->records_failed  ?? 0,
         ]);
         $conn->update(['last_synced_at' => now()]);
