@@ -12,15 +12,11 @@ class TallyLedgerGroup extends Model
 
     protected $fillable = [
         'tenant_id', 'tally_id', 'alter_id', 'action',
-        'name', 'under_id', 'under_name',
-        'nature_of_group', 'is_revenue', 'affects_gross', 'is_addable',
+        'name', 'under_id', 'under_name', 'nature_of_group',
         'is_active', 'last_synced_at',
     ];
 
     protected $casts = [
-        'is_revenue'     => 'boolean',
-        'affects_gross'  => 'boolean',
-        'is_addable'     => 'boolean',
         'is_active'      => 'boolean',
         'last_synced_at' => 'datetime',
     ];

@@ -12,13 +12,12 @@ class TallyPayHead extends Model
 
     protected $fillable = [
         'tenant_id', 'tally_id', 'alter_id', 'action',
-        'name', 'pay_head_type', 'income_type', 'pay_slip_name', 'under_group',
-        'ledger_name', 'calculation_type', 'leave_type', 'rate', 'rate_period',
+        'name', 'pay_type', 'income_type', 'parent_group',
+        'calculation_type', 'leave_type', 'calculation_period',
         'is_active', 'last_synced_at',
     ];
 
     protected $casts = [
-        'rate'           => 'float',
         'is_active'      => 'boolean',
         'last_synced_at' => 'datetime',
     ];

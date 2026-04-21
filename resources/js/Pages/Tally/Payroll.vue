@@ -26,22 +26,21 @@ const empSearch      = ref('')
 const empGroupFilter = ref('all')
 
 const empGroups = computed(() => {
-    const set = new Set(props.employees.map(e => e.group_name).filter(Boolean))
+    const set = new Set(props.employees.map(e => e.parent).filter(Boolean))
     return ['all', ...Array.from(set).sort()]
 })
 
 const filteredEmployees = computed(() => {
     let list = props.employees
     if (empGroupFilter.value !== 'all') {
-        list = list.filter(e => e.group_name === empGroupFilter.value)
+        list = list.filter(e => e.parent === empGroupFilter.value)
     }
     const q = empSearch.value.toLowerCase()
     if (q) {
         list = list.filter(e =>
             e.name.toLowerCase().includes(q) ||
             (e.employee_number ?? '').toLowerCase().includes(q) ||
-            (e.designation ?? '').toLowerCase().includes(q) ||
-            (e.department ?? '').toLowerCase().includes(q)
+            (e.designation ?? '').toLowerCase().includes(q)
         )
     }
     return list
@@ -53,14 +52,14 @@ const paySearch     = ref('')
 const payTypeFilter = ref('all')
 
 const payHeadTypes = computed(() => {
-    const set = new Set(props.payHeads.map(p => p.pay_head_type).filter(Boolean))
+    const set = new Set(props.payHeads.map(p => p.pay_type).filter(Boolean))
     return ['all', ...Array.from(set).sort()]
 })
 
 const filteredPayHeads = computed(() => {
     let list = props.payHeads
     if (payTypeFilter.value !== 'all') {
-        list = list.filter(p => p.pay_head_type === payTypeFilter.value)
+        list = list.filter(p => p.pay_type === payTypeFilter.value)
     }
     const q = paySearch.value.toLowerCase()
     if (q) {
@@ -85,10 +84,10 @@ const filteredAttendance = computed(() => {
 // ── Helpers ────────────────────────────────────────────────────────────────
 
 const payHeadTypeColors = {
-    'Earning':                              'bg-green-100 text-green-700',
+    'Earnings for Employees':               'bg-green-100 text-green-700',
     'Employees\' Statutory Deductions':     'bg-red-100 text-red-700',
     'Employer\'s Statutory Contributions':  'bg-blue-100 text-blue-700',
-    'Deduction':                            'bg-orange-100 text-orange-700',
+    'Deductions':                           'bg-orange-100 text-orange-700',
 }
 
 function payHeadTypeColor(type) {
@@ -183,17 +182,11 @@ function formatDate(d) {
                                 <p class="text-xs text-gray-400 font-mono mt-0.5">{{ emp.employee_number ?? '—' }}</p>
                             </div>
                             <div class="col-span-2">
-                                <p class="text-xs text-gray-600 truncate">{{ emp.group_name ?? '—' }}</p>
-                                <p class="text-xs text-gray-400 truncate">{{ emp.department ?? '' }}</p>
+                                <p class="text-xs text-gray-600 truncate">{{ emp.parent ?? '—' }}</p>
                             </div>
                             <div class="col-span-2 text-sm text-gray-600 truncate">{{ emp.designation ?? '—' }}</div>
                             <div class="col-span-1 text-center text-xs text-gray-500">{{ formatDate(emp.date_of_joining) }}</div>
                             <div class="col-span-1 text-center text-xs text-gray-500">{{ emp.gender ?? '—' }}</div>
-                            <div class="col-span-1">
-                                <p class="text-xs text-gray-500 font-mono truncate">{{ emp.pf_number ?? '—' }}</p>
-                                <p class="text-xs text-gray-400 font-mono truncate">{{ emp.uan_number ?? '' }}</p>
-                            </div>
-                            <div class="col-span-1 text-xs text-gray-500 truncate">{{ emp.bank_name ?? '—' }}</div>
                             <div class="col-span-1 text-center">
                                 <span :class="emp.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'"
                                       class="text-xs px-2 py-0.5 rounded-full font-medium">
@@ -219,7 +212,7 @@ function formatDate(d) {
                         <div v-for="grp in employeeGroups" :key="grp.id"
                              class="grid grid-cols-12 items-center px-6 py-4 border-b border-gray-50 last:border-0 hover:bg-gray-50/60 transition">
                             <div class="col-span-5 text-sm font-medium text-gray-900">{{ grp.name }}</div>
-                            <div class="col-span-4 text-sm text-gray-500">{{ grp.parent_name ?? '—' }}</div>
+                            <div class="col-span-4 text-sm text-gray-500">{{ grp.under ?? '—' }}</div>
                             <div class="col-span-2 text-center text-xs text-gray-400">{{ formatDate(grp.last_synced_at) }}</div>
                             <div class="col-span-1 text-center">
                                 <span :class="grp.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'"
@@ -250,9 +243,9 @@ function formatDate(d) {
                         <div class="grid grid-cols-12 px-6 py-3 bg-gray-50 border-b border-gray-100 text-xs font-semibold uppercase tracking-wide text-gray-400">
                             <div class="col-span-3">Pay Head</div>
                             <div class="col-span-3">Type</div>
-                            <div class="col-span-2">Ledger</div>
+                            <div class="col-span-2">Parent Group</div>
                             <div class="col-span-2">Calculation</div>
-                            <div class="col-span-1 text-right">Rate</div>
+                            <div class="col-span-1">Period</div>
                             <div class="col-span-1 text-center">Status</div>
                         </div>
 
@@ -260,20 +253,17 @@ function formatDate(d) {
                              class="grid grid-cols-12 items-center px-6 py-4 border-b border-gray-50 last:border-0 hover:bg-gray-50/60 transition">
                             <div class="col-span-3">
                                 <p class="text-sm font-medium text-gray-900">{{ ph.name }}</p>
-                                <p v-if="ph.pay_slip_name" class="text-xs text-gray-400 mt-0.5">{{ ph.pay_slip_name }}</p>
+                                <p v-if="ph.income_type" class="text-xs text-gray-400 mt-0.5">{{ ph.income_type }}</p>
                             </div>
                             <div class="col-span-3">
-                                <span :class="payHeadTypeColor(ph.pay_head_type)"
+                                <span :class="payHeadTypeColor(ph.pay_type)"
                                       class="text-xs px-2 py-0.5 rounded-full font-medium">
-                                    {{ ph.pay_head_type ?? '—' }}
+                                    {{ ph.pay_type ?? '—' }}
                                 </span>
                             </div>
-                            <div class="col-span-2 text-xs text-gray-500 truncate">{{ ph.ledger_name ?? '—' }}</div>
+                            <div class="col-span-2 text-xs text-gray-500 truncate">{{ ph.parent_group ?? '—' }}</div>
                             <div class="col-span-2 text-xs text-gray-500">{{ ph.calculation_type ?? '—' }}</div>
-                            <div class="col-span-1 text-right text-sm text-gray-700">
-                                <span v-if="ph.rate !== null">{{ ph.rate }}{{ ph.calculation_type === 'Fixed' ? '' : '%' }}</span>
-                                <span v-else class="text-gray-400">—</span>
-                            </div>
+                            <div class="col-span-1 text-xs text-gray-500">{{ ph.calculation_period ?? '—' }}</div>
                             <div class="col-span-1 text-center">
                                 <span :class="ph.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'"
                                       class="text-xs px-2 py-0.5 rounded-full font-medium">
@@ -311,7 +301,7 @@ function formatDate(d) {
                                     {{ att.attendance_type ?? '—' }}
                                 </span>
                             </div>
-                            <div class="col-span-2 text-center text-sm text-gray-500">{{ att.unit_of_measure ?? '—' }}</div>
+                            <div class="col-span-2 text-center text-sm text-gray-500">{{ att.attendance_period ?? '—' }}</div>
                             <div class="col-span-2 text-center">
                                 <span :class="att.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'"
                                       class="text-xs px-2 py-0.5 rounded-full font-medium">

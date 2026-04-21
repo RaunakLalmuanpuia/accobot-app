@@ -15,6 +15,7 @@ const filtered = computed(() => {
     if (!q) return props.groups
     return props.groups.filter(g =>
         g.name.toLowerCase().includes(q) ||
+        (g.under_name ?? '').toLowerCase().includes(q) ||
         (g.nature_of_group ?? '').toLowerCase().includes(q)
     )
 })
@@ -57,30 +58,20 @@ function formatDate(d) {
 
                 <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
                     <div class="grid grid-cols-12 px-6 py-3 bg-gray-50 border-b border-gray-100 text-xs font-semibold uppercase tracking-wide text-gray-400">
-                        <div class="col-span-4">Name</div>
-                        <div class="col-span-2">Under</div>
+                        <div class="col-span-5">Name</div>
+                        <div class="col-span-3">Under</div>
                         <div class="col-span-2">Nature</div>
-                        <div class="col-span-1 text-center">Revenue</div>
-                        <div class="col-span-1 text-center">Addable</div>
                         <div class="col-span-1 text-center">Status</div>
                         <div class="col-span-1">Last Synced</div>
                     </div>
 
                     <div v-for="group in filtered" :key="group.id"
                          class="grid grid-cols-12 items-center px-6 py-4 border-b border-gray-50 last:border-0 hover:bg-gray-50/60 transition">
-                        <div class="col-span-4">
+                        <div class="col-span-5">
                             <p class="text-sm font-medium text-gray-900">{{ group.name }}</p>
                         </div>
-                        <div class="col-span-2 text-sm text-gray-500 truncate">{{ group.under_name ?? '—' }}</div>
+                        <div class="col-span-3 text-sm text-gray-500 truncate">{{ group.under_name ?? '—' }}</div>
                         <div class="col-span-2 text-sm text-gray-500">{{ group.nature_of_group ?? '—' }}</div>
-                        <div class="col-span-1 text-center">
-                            <span v-if="group.is_revenue" class="text-xs text-green-600 font-medium">Yes</span>
-                            <span v-else class="text-xs text-gray-400">No</span>
-                        </div>
-                        <div class="col-span-1 text-center">
-                            <span v-if="group.is_addable" class="text-xs text-green-600 font-medium">Yes</span>
-                            <span v-else class="text-xs text-gray-400">No</span>
-                        </div>
                         <div class="col-span-1 text-center">
                             <span :class="group.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'"
                                   class="text-xs px-2 py-0.5 rounded-full font-medium">

@@ -12,7 +12,7 @@ class TallyEmployeeGroup extends Model
 
     protected $fillable = [
         'tenant_id', 'tally_id', 'alter_id', 'action',
-        'name', 'guid', 'parent_name', 'cost_centre_category',
+        'name', 'guid', 'under', 'cost_centre_category',
         'is_active', 'last_synced_at',
     ];
 

@@ -208,9 +208,6 @@ invoices.tally_voucher_id  → tally_vouchers.id
 | name | string | Group name |
 | under_id / under_name | integer / string | Parent group |
 | nature_of_group | string | Assets / Liabilities / Income / Expenses |
-| is_revenue | bool nullable | |
-| affects_gross | bool nullable | |
-| is_addable | bool nullable | |
 | is_active | bool | |
 
 #### tally_ledgers
@@ -220,13 +217,12 @@ All account masters — customers, vendors, bank accounts, tax ledgers, expense 
 |---------|---------|
 | Identity | tally_id, alter_id, action, ledger_name, group_name, parent_group |
 | Derived | ledger_category (customer/vendor/bank/tax/income/expense/asset/liability/other) |
-| Flags | is_bill_wise_on, inventory_affected, is_cost_centre_applicable |
-| GST | gstin_number, pan_number, tan_number, gst_type, is_rcm_applicable |
+| Flags | is_bill_wise_on, inventory_affected |
+| GST | gstin_number, pan_number, gst_type |
 | Contact | mailing_name, mobile_number, contact_person, contact_person_email, contact_person_email_cc, contact_person_fax, contact_person_website, contact_person_mobile |
 | Address | addresses (jsonb), state_name, country_name, pin_code |
 | Credit | credit_period, credit_limit |
 | Opening Balance | opening_balance, opening_balance_type (Dr/Cr) |
-| Bank | bank_details (jsonb) |
 | Other | aliases (jsonb), description, notes |
 | Mapping | mapped_client_id FK → clients, mapped_vendor_id FK → vendors |
 
@@ -239,25 +235,23 @@ All product/inventory masters.
 | Classification | stock_group_id, stock_group_name, stock_category_id, category_name |
 | Units | unit_id, unit_name, alternate_unit, conversion, denominator |
 | GST | is_gst_applicable, taxability, calculation_type, igst_rate, sgst_rate, cgst_rate, cess_rate, hsn_code |
-| Pricing | mrp_rate, standard_cost, standard_price |
+| Pricing | mrp_rate |
 | Stock | opening_balance, opening_rate, opening_value, closing_balance, closing_rate, closing_value |
-| Inventory | costing_method, is_batch_applicable, is_expiry_date_applicable, reorder_level, reorder_quantity, maximum_quantity |
-| Batch | batch_allocations (jsonb) |
 | Mapping | mapped_product_id FK → products |
 
 #### tally_stock_groups
 | Column | Notes |
 |--------|-------|
 | name | Group name |
-| parent_id / parent_name | Parent group |
-| nature_of_group | Assets / etc. |
-| should_add_quantities | bool |
+| parent | Parent group (maps to `Parent` in payload) |
+| aliases | jsonb |
 
 #### tally_stock_categories
 | Column | Notes |
 |--------|-------|
 | name | Category name |
-| parent_name | Parent category |
+| parent | Parent category (maps to `Parent` in payload) |
+| aliases | jsonb |
 
 #### tally_vouchers
 All financial transactions — every voucher type.
@@ -335,38 +329,37 @@ Statutory registrations — GST, TDS, TCS, PF, ESI, PT, etc.
 | Column | Notes |
 |--------|-------|
 | name | Group name |
-| parent_name | Parent group (nullable) |
+| guid | Tally GUID |
+| under | Parent group (maps to `Under` in payload) |
+| cost_centre_category | Maps to `CostCentreCategory` in payload |
 
 #### tally_pay_heads
 Payroll earning, deduction, and statutory heads.
 
 | Column | Notes |
 |--------|-------|
-| pay_head_type | Earning / Deduction / Employer Contributions / Statutory Deductions |
-| pay_slip_name | Name as it appears on the pay slip |
-| under_group | Parent group name |
-| ledger_name | Linked Tally ledger |
-| calculation_type | As Computed Value / Flat Rate / etc. |
-| rate | float nullable — fixed rate if applicable |
-| rate_period | Daily / Monthly / etc. |
+| pay_type | Earnings for Employees / Deductions / etc. (maps to `PayType` in payload) |
+| income_type | Fixed / Variable / etc. |
+| parent_group | Parent ledger group (maps to `ParentGroup` in payload) |
+| calculation_type | On Attendance / As Computed Value / etc. |
+| leave_type | LOP / etc. |
+| calculation_period | Monthly / Days / etc. (maps to `CalculationPeriod` in payload) |
 
 #### tally_attendance_types
 | Column | Notes |
 |--------|-------|
 | attendance_type | Attendance / Leave with Pay / Leave without Pay / Productivity |
-| unit_of_measure | Days / Hours / Pieces |
+| attendance_period | Days / Hours / Pieces (maps to connector field `AttendancePeriod`) |
 
 #### tally_employees
 Full employee master with payroll and statutory details.
 
 | Section | Columns |
 |---------|---------|
-| Identity | name, employee_number, group_name, designation, employee_function, department |
+| Identity | name, employee_number, parent, designation, employee_function, location |
 | Dates | date_of_joining, date_of_leaving, date_of_birth |
-| Personal | gender |
-| Statutory | pan, aadhar, pf_number, uan_number, esi_number |
-| Bank | bank_name, bank_account_number, bank_ifsc |
-| Other | addresses (jsonb), salary_details (jsonb) |
+| Personal | gender, father_name, spouse_name |
+| Other | aliases (jsonb) |
 
 > **Note:** The column is named `employee_function` (not `function`) to avoid PostgreSQL and PHP reserved-word conflicts.
 

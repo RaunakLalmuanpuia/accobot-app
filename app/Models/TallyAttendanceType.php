@@ -12,7 +12,7 @@ class TallyAttendanceType extends Model
 
     protected $fillable = [
         'tenant_id', 'tally_id', 'alter_id', 'action',
-        'name', 'guid', 'attendance_type', 'under', 'unit_of_measure',
+        'name', 'guid', 'attendance_type', 'under', 'attendance_period',
         'is_active', 'last_synced_at',
     ];
 

@@ -24,7 +24,7 @@ class TallyDataController extends Controller
             'tenant' => $tenant,
             'groups' => TallyLedgerGroup::where('tenant_id', $tenant->id)
                 ->orderBy('name')
-                ->get(['id', 'name', 'under_name', 'nature_of_group', 'is_revenue', 'affects_gross', 'is_addable', 'is_active', 'last_synced_at']),
+                ->get(['id', 'name', 'under_id', 'under_name', 'nature_of_group', 'is_active', 'last_synced_at']),
         ]);
     }
 
@@ -53,10 +53,10 @@ class TallyDataController extends Controller
             'tenant'          => $tenant,
             'stockGroups'     => TallyStockGroup::where('tenant_id', $tenant->id)
                 ->orderBy('name')
-                ->get(['id', 'name', 'parent_name', 'aliases', 'nature_of_group', 'should_add_quantities', 'is_active', 'last_synced_at']),
+                ->get(['id', 'name', 'parent', 'aliases', 'is_active', 'last_synced_at']),
             'stockCategories' => TallyStockCategory::where('tenant_id', $tenant->id)
                 ->orderBy('name')
-                ->get(['id', 'name', 'parent_name', 'aliases', 'is_active', 'last_synced_at']),
+                ->get(['id', 'name', 'parent', 'aliases', 'is_active', 'last_synced_at']),
             'godowns'         => TallyGodown::where('tenant_id', $tenant->id)
                 ->orderBy('name')
                 ->get(['id', 'name', 'under', 'guid', 'is_active', 'last_synced_at']),
@@ -73,7 +73,7 @@ class TallyDataController extends Controller
                 ->get([
                     'id', 'name', 'stock_group_name', 'category_name', 'unit_name',
                     'hsn_code', 'igst_rate', 'cgst_rate', 'sgst_rate',
-                    'mrp_rate', 'standard_price', 'opening_balance', 'closing_balance',
+                    'mrp_rate', 'opening_balance', 'closing_balance',
                     'closing_value', 'is_active', 'last_synced_at', 'mapped_product_id',
                 ]),
         ]);
@@ -112,20 +112,20 @@ class TallyDataController extends Controller
             'tenant'          => $tenant,
             'employees'       => TallyEmployee::where('tenant_id', $tenant->id)
                 ->orderBy('name')
-                ->get(['id', 'name', 'employee_number', 'group_name', 'designation',
-                       'department', 'date_of_joining', 'gender', 'pan', 'pf_number',
-                       'uan_number', 'esi_number', 'bank_name', 'is_active', 'last_synced_at']),
+                ->get(['id', 'name', 'employee_number', 'parent', 'designation',
+                       'location', 'date_of_joining', 'gender', 'father_name', 'spouse_name',
+                       'is_active', 'last_synced_at']),
             'employeeGroups'  => TallyEmployeeGroup::where('tenant_id', $tenant->id)
                 ->orderBy('name')
-                ->get(['id', 'name', 'parent_name', 'is_active', 'last_synced_at']),
+                ->get(['id', 'name', 'under', 'cost_centre_category', 'is_active', 'last_synced_at']),
             'payHeads'        => TallyPayHead::where('tenant_id', $tenant->id)
-                ->orderBy('pay_head_type')
+                ->orderBy('pay_type')
                 ->orderBy('name')
-                ->get(['id', 'name', 'pay_head_type', 'pay_slip_name', 'ledger_name',
-                       'calculation_type', 'rate', 'rate_period', 'is_active', 'last_synced_at']),
+                ->get(['id', 'name', 'pay_type', 'income_type', 'parent_group',
+                       'calculation_type', 'leave_type', 'calculation_period', 'is_active', 'last_synced_at']),
             'attendanceTypes' => TallyAttendanceType::where('tenant_id', $tenant->id)
                 ->orderBy('name')
-                ->get(['id', 'name', 'attendance_type', 'unit_of_measure', 'is_active', 'last_synced_at']),
+                ->get(['id', 'name', 'attendance_type', 'attendance_period', 'is_active', 'last_synced_at']),
         ]);
     }
 

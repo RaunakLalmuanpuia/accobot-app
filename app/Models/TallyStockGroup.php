@@ -12,15 +12,13 @@ class TallyStockGroup extends Model
 
     protected $fillable = [
         'tenant_id', 'tally_id', 'alter_id', 'action',
-        'name', 'parent_id', 'parent_name', 'aliases',
-        'nature_of_group', 'should_add_quantities',
+        'name', 'parent', 'aliases',
         'is_active', 'last_synced_at',
     ];
 
     protected $casts = [
-        'aliases'               => 'array',
-        'should_add_quantities' => 'boolean',
-        'is_active'             => 'boolean',
+        'aliases'    => 'array',
+        'is_active'  => 'boolean',
         'last_synced_at'        => 'datetime',
     ];
 

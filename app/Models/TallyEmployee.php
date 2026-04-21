@@ -12,19 +12,14 @@ class TallyEmployee extends Model
 
     protected $fillable = [
         'tenant_id', 'tally_id', 'alter_id', 'action',
-        'name', 'employee_number', 'group_name',
-        'designation', 'employee_function', 'department', 'location',
+        'name', 'employee_number', 'parent',
+        'designation', 'employee_function', 'location',
         'date_of_joining', 'date_of_leaving', 'date_of_birth', 'gender',
-        'father_name', 'spouse_name',
-        'pan', 'aadhar', 'pf_number', 'uan_number', 'esi_number',
-        'bank_name', 'bank_account_number', 'bank_ifsc',
-        'addresses', 'salary_details', 'aliases',
+        'father_name', 'spouse_name', 'aliases',
         'is_active', 'last_synced_at',
     ];
 
     protected $casts = [
-        'addresses'       => 'array',
-        'salary_details'  => 'array',
         'aliases'         => 'array',
         'date_of_joining' => 'date',
         'date_of_leaving' => 'date',

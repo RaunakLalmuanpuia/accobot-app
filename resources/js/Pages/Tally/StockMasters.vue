@@ -27,8 +27,7 @@ const filteredGroups = computed(() => {
     if (!q) return props.stockGroups
     return props.stockGroups.filter(g =>
         g.name.toLowerCase().includes(q) ||
-        (g.parent_name ?? '').toLowerCase().includes(q) ||
-        (g.nature_of_group ?? '').toLowerCase().includes(q)
+        (g.parent ?? '').toLowerCase().includes(q)
     )
 })
 
@@ -41,7 +40,7 @@ const filteredCategories = computed(() => {
     if (!q) return props.stockCategories
     return props.stockCategories.filter(c =>
         c.name.toLowerCase().includes(q) ||
-        (c.parent_name ?? '').toLowerCase().includes(q)
+        (c.parent ?? '').toLowerCase().includes(q)
     )
 })
 
@@ -125,28 +124,21 @@ function aliasText(aliases) {
 
                     <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
                         <div class="grid grid-cols-12 px-6 py-3 bg-gray-50 border-b border-gray-100 text-xs font-semibold uppercase tracking-wide text-gray-400">
-                            <div class="col-span-4">Name</div>
-                            <div class="col-span-3">Parent</div>
-                            <div class="col-span-2">Nature</div>
-                            <div class="col-span-1 text-center">Add Qty</div>
+                            <div class="col-span-6">Name</div>
+                            <div class="col-span-4">Parent</div>
                             <div class="col-span-1 text-center">Status</div>
                             <div class="col-span-1">Last Synced</div>
                         </div>
 
                         <div v-for="group in filteredGroups" :key="group.id"
                              class="grid grid-cols-12 items-center px-6 py-4 border-b border-gray-50 last:border-0 hover:bg-gray-50/60 transition">
-                            <div class="col-span-4">
+                            <div class="col-span-6">
                                 <p class="text-sm font-medium text-gray-900">{{ group.name }}</p>
                                 <p v-if="aliasText(group.aliases)" class="text-xs text-gray-400 mt-0.5 truncate">
                                     {{ aliasText(group.aliases) }}
                                 </p>
                             </div>
-                            <div class="col-span-3 text-sm text-gray-500 truncate">{{ group.parent_name ?? '—' }}</div>
-                            <div class="col-span-2 text-sm text-gray-500">{{ group.nature_of_group ?? '—' }}</div>
-                            <div class="col-span-1 text-center">
-                                <span v-if="group.should_add_quantities" class="text-xs text-green-600 font-medium">Yes</span>
-                                <span v-else class="text-xs text-gray-400">No</span>
-                            </div>
+                            <div class="col-span-4 text-sm text-gray-500 truncate">{{ group.parent ?? '—' }}</div>
                             <div class="col-span-1 text-center">
                                 <span :class="group.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'"
                                       class="text-xs px-2 py-0.5 rounded-full font-medium">
@@ -184,7 +176,7 @@ function aliasText(aliases) {
                                     {{ aliasText(cat.aliases) }}
                                 </p>
                             </div>
-                            <div class="col-span-4 text-sm text-gray-500">{{ cat.parent_name ?? '—' }}</div>
+                            <div class="col-span-4 text-sm text-gray-500">{{ cat.parent ?? '—' }}</div>
                             <div class="col-span-2 text-center">
                                 <span :class="cat.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'"
                                       class="text-xs px-2 py-0.5 rounded-full font-medium">

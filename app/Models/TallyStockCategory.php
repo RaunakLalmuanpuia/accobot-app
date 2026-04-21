@@ -12,7 +12,7 @@ class TallyStockCategory extends Model
 
     protected $fillable = [
         'tenant_id', 'tally_id', 'alter_id', 'action',
-        'name', 'parent_name', 'aliases',
+        'name', 'parent', 'aliases',
         'is_active', 'last_synced_at',
     ];
 
