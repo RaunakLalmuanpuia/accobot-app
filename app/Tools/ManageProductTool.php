@@ -47,6 +47,7 @@ class ManageProductTool implements Tool
             'sku'             => $schema->string()->description('SKU code. Pass null to auto-generate on create or leave unchanged on update.')->nullable()->required(),
             'stock_quantity'  => $schema->integer()->description('Stock quantity. Pass null to skip or leave unchanged.')->nullable()->required(),
             'is_active'       => $schema->boolean()->description('Set false to deactivate. Pass null to leave unchanged.')->nullable()->required(),
+            'show_all_fields' => $schema->boolean()->description('For action=list: when true return all fields (sub_category, main_group, sub_group, unit, description, status). Defaults to false.')->required(),
         ];
     }
 
@@ -85,6 +86,7 @@ class ManageProductTool implements Tool
         $mainGroup       = $this->nullableString($request['main_group'] ?? null);
         $subGroup        = $this->nullableString($request['sub_group'] ?? null);
         $includeInactive = (bool) ($request['include_inactive'] ?? false);
+        $showAllFields   = (bool) ($request['show_all_fields'] ?? false);
         $limit           = min((int) ($request['limit'] ?? 20) ?: 20, 100);
         $page            = max((int) ($request['page'] ?? 1) ?: 1, 1);
 
@@ -127,18 +129,37 @@ class ManageProductTool implements Tool
             'tax_rate' => $p->tax_rate, 'stock_quantity' => $p->stock_quantity,
         ])->toArray();
 
-        $header  = "| # | Name | Category | SKU | Price | GST | Stock |\n";
-        $header .= "|---|------|----------|-----|-------|-----|-------|\n";
+        $prefix = "Showing {$products->count()} of {$total} product(s) (page {$page}/{$totalPages})\n\n";
 
-        $rows = $products->map(fn ($p, $i) => sprintf(
-            '| %d | **%s** | %s | %s | ₹%s/%s | %s%% | %s |',
-            ($page - 1) * $limit + $i + 1,
-            $p->name, $p->category ?? '—', $p->sku ?? '—',
-            number_format((float) $p->unit_price, 2), $p->unit,
-            $p->tax_rate, $p->stock_quantity ?? '—'
-        ))->implode("\n");
+        if ($showAllFields) {
+            $header  = "| # | Name | SKU | Category | Sub-Category | Main Group | Sub Group | Price | Unit | GST | Stock | Status | Description |\n";
+            $header .= "|---|------|-----|----------|-------------|------------|-----------|-------|------|-----|-------|--------|-------------|\n";
 
-        return "Showing {$products->count()} of {$total} product(s) (page {$page}/{$totalPages})\n\n{$header}{$rows}";
+            $rows = $products->map(fn ($p, $i) => sprintf(
+                '| %d | **%s** | %s | %s | %s | %s | %s | ₹%s | %s | %s%% | %s | %s | %s |',
+                ($page - 1) * $limit + $i + 1,
+                $p->name, $p->sku ?? '—',
+                $p->category ?? '—', $p->sub_category ?? '—',
+                $p->main_group ?? '—', $p->sub_group ?? '—',
+                number_format((float) $p->unit_price, 2), $p->unit,
+                $p->tax_rate, $p->stock_quantity ?? '—',
+                $p->is_active ? 'Active' : 'Inactive',
+                $p->description ?? '—'
+            ))->implode("\n");
+        } else {
+            $header  = "| # | Name | Category | SKU | Price | GST | Stock |\n";
+            $header .= "|---|------|----------|-----|-------|-----|-------|\n";
+
+            $rows = $products->map(fn ($p, $i) => sprintf(
+                '| %d | **%s** | %s | %s | ₹%s/%s | %s%% | %s |',
+                ($page - 1) * $limit + $i + 1,
+                $p->name, $p->category ?? '—', $p->sku ?? '—',
+                number_format((float) $p->unit_price, 2), $p->unit,
+                $p->tax_rate, $p->stock_quantity ?? '—'
+            ))->implode("\n");
+        }
+
+        return $prefix . $header . $rows;
     }
 
     private function search(Request $request): string

@@ -68,6 +68,8 @@ class AccountingAgent implements Agent, Conversational, HasTools
         Never expose internal database IDs (client ID, product ID, invoice item ID, etc.) to the user. Refer to records by name or invoice number only.
 
         ## Product Classification
+        When the user asks to see all fields, full details, or complete information for inventory, pass `show_all_fields=true` to ManageProductTool (action=list). Otherwise use the default compact view.
+
         When creating a product, always populate the classification hierarchy when the information is available or can be reasonably inferred:
         - **category** — Main Category (e.g. "Television", "Furniture", "Electronics")
         - **sub_category** — Sub-Category / product type (e.g. "LED TV", "Smart TV", "Office Chair")
