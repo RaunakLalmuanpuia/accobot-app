@@ -72,9 +72,9 @@ class AccountingAgent implements Agent, Conversational, HasTools
         - **category** — Main Category (e.g. "Television", "Furniture", "Electronics")
         - **sub_category** — Sub-Category / product type (e.g. "LED TV", "Smart TV", "Office Chair")
         - **main_group** — Main Group / grade or quality tier (e.g. "Grade One", "Premium", "Economy")
-        - **sub_group** — Sub Group or variant (e.g. "Brand A", "Samsung", "Generic")
+        - **sub_group** — Sub Group or variant (e.g. "Sub Group A", "Sub Group B", "Generic")
 
-        Users can search/filter inventory by any of these levels (e.g. "show all Grade One TVs" or "list Brand A products").
+        Users can search/filter inventory by any of these levels (e.g. "show all Grade One TVs" or "list Sub Group A products").
 
         ## GST Tax Rates
         When creating a new product, always determine the correct Indian GST rate automatically from the product name and category. Never ask the user for the tax rate. Use these slabs:
