@@ -41,8 +41,6 @@ class TallyInboundSync
                     ->where('tally_id', $tallyId)
                     ->first();
 
-                if ($existing && $existing->alter_id === $alterId) { $log->records_skipped++; continue; }
-
                 $action = $item['Action'] ?? 'Create';
                 if ($action === 'Delete') {
                     if ($existing) { $existing->update(['is_active' => false]); $log->records_updated++; }
@@ -95,8 +93,6 @@ class TallyInboundSync
                     ->where('tenant_id', $conn->tenant_id)
                     ->where('tally_id', $tallyId)
                     ->first();
-
-                if ($existing && $existing->alter_id === $alterId) { $log->records_skipped++; continue; }
 
                 $action = $item['Action'] ?? 'Create';
                 if ($action === 'Delete') {
@@ -191,8 +187,6 @@ class TallyInboundSync
                     ->where('tenant_id', $conn->tenant_id)
                     ->where('tally_id', $tallyId)->first();
 
-                if ($existing && $existing->alter_id === $alterId) { $log->records_skipped++; continue; }
-
                 $action = $item['Action'] ?? 'Create';
                 if ($action === 'Delete') {
                     if ($existing) { $existing->update(['is_active' => false]); $log->records_updated++; }
@@ -238,8 +232,6 @@ class TallyInboundSync
                 $existing = TallyStockCategory::withoutGlobalScope('tenant')
                     ->where('tenant_id', $conn->tenant_id)
                     ->where('tally_id', $tallyId)->first();
-
-                if ($existing && $existing->alter_id === $alterId) { $log->records_skipped++; continue; }
 
                 $action = $item['Action'] ?? 'Create';
                 if ($action === 'Delete') {
@@ -287,8 +279,6 @@ class TallyInboundSync
                 $existing  = TallyStockItem::withoutGlobalScope('tenant')
                     ->where('tenant_id', $conn->tenant_id)
                     ->where('tally_id', $tallyId)->first();
-
-                if ($existing && $existing->alter_id === $alterId) { $log->records_skipped++; continue; }
 
                 $action = $item['Action'] ?? 'Create';
                 if ($action === 'Delete') {
@@ -388,8 +378,6 @@ class TallyInboundSync
                 $existing  = TallyVoucher::withoutGlobalScope('tenant')
                     ->where('tenant_id', $conn->tenant_id)
                     ->where('tally_id', $tallyId)->first();
-
-                if ($existing && $existing->alter_id === $alterId) { $log->records_skipped++; continue; }
 
                 $action = $item['Action'] ?? 'Create';
                 if ($action === 'Delete') {
@@ -603,8 +591,6 @@ class TallyInboundSync
                     ->where('tenant_id', $conn->tenant_id)
                     ->where('tally_id', $tallyId)->first();
 
-                if ($existing && $existing->alter_id === $alterId) { $log->records_skipped++; continue; }
-
                 $action = $item['Action'] ?? 'Create';
                 if ($action === 'Delete') {
                     if ($existing) { $existing->update(['is_active' => false]); $log->records_updated++; }
@@ -647,8 +633,6 @@ class TallyInboundSync
                 $existing = TallyStatutoryMaster::withoutGlobalScope('tenant')
                     ->where('tenant_id', $conn->tenant_id)
                     ->where('tally_id', $tallyId)->first();
-
-                if ($existing && $existing->alter_id === $alterId) { $log->records_skipped++; continue; }
 
                 $action = $item['Action'] ?? 'Create';
                 if ($action === 'Delete') {

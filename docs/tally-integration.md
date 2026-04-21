@@ -180,7 +180,7 @@ invoices.tally_voucher_id  → tally_vouchers.id
 
 **`unique(tenant_id, tally_id)`** — Every master/voucher table has this constraint. `tally_id` is the integer ID Tally assigns. This is the upsert key for all inbound syncs.
 
-**`alter_id`** — Tally increments `AlterID` every time a record changes. On inbound sync, if the incoming `AlterID` matches what's stored, the record is skipped entirely (no DB write). This is the primary deduplication mechanism.
+**`alter_id`** — Stored from the incoming payload but not used for any logic. The `Action` field (`Create` / `Update` / `Delete`) is the sole driver of inbound sync behaviour.
 
 **`is_active`** — Soft deletes. When Tally sends `Action: Delete`, `is_active` is set to `false`. Records are never hard-deleted.
 
@@ -995,7 +995,7 @@ There are two distinct cases depending on the table type:
 
 #### Case A — Pure mirror tables (no operational counterpart)
 
-These tables have no separate Accobot operational table. The outbound GET reads directly from them, so an edit to the mirror row WILL appear in the next outbound response — but `alter_id` is not bumped. Most connectors use `AlterID` for change detection and will skip a record whose `AlterID` hasn't changed, so the update is effectively invisible to Tally.
+These tables have no separate Accobot operational table. The outbound GET reads directly from them, so an edit to the mirror row WILL appear in the next outbound response.
 
 Affected tables:
 
