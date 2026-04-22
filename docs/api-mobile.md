@@ -215,7 +215,7 @@ Returns all active narration heads and their sub-heads. Use this to populate dro
 
 **Permission required:** `transactions.view`
 
-Paginated list of pending and reviewed transactions for the tenant. Includes AI-suggested invoice matches for unreconciled transactions (top 3).
+Paginated list of pending transactions for the tenant. Includes AI-suggested invoice matches for unreconciled transactions (top 3).
 
 **Query params**
 
@@ -258,6 +258,45 @@ Paginated list of pending and reviewed transactions for the tenant. Includes AI-
   "per_page": 25,
   "total": 120,
   "last_page": 5
+}
+```
+
+---
+
+#### `GET /api/mobile/tenants/{tenant}/banking/reviewed`
+
+**Permission required:** `transactions.view`
+
+Paginated list of transactions with `review_status = reviewed` for the tenant.
+
+**Query params**
+
+| Param | Type | Default | Notes |
+|---|---|---|---|
+| `page` | integer | `1` | Page number |
+| `per_page` | integer | `25` | Max `50` |
+
+**Response `200`** — Laravel paginator format
+```json
+{
+  "data": [
+    {
+      "id": "uuid",
+      "transaction_date": "2026-04-15",
+      "amount": 5000.00,
+      "type": "credit",
+      "description": "NEFT CR - ABC CORP",
+      "review_status": "reviewed",
+      "is_reconciled": false,
+      "narration_head": { "id": 1, "name": "Sales" },
+      "narration_sub_head": null,
+      "reconciled_invoice": null
+    }
+  ],
+  "current_page": 1,
+  "per_page": 25,
+  "total": 45,
+  "last_page": 2
 }
 ```
 
@@ -547,6 +586,7 @@ Permission errors:
 | `DELETE /mobile/tokens` | Authenticated |
 | `GET .../banking/narration-heads` | `transactions.view` |
 | `GET .../banking/pending` | `transactions.view` |
+| `GET .../banking/reviewed` | `transactions.view` |
 | `POST .../banking/ingest/sms` | `transactions.import` |
 | `POST .../banking/ingest/email` | `transactions.import` |
 | `POST .../banking/ingest/statement` | `transactions.import` |

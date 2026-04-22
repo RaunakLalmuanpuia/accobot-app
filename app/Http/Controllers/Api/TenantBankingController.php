@@ -71,7 +71,7 @@ class TenantBankingController extends Controller
         $transactions = BankTransaction::with(['narrationHead', 'narrationSubHead', 'reconciledInvoice'])
             ->where('tenant_id', $tenant->id)
             ->where('is_duplicate', false)
-            ->whereIn('review_status', ['pending', 'reviewed'])
+            ->where('review_status', 'pending')
             ->orderByDesc('transaction_date')
             ->paginate($perPage);
 
@@ -84,6 +84,28 @@ class TenantBankingController extends Controller
             );
             return $tx;
         });
+
+        return response()->json($transactions);
+    }
+
+    // ── Reviewed Transactions ──────────────────────────────────────────────
+
+    /**
+     * GET /api/mobile/tenants/{tenant}/banking/reviewed
+     *
+     * Paginated list of reviewed transactions for the tenant.
+     * Query params: page (default 1), per_page (default 25, max 50)
+     */
+    public function reviewed(Request $request, Tenant $tenant): JsonResponse
+    {
+        $perPage = min((int) $request->input('per_page', 25), 50);
+
+        $transactions = BankTransaction::with(['narrationHead', 'narrationSubHead', 'reconciledInvoice'])
+            ->where('tenant_id', $tenant->id)
+            ->where('is_duplicate', false)
+            ->where('review_status', 'reviewed')
+            ->orderByDesc('transaction_date')
+            ->paginate($perPage);
 
         return response()->json($transactions);
     }

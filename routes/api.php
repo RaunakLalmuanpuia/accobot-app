@@ -51,9 +51,11 @@ Route::prefix('mobile/tenants/{tenant}')
 
         // ── Banking: read ─────────────────────────────────────────────
         // GET   /api/mobile/tenants/{tenant}/banking/pending
+        // GET   /api/mobile/tenants/{tenant}/banking/reviewed
         // GET   /api/mobile/tenants/{tenant}/banking/narration-heads
         Route::prefix('banking')->name('banking.')->middleware('tenant.permission:transactions.view')->group(function () {
             Route::get('pending',         [TenantBankingController::class, 'pending'])->name('pending');
+            Route::get('reviewed',        [TenantBankingController::class, 'reviewed'])->name('reviewed');
             Route::get('narration-heads', [TenantBankingController::class, 'narrationHeads'])->name('narration-heads');
         });
 
