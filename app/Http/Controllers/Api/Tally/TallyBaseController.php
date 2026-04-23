@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Tally;
 
 use App\Http\Controllers\Controller;
+use App\Models\TallyCompany;
 use App\Models\TallyConnection;
 use App\Models\TallyInboundLog;
 use Illuminate\Http\Request;
@@ -31,6 +32,8 @@ class TallyBaseController extends Controller
     {
         $conn = $this->resolveConnection($request);
 
+        $this->upsertCompany($conn, $request);
+
         TallyInboundLog::create([
             'tenant_id'           => $conn->tenant_id,
             'tally_connection_id' => $conn->id,
@@ -39,6 +42,25 @@ class TallyBaseController extends Controller
         ]);
 
         return $conn;
+    }
+
+    private function upsertCompany(TallyConnection $conn, Request $request): void
+    {
+        $first = collect($request->input('Data') ?? $request->input('data', []))->first();
+        $guid  = data_get($first, 'CompanyGUID');
+
+        if (empty($guid)) {
+            return;
+        }
+
+        TallyCompany::updateOrCreate(
+            ['tally_connection_id' => $conn->id, 'company_guid' => $guid],
+            [
+                'company_name'   => data_get($first, 'CompanyName'),
+                'licence_type'   => data_get($first, 'LicenceType'),
+                'licence_number' => data_get($first, 'LicenceNumber'),
+            ]
+        );
     }
 
     protected function resolveConnectionByCompanyId(Request $request, string $companyId): TallyConnection

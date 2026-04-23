@@ -27,6 +27,19 @@ Content-Type: application/json
 Accept: application/json
 ```
 
+### Company fields (add to all future test payloads)
+
+The connector now sends four company-level fields inside each `Data` record (after the ID). Include them in all new tests so `tally_companies` is populated:
+
+```json
+"CompanyGUID": "248b1a3e-7f9f-443c-ae33-1984824e53f7",
+"CompanyName": "Acme Corp",
+"LicenceType": "Gold",
+"LicenceNumber": "TLY-123456"
+```
+
+These are optional — if `CompanyGUID` is absent, the upsert is silently skipped.
+
 ---
 
 ## Endpoint Status

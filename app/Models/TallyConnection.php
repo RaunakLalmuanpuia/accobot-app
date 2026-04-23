@@ -34,6 +34,11 @@ class TallyConnection extends Model
         return $this->belongsTo(Tenant::class);
     }
 
+    public function companies(): HasMany
+    {
+        return $this->hasMany(TallyCompany::class, 'tally_connection_id');
+    }
+
     public function syncLogs(): HasMany
     {
         return $this->hasMany(TallySyncLog::class, 'tenant_id', 'tenant_id');

@@ -60,7 +60,7 @@ Accobot replicates the `cloud-tally.in` connector API exactly — same paths, sa
               └────────────────────┘
 ```
 
-Each tenant has exactly **one** `tally_connections` row. That row holds the bearer token the connector uses for every request, and the `company_id` (Tally's UUID for the company) used to verify the right company is talking to the right tenant.
+Each tenant has exactly **one** `tally_connections` row. That row holds the bearer token the connector uses for every request. When the connector pushes data, Accobot auto-upserts a `tally_companies` row capturing the company name, GUID, licence type, and licence number from the payload.
 
 ---
 
@@ -145,12 +145,13 @@ If the token is compromised, the tenant can regenerate it from the Connection pa
 
 ---
 
-## 5. Database Design — 16 Tables + 4 FK Columns
+## 5. Database Design — 17 Tables + 4 FK Columns
 
 ### Overview
 
 ```
 tally_connections          ← one per tenant, holds auth token
+tally_companies            ← discovered Tally companies (auto-upserted on each push)
 tally_ledger_groups        ← Tally's account hierarchy
 tally_ledgers              ← every account (customers, vendors, bank, tax, etc.)
 tally_stock_groups         ← product group hierarchy
