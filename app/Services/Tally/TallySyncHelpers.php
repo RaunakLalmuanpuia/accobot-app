@@ -9,6 +9,8 @@ trait TallySyncHelpers
 {
     private function startLog(TallyConnection $conn, string $entity): TallySyncLog
     {
+        TallyInboundSync::$syncing = true;
+
         return TallySyncLog::create([
             'tenant_id'  => $conn->tenant_id,
             'entity'     => $entity,
@@ -20,6 +22,8 @@ trait TallySyncHelpers
 
     private function completeLog(TallySyncLog $log, TallyConnection $conn): TallySyncLog
     {
+        TallyInboundSync::$syncing = false;
+
         $log->update([
             'status'          => 'success',
             'completed_at'    => now(),
@@ -35,6 +39,8 @@ trait TallySyncHelpers
 
     private function failLog(TallySyncLog $log, string $message): TallySyncLog
     {
+        TallyInboundSync::$syncing = false;
+
         $log->update([
             'status'        => 'failed',
             'error_message' => $message,

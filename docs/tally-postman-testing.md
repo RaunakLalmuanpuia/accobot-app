@@ -14,7 +14,6 @@ Create a Postman environment with these variables:
 |---|---|---|
 | `base_url` | `http://localhost:8000` | Accobot app base URL |
 | `tally_token` | `abc123...` (48 chars) | Bearer token from Tally Connection settings |
-| `company_id` | `COMP001` | Tally company ID (used in confirmation endpoints) |
 
 ### Auth (apply to collection)
 
@@ -87,24 +86,24 @@ These are optional — if `CompanyGUID` is absent, the upsert is silently skippe
 | 39 | GET | `/api/VoucherAPI/payment-voucher` | ⬜ Pending |
 | 40 | GET | `/api/VoucherAPI/contra-voucher` | ⬜ Pending |
 | 41 | GET | `/api/VoucherAPI/journal-voucher` | ⬜ Pending |
-| 42 | POST | `/api/MastersAPI/update-ledger-group/{companyId}` | ⬜ Pending |
-| 43 | POST | `/api/MastersAPI/update-ledger-master/{companyId}` | ⬜ Pending |
-| 44 | POST | `/api/MastersAPI/update-stock-master/{companyId}` | ⬜ Pending |
-| 45 | POST | `/api/MastersAPI/update-stock-group/{companyId}` | ⬜ Pending |
-| 46 | POST | `/api/MastersAPI/update-stock-category/{companyId}` | ⬜ Pending |
-| 47 | POST | `/api/MastersAPI/update-statutory-master/{companyId}` | ⬜ Pending |
-| 48 | POST | `/api/PayrollAPI/update-employee-group/{companyId}` | ⬜ Pending |
-| 49 | POST | `/api/PayrollAPI/update-employee/{companyId}` | ⬜ Pending |
-| 50 | POST | `/api/PayrollAPI/update-pay-head/{companyId}` | ⬜ Pending |
-| 51 | POST | `/api/PayrollAPI/update-attendance-type/{companyId}` | ⬜ Pending |
-| 52 | POST | `/api/VoucherAPI/update-sales-voucher/{companyId}` | ⬜ Pending |
-| 53 | POST | `/api/VoucherAPI/update-purchase-voucher/{companyId}` | ⬜ Pending |
-| 54 | POST | `/api/VoucherAPI/update-debitnote-voucher/{companyId}` | ⬜ Pending |
-| 55 | POST | `/api/VoucherAPI/update-creditnote-voucher/{companyId}` | ⬜ Pending |
-| 56 | POST | `/api/VoucherAPI/update-receipt-voucher/{companyId}` | ⬜ Pending |
-| 57 | POST | `/api/VoucherAPI/update-payment-voucher/{companyId}` | ⬜ Pending |
-| 58 | POST | `/api/VoucherAPI/update-contra-voucher/{companyId}` | ⬜ Pending |
-| 59 | POST | `/api/VoucherAPI/update-journal-voucher/{companyId}` | ⬜ Pending |
+| 42 | POST | `/api/MastersAPI/update-ledger-group` | ⬜ Pending |
+| 43 | POST | `/api/MastersAPI/update-ledger-master` | ⬜ Pending |
+| 44 | POST | `/api/MastersAPI/update-stock-master` | ⬜ Pending |
+| 45 | POST | `/api/MastersAPI/update-stock-group` | ⬜ Pending |
+| 46 | POST | `/api/MastersAPI/update-stock-category` | ⬜ Pending |
+| 47 | POST | `/api/MastersAPI/update-statutory-master` | ⬜ Pending |
+| 48 | POST | `/api/PayrollAPI/update-employee-group` | ⬜ Pending |
+| 49 | POST | `/api/PayrollAPI/update-employee` | ⬜ Pending |
+| 50 | POST | `/api/PayrollAPI/update-pay-head` | ⬜ Pending |
+| 51 | POST | `/api/PayrollAPI/update-attendance-type` | ⬜ Pending |
+| 52 | POST | `/api/VoucherAPI/update-sales-voucher` | ⬜ Pending |
+| 53 | POST | `/api/VoucherAPI/update-purchase-voucher` | ⬜ Pending |
+| 54 | POST | `/api/VoucherAPI/update-debitnote-voucher` | ⬜ Pending |
+| 55 | POST | `/api/VoucherAPI/update-creditnote-voucher` | ⬜ Pending |
+| 56 | POST | `/api/VoucherAPI/update-receipt-voucher` | ⬜ Pending |
+| 57 | POST | `/api/VoucherAPI/update-payment-voucher` | ⬜ Pending |
+| 58 | POST | `/api/VoucherAPI/update-contra-voucher` | ⬜ Pending |
+| 59 | POST | `/api/VoucherAPI/update-journal-voucher` | ⬜ Pending |
 
 ---
 
@@ -1434,5 +1433,77 @@ These are optional — if `CompanyGUID` is absent, the upsert is silently skippe
 - `Action: "Delete"` → sets `is_active: false`
 
 ---
+
+---
+
+## Outbound API Testing Notes
+
+Outbound GET endpoints (rows 24–41) return records that are **pending** in the outbound queue. A record enters the queue only when it has been created or modified in Accobot (or when the Tally inbound sync creates/updates a Tally master record).
+
+### Pre-requisites for testing outbound endpoints
+
+1. Ensure at least one record is pending in `tally_outbound_queue` (`status = 'pending'`).  
+   Trigger one by editing any ledger/stock item/voucher in the Accobot UI, or by inserting a row manually:
+   ```sql
+   INSERT INTO tally_outbound_queue (tenant_id, entity_type, entity_id, status, queued_at)
+   VALUES (1, 'App\\Models\\TallyLedger', 42, 'pending', now());
+   ```
+2. The Bearer token used must belong to the same tenant as the pending record.
+
+### Outbound GET — no request body
+
+All GET endpoints take no request body. Auth header is the only requirement.
+
+**Example: GET `/api/MastersAPI/ledger-master`**
+
+Response when a ledger is pending:
+```json
+{
+  "Data": [
+    {
+      "AccobotId": 42,
+      "ID": null,
+      "AlterID": null,
+      "Action": "Create",
+      "LedgerName": "Acme Pvt Ltd",
+      "GroupName": "Sundry Debtors",
+      ...
+    }
+  ]
+}
+```
+
+Response when nothing is pending:
+```json
+{ "Data": [] }
+```
+
+### Confirmation POST — after connector processes the GET
+
+After Tally processes the record, it posts back with `AccobotId` and `TallyId`:
+
+**Example: POST `/api/MastersAPI/update-ledger-master`**
+
+```json
+{
+  "Data": [
+    {
+      "AccobotId": 42,
+      "TallyId": 5501,
+      "IsSynced": true
+    }
+  ]
+}
+```
+
+Response:
+```json
+{ "status": "ok", "updated": 1 }
+```
+
+After a successful confirmation:
+- The `tally_outbound_queue` row moves to `status = 'confirmed'`
+- The Accobot record gets `tally_id = 5501` written back
+- If `IsSynced: true` and the record maps to a Client/Vendor/Product/Invoice, `tally_synced_at` is set on that mapped record
 
 *More results will be added here as endpoints are tested.*

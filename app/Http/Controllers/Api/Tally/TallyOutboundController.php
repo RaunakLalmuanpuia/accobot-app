@@ -14,20 +14,25 @@ use App\Models\TallyStockGroup;
 use App\Models\TallyStockItem;
 use App\Models\TallyVoucher;
 use App\Services\Tally\TallyOutboundFormatter;
+use App\Services\Tally\TallyOutboundQueueService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class TallyOutboundController extends TallyBaseController
 {
-    public function __construct(private TallyOutboundFormatter $formatter) {}
+    public function __construct(
+        private TallyOutboundFormatter $formatter,
+        private TallyOutboundQueueService $queue,
+    ) {}
 
     public function ledgerGroup(Request $request): JsonResponse
     {
         $conn = $this->resolveAndVerify($request);
+        $ids  = $this->queue->pendingIds((int) $conn->tenant_id, TallyLedgerGroup::class);
 
         $groups = TallyLedgerGroup::withoutGlobalScope('tenant')
             ->where('tenant_id', $conn->tenant_id)
-            ->where('is_active', true)
+            ->whereIn('id', $ids)
             ->get();
 
         return response()->json(['Data' => $this->formatter->formatLedgerGroups($groups)]);
@@ -36,10 +41,11 @@ class TallyOutboundController extends TallyBaseController
     public function ledgerMaster(Request $request): JsonResponse
     {
         $conn = $this->resolveAndVerify($request);
+        $ids  = $this->queue->pendingIds((int) $conn->tenant_id, TallyLedger::class);
 
         $ledgers = TallyLedger::withoutGlobalScope('tenant')
             ->where('tenant_id', $conn->tenant_id)
-            ->where('is_active', true)
+            ->whereIn('id', $ids)
             ->get();
 
         return response()->json(['Data' => $this->formatter->formatLedgers($ledgers)]);
@@ -48,10 +54,11 @@ class TallyOutboundController extends TallyBaseController
     public function stockMaster(Request $request): JsonResponse
     {
         $conn = $this->resolveAndVerify($request);
+        $ids  = $this->queue->pendingIds((int) $conn->tenant_id, TallyStockItem::class);
 
         $items = TallyStockItem::withoutGlobalScope('tenant')
             ->where('tenant_id', $conn->tenant_id)
-            ->where('is_active', true)
+            ->whereIn('id', $ids)
             ->get();
 
         return response()->json(['Data' => $this->formatter->formatStockItems($items)]);
@@ -60,10 +67,11 @@ class TallyOutboundController extends TallyBaseController
     public function stockGroup(Request $request): JsonResponse
     {
         $conn = $this->resolveAndVerify($request);
+        $ids  = $this->queue->pendingIds((int) $conn->tenant_id, TallyStockGroup::class);
 
         $groups = TallyStockGroup::withoutGlobalScope('tenant')
             ->where('tenant_id', $conn->tenant_id)
-            ->where('is_active', true)
+            ->whereIn('id', $ids)
             ->get();
 
         return response()->json(['Data' => $this->formatter->formatStockGroups($groups)]);
@@ -72,10 +80,11 @@ class TallyOutboundController extends TallyBaseController
     public function stockCategory(Request $request): JsonResponse
     {
         $conn = $this->resolveAndVerify($request);
+        $ids  = $this->queue->pendingIds((int) $conn->tenant_id, TallyStockCategory::class);
 
         $cats = TallyStockCategory::withoutGlobalScope('tenant')
             ->where('tenant_id', $conn->tenant_id)
-            ->where('is_active', true)
+            ->whereIn('id', $ids)
             ->get();
 
         return response()->json(['Data' => $this->formatter->formatStockCategories($cats)]);
@@ -123,10 +132,12 @@ class TallyOutboundController extends TallyBaseController
 
     public function statutoryMaster(Request $request): JsonResponse
     {
-        $conn  = $this->resolveAndVerify($request);
+        $conn = $this->resolveAndVerify($request);
+        $ids  = $this->queue->pendingIds((int) $conn->tenant_id, TallyStatutoryMaster::class);
+
         $items = TallyStatutoryMaster::withoutGlobalScope('tenant')
             ->where('tenant_id', $conn->tenant_id)
-            ->where('is_active', true)
+            ->whereIn('id', $ids)
             ->get();
 
         return response()->json(['Data' => $this->formatter->formatStatutoryMasters($items)]);
@@ -135,9 +146,11 @@ class TallyOutboundController extends TallyBaseController
     public function employeeGroup(Request $request): JsonResponse
     {
         $conn   = $this->resolveAndVerify($request);
+        $ids    = $this->queue->pendingIds((int) $conn->tenant_id, TallyEmployeeGroup::class);
+
         $groups = TallyEmployeeGroup::withoutGlobalScope('tenant')
             ->where('tenant_id', $conn->tenant_id)
-            ->where('is_active', true)
+            ->whereIn('id', $ids)
             ->get();
 
         return response()->json(['Data' => $this->formatter->formatEmployeeGroups($groups)]);
@@ -146,9 +159,11 @@ class TallyOutboundController extends TallyBaseController
     public function employee(Request $request): JsonResponse
     {
         $conn      = $this->resolveAndVerify($request);
+        $ids       = $this->queue->pendingIds((int) $conn->tenant_id, TallyEmployee::class);
+
         $employees = TallyEmployee::withoutGlobalScope('tenant')
             ->where('tenant_id', $conn->tenant_id)
-            ->where('is_active', true)
+            ->whereIn('id', $ids)
             ->get();
 
         return response()->json(['Data' => $this->formatter->formatEmployees($employees)]);
@@ -157,9 +172,11 @@ class TallyOutboundController extends TallyBaseController
     public function payHead(Request $request): JsonResponse
     {
         $conn     = $this->resolveAndVerify($request);
+        $ids      = $this->queue->pendingIds((int) $conn->tenant_id, TallyPayHead::class);
+
         $payHeads = TallyPayHead::withoutGlobalScope('tenant')
             ->where('tenant_id', $conn->tenant_id)
-            ->where('is_active', true)
+            ->whereIn('id', $ids)
             ->get();
 
         return response()->json(['Data' => $this->formatter->formatPayHeads($payHeads)]);
@@ -168,9 +185,11 @@ class TallyOutboundController extends TallyBaseController
     public function attendanceType(Request $request): JsonResponse
     {
         $conn  = $this->resolveAndVerify($request);
+        $ids   = $this->queue->pendingIds((int) $conn->tenant_id, TallyAttendanceType::class);
+
         $types = TallyAttendanceType::withoutGlobalScope('tenant')
             ->where('tenant_id', $conn->tenant_id)
-            ->where('is_active', true)
+            ->whereIn('id', $ids)
             ->get();
 
         return response()->json(['Data' => $this->formatter->formatAttendanceTypes($types)]);
@@ -179,12 +198,13 @@ class TallyOutboundController extends TallyBaseController
     private function voucherResponse(Request $request, string $type): JsonResponse
     {
         $conn = $this->resolveAndVerify($request);
+        $ids  = $this->queue->pendingIds((int) $conn->tenant_id, TallyVoucher::class);
 
         $vouchers = TallyVoucher::withoutGlobalScope('tenant')
             ->with(['inventoryEntries', 'ledgerEntries'])
             ->where('tenant_id', $conn->tenant_id)
             ->where('voucher_type', $type)
-            ->where('is_active', true)
+            ->whereIn('id', $ids)
             ->get();
 
         $formatted = match ($type) {

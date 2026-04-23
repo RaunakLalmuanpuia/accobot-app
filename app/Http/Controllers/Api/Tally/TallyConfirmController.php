@@ -13,110 +13,112 @@ use App\Models\TallyStockCategory;
 use App\Models\TallyStockGroup;
 use App\Models\TallyStockItem;
 use App\Models\TallyVoucher;
+use App\Services\Tally\TallyOutboundQueueService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class TallyConfirmController extends TallyBaseController
 {
-    public function ledgerMaster(Request $request, string $companyId): JsonResponse
+    public function __construct(private TallyOutboundQueueService $queue) {}
+
+    public function ledgerMaster(Request $request): JsonResponse
     {
-        return $this->handle($request, $companyId, TallyLedger::class);
+        return $this->handle($request, TallyLedger::class);
     }
 
-    public function stockMaster(Request $request, string $companyId): JsonResponse
+    public function stockMaster(Request $request): JsonResponse
     {
-        return $this->handle($request, $companyId, TallyStockItem::class);
+        return $this->handle($request, TallyStockItem::class);
     }
 
-    public function ledgerGroup(Request $request, string $companyId): JsonResponse
+    public function ledgerGroup(Request $request): JsonResponse
     {
-        return $this->handle($request, $companyId, TallyLedgerGroup::class);
+        return $this->handle($request, TallyLedgerGroup::class);
     }
 
-    public function stockGroup(Request $request, string $companyId): JsonResponse
+    public function stockGroup(Request $request): JsonResponse
     {
-        return $this->handle($request, $companyId, TallyStockGroup::class);
+        return $this->handle($request, TallyStockGroup::class);
     }
 
-    public function stockCategory(Request $request, string $companyId): JsonResponse
+    public function stockCategory(Request $request): JsonResponse
     {
-        return $this->handle($request, $companyId, TallyStockCategory::class);
+        return $this->handle($request, TallyStockCategory::class);
     }
 
-    public function salesVoucher(Request $request, string $companyId): JsonResponse
+    public function salesVoucher(Request $request): JsonResponse
     {
-        return $this->handle($request, $companyId, TallyVoucher::class);
+        return $this->handle($request, TallyVoucher::class);
     }
 
-    public function purchaseVoucher(Request $request, string $companyId): JsonResponse
+    public function purchaseVoucher(Request $request): JsonResponse
     {
-        return $this->handle($request, $companyId, TallyVoucher::class);
+        return $this->handle($request, TallyVoucher::class);
     }
 
-    public function debitNoteVoucher(Request $request, string $companyId): JsonResponse
+    public function debitNoteVoucher(Request $request): JsonResponse
     {
-        return $this->handle($request, $companyId, TallyVoucher::class);
+        return $this->handle($request, TallyVoucher::class);
     }
 
-    public function creditNoteVoucher(Request $request, string $companyId): JsonResponse
+    public function creditNoteVoucher(Request $request): JsonResponse
     {
-        return $this->handle($request, $companyId, TallyVoucher::class);
+        return $this->handle($request, TallyVoucher::class);
     }
 
-    public function receiptVoucher(Request $request, string $companyId): JsonResponse
+    public function receiptVoucher(Request $request): JsonResponse
     {
-        return $this->handle($request, $companyId, TallyVoucher::class);
+        return $this->handle($request, TallyVoucher::class);
     }
 
-    public function paymentVoucher(Request $request, string $companyId): JsonResponse
+    public function paymentVoucher(Request $request): JsonResponse
     {
-        return $this->handle($request, $companyId, TallyVoucher::class);
+        return $this->handle($request, TallyVoucher::class);
     }
 
-    public function contraVoucher(Request $request, string $companyId): JsonResponse
+    public function contraVoucher(Request $request): JsonResponse
     {
-        return $this->handle($request, $companyId, TallyVoucher::class);
+        return $this->handle($request, TallyVoucher::class);
     }
 
-    public function journalVoucher(Request $request, string $companyId): JsonResponse
+    public function journalVoucher(Request $request): JsonResponse
     {
-        return $this->handle($request, $companyId, TallyVoucher::class);
+        return $this->handle($request, TallyVoucher::class);
     }
 
-    public function statutoryMaster(Request $request, string $companyId): JsonResponse
+    public function statutoryMaster(Request $request): JsonResponse
     {
-        return $this->handle($request, $companyId, TallyStatutoryMaster::class);
+        return $this->handle($request, TallyStatutoryMaster::class);
     }
 
-    public function employeeGroup(Request $request, string $companyId): JsonResponse
+    public function employeeGroup(Request $request): JsonResponse
     {
-        return $this->handle($request, $companyId, TallyEmployeeGroup::class);
+        return $this->handle($request, TallyEmployeeGroup::class);
     }
 
-    public function employee(Request $request, string $companyId): JsonResponse
+    public function employee(Request $request): JsonResponse
     {
-        return $this->handle($request, $companyId, TallyEmployee::class);
+        return $this->handle($request, TallyEmployee::class);
     }
 
-    public function payHead(Request $request, string $companyId): JsonResponse
+    public function payHead(Request $request): JsonResponse
     {
-        return $this->handle($request, $companyId, TallyPayHead::class);
+        return $this->handle($request, TallyPayHead::class);
     }
 
-    public function attendanceType(Request $request, string $companyId): JsonResponse
+    public function attendanceType(Request $request): JsonResponse
     {
-        return $this->handle($request, $companyId, TallyAttendanceType::class);
+        return $this->handle($request, TallyAttendanceType::class);
     }
 
-    private function handle(Request $request, string $companyId, string $modelClass): JsonResponse
+    private function handle(Request $request, string $modelClass): JsonResponse
     {
-        $conn = $this->resolveConnectionByCompanyId($request, $companyId);
-
-        $items    = $request->input('Data', []);
-        $updated  = 0;
+        $conn    = $this->resolveConnection($request);
+        $items   = $request->input('Data', []);
+        $updated = 0;
 
         foreach ($items as $item) {
-            $id      = $item['Id'] ?? $item['ID'] ?? null;
+            $id      = $item['AccobotId'] ?? $item['Id'] ?? null;
             $tallyId = $item['TallyId'] ?? $item['TallyID'] ?? null;
             $synced  = $item['IsSynced'] ?? false;
 
@@ -128,10 +130,11 @@ class TallyConfirmController extends TallyBaseController
 
             if (!$record) continue;
 
-            $record->update(['tally_id' => (int) $tallyId]);
+            $record->updateQuietly(['tally_id' => (int) $tallyId]);
             $updated++;
 
-            // Mark mapped Accobot model as synced where applicable
+            $this->queue->markConfirmed((int) $conn->tenant_id, $modelClass, (int) $id);
+
             $this->markMappedSynced($record, $synced);
         }
 
@@ -145,16 +148,16 @@ class TallyConfirmController extends TallyBaseController
         $now = now();
 
         if ($record instanceof TallyLedger) {
-            $record->mappedClient?->update(['tally_synced_at' => $now]);
-            $record->mappedVendor?->update(['tally_synced_at' => $now]);
+            $record->mappedClient?->updateQuietly(['tally_synced_at' => $now]);
+            $record->mappedVendor?->updateQuietly(['tally_synced_at' => $now]);
         }
 
         if ($record instanceof TallyStockItem) {
-            $record->mappedProduct?->update(['tally_synced_at' => $now]);
+            $record->mappedProduct?->updateQuietly(['tally_synced_at' => $now]);
         }
 
         if ($record instanceof TallyVoucher) {
-            $record->mappedInvoice?->update(['tally_synced_at' => $now]);
+            $record->mappedInvoice?->updateQuietly(['tally_synced_at' => $now]);
         }
     }
 }

@@ -14,7 +14,7 @@ The token is the **48-character `inbound_token`** generated per tenant in the Ta
 Authorization: Bearer <inbound_token>
 ```
 
-The token resolves the tenant automatically — no company ID needed in headers (though some endpoints accept `?companyId=` as a query parameter for verification).
+The token resolves the tenant automatically — no company ID needed anywhere — the token is the sole auth mechanism.
 
 ---
 
@@ -1447,13 +1447,14 @@ Reports are stored as **insert-only snapshots** in `tally_reports`. Old snapshot
 
 ## 4. Outbound: Masters (Tally reads Accobot)
 
-Tally calls these **GET** endpoints to pull master data from Accobot. All return only `is_active = true` records.
+Tally calls these **GET** endpoints to poll for changes. Only records with a **pending** entry in `tally_outbound_queue` are returned — the connector gets `"Data": []` when nothing has changed.
 
-**Query Parameter (optional for all outbound GET endpoints):**
+Records become pending when:
+- Any Tally model record is created or updated in the Accobot UI
+- An Accobot Client, Vendor, Product, or Invoice is created/updated (auto-creates a stub Tally record)
+- A record is deactivated (`is_active = false`) — sent with `"Action": "Delete"`
 
-| Parameter | Type | Description |
-|---|---|---|
-| `companyId` | string | If provided, verified against the connection's `company_id`. Mismatch returns `403`. |
+Records are removed from pending when the connector calls the confirmation endpoint.
 
 ---
 
@@ -1463,7 +1464,7 @@ Returns all active ledger groups.
 
 **Request**
 ```
-GET /api/MastersAPI/ledger-group?companyId=COMP001
+GET /api/MastersAPI/ledger-group
 Authorization: Bearer <token>
 ```
 
@@ -1473,6 +1474,7 @@ Authorization: Bearer <token>
 {
   "Data": [
     {
+      "AccobotId": 1,
       "ID": 1,
       "AlterID": 42,
       "Action": "Create",
@@ -1506,6 +1508,7 @@ Authorization: Bearer <token>
 {
   "Data": [
     {
+      "AccobotId": 101,
       "ID": 101,
       "AlterID": 205,
       "Action": "Create",
@@ -1554,6 +1557,7 @@ Returns all active stock items.
 {
   "Data": [
     {
+      "AccobotId": 201,
       "ID": 201,
       "AlterID": 88,
       "Action": "Create",
@@ -1611,6 +1615,7 @@ Returns all active stock groups.
 {
   "Data": [
     {
+      "AccobotId": 10,
       "ID": 10,
       "AlterID": 55,
       "Action": "Create",
@@ -1636,6 +1641,7 @@ Returns all active stock categories.
 {
   "Data": [
     {
+      "AccobotId": 5,
       "ID": 5,
       "AlterID": 11,
       "Action": "Create",
@@ -1658,6 +1664,7 @@ Returns all active statutory masters.
 {
   "Data": [
     {
+      "AccobotId": 301,
       "ID": 301,
       "AlterID": 120,
       "Action": "Create",
@@ -1691,6 +1698,7 @@ Returns all active employee groups.
 {
   "Data": [
     {
+      "AccobotId": 401,
       "ID": 401,
       "AlterID": 10,
       "Action": "Create",
@@ -1713,6 +1721,7 @@ Returns all active employees with full payroll details.
 {
   "Data": [
     {
+      "AccobotId": 501,
       "ID": 501,
       "AlterID": 200,
       "Action": "Create",
@@ -1753,6 +1762,7 @@ Returns all active pay heads.
 {
   "Data": [
     {
+      "AccobotId": 601,
       "ID": 601,
       "AlterID": 30,
       "Action": "Create",
@@ -1781,6 +1791,7 @@ Returns all active attendance types.
 {
   "Data": [
     {
+      "AccobotId": 701,
       "ID": 701,
       "AlterID": 5,
       "Action": "Create",
@@ -1808,6 +1819,7 @@ Returns all active Sales vouchers with inventory and ledger entries.
 {
   "Data": [
     {
+      "AccobotId": 42,
       "MasterID": 5001,
       "AlterID": 300,
       "Action": "Create",
@@ -1916,9 +1928,9 @@ Returns all active Journal vouchers. `"VoucherType": "Journal"`. Adjustment and 
 
 ## 6. Confirmation: Tally writes back its IDs
 
-After Tally creates records based on data it read from Accobot (outbound GET), it calls these endpoints to write back the Tally-assigned IDs. This closes the sync loop for Accobot-originated data.
+After Tally writes records based on data from the outbound GET endpoints, it confirms by POSTing back the Tally-assigned ID. This marks the queue entry as `confirmed` so the record is no longer returned on the next poll.
 
-**URL Parameter:** `{companyId}` — must match the tenant's configured `company_id`.
+**No URL parameters required.** Auth is via Bearer token only.
 
 ### Standard Confirmation Response
 
@@ -1933,7 +1945,7 @@ After Tally creates records based on data it read from Accobot (outbound GET), i
 
 ---
 
-### 6.1 POST `/api/MastersAPI/update-ledger-master/{companyId}`
+### 6.1 POST `/api/MastersAPI/update-ledger-master`
 
 **Request Body**
 
@@ -1941,7 +1953,7 @@ After Tally creates records based on data it read from Accobot (outbound GET), i
 {
   "Data": [
     {
-      "Id": "uuid-of-accobot-tally-ledger-record",
+      "AccobotId": 42,
       "TallyId": 101,
       "IsSynced": true
     }
@@ -1951,13 +1963,13 @@ After Tally creates records based on data it read from Accobot (outbound GET), i
 
 | Field | Type | Description |
 |---|---|---|
-| `Id` | string | Accobot's UUID for the `tally_ledgers` record |
+| `AccobotId` | integer | Accobot's primary key for the `tally_ledgers` row — returned as `AccobotId` in the GET response |
 | `TallyId` | integer | Tally's assigned ID (also accepted as `TallyID`) |
 | `IsSynced` | boolean | If `true`, marks the mapped Client/Vendor as synced (`updated_at` touched) |
 
 ---
 
-### 6.2 POST `/api/MastersAPI/update-stock-master/{companyId}`
+### 6.2 POST `/api/MastersAPI/update-stock-master`
 
 Same structure as update-ledger-master. Updates `tally_stock_items`. If `IsSynced: true`, touches the mapped Product.
 
@@ -1965,7 +1977,7 @@ Same structure as update-ledger-master. Updates `tally_stock_items`. If `IsSynce
 {
   "Data": [
     {
-      "Id": "uuid-of-accobot-tally-stock-item-record",
+      "AccobotId": 201,
       "TallyId": 201,
       "IsSynced": true
     }
@@ -1975,7 +1987,7 @@ Same structure as update-ledger-master. Updates `tally_stock_items`. If `IsSynce
 
 ---
 
-### 6.3 POST `/api/MastersAPI/update-ledger-group/{companyId}`
+### 6.3 POST `/api/MastersAPI/update-ledger-group`
 
 Updates `tally_ledger_groups` with Tally-assigned ID.
 
@@ -1983,7 +1995,7 @@ Updates `tally_ledger_groups` with Tally-assigned ID.
 {
   "Data": [
     {
-      "Id": "uuid-of-accobot-tally-ledger-group-record",
+      "AccobotId": 1,
       "TallyId": 1,
       "IsSynced": false
     }
@@ -1993,35 +2005,35 @@ Updates `tally_ledger_groups` with Tally-assigned ID.
 
 ---
 
-### 6.4 POST `/api/MastersAPI/update-stock-group/{companyId}`
+### 6.4 POST `/api/MastersAPI/update-stock-group`
 
 Updates `tally_stock_groups`.
 
 ```json
 {
   "Data": [
-    { "Id": "uuid", "TallyId": 10, "IsSynced": false }
+    { "AccobotId": 10, "TallyId": 10, "IsSynced": false }
   ]
 }
 ```
 
 ---
 
-### 6.5 POST `/api/MastersAPI/update-stock-category/{companyId}`
+### 6.5 POST `/api/MastersAPI/update-stock-category`
 
 Updates `tally_stock_categories`.
 
 ```json
 {
   "Data": [
-    { "Id": "uuid", "TallyId": 5, "IsSynced": false }
+    { "AccobotId": 5, "TallyId": 5, "IsSynced": false }
   ]
 }
 ```
 
 ---
 
-### 6.6 POST `/api/VoucherAPI/update-sales-voucher/{companyId}`
+### 6.6 POST `/api/VoucherAPI/update-sales-voucher`
 
 Updates `tally_vouchers` (Sales type). If `IsSynced: true`, touches the mapped Invoice.
 
@@ -2029,7 +2041,7 @@ Updates `tally_vouchers` (Sales type). If `IsSynced: true`, touches the mapped I
 {
   "Data": [
     {
-      "Id": "uuid-of-accobot-tally-voucher-record",
+      "AccobotId": 42,
       "TallyId": 5001,
       "IsSynced": true
     }
@@ -2039,112 +2051,112 @@ Updates `tally_vouchers` (Sales type). If `IsSynced: true`, touches the mapped I
 
 ---
 
-### 6.7 POST `/api/VoucherAPI/update-purchase-voucher/{companyId}`
+### 6.7 POST `/api/VoucherAPI/update-purchase-voucher`
 
 Updates `tally_vouchers` (Purchase type).
 
 ---
 
-### 6.8 POST `/api/VoucherAPI/update-debitnote-voucher/{companyId}`
+### 6.8 POST `/api/VoucherAPI/update-debitnote-voucher`
 
 Updates `tally_vouchers` (DebitNote type).
 
 ---
 
-### 6.9 POST `/api/VoucherAPI/update-creditnote-voucher/{companyId}`
+### 6.9 POST `/api/VoucherAPI/update-creditnote-voucher`
 
 Updates `tally_vouchers` (CreditNote type).
 
 ---
 
-### 6.10 POST `/api/VoucherAPI/update-receipt-voucher/{companyId}`
+### 6.10 POST `/api/VoucherAPI/update-receipt-voucher`
 
 Updates `tally_vouchers` (Receipt type).
 
 ---
 
-### 6.11 POST `/api/VoucherAPI/update-payment-voucher/{companyId}`
+### 6.11 POST `/api/VoucherAPI/update-payment-voucher`
 
 Updates `tally_vouchers` (Payment type).
 
 ---
 
-### 6.12 POST `/api/VoucherAPI/update-contra-voucher/{companyId}`
+### 6.12 POST `/api/VoucherAPI/update-contra-voucher`
 
 Updates `tally_vouchers` (Contra type).
 
 ---
 
-### 6.13 POST `/api/VoucherAPI/update-journal-voucher/{companyId}`
+### 6.13 POST `/api/VoucherAPI/update-journal-voucher`
 
 Updates `tally_vouchers` (Journal type).
 
 ---
 
-### 6.14 POST `/api/MastersAPI/update-statutory-master/{companyId}`
+### 6.14 POST `/api/MastersAPI/update-statutory-master`
 
 Updates `tally_statutory_masters` with Tally-assigned ID.
 
 ```json
 {
   "Data": [
-    { "Id": "uuid", "TallyId": 301, "IsSynced": false }
+    { "AccobotId": 301, "TallyId": 301, "IsSynced": false }
   ]
 }
 ```
 
 ---
 
-### 6.15 POST `/api/PayrollAPI/update-employee-group/{companyId}`
+### 6.15 POST `/api/PayrollAPI/update-employee-group`
 
 Updates `tally_employee_groups` with Tally-assigned ID.
 
 ```json
 {
   "Data": [
-    { "Id": "uuid", "TallyId": 401, "IsSynced": false }
+    { "AccobotId": 401, "TallyId": 401, "IsSynced": false }
   ]
 }
 ```
 
 ---
 
-### 6.16 POST `/api/PayrollAPI/update-employee/{companyId}`
+### 6.16 POST `/api/PayrollAPI/update-employee`
 
 Updates `tally_employees` with Tally-assigned ID.
 
 ```json
 {
   "Data": [
-    { "Id": "uuid", "TallyId": 501, "IsSynced": true }
+    { "AccobotId": 501, "TallyId": 501, "IsSynced": true }
   ]
 }
 ```
 
 ---
 
-### 6.17 POST `/api/PayrollAPI/update-pay-head/{companyId}`
+### 6.17 POST `/api/PayrollAPI/update-pay-head`
 
 Updates `tally_pay_heads` with Tally-assigned ID.
 
 ```json
 {
   "Data": [
-    { "Id": "uuid", "TallyId": 601, "IsSynced": false }
+    { "AccobotId": 601, "TallyId": 601, "IsSynced": false }
   ]
 }
 ```
 
 ---
 
-### 6.18 POST `/api/PayrollAPI/update-attendance-type/{companyId}`
+### 6.18 POST `/api/PayrollAPI/update-attendance-type`
 
 Updates `tally_attendance_types` with Tally-assigned ID.
 
 ```json
 {
   "Data": [
-    { "Id": "uuid", "TallyId": 701, "IsSynced": false }
+    { "AccobotId": 701, "TallyId": 701, "IsSynced": false }
   ]
 }
 ```
@@ -2153,27 +2165,15 @@ Updates `tally_attendance_types` with Tally-assigned ID.
 
 ## 7. Known Limitations
 
-### Accobot-side edits are invisible to the connector
+### Accobot-side edits now propagate to Tally via the outbound queue
 
-The `AlterID` field in all outbound GET responses is **Tally's own version number** — stored as-is when Tally pushed the record inbound. Accobot does not maintain its own version counter.
-
-**Consequence:** If you edit a master record directly in Accobot (e.g. rename a ledger group, change a ledger's address), the connector has no signal that anything changed. The next GET response will return the updated field values, but the `AlterID` is unchanged — so a connector that uses AlterID for change detection will skip the record.
-
-**What works reliably:**
-- Changes made in Tally → pushed inbound → always reflected in GET responses with a new `AlterID` ✓
-- Accobot-side edits → reflected in GET field values, but no AlterID bump → connector may or may not detect the change ✗
-
-**Workaround options:**
-1. **Full resync** — instruct the connector to do a full field-level diff (not just AlterID comparison) on demand
-2. **Edit in Tally, not Accobot** — for master data that originates in Tally, always make changes there; let them flow inbound
-
-This is a current architectural gap. A future fix would be to maintain an `accobot_alter_id` counter on every Accobot-side update and expose it in GET responses alongside `AlterID`.
+When any record is edited in the Accobot UI, `TallyModelObserver` automatically queues it as `pending`. The connector picks it up on the next poll with `Action: "Update"`. The `AlterID` in the response is unchanged (it reflects Tally's last known version), but the `Action` field is the reliable signal for the connector.
 
 ---
 
-### Deletions in Accobot are not propagated to Tally
+### Deletions in Accobot propagate to Tally as Action: Delete
 
-Deleting or deactivating a Client, Vendor, or Product in Accobot does **not** send any signal to Tally. The connector will continue to see the record in GET responses until it is also marked inactive in `tally_ledgers` / `tally_stock_items` (which only happens when Tally sends `Action: Delete` inbound).
+When a record is deactivated (`is_active = false`) in Accobot, if it already has a `tally_id` (meaning it exists in Tally), it is queued with `Action: "Delete"` and served on the next poll. If `tally_id` is null (never reached Tally), the record is not queued — there is nothing to delete in Tally.
 
 ---
 
@@ -2191,7 +2191,7 @@ Missing or invalid Bearer token.
 
 ### 403 Forbidden
 
-`companyId` query param does not match the connection's configured company ID.
+Token is valid but the resolved tenant does not match the requested resource.
 
 ```json
 { "message": "Company ID mismatch." }
@@ -2256,44 +2256,44 @@ All Tally API routes are throttled at **120 requests per minute**. Exceeding thi
 
 | Method | Path | Description |
 |---|---|---|
-| GET | `/api/MastersAPI/ledger-group` | Fetch all ledger groups |
-| GET | `/api/MastersAPI/ledger-master` | Fetch all ledgers |
-| GET | `/api/MastersAPI/stock-master` | Fetch all stock items |
-| GET | `/api/MastersAPI/stock-group` | Fetch all stock groups |
-| GET | `/api/MastersAPI/stock-category` | Fetch all stock categories |
-| GET | `/api/VoucherAPI/sales-voucher` | Fetch Sales vouchers |
-| GET | `/api/VoucherAPI/purchase-voucher` | Fetch Purchase vouchers |
-| GET | `/api/VoucherAPI/debitNote-voucher` | Fetch Debit Note vouchers |
-| GET | `/api/VoucherAPI/creditNote-voucher` | Fetch Credit Note vouchers |
-| GET | `/api/VoucherAPI/receipt-voucher` | Fetch Receipt vouchers |
-| GET | `/api/VoucherAPI/payment-voucher` | Fetch Payment vouchers |
-| GET | `/api/VoucherAPI/contra-voucher` | Fetch Contra vouchers |
-| GET | `/api/VoucherAPI/journal-voucher` | Fetch Journal vouchers |
-| GET | `/api/MastersAPI/statutory-master` | Fetch Statutory masters |
-| GET | `/api/PayrollAPI/employee-group` | Fetch Employee groups |
-| GET | `/api/PayrollAPI/employee` | Fetch Employees |
-| GET | `/api/PayrollAPI/pay-head` | Fetch Pay heads |
-| GET | `/api/PayrollAPI/attendance-type` | Fetch Attendance types |
+| GET | `/api/MastersAPI/ledger-group` | Fetch pending ledger groups |
+| GET | `/api/MastersAPI/ledger-master` | Fetch pending ledgers |
+| GET | `/api/MastersAPI/stock-master` | Fetch pending stock items |
+| GET | `/api/MastersAPI/stock-group` | Fetch pending stock groups |
+| GET | `/api/MastersAPI/stock-category` | Fetch pending stock categories |
+| GET | `/api/VoucherAPI/sales-voucher` | Fetch pending Sales vouchers |
+| GET | `/api/VoucherAPI/purchase-voucher` | Fetch pending Purchase vouchers |
+| GET | `/api/VoucherAPI/debitNote-voucher` | Fetch pending Debit Note vouchers |
+| GET | `/api/VoucherAPI/creditNote-voucher` | Fetch pending Credit Note vouchers |
+| GET | `/api/VoucherAPI/receipt-voucher` | Fetch pending Receipt vouchers |
+| GET | `/api/VoucherAPI/payment-voucher` | Fetch pending Payment vouchers |
+| GET | `/api/VoucherAPI/contra-voucher` | Fetch pending Contra vouchers |
+| GET | `/api/VoucherAPI/journal-voucher` | Fetch pending Journal vouchers |
+| GET | `/api/MastersAPI/statutory-master` | Fetch pending Statutory masters |
+| GET | `/api/PayrollAPI/employee-group` | Fetch pending Employee groups |
+| GET | `/api/PayrollAPI/employee` | Fetch pending Employees |
+| GET | `/api/PayrollAPI/pay-head` | Fetch pending Pay heads |
+| GET | `/api/PayrollAPI/attendance-type` | Fetch pending Attendance types |
 
 ### Confirmation POST — `Authorization: Bearer <token>`
 
 | Method | Path | Description |
 |---|---|---|
-| POST | `/api/MastersAPI/update-ledger-master/{companyId}` | Write back Tally ID to ledger |
-| POST | `/api/MastersAPI/update-stock-master/{companyId}` | Write back Tally ID to stock item |
-| POST | `/api/MastersAPI/update-ledger-group/{companyId}` | Write back Tally ID to ledger group |
-| POST | `/api/MastersAPI/update-stock-group/{companyId}` | Write back Tally ID to stock group |
-| POST | `/api/MastersAPI/update-stock-category/{companyId}` | Write back Tally ID to stock category |
-| POST | `/api/VoucherAPI/update-sales-voucher/{companyId}` | Write back Tally ID to Sales voucher |
-| POST | `/api/VoucherAPI/update-purchase-voucher/{companyId}` | Write back Tally ID to Purchase voucher |
-| POST | `/api/VoucherAPI/update-debitnote-voucher/{companyId}` | Write back Tally ID to Debit Note |
-| POST | `/api/VoucherAPI/update-creditnote-voucher/{companyId}` | Write back Tally ID to Credit Note |
-| POST | `/api/VoucherAPI/update-receipt-voucher/{companyId}` | Write back Tally ID to Receipt voucher |
-| POST | `/api/VoucherAPI/update-payment-voucher/{companyId}` | Write back Tally ID to Payment voucher |
-| POST | `/api/VoucherAPI/update-contra-voucher/{companyId}` | Write back Tally ID to Contra voucher |
-| POST | `/api/VoucherAPI/update-journal-voucher/{companyId}` | Write back Tally ID to Journal voucher |
-| POST | `/api/MastersAPI/update-statutory-master/{companyId}` | Write back Tally ID to Statutory master |
-| POST | `/api/PayrollAPI/update-employee-group/{companyId}` | Write back Tally ID to Employee group |
-| POST | `/api/PayrollAPI/update-employee/{companyId}` | Write back Tally ID to Employee |
-| POST | `/api/PayrollAPI/update-pay-head/{companyId}` | Write back Tally ID to Pay head |
-| POST | `/api/PayrollAPI/update-attendance-type/{companyId}` | Write back Tally ID to Attendance type |
+| POST | `/api/MastersAPI/update-ledger-master` | Write back Tally ID to ledger |
+| POST | `/api/MastersAPI/update-stock-master` | Write back Tally ID to stock item |
+| POST | `/api/MastersAPI/update-ledger-group` | Write back Tally ID to ledger group |
+| POST | `/api/MastersAPI/update-stock-group` | Write back Tally ID to stock group |
+| POST | `/api/MastersAPI/update-stock-category` | Write back Tally ID to stock category |
+| POST | `/api/VoucherAPI/update-sales-voucher` | Write back Tally ID to Sales voucher |
+| POST | `/api/VoucherAPI/update-purchase-voucher` | Write back Tally ID to Purchase voucher |
+| POST | `/api/VoucherAPI/update-debitnote-voucher` | Write back Tally ID to Debit Note |
+| POST | `/api/VoucherAPI/update-creditnote-voucher` | Write back Tally ID to Credit Note |
+| POST | `/api/VoucherAPI/update-receipt-voucher` | Write back Tally ID to Receipt voucher |
+| POST | `/api/VoucherAPI/update-payment-voucher` | Write back Tally ID to Payment voucher |
+| POST | `/api/VoucherAPI/update-contra-voucher` | Write back Tally ID to Contra voucher |
+| POST | `/api/VoucherAPI/update-journal-voucher` | Write back Tally ID to Journal voucher |
+| POST | `/api/MastersAPI/update-statutory-master` | Write back Tally ID to Statutory master |
+| POST | `/api/PayrollAPI/update-employee-group` | Write back Tally ID to Employee group |
+| POST | `/api/PayrollAPI/update-employee` | Write back Tally ID to Employee |
+| POST | `/api/PayrollAPI/update-pay-head` | Write back Tally ID to Pay head |
+| POST | `/api/PayrollAPI/update-attendance-type` | Write back Tally ID to Attendance type |

@@ -103,7 +103,7 @@ All 63 API endpoints (inbound, outbound, confirmation) use the same token-based 
 5. If the token doesn't exist or `is_active = false`, it returns HTTP 401 immediately.
 6. On every successful request, `inbound_token_last_used_at` is stamped so you can see when Tally last talked to Accobot.
 
-For confirmation endpoints (Flow 3), `resolveConnectionByCompanyId()` additionally verifies that the `{companyId}` in the URL matches the `company_id` stored on the connection.
+All endpoints — including confirmation — use only the Bearer token for auth. `companyId` is not required anywhere.
 
 ```php
 // TallyBaseController — runs on every API request
@@ -556,38 +556,43 @@ Tax (check 4) deliberately comes before income (check 5) because some tax group 
 
 ## 10. Outbound GET — Accobot Data Served to Tally
 
-These are the exact `cloud-tally.in` Swagger paths. The Tally connector polls them to fetch any Accobot-originated records that should appear in Tally.
+The Tally connector polls these endpoints to pick up changes made in Accobot. Only records with a **pending** entry in `tally_outbound_queue` are returned — the connector gets an empty `Data` array when there is nothing new.
+
+**Change detection (outbound queue):**
+- When any Tally model record is created or updated in Accobot, a `TallyModelObserver` upserts a `pending` row in `tally_outbound_queue (tenant_id, entity_type, entity_id)`.
+- When an Accobot-native record (Client, Vendor, Product, Invoice) is created or updated, `TallyAccobotObserver` auto-creates a stub Tally record (TallyLedger / TallyStockItem / TallyVoucher) if none exists, then queues it.
+- Observer queuing is **suppressed during inbound sync** via `TallyInboundSync::$syncing` to prevent loop-back.
+- A record edited multiple times before the connector polls still produces a single `pending` entry (upsert).
+- Status transitions: `pending` → `confirmed`. Records stay `pending` and are re-served on every poll until the confirmation endpoint marks them `confirmed`.
 
 **Flow:**
-1. Request arrives with Bearer token + `?companyId=` query param.
+1. Request arrives with Bearer token.
 2. `TallyBaseController::resolveConnection()` authenticates and finds the tenant.
-3. `companyId` is verified against `tally_connections.company_id`.
-4. `TallyOutboundController` queries the relevant `tally_*` table for `is_active = true` records.
+3. `TallyOutboundQueueService::pendingIds()` fetches IDs with `status = pending` for that entity type.
+4. `TallyOutboundController` queries the relevant `tally_*` table, filtered to those IDs.
 5. `TallyOutboundFormatter` converts them to Tally's exact payload structure.
-6. Response: `{ "Data": [...] }`
-
-**Current scope:** These endpoints return data from the `tally_*` mirror tables (records that came from Tally originally). The Outbound formatter includes all fields Tally expects, preserving exact casing and using `"Yes"` / `"No"` for boolean fields (Tally's format).
+6. Response: `{ "Data": [...] }` — empty array if nothing pending.
 
 **Endpoints:**
 ```
-GET /api/MastersAPI/ledger-group?companyId=
-GET /api/MastersAPI/ledger-master?companyId=
-GET /api/MastersAPI/stock-master?companyId=
-GET /api/MastersAPI/stock-group?companyId=
-GET /api/MastersAPI/stock-category?companyId=
-GET /api/MastersAPI/statutory-master?companyId=
-GET /api/PayrollAPI/employee-group?companyId=
-GET /api/PayrollAPI/employee?companyId=
-GET /api/PayrollAPI/pay-head?companyId=
-GET /api/PayrollAPI/attendance-type?companyId=
-GET /api/VoucherAPI/sales-voucher?companyId=
-GET /api/VoucherAPI/purchase-voucher?companyId=
-GET /api/VoucherAPI/debitNote-voucher?companyId=
-GET /api/VoucherAPI/creditNote-voucher?companyId=
-GET /api/VoucherAPI/receipt-voucher?companyId=
-GET /api/VoucherAPI/payment-voucher?companyId=
-GET /api/VoucherAPI/contra-voucher?companyId=
-GET /api/VoucherAPI/journal-voucher?companyId=
+GET /api/MastersAPI/ledger-group
+GET /api/MastersAPI/ledger-master
+GET /api/MastersAPI/stock-master
+GET /api/MastersAPI/stock-group
+GET /api/MastersAPI/stock-category
+GET /api/MastersAPI/statutory-master
+GET /api/PayrollAPI/employee-group
+GET /api/PayrollAPI/employee
+GET /api/PayrollAPI/pay-head
+GET /api/PayrollAPI/attendance-type
+GET /api/VoucherAPI/sales-voucher
+GET /api/VoucherAPI/purchase-voucher
+GET /api/VoucherAPI/debitNote-voucher
+GET /api/VoucherAPI/creditNote-voucher
+GET /api/VoucherAPI/receipt-voucher
+GET /api/VoucherAPI/payment-voucher
+GET /api/VoucherAPI/contra-voucher
+GET /api/VoucherAPI/journal-voucher
 ```
 
 ---
@@ -609,28 +614,28 @@ After Tally creates an Accobot-originated record, it confirms the creation by PO
 - `TallyId` = the integer ID Tally assigned
 - `IsSynced` = when `true`, stamps `tally_synced_at` on the mapped Accobot model (Client, Vendor, Product, or Invoice)
 
-`TallyConfirmController` looks up the record by `Id` and `tenant_id`, then updates its `tally_id` column with the value Tally assigned. This ensures the record can be deduped correctly on future inbound syncs. When `IsSynced: true`, the corresponding auto-mapped model (e.g. the Client created from a Ledger) gets its `tally_synced_at` timestamp set, recording when Tally last confirmed it as synced.
+`TallyConfirmController` looks up the record by `Id` and `tenant_id`, updates its `tally_id`, and marks the `tally_outbound_queue` entry as `confirmed`. When `IsSynced: true`, the corresponding auto-mapped model (e.g. the Client created from a Ledger) gets its `tally_synced_at` timestamp set.
 
 **Endpoints:**
 ```
-POST /api/MastersAPI/update-ledger-master/{companyId}
-POST /api/MastersAPI/update-stock-master/{companyId}
-POST /api/MastersAPI/update-ledger-group/{companyId}
-POST /api/MastersAPI/update-stock-group/{companyId}
-POST /api/MastersAPI/update-stock-category/{companyId}
-POST /api/MastersAPI/update-statutory-master/{companyId}
-POST /api/PayrollAPI/update-employee-group/{companyId}
-POST /api/PayrollAPI/update-employee/{companyId}
-POST /api/PayrollAPI/update-pay-head/{companyId}
-POST /api/PayrollAPI/update-attendance-type/{companyId}
-POST /api/VoucherAPI/update-sales-voucher/{companyId}
-POST /api/VoucherAPI/update-purchase-voucher/{companyId}
-POST /api/VoucherAPI/update-debitnote-voucher/{companyId}
-POST /api/VoucherAPI/update-creditnote-voucher/{companyId}
-POST /api/VoucherAPI/update-receipt-voucher/{companyId}
-POST /api/VoucherAPI/update-payment-voucher/{companyId}
-POST /api/VoucherAPI/update-contra-voucher/{companyId}
-POST /api/VoucherAPI/update-journal-voucher/{companyId}
+POST /api/MastersAPI/update-ledger-master
+POST /api/MastersAPI/update-stock-master
+POST /api/MastersAPI/update-ledger-group
+POST /api/MastersAPI/update-stock-group
+POST /api/MastersAPI/update-stock-category
+POST /api/MastersAPI/update-statutory-master
+POST /api/PayrollAPI/update-employee-group
+POST /api/PayrollAPI/update-employee
+POST /api/PayrollAPI/update-pay-head
+POST /api/PayrollAPI/update-attendance-type
+POST /api/VoucherAPI/update-sales-voucher
+POST /api/VoucherAPI/update-purchase-voucher
+POST /api/VoucherAPI/update-debitnote-voucher
+POST /api/VoucherAPI/update-creditnote-voucher
+POST /api/VoucherAPI/update-receipt-voucher
+POST /api/VoucherAPI/update-payment-voucher
+POST /api/VoucherAPI/update-contra-voucher
+POST /api/VoucherAPI/update-journal-voucher
 ```
 
 ---
@@ -735,24 +740,24 @@ The `employees` endpoint also accepts `"full_sync": true` — after processing, 
 
 | Endpoint | Returns |
 |----------|---------|
-| GET /api/MastersAPI/ledger-group?companyId= | tally_ledger_groups |
-| GET /api/MastersAPI/ledger-master?companyId= | tally_ledgers |
-| GET /api/MastersAPI/stock-master?companyId= | tally_stock_items |
-| GET /api/MastersAPI/stock-group?companyId= | tally_stock_groups |
-| GET /api/MastersAPI/stock-category?companyId= | tally_stock_categories |
-| GET /api/MastersAPI/statutory-master?companyId= | tally_statutory_masters |
-| GET /api/PayrollAPI/employee-group?companyId= | tally_employee_groups |
-| GET /api/PayrollAPI/employee?companyId= | tally_employees |
-| GET /api/PayrollAPI/pay-head?companyId= | tally_pay_heads |
-| GET /api/PayrollAPI/attendance-type?companyId= | tally_attendance_types |
-| GET /api/VoucherAPI/sales-voucher?companyId= | tally_vouchers (Sales) |
-| GET /api/VoucherAPI/purchase-voucher?companyId= | tally_vouchers (Purchase) |
-| GET /api/VoucherAPI/debitNote-voucher?companyId= | tally_vouchers (DebitNote) |
-| GET /api/VoucherAPI/creditNote-voucher?companyId= | tally_vouchers (CreditNote) |
-| GET /api/VoucherAPI/receipt-voucher?companyId= | tally_vouchers (Receipt) |
-| GET /api/VoucherAPI/payment-voucher?companyId= | tally_vouchers (Payment) |
-| GET /api/VoucherAPI/contra-voucher?companyId= | tally_vouchers (Contra) |
-| GET /api/VoucherAPI/journal-voucher?companyId= | tally_vouchers (Journal) |
+| GET /api/MastersAPI/ledger-group | tally_ledger_groups |
+| GET /api/MastersAPI/ledger-master | tally_ledgers |
+| GET /api/MastersAPI/stock-master | tally_stock_items |
+| GET /api/MastersAPI/stock-group | tally_stock_groups |
+| GET /api/MastersAPI/stock-category | tally_stock_categories |
+| GET /api/MastersAPI/statutory-master | tally_statutory_masters |
+| GET /api/PayrollAPI/employee-group | tally_employee_groups |
+| GET /api/PayrollAPI/employee | tally_employees |
+| GET /api/PayrollAPI/pay-head | tally_pay_heads |
+| GET /api/PayrollAPI/attendance-type | tally_attendance_types |
+| GET /api/VoucherAPI/sales-voucher | tally_vouchers (Sales) |
+| GET /api/VoucherAPI/purchase-voucher | tally_vouchers (Purchase) |
+| GET /api/VoucherAPI/debitNote-voucher | tally_vouchers (DebitNote) |
+| GET /api/VoucherAPI/creditNote-voucher | tally_vouchers (CreditNote) |
+| GET /api/VoucherAPI/receipt-voucher | tally_vouchers (Receipt) |
+| GET /api/VoucherAPI/payment-voucher | tally_vouchers (Payment) |
+| GET /api/VoucherAPI/contra-voucher | tally_vouchers (Contra) |
+| GET /api/VoucherAPI/journal-voucher | tally_vouchers (Journal) |
 
 **Response format:** `{ "Data": [...] }` — Tally-compatible field names and casing
 
@@ -760,24 +765,24 @@ The `employees` endpoint also accepts `"full_sync": true` — after processing, 
 
 | Endpoint | Writes TallyId to |
 |----------|------------------|
-| POST /api/MastersAPI/update-ledger-master/{companyId} | tally_ledgers.tally_id |
-| POST /api/MastersAPI/update-stock-master/{companyId} | tally_stock_items.tally_id |
-| POST /api/MastersAPI/update-ledger-group/{companyId} | tally_ledger_groups.tally_id |
-| POST /api/MastersAPI/update-stock-group/{companyId} | tally_stock_groups.tally_id |
-| POST /api/MastersAPI/update-stock-category/{companyId} | tally_stock_categories.tally_id |
-| POST /api/MastersAPI/update-statutory-master/{companyId} | tally_statutory_masters.tally_id |
-| POST /api/PayrollAPI/update-employee-group/{companyId} | tally_employee_groups.tally_id |
-| POST /api/PayrollAPI/update-employee/{companyId} | tally_employees.tally_id |
-| POST /api/PayrollAPI/update-pay-head/{companyId} | tally_pay_heads.tally_id |
-| POST /api/PayrollAPI/update-attendance-type/{companyId} | tally_attendance_types.tally_id |
-| POST /api/VoucherAPI/update-sales-voucher/{companyId} | tally_vouchers.tally_id |
-| POST /api/VoucherAPI/update-purchase-voucher/{companyId} | tally_vouchers.tally_id |
-| POST /api/VoucherAPI/update-debitnote-voucher/{companyId} | tally_vouchers.tally_id |
-| POST /api/VoucherAPI/update-creditnote-voucher/{companyId} | tally_vouchers.tally_id |
-| POST /api/VoucherAPI/update-receipt-voucher/{companyId} | tally_vouchers.tally_id |
-| POST /api/VoucherAPI/update-payment-voucher/{companyId} | tally_vouchers.tally_id |
-| POST /api/VoucherAPI/update-contra-voucher/{companyId} | tally_vouchers.tally_id |
-| POST /api/VoucherAPI/update-journal-voucher/{companyId} | tally_vouchers.tally_id |
+| POST /api/MastersAPI/update-ledger-master | tally_ledgers.tally_id |
+| POST /api/MastersAPI/update-stock-master | tally_stock_items.tally_id |
+| POST /api/MastersAPI/update-ledger-group | tally_ledger_groups.tally_id |
+| POST /api/MastersAPI/update-stock-group | tally_stock_groups.tally_id |
+| POST /api/MastersAPI/update-stock-category | tally_stock_categories.tally_id |
+| POST /api/MastersAPI/update-statutory-master | tally_statutory_masters.tally_id |
+| POST /api/PayrollAPI/update-employee-group | tally_employee_groups.tally_id |
+| POST /api/PayrollAPI/update-employee | tally_employees.tally_id |
+| POST /api/PayrollAPI/update-pay-head | tally_pay_heads.tally_id |
+| POST /api/PayrollAPI/update-attendance-type | tally_attendance_types.tally_id |
+| POST /api/VoucherAPI/update-sales-voucher | tally_vouchers.tally_id |
+| POST /api/VoucherAPI/update-purchase-voucher | tally_vouchers.tally_id |
+| POST /api/VoucherAPI/update-debitnote-voucher | tally_vouchers.tally_id |
+| POST /api/VoucherAPI/update-creditnote-voucher | tally_vouchers.tally_id |
+| POST /api/VoucherAPI/update-receipt-voucher | tally_vouchers.tally_id |
+| POST /api/VoucherAPI/update-payment-voucher | tally_vouchers.tally_id |
+| POST /api/VoucherAPI/update-contra-voucher | tally_vouchers.tally_id |
+| POST /api/VoucherAPI/update-journal-voucher | tally_vouchers.tally_id |
 
 ---
 
@@ -876,13 +881,13 @@ The "Tally" link appears in the top navigation for any user with `integrations.v
 
 | Class | Responsibility |
 |-------|---------------|
-| `TallyBaseController` | Resolves `TallyConnection` from Bearer token. Stamps `inbound_token_last_used_at`. Verifies `companyId`. Base class for all Tally API controllers. |
+| `TallyBaseController` | Resolves `TallyConnection` from Bearer token. Stamps `inbound_token_last_used_at`. Base class for all Tally API controllers. |
 | `TallyInboundMastersController` | 6 methods: ledgerGroups, ledgers, stockItems, stockGroups, stockCategories, statutory. |
 | `TallyInboundPayrollController` | 4 methods: employeeGroups, employees, payHeads, attendanceTypes. Injects `TallyPayrollSync`. |
 | `TallyInboundVouchersController` | 8 methods: sales, creditNote, purchase, debitNote, receipt, payment, contra, journal. All delegate to `TallyInboundSync::syncVouchers()`. |
 | `TallyInboundReportsController` | 4 methods: balanceSheet, profitLoss, cashFlow, ratioAnalysis. |
-| `TallyOutboundController` | 18 methods (6 masters + 4 payroll + 8 voucher types). Queries tally_* tables, formats via `TallyOutboundFormatter`, returns `{ "Data": [...] }`. |
-| `TallyConfirmController` | 23 methods. Reads `{ "Data": [{ "Id", "TallyId", "IsSynced" }] }`. Updates `tally_id` on the matching row. All delegates to a shared `handle()` method. |
+| `TallyOutboundController` | 18 methods (6 masters + 4 payroll + 8 voucher types). Returns only `pending` queue entries via `TallyOutboundQueueService`. |
+| `TallyConfirmController` | 23 methods. Updates `tally_id` and marks queue entry `confirmed`. Reads `{ "Data": [{ "Id", "TallyId", "IsSynced" }] }`. |
 
 ### Web Controllers
 

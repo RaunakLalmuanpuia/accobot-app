@@ -9,6 +9,7 @@ class TallyOutboundFormatter
     public function formatLedgerGroups(Collection $groups): array
     {
         return $groups->map(fn ($g) => [
+            'AccobotId'      => $g->id,
             'ID'             => $g->tally_id,
             'AlterID'        => $g->alter_id,
             'Action'         => $g->action,
@@ -22,6 +23,7 @@ class TallyOutboundFormatter
     public function formatLedgers(Collection $ledgers): array
     {
         return $ledgers->map(fn ($l) => [
+            'AccobotId'                => $l->id,
             'ID'                       => $l->tally_id,
             'AlterID'                  => $l->alter_id,
             'Action'                   => $l->action,
@@ -55,6 +57,7 @@ class TallyOutboundFormatter
     public function formatStockItems(Collection $items): array
     {
         return $items->map(fn ($s) => [
+            'AccobotId'              => $s->id,
             'ID'                     => $s->tally_id,
             'AlterID'                => $s->alter_id,
             'Action'                 => $s->action,
@@ -92,6 +95,7 @@ class TallyOutboundFormatter
     public function formatStockGroups(Collection $groups): array
     {
         return $groups->map(fn ($g) => [
+            'AccobotId'           => $g->id,
             'ID'                  => $g->tally_id,
             'AlterID'             => $g->alter_id,
             'Action'              => $g->action,
@@ -104,6 +108,7 @@ class TallyOutboundFormatter
     public function formatStockCategories(Collection $cats): array
     {
         return $cats->map(fn ($c) => [
+            'AccobotId'  => $c->id,
             'ID'         => $c->tally_id,
             'AlterID'    => $c->alter_id,
             'Action'     => $c->action,
@@ -156,6 +161,7 @@ class TallyOutboundFormatter
     public function formatStatutoryMasters(Collection $items): array
     {
         return $items->map(fn ($s) => [
+            'AccobotId'          => $s->id,
             'ID'                 => $s->tally_id,
             'AlterID'            => $s->alter_id,
             'Action'             => $s->action,
@@ -174,6 +180,7 @@ class TallyOutboundFormatter
     public function formatEmployeeGroups(Collection $groups): array
     {
         return $groups->map(fn ($g) => [
+            'AccobotId'  => $g->id,
             'ID'         => $g->tally_id,
             'AlterID'    => $g->alter_id,
             'Action'     => $g->action,
@@ -186,6 +193,7 @@ class TallyOutboundFormatter
     public function formatEmployees(Collection $employees): array
     {
         return $employees->map(fn ($e) => [
+            'AccobotId'         => $e->id,
             'ID'                => $e->tally_id,
             'AlterID'           => $e->alter_id,
             'Action'            => $e->action,
@@ -208,6 +216,7 @@ class TallyOutboundFormatter
     public function formatPayHeads(Collection $payHeads): array
     {
         return $payHeads->map(fn ($p) => [
+            'AccobotId'       => $p->id,
             'ID'              => $p->tally_id,
             'AlterID'         => $p->alter_id,
             'Action'          => $p->action,
@@ -224,6 +233,7 @@ class TallyOutboundFormatter
     public function formatAttendanceTypes(Collection $types): array
     {
         return $types->map(fn ($t) => [
+            'AccobotId'      => $t->id,
             'ID'             => $t->tally_id,
             'AlterID'        => $t->alter_id,
             'Action'         => $t->action,
@@ -239,6 +249,7 @@ class TallyOutboundFormatter
     {
         return $vouchers->map(function ($v) {
             $base = [
+                'AccobotId'     => $v->id,
                 'MasterID'      => $v->tally_id,
                 'AlterID'       => $v->alter_id,
                 'Action'        => $v->action,

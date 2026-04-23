@@ -24,6 +24,8 @@ use App\Models\Vendor;
 
 class TallyInboundSync
 {
+    public static bool $syncing = false;
+
     public function syncLedgerGroups(TallyConnection $conn, array $items): TallySyncLog
     {
         $log = $this->startLog($conn, 'ledger_groups');
