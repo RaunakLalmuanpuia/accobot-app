@@ -392,7 +392,7 @@ class TallyInboundSync
                     'party_tally_ledger_id'   => $partyLedgerId,
                     'voucher_total'           => isset($item['Voucher_Total']) ? (float) $item['Voucher_Total'] : (isset($item['VoucherTotal']) ? (float) $item['VoucherTotal'] : null),
                     'is_invoice'              => $this->parseBool($item['IsInvoice'] ?? null) ?? false,
-                    'is_deleted'              => false,
+                    'is_deleted'              => $this->parseBool($item['IsDeleted'] ?? null) ?? false,
                     'place_of_supply'         => $item['PlaceOfSupply'] ?? null,
                     'delivery_note_no'        => $item['DeliveryNoteNo'] ?? null,
                     'delivery_note_date'      => $item['DeliveryNoteDate'] ?? null,
