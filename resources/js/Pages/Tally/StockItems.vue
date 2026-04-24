@@ -48,6 +48,13 @@ function formatDate(d) {
     return new Date(d).toLocaleDateString()
 }
 
+function syncBadge(status) {
+    if (status === 'pending')   return { label: 'Pending', cls: 'bg-amber-100 text-amber-700' }
+    if (status === 'confirmed') return { label: 'Synced',  cls: 'bg-green-100 text-green-700' }
+    if (status === 'synced')    return { label: 'Synced',  cls: 'bg-green-100 text-green-700' }
+    return                             { label: 'Local',   cls: 'bg-gray-100 text-gray-400'   }
+}
+
 // ── CRUD ───────────────────────────────────────────────────────────────────────
 const modal     = ref(null)
 const isEditing = computed(() => modal.value && modal.value !== 'create')
@@ -160,12 +167,12 @@ function destroy(item) {
                     <div class="grid grid-cols-12 px-6 py-3 bg-gray-50 border-b border-gray-100 text-xs font-semibold uppercase tracking-wide text-gray-400">
                         <div class="col-span-3">Item Name</div>
                         <div class="col-span-2">Group / Category</div>
-                        <div class="col-span-1">HSN</div>
                         <div class="col-span-1 text-center">Unit</div>
                         <div class="col-span-1 text-center">IGST %</div>
                         <div class="col-span-1 text-right">MRP</div>
                         <div class="col-span-1 text-right">Closing Qty</div>
                         <div class="col-span-1 text-center">Status</div>
+                        <div class="col-span-1 text-center">Tally</div>
                         <div class="col-span-1 text-right" v-if="canManage">Actions</div>
                     </div>
 
@@ -181,7 +188,6 @@ function destroy(item) {
                             <p class="text-xs text-gray-600 truncate">{{ item.stock_group_name ?? '—' }}</p>
                             <p class="text-xs text-gray-400 truncate">{{ item.category_name ?? '' }}</p>
                         </div>
-                        <div class="col-span-1 text-xs text-gray-500 font-mono">{{ item.hsn_code ?? '—' }}</div>
                         <div class="col-span-1 text-center text-sm text-gray-500">{{ item.unit_name ?? '—' }}</div>
                         <div class="col-span-1 text-center text-sm text-gray-600">{{ item.igst_rate ?? '—' }}</div>
                         <div class="col-span-1 text-right text-sm text-gray-700">{{ formatAmount(item.mrp_rate) }}</div>
@@ -190,6 +196,12 @@ function destroy(item) {
                             <span :class="item.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'"
                                   class="text-xs px-2 py-0.5 rounded-full font-medium">
                                 {{ item.is_active ? 'Active' : 'Inactive' }}
+                            </span>
+                        </div>
+                        <div class="col-span-1 text-center">
+                            <span :class="syncBadge(item.sync_status).cls"
+                                  class="text-xs px-2 py-0.5 rounded-full font-medium">
+                                {{ syncBadge(item.sync_status).label }}
                             </span>
                         </div>
                         <div class="col-span-1 text-right" v-if="canManage">

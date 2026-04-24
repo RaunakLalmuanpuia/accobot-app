@@ -108,6 +108,13 @@ function formatDate(d) {
     return new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
+function syncBadge(status) {
+    if (status === 'pending')   return { label: 'Pending', cls: 'bg-amber-100 text-amber-700' }
+    if (status === 'confirmed') return { label: 'Synced',  cls: 'bg-green-100 text-green-700' }
+    if (status === 'synced')    return { label: 'Synced',  cls: 'bg-green-100 text-green-700' }
+    return                             { label: 'Local',   cls: 'bg-gray-100 text-gray-400'   }
+}
+
 // ── Employee CRUD ──────────────────────────────────────────────────────────────
 const empModal     = ref(null)
 const isEditingEmp = computed(() => empModal.value && empModal.value !== 'create')
@@ -409,10 +416,11 @@ function destroyAtt(att) {
                         <div class="grid grid-cols-12 px-6 py-3 bg-gray-50 border-b border-gray-100 text-xs font-semibold uppercase tracking-wide text-gray-400">
                             <div class="col-span-3">Employee</div>
                             <div class="col-span-2">Group / Dept</div>
-                            <div class="col-span-2">Designation</div>
+                            <div class="col-span-1">Designation</div>
                             <div class="col-span-1 text-center">DOJ</div>
                             <div class="col-span-1 text-center">Gender</div>
                             <div class="col-span-1 text-center">Status</div>
+                            <div class="col-span-1 text-center">Tally</div>
                             <div class="col-span-2 text-right" v-if="canManage">Actions</div>
                         </div>
 
@@ -423,13 +431,19 @@ function destroyAtt(att) {
                                 <p class="text-xs text-gray-400 font-mono mt-0.5">{{ emp.employee_number ?? '—' }}</p>
                             </div>
                             <div class="col-span-2 text-xs text-gray-600 truncate">{{ emp.parent ?? '—' }}</div>
-                            <div class="col-span-2 text-sm text-gray-600 truncate">{{ emp.designation ?? '—' }}</div>
+                            <div class="col-span-1 text-xs text-gray-600 truncate">{{ emp.designation ?? '—' }}</div>
                             <div class="col-span-1 text-center text-xs text-gray-500">{{ formatDate(emp.date_of_joining) }}</div>
                             <div class="col-span-1 text-center text-xs text-gray-500">{{ emp.gender ?? '—' }}</div>
                             <div class="col-span-1 text-center">
                                 <span :class="emp.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'"
                                       class="text-xs px-2 py-0.5 rounded-full font-medium">
                                     {{ emp.is_active ? 'Active' : 'Inactive' }}
+                                </span>
+                            </div>
+                            <div class="col-span-1 text-center">
+                                <span :class="syncBadge(emp.sync_status).cls"
+                                      class="text-xs px-2 py-0.5 rounded-full font-medium">
+                                    {{ syncBadge(emp.sync_status).label }}
                                 </span>
                             </div>
                             <div class="col-span-2 text-right" v-if="canManage">
@@ -448,22 +462,29 @@ function destroyAtt(att) {
                 <template v-if="activeTab === 'employeeGroups'">
                     <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
                         <div class="grid grid-cols-12 px-6 py-3 bg-gray-50 border-b border-gray-100 text-xs font-semibold uppercase tracking-wide text-gray-400">
-                            <div class="col-span-4">Group Name</div>
+                            <div class="col-span-3">Group Name</div>
                             <div class="col-span-3">Parent</div>
                             <div class="col-span-2">Cost Centre Category</div>
                             <div class="col-span-1 text-center">Status</div>
+                            <div class="col-span-1 text-center">Tally</div>
                             <div class="col-span-2 text-right" v-if="canManage">Actions</div>
                         </div>
 
                         <div v-for="grp in employeeGroups" :key="grp.id"
                              class="grid grid-cols-12 items-center px-6 py-4 border-b border-gray-50 last:border-0 hover:bg-gray-50/60 transition">
-                            <div class="col-span-4 text-sm font-medium text-gray-900">{{ grp.name }}</div>
+                            <div class="col-span-3 text-sm font-medium text-gray-900">{{ grp.name }}</div>
                             <div class="col-span-3 text-sm text-gray-500">{{ grp.under ?? '—' }}</div>
                             <div class="col-span-2 text-xs text-gray-500 truncate">{{ grp.cost_centre_category ?? '—' }}</div>
                             <div class="col-span-1 text-center">
                                 <span :class="grp.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'"
                                       class="text-xs px-2 py-0.5 rounded-full font-medium">
                                     {{ grp.is_active ? 'Active' : 'Inactive' }}
+                                </span>
+                            </div>
+                            <div class="col-span-1 text-center">
+                                <span :class="syncBadge(grp.sync_status).cls"
+                                      class="text-xs px-2 py-0.5 rounded-full font-medium">
+                                    {{ syncBadge(grp.sync_status).label }}
                                 </span>
                             </div>
                             <div class="col-span-2 text-right" v-if="canManage">
@@ -494,11 +515,12 @@ function destroyAtt(att) {
                     <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
                         <div class="grid grid-cols-12 px-6 py-3 bg-gray-50 border-b border-gray-100 text-xs font-semibold uppercase tracking-wide text-gray-400">
                             <div class="col-span-3">Pay Head</div>
-                            <div class="col-span-3">Type</div>
+                            <div class="col-span-2">Type</div>
                             <div class="col-span-2">Parent Group</div>
                             <div class="col-span-1">Calculation</div>
                             <div class="col-span-1">Period</div>
                             <div class="col-span-1 text-center">Status</div>
+                            <div class="col-span-1 text-center">Tally</div>
                             <div class="col-span-1 text-right" v-if="canManage">Actions</div>
                         </div>
 
@@ -508,7 +530,7 @@ function destroyAtt(att) {
                                 <p class="text-sm font-medium text-gray-900">{{ ph.name }}</p>
                                 <p v-if="ph.income_type" class="text-xs text-gray-400 mt-0.5">{{ ph.income_type }}</p>
                             </div>
-                            <div class="col-span-3">
+                            <div class="col-span-2">
                                 <span :class="payHeadTypeColor(ph.pay_type)"
                                       class="text-xs px-2 py-0.5 rounded-full font-medium">
                                     {{ ph.pay_type ?? '—' }}
@@ -521,6 +543,12 @@ function destroyAtt(att) {
                                 <span :class="ph.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'"
                                       class="text-xs px-2 py-0.5 rounded-full font-medium">
                                     {{ ph.is_active ? 'Active' : 'Inactive' }}
+                                </span>
+                            </div>
+                            <div class="col-span-1 text-center">
+                                <span :class="syncBadge(ph.sync_status).cls"
+                                      class="text-xs px-2 py-0.5 rounded-full font-medium">
+                                    {{ syncBadge(ph.sync_status).label }}
                                 </span>
                             </div>
                             <div class="col-span-1 text-right" v-if="canManage">
@@ -545,16 +573,17 @@ function destroyAtt(att) {
 
                     <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
                         <div class="grid grid-cols-12 px-6 py-3 bg-gray-50 border-b border-gray-100 text-xs font-semibold uppercase tracking-wide text-gray-400">
-                            <div class="col-span-4">Name</div>
+                            <div class="col-span-3">Name</div>
                             <div class="col-span-3">Attendance Type</div>
                             <div class="col-span-2 text-center">Unit</div>
                             <div class="col-span-1 text-center">Status</div>
+                            <div class="col-span-1 text-center">Tally</div>
                             <div class="col-span-2 text-right" v-if="canManage">Actions</div>
                         </div>
 
                         <div v-for="att in filteredAttendance" :key="att.id"
                              class="grid grid-cols-12 items-center px-6 py-4 border-b border-gray-50 last:border-0 hover:bg-gray-50/60 transition">
-                            <div class="col-span-4 text-sm font-medium text-gray-900">{{ att.name }}</div>
+                            <div class="col-span-3 text-sm font-medium text-gray-900">{{ att.name }}</div>
                             <div class="col-span-3">
                                 <span :class="attTypeColor(att.attendance_type)"
                                       class="text-xs px-2 py-0.5 rounded-full font-medium">
@@ -566,6 +595,12 @@ function destroyAtt(att) {
                                 <span :class="att.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'"
                                       class="text-xs px-2 py-0.5 rounded-full font-medium">
                                     {{ att.is_active ? 'Active' : 'Inactive' }}
+                                </span>
+                            </div>
+                            <div class="col-span-1 text-center">
+                                <span :class="syncBadge(att.sync_status).cls"
+                                      class="text-xs px-2 py-0.5 rounded-full font-medium">
+                                    {{ syncBadge(att.sync_status).label }}
                                 </span>
                             </div>
                             <div class="col-span-2 text-right" v-if="canManage">

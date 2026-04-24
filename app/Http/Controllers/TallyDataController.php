@@ -15,36 +15,58 @@ use App\Models\TallyPayHead;
 use App\Models\TallyStatutoryMaster;
 use App\Models\TallyStockItem;
 use App\Models\TallyVoucher;
+use Illuminate\Support\Facades\DB;
 
 class TallyDataController extends Controller
 {
+    private function queueMap(string|int $tenantId, string $entityClass): array
+    {
+        return DB::table('tally_outbound_queue')
+            ->where('tenant_id', (int) $tenantId)
+            ->where('entity_type', $entityClass)
+            ->pluck('status', 'entity_id')
+            ->all();
+    }
+
+    private function addSyncStatus($records, array $map)
+    {
+        return $records->each(function ($r) use ($map) {
+            $r->sync_status = $map[$r->id] ?? ($r->tally_id ? 'synced' : 'local');
+        });
+    }
+
     public function ledgerGroups(Tenant $tenant)
     {
+        $map = $this->queueMap($tenant->id, TallyLedgerGroup::class);
         return inertia('Tally/LedgerGroups', [
             'tenant' => $tenant,
-            'groups' => TallyLedgerGroup::where('tenant_id', $tenant->id)
-                ->orderBy('name')
-                ->get(['id', 'name', 'under_id', 'under_name', 'nature_of_group', 'is_active', 'last_synced_at']),
+            'groups' => $this->addSyncStatus(
+                TallyLedgerGroup::where('tenant_id', $tenant->id)
+                    ->orderBy('name')
+                    ->get(['id', 'tally_id', 'name', 'under_id', 'under_name', 'nature_of_group', 'is_active', 'last_synced_at']),
+                $map
+            ),
         ]);
     }
 
     public function ledgers(Tenant $tenant)
     {
+        $map = $this->queueMap($tenant->id, TallyLedger::class);
         return inertia('Tally/Ledgers', [
             'tenant'           => $tenant,
-            'ledgers'          => TallyLedger::where('tenant_id', $tenant->id)
-                ->with([
-                    'mappedClient:id,name',
-                    'mappedVendor:id,name',
-                ])
-                ->orderBy('ledger_name')
-                ->get([
-                    'id', 'tally_id', 'ledger_name', 'group_name', 'parent_group',
-                    'gstin_number', 'pan_number', 'gst_type', 'state_name', 'country_name',
-                    'mobile_number', 'opening_balance', 'opening_balance_type', 'credit_limit',
-                    'bank_details', 'aliases', 'is_active', 'last_synced_at',
-                    'mapped_client_id', 'mapped_vendor_id',
-                ]),
+            'ledgers'          => $this->addSyncStatus(
+                TallyLedger::where('tenant_id', $tenant->id)
+                    ->with(['mappedClient:id,name', 'mappedVendor:id,name'])
+                    ->orderBy('ledger_name')
+                    ->get([
+                        'id', 'tally_id', 'ledger_name', 'group_name', 'parent_group',
+                        'gstin_number', 'pan_number', 'gst_type', 'state_name', 'country_name',
+                        'mobile_number', 'opening_balance', 'opening_balance_type', 'credit_limit',
+                        'bank_details', 'aliases', 'is_active', 'last_synced_at',
+                        'mapped_client_id', 'mapped_vendor_id',
+                    ]),
+                $map
+            ),
             'ledgerGroupNames' => TallyLedgerGroup::where('tenant_id', $tenant->id)
                 ->where('is_active', true)
                 ->orderBy('name')
@@ -54,14 +76,22 @@ class TallyDataController extends Controller
 
     public function stockMasters(Tenant $tenant)
     {
+        $sgMap = $this->queueMap($tenant->id, TallyStockGroup::class);
+        $scMap = $this->queueMap($tenant->id, TallyStockCategory::class);
         return inertia('Tally/StockMasters', [
             'tenant'          => $tenant,
-            'stockGroups'     => TallyStockGroup::where('tenant_id', $tenant->id)
-                ->orderBy('name')
-                ->get(['id', 'name', 'parent', 'aliases', 'is_active', 'last_synced_at']),
-            'stockCategories' => TallyStockCategory::where('tenant_id', $tenant->id)
-                ->orderBy('name')
-                ->get(['id', 'name', 'parent', 'aliases', 'is_active', 'last_synced_at']),
+            'stockGroups'     => $this->addSyncStatus(
+                TallyStockGroup::where('tenant_id', $tenant->id)
+                    ->orderBy('name')
+                    ->get(['id', 'tally_id', 'name', 'parent', 'aliases', 'is_active', 'last_synced_at']),
+                $sgMap
+            ),
+            'stockCategories' => $this->addSyncStatus(
+                TallyStockCategory::where('tenant_id', $tenant->id)
+                    ->orderBy('name')
+                    ->get(['id', 'tally_id', 'name', 'parent', 'aliases', 'is_active', 'last_synced_at']),
+                $scMap
+            ),
             'godowns'         => TallyGodown::where('tenant_id', $tenant->id)
                 ->orderBy('name')
                 ->get(['id', 'name', 'under', 'guid', 'is_active', 'last_synced_at']),
@@ -70,17 +100,21 @@ class TallyDataController extends Controller
 
     public function stockItems(Tenant $tenant)
     {
+        $map = $this->queueMap($tenant->id, TallyStockItem::class);
         return inertia('Tally/StockItems', [
             'tenant'             => $tenant,
-            'items'              => TallyStockItem::where('tenant_id', $tenant->id)
-                ->with(['mappedProduct:id,name'])
-                ->orderBy('name')
-                ->get([
-                    'id', 'name', 'stock_group_name', 'category_name', 'unit_name',
-                    'hsn_code', 'igst_rate', 'cgst_rate', 'sgst_rate',
-                    'mrp_rate', 'opening_balance', 'closing_balance',
-                    'closing_value', 'is_active', 'last_synced_at', 'mapped_product_id',
-                ]),
+            'items'              => $this->addSyncStatus(
+                TallyStockItem::where('tenant_id', $tenant->id)
+                    ->with(['mappedProduct:id,name'])
+                    ->orderBy('name')
+                    ->get([
+                        'id', 'tally_id', 'name', 'stock_group_name', 'category_name', 'unit_name',
+                        'hsn_code', 'igst_rate', 'cgst_rate', 'sgst_rate',
+                        'mrp_rate', 'opening_balance', 'closing_balance',
+                        'closing_value', 'is_active', 'last_synced_at', 'mapped_product_id',
+                    ]),
+                $map
+            ),
             'stockGroupNames'    => TallyStockGroup::where('tenant_id', $tenant->id)
                 ->where('is_active', true)
                 ->orderBy('name')
@@ -109,36 +143,56 @@ class TallyDataController extends Controller
 
     public function statutoryMasters(Tenant $tenant)
     {
+        $map = $this->queueMap($tenant->id, TallyStatutoryMaster::class);
         return inertia('Tally/StatutoryMasters', [
             'tenant' => $tenant,
-            'items'  => TallyStatutoryMaster::where('tenant_id', $tenant->id)
-                ->orderBy('statutory_type')
-                ->orderBy('name')
-                ->get(['id', 'name', 'statutory_type', 'registration_number', 'state_code',
-                       'registration_type', 'pan', 'tan', 'applicable_from', 'is_active', 'last_synced_at']),
+            'items'  => $this->addSyncStatus(
+                TallyStatutoryMaster::where('tenant_id', $tenant->id)
+                    ->orderBy('statutory_type')
+                    ->orderBy('name')
+                    ->get(['id', 'tally_id', 'name', 'statutory_type', 'registration_number', 'state_code',
+                           'registration_type', 'pan', 'tan', 'applicable_from', 'is_active', 'last_synced_at']),
+                $map
+            ),
         ]);
     }
 
     public function payroll(Tenant $tenant)
     {
+        $empMap = $this->queueMap($tenant->id, TallyEmployee::class);
+        $egMap  = $this->queueMap($tenant->id, TallyEmployeeGroup::class);
+        $phMap  = $this->queueMap($tenant->id, TallyPayHead::class);
+        $atMap  = $this->queueMap($tenant->id, TallyAttendanceType::class);
         return inertia('Tally/Payroll', [
             'tenant'          => $tenant,
-            'employees'       => TallyEmployee::where('tenant_id', $tenant->id)
-                ->orderBy('name')
-                ->get(['id', 'name', 'employee_number', 'parent', 'designation',
-                       'location', 'date_of_joining', 'gender', 'father_name', 'spouse_name',
-                       'is_active', 'last_synced_at']),
-            'employeeGroups'  => TallyEmployeeGroup::where('tenant_id', $tenant->id)
-                ->orderBy('name')
-                ->get(['id', 'name', 'under', 'cost_centre_category', 'is_active', 'last_synced_at']),
-            'payHeads'        => TallyPayHead::where('tenant_id', $tenant->id)
-                ->orderBy('pay_type')
-                ->orderBy('name')
-                ->get(['id', 'name', 'pay_type', 'income_type', 'parent_group',
-                       'calculation_type', 'leave_type', 'calculation_period', 'is_active', 'last_synced_at']),
-            'attendanceTypes' => TallyAttendanceType::where('tenant_id', $tenant->id)
-                ->orderBy('name')
-                ->get(['id', 'name', 'attendance_type', 'attendance_period', 'is_active', 'last_synced_at']),
+            'employees'       => $this->addSyncStatus(
+                TallyEmployee::where('tenant_id', $tenant->id)
+                    ->orderBy('name')
+                    ->get(['id', 'tally_id', 'name', 'employee_number', 'parent', 'designation',
+                           'location', 'date_of_joining', 'gender', 'father_name', 'spouse_name',
+                           'is_active', 'last_synced_at']),
+                $empMap
+            ),
+            'employeeGroups'  => $this->addSyncStatus(
+                TallyEmployeeGroup::where('tenant_id', $tenant->id)
+                    ->orderBy('name')
+                    ->get(['id', 'tally_id', 'name', 'under', 'cost_centre_category', 'is_active', 'last_synced_at']),
+                $egMap
+            ),
+            'payHeads'        => $this->addSyncStatus(
+                TallyPayHead::where('tenant_id', $tenant->id)
+                    ->orderBy('pay_type')
+                    ->orderBy('name')
+                    ->get(['id', 'tally_id', 'name', 'pay_type', 'income_type', 'parent_group',
+                           'calculation_type', 'leave_type', 'calculation_period', 'is_active', 'last_synced_at']),
+                $phMap
+            ),
+            'attendanceTypes' => $this->addSyncStatus(
+                TallyAttendanceType::where('tenant_id', $tenant->id)
+                    ->orderBy('name')
+                    ->get(['id', 'tally_id', 'name', 'attendance_type', 'attendance_period', 'is_active', 'last_synced_at']),
+                $atMap
+            ),
         ]);
     }
 

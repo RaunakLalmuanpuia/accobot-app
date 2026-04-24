@@ -49,6 +49,13 @@ function typeColor(type) {
     return typeColors[type] ?? 'bg-gray-100 text-gray-600'
 }
 
+function syncBadge(status) {
+    if (status === 'pending')   return { label: 'Pending', cls: 'bg-amber-100 text-amber-700' }
+    if (status === 'confirmed') return { label: 'Synced',  cls: 'bg-green-100 text-green-700' }
+    if (status === 'synced')    return { label: 'Synced',  cls: 'bg-green-100 text-green-700' }
+    return                             { label: 'Local',   cls: 'bg-gray-100 text-gray-400'   }
+}
+
 function formatDate(d) {
     if (!d) return '—'
     return new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
@@ -161,12 +168,13 @@ function destroy(item) {
                 <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
                     <div class="grid grid-cols-12 px-6 py-3 bg-gray-50 border-b border-gray-100 text-xs font-semibold uppercase tracking-wide text-gray-400">
                         <div class="col-span-1 text-center">Type</div>
-                        <div class="col-span-3">Name</div>
+                        <div class="col-span-2">Name</div>
                         <div class="col-span-2">Registration No.</div>
                         <div class="col-span-2">Registration Type</div>
                         <div class="col-span-1 text-center">State</div>
                         <div class="col-span-1 text-center">From</div>
                         <div class="col-span-1 text-center">Status</div>
+                        <div class="col-span-1 text-center">Tally</div>
                         <div class="col-span-1 text-right" v-if="canManage">Actions</div>
                     </div>
 
@@ -178,7 +186,7 @@ function destroy(item) {
                                 {{ item.statutory_type ?? '—' }}
                             </span>
                         </div>
-                        <div class="col-span-3">
+                        <div class="col-span-2">
                             <p class="text-sm font-medium text-gray-900">{{ item.name }}</p>
                             <p v-if="item.pan || item.tan" class="text-xs text-gray-400 mt-0.5 font-mono">
                                 {{ item.pan ?? item.tan }}
@@ -192,6 +200,12 @@ function destroy(item) {
                             <span :class="item.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'"
                                   class="text-xs px-2 py-0.5 rounded-full font-medium">
                                 {{ item.is_active ? 'Active' : 'Inactive' }}
+                            </span>
+                        </div>
+                        <div class="col-span-1 text-center">
+                            <span :class="syncBadge(item.sync_status).cls"
+                                  class="text-xs px-2 py-0.5 rounded-full font-medium">
+                                {{ syncBadge(item.sync_status).label }}
                             </span>
                         </div>
                         <div class="col-span-1 text-right" v-if="canManage">

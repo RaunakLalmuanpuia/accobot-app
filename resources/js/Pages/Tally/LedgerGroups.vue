@@ -29,6 +29,13 @@ function formatDate(d) {
     return new Date(d).toLocaleDateString()
 }
 
+function syncBadge(status) {
+    if (status === 'pending')   return { label: 'Pending',  cls: 'bg-amber-100 text-amber-700' }
+    if (status === 'confirmed') return { label: 'Synced',   cls: 'bg-green-100 text-green-700' }
+    if (status === 'synced')    return { label: 'Synced',   cls: 'bg-green-100 text-green-700' }
+    return                             { label: 'Local',    cls: 'bg-gray-100 text-gray-400'   }
+}
+
 // ── CRUD ───────────────────────────────────────────────────────────────────────
 const modal   = ref(null) // null | 'create' | {record}
 const isEditing = computed(() => modal.value && modal.value !== 'create')
@@ -126,17 +133,18 @@ function destroy(group) {
 
                 <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
                     <div class="grid grid-cols-12 px-6 py-3 bg-gray-50 border-b border-gray-100 text-xs font-semibold uppercase tracking-wide text-gray-400">
-                        <div class="col-span-4">Name</div>
+                        <div class="col-span-3">Name</div>
                         <div class="col-span-3">Under</div>
                         <div class="col-span-2">Nature</div>
                         <div class="col-span-1 text-center">Status</div>
+                        <div class="col-span-1 text-center">Tally</div>
                         <div class="col-span-1">Last Synced</div>
                         <div class="col-span-1 text-right" v-if="canManage">Actions</div>
                     </div>
 
                     <div v-for="group in filtered" :key="group.id"
                          class="grid grid-cols-12 items-center px-6 py-4 border-b border-gray-50 last:border-0 hover:bg-gray-50/60 transition">
-                        <div class="col-span-4">
+                        <div class="col-span-3">
                             <p class="text-sm font-medium text-gray-900">{{ group.name }}</p>
                         </div>
                         <div class="col-span-3 text-sm text-gray-500 truncate">{{ group.under_name ?? '—' }}</div>
@@ -145,6 +153,12 @@ function destroy(group) {
                             <span :class="group.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'"
                                   class="text-xs px-2 py-0.5 rounded-full font-medium">
                                 {{ group.is_active ? 'Active' : 'Inactive' }}
+                            </span>
+                        </div>
+                        <div class="col-span-1 text-center">
+                            <span :class="syncBadge(group.sync_status).cls"
+                                  class="text-xs px-2 py-0.5 rounded-full font-medium">
+                                {{ syncBadge(group.sync_status).label }}
                             </span>
                         </div>
                         <div class="col-span-1 text-xs text-gray-400">{{ formatDate(group.last_synced_at) }}</div>

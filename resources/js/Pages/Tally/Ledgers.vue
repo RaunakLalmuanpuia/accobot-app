@@ -43,6 +43,13 @@ function mappingBadge(ledger) {
     return null
 }
 
+function syncBadge(status) {
+    if (status === 'pending')   return { label: 'Pending', cls: 'bg-amber-100 text-amber-700' }
+    if (status === 'confirmed') return { label: 'Synced',  cls: 'bg-green-100 text-green-700' }
+    if (status === 'synced')    return { label: 'Synced',  cls: 'bg-green-100 text-green-700' }
+    return                             { label: 'Local',   cls: 'bg-gray-100 text-gray-400'   }
+}
+
 function formatAmount(v) {
     if (v === null || v === undefined) return '—'
     return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(v)
@@ -179,8 +186,9 @@ function destroy(ledger) {
                         <div class="col-span-2">Group</div>
                         <div class="col-span-2">GSTIN</div>
                         <div class="col-span-1">State</div>
-                        <div class="col-span-2 text-right">Opening Bal.</div>
+                        <div class="col-span-1 text-right">Opening Bal.</div>
                         <div class="col-span-1 text-center">Mapped</div>
+                        <div class="col-span-1 text-center">Tally</div>
                         <div class="col-span-1 text-right" v-if="canManage">Actions</div>
                     </div>
 
@@ -200,7 +208,7 @@ function destroy(ledger) {
                         <div class="col-span-2 text-sm text-gray-500 truncate">{{ ledger.group_name ?? '—' }}</div>
                         <div class="col-span-2 text-xs text-gray-500 font-mono">{{ ledger.gstin_number ?? '—' }}</div>
                         <div class="col-span-1 text-sm text-gray-500 truncate">{{ ledger.state_name ?? '—' }}</div>
-                        <div class="col-span-2 text-right">
+                        <div class="col-span-1 text-right">
                             <span v-if="ledger.opening_balance" class="text-sm text-gray-700 font-medium">
                                 {{ formatAmount(ledger.opening_balance) }}
                                 <span class="text-xs text-gray-400 ml-0.5">{{ ledger.opening_balance_type }}</span>
@@ -214,6 +222,12 @@ function destroy(ledger) {
                                 {{ mappingBadge(ledger).label }}
                             </span>
                             <span v-else class="text-xs text-gray-300">—</span>
+                        </div>
+                        <div class="col-span-1 text-center">
+                            <span :class="syncBadge(ledger.sync_status).cls"
+                                  class="text-xs px-2 py-0.5 rounded-full font-medium">
+                                {{ syncBadge(ledger.sync_status).label }}
+                            </span>
                         </div>
                         <div class="col-span-1 text-right" v-if="canManage">
                             <button @click="openEdit(ledger)"
