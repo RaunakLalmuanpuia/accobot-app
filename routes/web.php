@@ -18,6 +18,7 @@ use App\Http\Controllers\SmsIngestController;
 use App\Http\Controllers\StatementUploadController;
 use App\Http\Controllers\TallyConnectionController;
 use App\Http\Controllers\TallyDataController;
+use App\Http\Controllers\TallyMasterCrudController;
 use App\Http\Controllers\TallySyncController;
 use App\Http\Controllers\TeamMemberController;
 use App\Http\Controllers\ProductController;
@@ -135,6 +136,59 @@ Route::middleware(['auth', 'verified', 'member'])
         Route::get('/tally/vouchers/{voucher}', [TallyDataController::class, 'voucherShow'])->name('tally.vouchers.show')->middleware('tenant.permission:integrations.view');
         Route::get('/tally/statutory-masters', [TallyDataController::class, 'statutoryMasters'])->name('tally.statutory-masters.index')->middleware('tenant.permission:integrations.view');
         Route::get('/tally/payroll', [TallyDataController::class, 'payroll'])->name('tally.payroll.index')->middleware('tenant.permission:integrations.view');
+
+        // ── Tally Master CRUD (manage permission required) ─────────────
+        Route::middleware('tenant.permission:integrations.manage')->group(function () {
+            // Ledger Groups
+            Route::post('/tally/ledger-groups', [TallyMasterCrudController::class, 'ledgerGroupStore'])->name('tally.ledger-groups.store');
+            Route::put('/tally/ledger-groups/{ledgerGroup}', [TallyMasterCrudController::class, 'ledgerGroupUpdate'])->name('tally.ledger-groups.update');
+            Route::delete('/tally/ledger-groups/{ledgerGroup}', [TallyMasterCrudController::class, 'ledgerGroupDestroy'])->name('tally.ledger-groups.destroy');
+
+            // Ledgers
+            Route::post('/tally/ledgers', [TallyMasterCrudController::class, 'ledgerStore'])->name('tally.ledgers.store');
+            Route::put('/tally/ledgers/{ledger}', [TallyMasterCrudController::class, 'ledgerUpdate'])->name('tally.ledgers.update');
+            Route::delete('/tally/ledgers/{ledger}', [TallyMasterCrudController::class, 'ledgerDestroy'])->name('tally.ledgers.destroy');
+
+            // Stock Groups
+            Route::post('/tally/stock-groups', [TallyMasterCrudController::class, 'stockGroupStore'])->name('tally.stock-groups.store');
+            Route::put('/tally/stock-groups/{stockGroup}', [TallyMasterCrudController::class, 'stockGroupUpdate'])->name('tally.stock-groups.update');
+            Route::delete('/tally/stock-groups/{stockGroup}', [TallyMasterCrudController::class, 'stockGroupDestroy'])->name('tally.stock-groups.destroy');
+
+            // Stock Categories
+            Route::post('/tally/stock-categories', [TallyMasterCrudController::class, 'stockCategoryStore'])->name('tally.stock-categories.store');
+            Route::put('/tally/stock-categories/{stockCategory}', [TallyMasterCrudController::class, 'stockCategoryUpdate'])->name('tally.stock-categories.update');
+            Route::delete('/tally/stock-categories/{stockCategory}', [TallyMasterCrudController::class, 'stockCategoryDestroy'])->name('tally.stock-categories.destroy');
+
+            // Stock Items
+            Route::post('/tally/stock-items', [TallyMasterCrudController::class, 'stockItemStore'])->name('tally.stock-items.store');
+            Route::put('/tally/stock-items/{stockItem}', [TallyMasterCrudController::class, 'stockItemUpdate'])->name('tally.stock-items.update');
+            Route::delete('/tally/stock-items/{stockItem}', [TallyMasterCrudController::class, 'stockItemDestroy'])->name('tally.stock-items.destroy');
+
+            // Statutory Masters
+            Route::post('/tally/statutory-masters', [TallyMasterCrudController::class, 'statutoryMasterStore'])->name('tally.statutory-masters.store');
+            Route::put('/tally/statutory-masters/{statutoryMaster}', [TallyMasterCrudController::class, 'statutoryMasterUpdate'])->name('tally.statutory-masters.update');
+            Route::delete('/tally/statutory-masters/{statutoryMaster}', [TallyMasterCrudController::class, 'statutoryMasterDestroy'])->name('tally.statutory-masters.destroy');
+
+            // Employee Groups
+            Route::post('/tally/employee-groups', [TallyMasterCrudController::class, 'employeeGroupStore'])->name('tally.employee-groups.store');
+            Route::put('/tally/employee-groups/{employeeGroup}', [TallyMasterCrudController::class, 'employeeGroupUpdate'])->name('tally.employee-groups.update');
+            Route::delete('/tally/employee-groups/{employeeGroup}', [TallyMasterCrudController::class, 'employeeGroupDestroy'])->name('tally.employee-groups.destroy');
+
+            // Employees
+            Route::post('/tally/employees', [TallyMasterCrudController::class, 'employeeStore'])->name('tally.employees.store');
+            Route::put('/tally/employees/{employee}', [TallyMasterCrudController::class, 'employeeUpdate'])->name('tally.employees.update');
+            Route::delete('/tally/employees/{employee}', [TallyMasterCrudController::class, 'employeeDestroy'])->name('tally.employees.destroy');
+
+            // Pay Heads
+            Route::post('/tally/pay-heads', [TallyMasterCrudController::class, 'payHeadStore'])->name('tally.pay-heads.store');
+            Route::put('/tally/pay-heads/{payHead}', [TallyMasterCrudController::class, 'payHeadUpdate'])->name('tally.pay-heads.update');
+            Route::delete('/tally/pay-heads/{payHead}', [TallyMasterCrudController::class, 'payHeadDestroy'])->name('tally.pay-heads.destroy');
+
+            // Attendance Types
+            Route::post('/tally/attendance-types', [TallyMasterCrudController::class, 'attendanceTypeStore'])->name('tally.attendance-types.store');
+            Route::put('/tally/attendance-types/{attendanceType}', [TallyMasterCrudController::class, 'attendanceTypeUpdate'])->name('tally.attendance-types.update');
+            Route::delete('/tally/attendance-types/{attendanceType}', [TallyMasterCrudController::class, 'attendanceTypeDestroy'])->name('tally.attendance-types.destroy');
+        });
 
         // ── Banking / Narration ────────────────────────────────────────
         Route::get('/banking', [BankTransactionController::class, 'pending'])

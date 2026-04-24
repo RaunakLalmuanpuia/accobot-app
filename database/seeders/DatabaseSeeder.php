@@ -31,7 +31,7 @@ class DatabaseSeeder extends Seeder
             AccountingSeeder::class,
             BankTransactionSeeder::class,
             InvoiceMatchingDemoSeeder::class,   // invoices + matching transactions
-            TallySeeder::class,
+//            TallySeeder::class,
         ]);
     }
 }

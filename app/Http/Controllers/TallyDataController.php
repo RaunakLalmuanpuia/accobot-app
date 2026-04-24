@@ -31,19 +31,24 @@ class TallyDataController extends Controller
     public function ledgers(Tenant $tenant)
     {
         return inertia('Tally/Ledgers', [
-            'tenant'  => $tenant,
-            'ledgers' => TallyLedger::where('tenant_id', $tenant->id)
+            'tenant'           => $tenant,
+            'ledgers'          => TallyLedger::where('tenant_id', $tenant->id)
                 ->with([
                     'mappedClient:id,name',
                     'mappedVendor:id,name',
                 ])
                 ->orderBy('ledger_name')
                 ->get([
-                    'id', 'ledger_name', 'group_name', 'parent_group', 'gstin_number',
-                    'gst_type', 'state_name', 'country_name', 'opening_balance',
-                    'opening_balance_type', 'credit_limit', 'is_active', 'last_synced_at',
+                    'id', 'tally_id', 'ledger_name', 'group_name', 'parent_group',
+                    'gstin_number', 'pan_number', 'gst_type', 'state_name', 'country_name',
+                    'mobile_number', 'opening_balance', 'opening_balance_type', 'credit_limit',
+                    'bank_details', 'aliases', 'is_active', 'last_synced_at',
                     'mapped_client_id', 'mapped_vendor_id',
                 ]),
+            'ledgerGroupNames' => TallyLedgerGroup::where('tenant_id', $tenant->id)
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->pluck('name'),
         ]);
     }
 
@@ -66,8 +71,8 @@ class TallyDataController extends Controller
     public function stockItems(Tenant $tenant)
     {
         return inertia('Tally/StockItems', [
-            'tenant' => $tenant,
-            'items'  => TallyStockItem::where('tenant_id', $tenant->id)
+            'tenant'             => $tenant,
+            'items'              => TallyStockItem::where('tenant_id', $tenant->id)
                 ->with(['mappedProduct:id,name'])
                 ->orderBy('name')
                 ->get([
@@ -76,6 +81,14 @@ class TallyDataController extends Controller
                     'mrp_rate', 'opening_balance', 'closing_balance',
                     'closing_value', 'is_active', 'last_synced_at', 'mapped_product_id',
                 ]),
+            'stockGroupNames'    => TallyStockGroup::where('tenant_id', $tenant->id)
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->pluck('name'),
+            'stockCategoryNames' => TallyStockCategory::where('tenant_id', $tenant->id)
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->pluck('name'),
         ]);
     }
 

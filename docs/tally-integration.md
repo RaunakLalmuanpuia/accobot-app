@@ -810,12 +810,43 @@ All web routes are inside the `Route::middleware(['auth', 'verified', 'member'])
 | GET | /t/{tenant}/tally/sync | tally.sync.index | integrations.view |
 | POST | /t/{tenant}/tally/sync | tally.sync.trigger | integrations.manage |
 | GET | /t/{tenant}/tally/ledger-groups | tally.ledger-groups.index | integrations.view |
+| POST | /t/{tenant}/tally/ledger-groups | tally.ledger-groups.store | integrations.manage |
+| PUT | /t/{tenant}/tally/ledger-groups/{ledgerGroup} | tally.ledger-groups.update | integrations.manage |
+| DELETE | /t/{tenant}/tally/ledger-groups/{ledgerGroup} | tally.ledger-groups.destroy | integrations.manage |
 | GET | /t/{tenant}/tally/ledgers | tally.ledgers.index | integrations.view |
+| POST | /t/{tenant}/tally/ledgers | tally.ledgers.store | integrations.manage |
+| PUT | /t/{tenant}/tally/ledgers/{ledger} | tally.ledgers.update | integrations.manage |
+| DELETE | /t/{tenant}/tally/ledgers/{ledger} | tally.ledgers.destroy | integrations.manage |
+| GET | /t/{tenant}/tally/stock-masters | tally.stock-masters.index | integrations.view |
+| POST | /t/{tenant}/tally/stock-groups | tally.stock-groups.store | integrations.manage |
+| PUT | /t/{tenant}/tally/stock-groups/{stockGroup} | tally.stock-groups.update | integrations.manage |
+| DELETE | /t/{tenant}/tally/stock-groups/{stockGroup} | tally.stock-groups.destroy | integrations.manage |
+| POST | /t/{tenant}/tally/stock-categories | tally.stock-categories.store | integrations.manage |
+| PUT | /t/{tenant}/tally/stock-categories/{stockCategory} | tally.stock-categories.update | integrations.manage |
+| DELETE | /t/{tenant}/tally/stock-categories/{stockCategory} | tally.stock-categories.destroy | integrations.manage |
 | GET | /t/{tenant}/tally/stock-items | tally.stock-items.index | integrations.view |
+| POST | /t/{tenant}/tally/stock-items | tally.stock-items.store | integrations.manage |
+| PUT | /t/{tenant}/tally/stock-items/{stockItem} | tally.stock-items.update | integrations.manage |
+| DELETE | /t/{tenant}/tally/stock-items/{stockItem} | tally.stock-items.destroy | integrations.manage |
 | GET | /t/{tenant}/tally/vouchers | tally.vouchers.index | integrations.view |
 | GET | /t/{tenant}/tally/vouchers/{voucher} | tally.vouchers.show | integrations.view |
 | GET | /t/{tenant}/tally/statutory-masters | tally.statutory-masters.index | integrations.view |
+| POST | /t/{tenant}/tally/statutory-masters | tally.statutory-masters.store | integrations.manage |
+| PUT | /t/{tenant}/tally/statutory-masters/{statutoryMaster} | tally.statutory-masters.update | integrations.manage |
+| DELETE | /t/{tenant}/tally/statutory-masters/{statutoryMaster} | tally.statutory-masters.destroy | integrations.manage |
 | GET | /t/{tenant}/tally/payroll | tally.payroll.index | integrations.view |
+| POST | /t/{tenant}/tally/employees | tally.employees.store | integrations.manage |
+| PUT | /t/{tenant}/tally/employees/{employee} | tally.employees.update | integrations.manage |
+| DELETE | /t/{tenant}/tally/employees/{employee} | tally.employees.destroy | integrations.manage |
+| POST | /t/{tenant}/tally/employee-groups | tally.employee-groups.store | integrations.manage |
+| PUT | /t/{tenant}/tally/employee-groups/{employeeGroup} | tally.employee-groups.update | integrations.manage |
+| DELETE | /t/{tenant}/tally/employee-groups/{employeeGroup} | tally.employee-groups.destroy | integrations.manage |
+| POST | /t/{tenant}/tally/pay-heads | tally.pay-heads.store | integrations.manage |
+| PUT | /t/{tenant}/tally/pay-heads/{payHead} | tally.pay-heads.update | integrations.manage |
+| DELETE | /t/{tenant}/tally/pay-heads/{payHead} | tally.pay-heads.destroy | integrations.manage |
+| POST | /t/{tenant}/tally/attendance-types | tally.attendance-types.store | integrations.manage |
+| PUT | /t/{tenant}/tally/attendance-types/{attendanceType} | tally.attendance-types.update | integrations.manage |
+| DELETE | /t/{tenant}/tally/attendance-types/{attendanceType} | tally.attendance-types.destroy | integrations.manage |
 
 ### Connection.vue — three sections
 
@@ -832,17 +863,27 @@ All web routes are inside the `Route::middleware(['auth', 'verified', 'member'])
 - **Reports tab**: List of all report snapshots with type, period, generated and received timestamps.
 - **Logs tab**: Full log history (last 200), expandable error messages, colour-coded status badges.
 
-### Data browse pages (TallyDataController)
+### Data browse + CRUD pages
 
-| Page | Route | Description |
-|------|-------|-------------|
-| LedgerGroups.vue | tally.ledger-groups.index | Search + filter all synced ledger groups |
-| Ledgers.vue | tally.ledgers.index | Search + group-filter ledgers with Client/Vendor mapping badges |
-| StockItems.vue | tally.stock-items.index | Search + group-filter stock items with Product mapping badges |
-| Vouchers.vue | tally.vouchers.index | Filter by voucher type, click-through to detail |
-| VoucherShow.vue | tally.vouchers.show | Full voucher detail: inventory entries + ledger entries |
-| StatutoryMasters.vue | tally.statutory-masters.index | Searchable table with type-colour badges (GST=blue, TDS=amber, TCS=orange, PF=green, ESI=teal, PT=purple) |
-| Payroll.vue | tally.payroll.index | 4-tab page: Employees (search + group filter), Employee Groups, Pay Heads (type badges), Attendance Types (type badges) |
+All pages show data to any user with `integrations.view`. Edit / New / Delete actions are only visible to users with `integrations.manage`.
+
+**Delete behaviour**: if the record has a `tally_id` (i.e. was synced to Tally), the controller sets `is_active=false` and queues `Action: Delete` for the connector. If it has no `tally_id` (created in Accobot, never sent), it is hard-deleted.
+
+**Outbound payload logging**: every outbound GET endpoint now logs `tally.outbound` to `storage/logs/laravel.log` with `entity`, `tenant_id`, `count`, and the full `payload` array. Empty responses (nothing pending) are not logged.
+
+| Page | Route | CRUD entities |
+|------|-------|---------------|
+| LedgerGroups.vue | tally.ledger-groups.index | Ledger Groups — Name, Under, Nature of Group |
+| Ledgers.vue | tally.ledgers.index | Ledgers — Name, Group, GSTIN, PAN, GST Type, State, Mobile, Opening Balance |
+| StockMasters.vue | tally.stock-masters.index | Stock Groups + Stock Categories (tabs). Godowns tab is read-only (inbound only). |
+| StockItems.vue | tally.stock-items.index | Stock Items — Name, Group, Category, Unit, HSN, GST rates (IGST/SGST/CGST/CESS), Opening Balance |
+| StatutoryMasters.vue | tally.statutory-masters.index | Statutory Masters — Name, Type, Reg. No., State Code, Reg. Type, PAN, TAN, Applicable From |
+| Payroll.vue | tally.payroll.index | 4 tabs: Employees, Employee Groups, Pay Heads, Attendance Types — all with full CRUD |
+| Vouchers.vue | tally.vouchers.index | Read-only. Filter by type, click-through to detail. |
+| VoucherShow.vue | tally.vouchers.show | Read-only. Full voucher detail with inventory + ledger entries. |
+
+#### New controller
+`TallyMasterCrudController` — 30 methods (store/update/destroy × 10 master entities). Handles both Option A (new Accobot-originated record) and Option B (editing an inbound-synced record). All saves trigger `TallyModelObserver` → outbound queue automatically.
 
 ### Seeder
 
@@ -905,7 +946,8 @@ The "Tally" link appears in the top navigation for any user with `integrations.v
 |-------|---------------|
 | `TallyConnectionController` | show(), save(), regenerateToken(), destroy(), testConnection(). Manages the `tally_connections` row for a tenant. |
 | `TallySyncController` | index() (builds Sync.vue props: latest logs per entity, all logs, report snapshots, stats including statutory_masters + employees counts), trigger() (logs a manual trigger entry). |
-| `TallyDataController` | Data browse: ledgerGroups(), ledgers(), stockItems(), vouchers(), voucherShow(), statutoryMasters(), payroll(). |
+| `TallyDataController` | Data browse: ledgerGroups(), ledgers(), stockItems(), vouchers(), voucherShow(), statutoryMasters(), payroll(). Also passes `ledgerGroupNames`, `stockGroupNames`, `stockCategoryNames` for form autocomplete. |
+| `TallyMasterCrudController` | 30 methods. store/update/destroy for: LedgerGroup, Ledger, StockGroup, StockCategory, StockItem, StatutoryMaster, EmployeeGroup, Employee, PayHead, AttendanceType. |
 
 ---
 

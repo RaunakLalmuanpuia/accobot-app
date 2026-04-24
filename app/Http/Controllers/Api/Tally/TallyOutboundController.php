@@ -17,6 +17,7 @@ use App\Services\Tally\TallyOutboundFormatter;
 use App\Services\Tally\TallyOutboundQueueService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class TallyOutboundController extends TallyBaseController
 {
@@ -35,7 +36,9 @@ class TallyOutboundController extends TallyBaseController
             ->whereIn('id', $ids)
             ->get();
 
-        return response()->json(['Data' => $this->formatter->formatLedgerGroups($groups)]);
+        $data = $this->formatter->formatLedgerGroups($groups);
+        $this->logOutbound('LedgerGroup', (int) $conn->tenant_id, $data);
+        return response()->json(['Data' => $data]);
     }
 
     public function ledgerMaster(Request $request): JsonResponse
@@ -48,7 +51,9 @@ class TallyOutboundController extends TallyBaseController
             ->whereIn('id', $ids)
             ->get();
 
-        return response()->json(['Data' => $this->formatter->formatLedgers($ledgers)]);
+        $data = $this->formatter->formatLedgers($ledgers);
+        $this->logOutbound('Ledger', (int) $conn->tenant_id, $data);
+        return response()->json(['Data' => $data]);
     }
 
     public function stockMaster(Request $request): JsonResponse
@@ -61,7 +66,9 @@ class TallyOutboundController extends TallyBaseController
             ->whereIn('id', $ids)
             ->get();
 
-        return response()->json(['Data' => $this->formatter->formatStockItems($items)]);
+        $data = $this->formatter->formatStockItems($items);
+        $this->logOutbound('StockItem', (int) $conn->tenant_id, $data);
+        return response()->json(['Data' => $data]);
     }
 
     public function stockGroup(Request $request): JsonResponse
@@ -74,7 +81,9 @@ class TallyOutboundController extends TallyBaseController
             ->whereIn('id', $ids)
             ->get();
 
-        return response()->json(['Data' => $this->formatter->formatStockGroups($groups)]);
+        $data = $this->formatter->formatStockGroups($groups);
+        $this->logOutbound('StockGroup', (int) $conn->tenant_id, $data);
+        return response()->json(['Data' => $data]);
     }
 
     public function stockCategory(Request $request): JsonResponse
@@ -87,7 +96,9 @@ class TallyOutboundController extends TallyBaseController
             ->whereIn('id', $ids)
             ->get();
 
-        return response()->json(['Data' => $this->formatter->formatStockCategories($cats)]);
+        $data = $this->formatter->formatStockCategories($cats);
+        $this->logOutbound('StockCategory', (int) $conn->tenant_id, $data);
+        return response()->json(['Data' => $data]);
     }
 
     public function salesVoucher(Request $request): JsonResponse
@@ -140,7 +151,9 @@ class TallyOutboundController extends TallyBaseController
             ->whereIn('id', $ids)
             ->get();
 
-        return response()->json(['Data' => $this->formatter->formatStatutoryMasters($items)]);
+        $data = $this->formatter->formatStatutoryMasters($items);
+        $this->logOutbound('StatutoryMaster', (int) $conn->tenant_id, $data);
+        return response()->json(['Data' => $data]);
     }
 
     public function employeeGroup(Request $request): JsonResponse
@@ -153,7 +166,9 @@ class TallyOutboundController extends TallyBaseController
             ->whereIn('id', $ids)
             ->get();
 
-        return response()->json(['Data' => $this->formatter->formatEmployeeGroups($groups)]);
+        $data = $this->formatter->formatEmployeeGroups($groups);
+        $this->logOutbound('EmployeeGroup', (int) $conn->tenant_id, $data);
+        return response()->json(['Data' => $data]);
     }
 
     public function employee(Request $request): JsonResponse
@@ -166,7 +181,9 @@ class TallyOutboundController extends TallyBaseController
             ->whereIn('id', $ids)
             ->get();
 
-        return response()->json(['Data' => $this->formatter->formatEmployees($employees)]);
+        $data = $this->formatter->formatEmployees($employees);
+        $this->logOutbound('Employee', (int) $conn->tenant_id, $data);
+        return response()->json(['Data' => $data]);
     }
 
     public function payHead(Request $request): JsonResponse
@@ -179,7 +196,9 @@ class TallyOutboundController extends TallyBaseController
             ->whereIn('id', $ids)
             ->get();
 
-        return response()->json(['Data' => $this->formatter->formatPayHeads($payHeads)]);
+        $data = $this->formatter->formatPayHeads($payHeads);
+        $this->logOutbound('PayHead', (int) $conn->tenant_id, $data);
+        return response()->json(['Data' => $data]);
     }
 
     public function attendanceType(Request $request): JsonResponse
@@ -192,7 +211,9 @@ class TallyOutboundController extends TallyBaseController
             ->whereIn('id', $ids)
             ->get();
 
-        return response()->json(['Data' => $this->formatter->formatAttendanceTypes($types)]);
+        $data = $this->formatter->formatAttendanceTypes($types);
+        $this->logOutbound('AttendanceType', (int) $conn->tenant_id, $data);
+        return response()->json(['Data' => $data]);
     }
 
     public function salaryVoucher(Request $request): JsonResponse
@@ -217,11 +238,12 @@ class TallyOutboundController extends TallyBaseController
             ->whereIn('id', $ids)
             ->get();
 
-        $formatted = $type === 'Payroll'
+        $data = $type === 'Payroll'
             ? $this->formatter->formatSalaryVouchers($vouchers)
             : $this->formatter->formatAttendanceVouchers($vouchers);
 
-        return response()->json(['Data' => $formatted]);
+        $this->logOutbound($type . 'Voucher', (int) $conn->tenant_id, $data);
+        return response()->json(['Data' => $data]);
     }
 
     private function voucherResponse(Request $request, string $type): JsonResponse
@@ -236,7 +258,7 @@ class TallyOutboundController extends TallyBaseController
             ->whereIn('id', $ids)
             ->get();
 
-        $formatted = match ($type) {
+        $data = match ($type) {
             'Sales'      => $this->formatter->formatSalesVouchers($vouchers),
             'Purchase'   => $this->formatter->formatPurchaseVouchers($vouchers),
             'DebitNote'  => $this->formatter->formatDebitNoteVouchers($vouchers),
@@ -247,7 +269,21 @@ class TallyOutboundController extends TallyBaseController
             'Journal'    => $this->formatter->formatJournalVouchers($vouchers),
         };
 
-        return response()->json(['Data' => $formatted]);
+        $this->logOutbound($type . 'Voucher', (int) $conn->tenant_id, $data);
+        return response()->json(['Data' => $data]);
+    }
+
+    private function logOutbound(string $entity, int $tenantId, array $data): void
+    {
+        if (empty($data)) {
+            return;
+        }
+        Log::info('tally.outbound', [
+            'entity'    => $entity,
+            'tenant_id' => $tenantId,
+            'count'     => count($data),
+            'payload'   => $data,
+        ]);
     }
 
     private function resolveAndVerify(Request $request)

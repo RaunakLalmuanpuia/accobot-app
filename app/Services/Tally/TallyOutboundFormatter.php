@@ -51,6 +51,7 @@ class TallyOutboundFormatter
             'Aliases'            => $l->aliases ?? [],
             'Description'              => $l->description,
             'Notes'                    => $l->notes,
+            'BankDetails'              => $l->bank_details ?? [],
         ])->values()->all();
     }
 
