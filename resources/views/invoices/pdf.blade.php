@@ -10,6 +10,7 @@
 
         /* Header */
         .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 36px; }
+        .brand-logo { height: 40px; width: auto; margin-bottom: 4px; }
         .brand { font-size: 24px; font-weight: 700; color: #4f46e5; letter-spacing: -0.5px; }
         .brand-sub { font-size: 11px; color: #6b7280; margin-top: 2px; }
         .invoice-meta { text-align: right; }
@@ -66,6 +67,7 @@
     <!-- Header -->
     <div class="header">
         <div>
+            <img class="brand-logo" src="data:image/jpeg;base64,{{ base64_encode(file_get_contents(public_path('logo.jpg'))) }}" alt="Logo" />
             <div class="brand">{{ $tenant->name }}</div>
             <div class="brand-sub">{{ $tenant->type === 'ca_firm' ? 'CA Firm' : 'Business' }}</div>
         </div>
