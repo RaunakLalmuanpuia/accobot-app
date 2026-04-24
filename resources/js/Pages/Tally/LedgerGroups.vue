@@ -124,6 +124,10 @@ function destroy(group) {
                      class="rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-800">
                     {{ $page.props.flash.success }}
                 </div>
+                <div v-if="$page.props.flash?.info"
+                     class="rounded-lg bg-violet-50 border border-violet-200 px-4 py-3 text-sm text-violet-800">
+                    {{ $page.props.flash.info }}
+                </div>
 
                 <div class="flex items-center gap-3">
                     <input v-model="search" type="text" placeholder="Search groups…"

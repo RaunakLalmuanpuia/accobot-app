@@ -54,6 +54,10 @@ class TallyMasterCrudController extends Controller
 
         $ledgerGroup->update($data);
 
+        if (! $ledgerGroup->wasChanged()) {
+            return back()->with('info', 'No changes detected.');
+        }
+
         $this->logPayload($ledgerGroup);
         return back()->with('success', 'Ledger group updated and queued for Tally sync.');
     }
@@ -132,6 +136,10 @@ class TallyMasterCrudController extends Controller
 
         $ledger->update($data);
 
+        if (! $ledger->wasChanged()) {
+            return back()->with('info', 'No changes detected.');
+        }
+
         $this->logPayload($ledger);
         return back()->with('success', 'Ledger updated and queued for Tally sync.');
     }
@@ -180,6 +188,10 @@ class TallyMasterCrudController extends Controller
 
         $stockGroup->update($data);
 
+        if (! $stockGroup->wasChanged()) {
+            return back()->with('info', 'No changes detected.');
+        }
+
         $this->logPayload($stockGroup);
         return back()->with('success', 'Stock group updated and queued for Tally sync.');
     }
@@ -227,6 +239,10 @@ class TallyMasterCrudController extends Controller
         ]);
 
         $stockCategory->update($data);
+
+        if (! $stockCategory->wasChanged()) {
+            return back()->with('info', 'No changes detected.');
+        }
 
         $this->logPayload($stockCategory);
         return back()->with('success', 'Stock category updated and queued for Tally sync.');
@@ -292,6 +308,10 @@ class TallyMasterCrudController extends Controller
 
         $stockItem->update($data);
 
+        if (! $stockItem->wasChanged()) {
+            return back()->with('info', 'No changes detected.');
+        }
+
         $this->logPayload($stockItem);
         return back()->with('success', 'Stock item updated and queued for Tally sync.');
     }
@@ -352,6 +372,10 @@ class TallyMasterCrudController extends Controller
 
         $statutoryMaster->update($data);
 
+        if (! $statutoryMaster->wasChanged()) {
+            return back()->with('info', 'No changes detected.');
+        }
+
         $this->logPayload($statutoryMaster);
         return back()->with('success', 'Statutory master updated and queued for Tally sync.');
     }
@@ -401,6 +425,10 @@ class TallyMasterCrudController extends Controller
         ]);
 
         $employeeGroup->update($data);
+
+        if (! $employeeGroup->wasChanged()) {
+            return back()->with('info', 'No changes detected.');
+        }
 
         $this->logPayload($employeeGroup);
         return back()->with('success', 'Employee group updated and queued for Tally sync.');
@@ -462,6 +490,10 @@ class TallyMasterCrudController extends Controller
 
         $employee->update($data);
 
+        if (! $employee->wasChanged()) {
+            return back()->with('info', 'No changes detected.');
+        }
+
         $this->logPayload($employee);
         return back()->with('success', 'Employee updated and queued for Tally sync.');
     }
@@ -518,6 +550,10 @@ class TallyMasterCrudController extends Controller
 
         $payHead->update($data);
 
+        if (! $payHead->wasChanged()) {
+            return back()->with('info', 'No changes detected.');
+        }
+
         $this->logPayload($payHead);
         return back()->with('success', 'Pay head updated and queued for Tally sync.');
     }
@@ -567,6 +603,10 @@ class TallyMasterCrudController extends Controller
         ]);
 
         $attendanceType->update($data);
+
+        if (! $attendanceType->wasChanged()) {
+            return back()->with('info', 'No changes detected.');
+        }
 
         $this->logPayload($attendanceType);
         return back()->with('success', 'Attendance type updated and queued for Tally sync.');

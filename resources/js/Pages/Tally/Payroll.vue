@@ -379,6 +379,10 @@ function destroyAtt(att) {
                      class="rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-800">
                     {{ $page.props.flash.success }}
                 </div>
+                <div v-if="$page.props.flash?.info"
+                     class="rounded-lg bg-violet-50 border border-violet-200 px-4 py-3 text-sm text-violet-800">
+                    {{ $page.props.flash.info }}
+                </div>
 
                 <!-- Tabs -->
                 <div class="flex gap-1 border-b border-gray-200">
