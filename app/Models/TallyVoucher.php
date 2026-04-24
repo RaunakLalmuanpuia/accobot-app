@@ -63,6 +63,11 @@ class TallyVoucher extends Model
         return $this->hasMany(TallyVoucherLedgerEntry::class);
     }
 
+    public function employeeAllocations(): HasMany
+    {
+        return $this->hasMany(TallyVoucherEmployeeAllocation::class);
+    }
+
     public function mappedInvoice(): BelongsTo
     {
         return $this->belongsTo(Invoice::class, 'mapped_invoice_id');

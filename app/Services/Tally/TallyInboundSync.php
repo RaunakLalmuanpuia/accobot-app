@@ -17,7 +17,9 @@ use App\Models\TallyStockGroup;
 use App\Models\TallyStockItem;
 use App\Models\TallyGodown;
 use App\Models\TallyStatutoryMaster;
+use App\Models\TallyEmployee;
 use App\Models\TallyVoucher;
+use App\Models\TallyVoucherEmployeeAllocation;
 use App\Models\TallyVoucherInventoryEntry;
 use App\Models\TallyVoucherLedgerEntry;
 use App\Models\Vendor;
@@ -647,6 +649,108 @@ class TallyInboundSync
 
                 if ($existing) { $existing->update($data); $log->records_updated++; }
                 else { TallyStatutoryMaster::create($data); $log->records_created++; }
+            }
+        } catch (\Throwable $e) {
+            return $this->failLog($log, $e->getMessage());
+        }
+
+        return $this->completeLog($log, $conn);
+    }
+
+    public function syncPayrollVouchers(TallyConnection $conn, array $items, string $type, bool $fullSync = false): TallySyncLog
+    {
+        $entity = 'vouchers_' . strtolower($type);
+        $log    = $this->startLog($conn, $entity);
+
+        try {
+            $seenIds = [];
+
+            foreach (array_chunk($items, 250) as $chunk) {
+            foreach ($chunk as $raw) {
+                $item    = $this->strip($raw);
+                $tallyId = (int) ($item['MasterID'] ?? $item['ID'] ?? $item['Id'] ?? 0);
+                if (!$tallyId) { $log->records_failed++; continue; }
+
+                $seenIds[] = $tallyId;
+                $alterId   = (int) ($item['AlterID'] ?? $item['AlterId'] ?? 0);
+                $existing  = TallyVoucher::withoutGlobalScope('tenant')
+                    ->where('tenant_id', $conn->tenant_id)
+                    ->where('tally_id', $tallyId)->first();
+
+                $action = $item['Action'] ?? 'Create';
+                if ($action === 'Delete') {
+                    if ($existing) { $existing->update(['is_active' => false, 'is_deleted' => true]); $log->records_deleted++; }
+                    continue;
+                }
+
+                $voucherData = [
+                    'tenant_id'      => $conn->tenant_id,
+                    'tally_id'       => $tallyId,
+                    'alter_id'       => $alterId,
+                    'action'         => $action,
+                    'voucher_type'   => $type,
+                    'voucher_number' => $item['VoucherNumber'] ?? null,
+                    'voucher_date'   => $this->parseDate($item['VoucherDate'] ?? null),
+                    'narration'      => $item['Narration'] ?? null,
+                    'is_invoice'     => false,
+                    'is_deleted'     => false,
+                    'is_active'      => true,
+                    'last_synced_at' => now(),
+                ];
+
+                try {
+                    DB::transaction(function () use ($existing, $voucherData, $item, $conn, &$log) {
+                        if ($existing) {
+                            $existing->update($voucherData);
+                            $voucher = $existing->fresh();
+                            $log->records_updated++;
+                        } else {
+                            $voucher = TallyVoucher::create($voucherData);
+                            $log->records_created++;
+                        }
+
+                        TallyVoucherEmployeeAllocation::withoutGlobalScope('tenant')
+                            ->where('tally_voucher_id', $voucher->id)->delete();
+
+                        foreach ($item['EmployeeAllocations'] ?? [] as $alloc) {
+                            $alloc = $this->strip($alloc);
+
+                            $employeeId = null;
+                            if (!empty($alloc['EmployeeName'])) {
+                                $employeeId = TallyEmployee::withoutGlobalScope('tenant')
+                                    ->where('tenant_id', $conn->tenant_id)
+                                    ->where('name', $alloc['EmployeeName'])
+                                    ->value('id');
+                            }
+
+                            // PayHeadEntries for Payroll, AttendanceEntries for Attendance
+                            $entries = $alloc['PayHeadEntries'] ?? $alloc['AttendanceEntries'] ?? [];
+
+                            TallyVoucherEmployeeAllocation::create([
+                                'tenant_id'          => $conn->tenant_id,
+                                'tally_voucher_id'   => $voucher->id,
+                                'tally_employee_id'  => $employeeId,
+                                'employee_name'      => $alloc['EmployeeName'] ?? '',
+                                'employee_group'     => $alloc['EmployeeGroup'] ?? null,
+                                'entries'            => $entries,
+                                'net_payable'        => isset($alloc['NetPayable']) ? (float) $alloc['NetPayable'] : null,
+                            ]);
+                        }
+                    });
+                } catch (\Throwable $e) {
+                    $log->records_failed++;
+                    Log::warning("Tally payroll voucher sync failed for tally_id={$tallyId}: " . $e->getMessage());
+                    continue;
+                }
+            }
+            } // end chunk
+
+            if ($fullSync && count($seenIds)) {
+                TallyVoucher::withoutGlobalScope('tenant')
+                    ->where('tenant_id', $conn->tenant_id)
+                    ->where('voucher_type', $type)
+                    ->whereNotIn('tally_id', $seenIds)
+                    ->update(['is_active' => false]);
             }
         } catch (\Throwable $e) {
             return $this->failLog($log, $e->getMessage());

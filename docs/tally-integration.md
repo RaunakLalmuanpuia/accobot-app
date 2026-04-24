@@ -585,6 +585,8 @@ GET /api/PayrollAPI/employee-group
 GET /api/PayrollAPI/employee
 GET /api/PayrollAPI/pay-head
 GET /api/PayrollAPI/attendance-type
+GET /api/PayrollAPI/salary-voucher
+GET /api/PayrollAPI/attendance-voucher
 GET /api/VoucherAPI/sales-voucher
 GET /api/VoucherAPI/purchase-voucher
 GET /api/VoucherAPI/debitNote-voucher
@@ -628,6 +630,8 @@ POST /api/PayrollAPI/update-employee-group
 POST /api/PayrollAPI/update-employee
 POST /api/PayrollAPI/update-pay-head
 POST /api/PayrollAPI/update-attendance-type
+POST /api/PayrollAPI/update-salary-voucher
+POST /api/PayrollAPI/update-attendance-voucher
 POST /api/VoucherAPI/update-sales-voucher
 POST /api/VoucherAPI/update-purchase-voucher
 POST /api/VoucherAPI/update-debitnote-voucher
@@ -718,6 +722,8 @@ All routes are in `routes/api.php`. All are throttled at 120 requests/minute. No
 | POST /api/tally/inbound/payroll/employees | `@employees` | tally_employees |
 | POST /api/tally/inbound/payroll/pay-heads | `@payHeads` | tally_pay_heads |
 | POST /api/tally/inbound/payroll/attendance-types | `@attendanceTypes` | tally_attendance_types |
+| POST /api/tally/inbound/payroll/salary-voucher | `TallyInboundVouchersController@salary` | tally_vouchers (Payroll) + tally_voucher_employee_allocations |
+| POST /api/tally/inbound/payroll/attendance-voucher | `@attendance` | tally_vouchers (Attendance) + tally_voucher_employee_allocations |
 | POST /api/tally/inbound/vouchers/sales | `TallyInboundVouchersController@sales` | tally_vouchers (Sales) |
 | POST /api/tally/inbound/vouchers/credit-note | `@creditNote` | tally_vouchers (CreditNote) |
 | POST /api/tally/inbound/vouchers/purchase | `@purchase` | tally_vouchers (Purchase) |
@@ -750,6 +756,8 @@ The `employees` endpoint also accepts `"full_sync": true` — after processing, 
 | GET /api/PayrollAPI/employee | tally_employees |
 | GET /api/PayrollAPI/pay-head | tally_pay_heads |
 | GET /api/PayrollAPI/attendance-type | tally_attendance_types |
+| GET /api/PayrollAPI/salary-voucher | tally_vouchers (Payroll) with EmployeeAllocations |
+| GET /api/PayrollAPI/attendance-voucher | tally_vouchers (Attendance) with EmployeeAllocations |
 | GET /api/VoucherAPI/sales-voucher | tally_vouchers (Sales) |
 | GET /api/VoucherAPI/purchase-voucher | tally_vouchers (Purchase) |
 | GET /api/VoucherAPI/debitNote-voucher | tally_vouchers (DebitNote) |
@@ -775,6 +783,8 @@ The `employees` endpoint also accepts `"full_sync": true` — after processing, 
 | POST /api/PayrollAPI/update-employee | tally_employees.tally_id |
 | POST /api/PayrollAPI/update-pay-head | tally_pay_heads.tally_id |
 | POST /api/PayrollAPI/update-attendance-type | tally_attendance_types.tally_id |
+| POST /api/PayrollAPI/update-salary-voucher | tally_vouchers.tally_id |
+| POST /api/PayrollAPI/update-attendance-voucher | tally_vouchers.tally_id |
 | POST /api/VoucherAPI/update-sales-voucher | tally_vouchers.tally_id |
 | POST /api/VoucherAPI/update-purchase-voucher | tally_vouchers.tally_id |
 | POST /api/VoucherAPI/update-debitnote-voucher | tally_vouchers.tally_id |
@@ -875,7 +885,7 @@ The "Tally" link appears in the top navigation for any user with `integrations.v
 | `TallyInboundSync` | `app/Services/Tally/` | Inbound upsert for ledgers, stock items, vouchers, statutory masters. Uses `TallySyncHelpers`. Runs auto-mapping after each upsert. |
 | `TallyPayrollSync` | `app/Services/Tally/` | Inbound upsert for payroll entities: `syncEmployeeGroups()`, `syncEmployees()` (supports `full_sync`), `syncPayHeads()`, `syncAttendanceTypes()`. Uses `TallySyncHelpers`. |
 | `TallyReportSync` | `app/Services/Tally/` | Report snapshot inserts. 1 public method. |
-| `TallyOutboundFormatter` | `app/Services/Tally/` | Formats Tally mirror records into Tally's exact payload structure. 18 public methods covering all masters, payroll, and voucher types. |
+| `TallyOutboundFormatter` | `app/Services/Tally/` | Formats Tally mirror records into Tally's exact payload structure. 20 public methods covering all masters, payroll (incl. salary + attendance vouchers), and voucher types. |
 
 ### API Controllers
 
@@ -886,7 +896,7 @@ The "Tally" link appears in the top navigation for any user with `integrations.v
 | `TallyInboundPayrollController` | 4 methods: employeeGroups, employees, payHeads, attendanceTypes. Injects `TallyPayrollSync`. |
 | `TallyInboundVouchersController` | 8 methods: sales, creditNote, purchase, debitNote, receipt, payment, contra, journal. All delegate to `TallyInboundSync::syncVouchers()`. |
 | `TallyInboundReportsController` | 4 methods: balanceSheet, profitLoss, cashFlow, ratioAnalysis. |
-| `TallyOutboundController` | 18 methods (6 masters + 4 payroll + 8 voucher types). Returns only `pending` queue entries via `TallyOutboundQueueService`. |
+| `TallyOutboundController` | 20 methods (6 masters + 6 payroll + 8 voucher types). Returns only `pending` queue entries via `TallyOutboundQueueService`. |
 | `TallyConfirmController` | 23 methods. Updates `tally_id` and marks queue entry `confirmed`. Reads `{ "Data": [{ "Id", "TallyId", "IsSynced" }] }`. |
 
 ### Web Controllers

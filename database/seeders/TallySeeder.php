@@ -23,6 +23,7 @@ use App\Models\TallyStockItem;
 use App\Models\TallyStatutoryMaster;
 use App\Models\TallySyncLog;
 use App\Models\TallyVoucher;
+use App\Models\TallyVoucherEmployeeAllocation;
 use App\Models\TallyVoucherInventoryEntry;
 use App\Models\TallyVoucherLedgerEntry;
 use App\Models\Vendor;
@@ -456,6 +457,8 @@ class TallySeeder extends Seeder
             ['pay_heads',           'inbound', 'success', false, 10, 0, 0, 0, 0, null],
             ['attendance_types',    'inbound', 'success', false, 7,  0, 0, 0, 0, null],
             ['employees',           'inbound', 'success', false, 5,  0, 0, 0, 0, null],
+            ['vouchers_payroll',    'inbound', 'success', false, 1,  0, 0, 0, 0, null],
+            ['vouchers_attendance', 'inbound', 'success', false, 1,  0, 0, 0, 0, null],
             ['manual_trigger',      'inbound', 'success', true,  0,  0, 0, 0, 0, null],
             ['ledgers',             'inbound', 'failed',  false, 0,  0, 0, 3, 0, 'Ledger "XYZ Corp" has duplicate tally_id 14 for this tenant'],
         ];
@@ -614,6 +617,138 @@ class TallySeeder extends Seeder
                     'gender'          => $gender,
                     'is_active'       => true,
                     'last_synced_at'  => now()->subHours(1),
+                ]
+            );
+        }
+
+        // ── Payroll Vouchers ──────────────────────────────────────────────
+        // Fetch the employees we just seeded so we can link allocations
+        $employees = TallyEmployee::withoutGlobalScope('tenant')
+            ->where('tenant_id', $tid)
+            ->get()
+            ->keyBy('name');
+
+        // April 2024 salary run
+        $salaryVoucher = TallyVoucher::firstOrCreate(
+            ['tenant_id' => $tid, 'tally_id' => 6001],
+            [
+                'alter_id'       => 6001,
+                'voucher_type'   => 'Payroll',
+                'voucher_number' => 'SAL/2024-25/001',
+                'voucher_date'   => '2024-04-30',
+                'narration'      => 'Salary for the month of April 2024',
+                'is_invoice'     => false,
+                'is_deleted'     => false,
+                'is_active'      => true,
+                'last_synced_at' => now()->subHours(1),
+            ]
+        );
+
+        // [name, group, payHeadEntries, netPayable]
+        $salaryAllocations = [
+            ['Arjun Mehta',   'Management',         [
+                ['PayHeadName' => 'Basic Salary',         'Amount' => 80000],
+                ['PayHeadName' => 'House Rent Allowance', 'Amount' => 32000],
+                ['PayHeadName' => 'Conveyance Allowance', 'Amount' => 3200],
+                ['PayHeadName' => 'PF - Employee',        'Amount' => -9600],
+                ['PayHeadName' => 'Professional Tax',     'Amount' => -200],
+            ], 105400],
+            ['Sunita Sharma', 'Technology',          [
+                ['PayHeadName' => 'Basic Salary',         'Amount' => 60000],
+                ['PayHeadName' => 'House Rent Allowance', 'Amount' => 24000],
+                ['PayHeadName' => 'Conveyance Allowance', 'Amount' => 1600],
+                ['PayHeadName' => 'PF - Employee',        'Amount' => -7200],
+                ['PayHeadName' => 'Professional Tax',     'Amount' => -200],
+            ], 78200],
+            ['Rakesh Gupta',  'Sales & Marketing',  [
+                ['PayHeadName' => 'Basic Salary',         'Amount' => 55000],
+                ['PayHeadName' => 'House Rent Allowance', 'Amount' => 22000],
+                ['PayHeadName' => 'Conveyance Allowance', 'Amount' => 1600],
+                ['PayHeadName' => 'PF - Employee',        'Amount' => -6600],
+                ['PayHeadName' => 'Professional Tax',     'Amount' => -200],
+            ], 71800],
+            ['Pooja Nair',    'Finance & Accounts', [
+                ['PayHeadName' => 'Basic Salary',         'Amount' => 40000],
+                ['PayHeadName' => 'House Rent Allowance', 'Amount' => 16000],
+                ['PayHeadName' => 'Conveyance Allowance', 'Amount' => 1600],
+                ['PayHeadName' => 'PF - Employee',        'Amount' => -4800],
+                ['PayHeadName' => 'Professional Tax',     'Amount' => -200],
+            ], 52600],
+            ['Vikram Singh',  'Operations',         [
+                ['PayHeadName' => 'Basic Salary',         'Amount' => 50000],
+                ['PayHeadName' => 'House Rent Allowance', 'Amount' => 20000],
+                ['PayHeadName' => 'Conveyance Allowance', 'Amount' => 1600],
+                ['PayHeadName' => 'PF - Employee',        'Amount' => -6000],
+                ['PayHeadName' => 'Professional Tax',     'Amount' => -200],
+            ], 65400],
+        ];
+
+        foreach ($salaryAllocations as [$empName, $empGroup, $payHeadEntries, $netPayable]) {
+            TallyVoucherEmployeeAllocation::firstOrCreate(
+                ['tally_voucher_id' => $salaryVoucher->id, 'employee_name' => $empName],
+                [
+                    'tenant_id'         => $tid,
+                    'tally_employee_id' => $employees[$empName]?->id,
+                    'employee_group'    => $empGroup,
+                    'entries'           => $payHeadEntries,
+                    'net_payable'       => $netPayable,
+                ]
+            );
+        }
+
+        // April 2024 attendance run
+        $attendanceVoucher = TallyVoucher::firstOrCreate(
+            ['tenant_id' => $tid, 'tally_id' => 6002],
+            [
+                'alter_id'       => 6002,
+                'voucher_type'   => 'Attendance',
+                'voucher_number' => 'ATT/2024-25/001',
+                'voucher_date'   => '2024-04-30',
+                'narration'      => 'Attendance for the month of April 2024',
+                'is_invoice'     => false,
+                'is_deleted'     => false,
+                'is_active'      => true,
+                'last_synced_at' => now()->subHours(1),
+            ]
+        );
+
+        // [name, group, attendanceEntries]
+        $attendanceAllocations = [
+            ['Arjun Mehta',   'Management',         [
+                ['AttendanceType' => 'Present',      'Units' => 25],
+                ['AttendanceType' => 'Casual Leave', 'Units' => 1],
+                ['AttendanceType' => 'Week Off',     'Units' => 4],
+            ]],
+            ['Sunita Sharma', 'Technology',          [
+                ['AttendanceType' => 'Present',    'Units' => 23],
+                ['AttendanceType' => 'Sick Leave', 'Units' => 2],
+                ['AttendanceType' => 'Week Off',   'Units' => 5],
+            ]],
+            ['Rakesh Gupta',  'Sales & Marketing',  [
+                ['AttendanceType' => 'Present',       'Units' => 24],
+                ['AttendanceType' => 'Unpaid Leave',  'Units' => 1],
+                ['AttendanceType' => 'Week Off',      'Units' => 5],
+            ]],
+            ['Pooja Nair',    'Finance & Accounts', [
+                ['AttendanceType' => 'Present',  'Units' => 26],
+                ['AttendanceType' => 'Week Off', 'Units' => 4],
+            ]],
+            ['Vikram Singh',  'Operations',         [
+                ['AttendanceType' => 'Present',      'Units' => 22],
+                ['AttendanceType' => 'Casual Leave', 'Units' => 2],
+                ['AttendanceType' => 'Week Off',     'Units' => 6],
+            ]],
+        ];
+
+        foreach ($attendanceAllocations as [$empName, $empGroup, $attendanceEntries]) {
+            TallyVoucherEmployeeAllocation::firstOrCreate(
+                ['tally_voucher_id' => $attendanceVoucher->id, 'employee_name' => $empName],
+                [
+                    'tenant_id'         => $tid,
+                    'tally_employee_id' => $employees[$empName]?->id,
+                    'employee_group'    => $empGroup,
+                    'entries'           => $attendanceEntries,
+                    'net_payable'       => null,
                 ]
             );
         }
@@ -848,6 +983,6 @@ class TallySeeder extends Seeder
             );
         }
 
-        $this->command->info('TallySeeder: seeded connection, company, 8 ledger groups, 14 ledgers, 5 stock groups, 3 categories, 2 godowns, 10 stock items, 10 vouchers, 8 statutory masters, 5 employee groups, 10 pay heads, 7 attendance types, 5 employees, reports, sync logs for Tili.');
+        $this->command->info('TallySeeder: seeded connection, company, 8 ledger groups, 14 ledgers, 5 stock groups, 3 categories, 2 godowns, 10 stock items, 10 vouchers, 1 payroll voucher (5 employee allocations), 1 attendance voucher (5 employee allocations), 8 statutory masters, 5 employee groups, 10 pay heads, 7 attendance types, 5 employees, reports, sync logs for Tili.');
     }
 }

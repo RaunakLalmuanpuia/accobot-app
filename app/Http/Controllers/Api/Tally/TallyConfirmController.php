@@ -111,6 +111,16 @@ class TallyConfirmController extends TallyBaseController
         return $this->handle($request, TallyAttendanceType::class);
     }
 
+    public function salaryVoucher(Request $request): JsonResponse
+    {
+        return $this->handle($request, TallyVoucher::class);
+    }
+
+    public function attendanceVoucher(Request $request): JsonResponse
+    {
+        return $this->handle($request, TallyVoucher::class);
+    }
+
     private function handle(Request $request, string $modelClass): JsonResponse
     {
         $conn    = $this->resolveConnection($request);

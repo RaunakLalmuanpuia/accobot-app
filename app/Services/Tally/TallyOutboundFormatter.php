@@ -243,6 +243,45 @@ class TallyOutboundFormatter
         ])->values()->all();
     }
 
+    public function formatSalaryVouchers(Collection $vouchers): array
+    {
+        return $vouchers->map(fn ($v) => [
+            'AccobotId'     => $v->id,
+            'MasterID'      => $v->tally_id,
+            'AlterID'       => $v->alter_id,
+            'Action'        => $v->action,
+            'VoucherType'   => $v->voucher_type,
+            'VoucherNumber' => $v->voucher_number,
+            'VoucherDate'   => $v->voucher_date?->format('Y-m-d'),
+            'Narration'     => $v->narration,
+            'EmployeeAllocations' => $v->employeeAllocations->map(fn ($a) => [
+                'EmployeeName'  => $a->employee_name,
+                'EmployeeGroup' => $a->employee_group,
+                'PayHeadEntries' => $a->entries ?? [],
+                'NetPayable'    => $a->net_payable,
+            ])->values()->all(),
+        ])->values()->all();
+    }
+
+    public function formatAttendanceVouchers(Collection $vouchers): array
+    {
+        return $vouchers->map(fn ($v) => [
+            'AccobotId'     => $v->id,
+            'MasterID'      => $v->tally_id,
+            'AlterID'       => $v->alter_id,
+            'Action'        => $v->action,
+            'VoucherType'   => $v->voucher_type,
+            'VoucherNumber' => $v->voucher_number,
+            'VoucherDate'   => $v->voucher_date?->format('Y-m-d'),
+            'Narration'     => $v->narration,
+            'EmployeeAllocations' => $v->employeeAllocations->map(fn ($a) => [
+                'EmployeeName'     => $a->employee_name,
+                'EmployeeGroup'    => $a->employee_group,
+                'AttendanceEntries' => $a->entries ?? [],
+            ])->values()->all(),
+        ])->values()->all();
+    }
+
     // ── Private ────────────────────────────────────────────────────────────────
 
     private function formatVouchers(Collection $vouchers): array

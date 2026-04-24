@@ -195,6 +195,35 @@ class TallyOutboundController extends TallyBaseController
         return response()->json(['Data' => $this->formatter->formatAttendanceTypes($types)]);
     }
 
+    public function salaryVoucher(Request $request): JsonResponse
+    {
+        return $this->payrollVoucherResponse($request, 'Payroll');
+    }
+
+    public function attendanceVoucher(Request $request): JsonResponse
+    {
+        return $this->payrollVoucherResponse($request, 'Attendance');
+    }
+
+    private function payrollVoucherResponse(Request $request, string $type): JsonResponse
+    {
+        $conn = $this->resolveAndVerify($request);
+        $ids  = $this->queue->pendingIds((int) $conn->tenant_id, TallyVoucher::class);
+
+        $vouchers = TallyVoucher::withoutGlobalScope('tenant')
+            ->with('employeeAllocations')
+            ->where('tenant_id', $conn->tenant_id)
+            ->where('voucher_type', $type)
+            ->whereIn('id', $ids)
+            ->get();
+
+        $formatted = $type === 'Payroll'
+            ? $this->formatter->formatSalaryVouchers($vouchers)
+            : $this->formatter->formatAttendanceVouchers($vouchers);
+
+        return response()->json(['Data' => $formatted]);
+    }
+
     private function voucherResponse(Request $request, string $type): JsonResponse
     {
         $conn = $this->resolveAndVerify($request);

@@ -91,6 +91,8 @@ Route::prefix('tally/inbound')->middleware('throttle:120,1')->group(function () 
     Route::post('payroll/employees',        [TallyInboundPayrollController::class, 'employees']);
     Route::post('payroll/pay-heads',        [TallyInboundPayrollController::class, 'payHeads']);
     Route::post('payroll/attendance-types', [TallyInboundPayrollController::class, 'attendanceTypes']);
+    Route::post('payroll/salary-voucher',   [TallyInboundVouchersController::class, 'salary']);
+    Route::post('payroll/attendance-voucher', [TallyInboundVouchersController::class, 'attendance']);
     Route::post('vouchers/sales',           [TallyInboundVouchersController::class, 'sales']);
     Route::post('vouchers/credit-note',     [TallyInboundVouchersController::class, 'creditNote']);
     Route::post('vouchers/purchase',        [TallyInboundVouchersController::class, 'purchase']);
@@ -126,10 +128,14 @@ Route::prefix('PayrollAPI')->middleware('throttle:120,1')->group(function () {
     Route::get('employee',          [TallyOutboundController::class, 'employee']);
     Route::get('pay-head',          [TallyOutboundController::class, 'payHead']);
     Route::get('attendance-type',   [TallyOutboundController::class, 'attendanceType']);
-    Route::post('update-employee-group',   [TallyConfirmController::class, 'employeeGroup']);
-    Route::post('update-employee',         [TallyConfirmController::class, 'employee']);
-    Route::post('update-pay-head',         [TallyConfirmController::class, 'payHead']);
-    Route::post('update-attendance-type',  [TallyConfirmController::class, 'attendanceType']);
+    Route::get('salary-voucher',    [TallyOutboundController::class, 'salaryVoucher']);
+    Route::get('attendance-voucher', [TallyOutboundController::class, 'attendanceVoucher']);
+    Route::post('update-employee-group',    [TallyConfirmController::class, 'employeeGroup']);
+    Route::post('update-employee',          [TallyConfirmController::class, 'employee']);
+    Route::post('update-pay-head',          [TallyConfirmController::class, 'payHead']);
+    Route::post('update-attendance-type',   [TallyConfirmController::class, 'attendanceType']);
+    Route::post('update-salary-voucher',    [TallyConfirmController::class, 'salaryVoucher']);
+    Route::post('update-attendance-voucher', [TallyConfirmController::class, 'attendanceVoucher']);
 });
 
 Route::prefix('VoucherAPI')->middleware('throttle:120,1')->group(function () {

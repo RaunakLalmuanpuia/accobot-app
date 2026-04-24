@@ -50,12 +50,39 @@ class TallyInboundVouchersController extends TallyBaseController
         return $this->handle($request, 'Journal');
     }
 
+    public function salary(Request $request): JsonResponse
+    {
+        return $this->handlePayroll($request, 'Payroll');
+    }
+
+    public function attendance(Request $request): JsonResponse
+    {
+        return $this->handlePayroll($request, 'Attendance');
+    }
+
     private function handle(Request $request, string $type): JsonResponse
     {
         $conn     = $this->resolveAndLog($request);
         $items    = $request->input('data', $request->input('Data', []));
         $fullSync = (bool) $request->input('full_sync', false);
         $log      = $this->sync->syncVouchers($conn, $items, $type, $fullSync);
+
+        return response()->json([
+            'status'  => $log->status,
+            'created' => $log->records_created,
+            'updated' => $log->records_updated,
+            'deleted' => $log->records_deleted,
+            'skipped' => $log->records_skipped,
+            'failed'  => $log->records_failed,
+        ]);
+    }
+
+    private function handlePayroll(Request $request, string $type): JsonResponse
+    {
+        $conn     = $this->resolveAndLog($request);
+        $items    = $request->input('data', $request->input('Data', []));
+        $fullSync = (bool) $request->input('full_sync', false);
+        $log      = $this->sync->syncPayrollVouchers($conn, $items, $type, $fullSync);
 
         return response()->json([
             'status'  => $log->status,
