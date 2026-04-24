@@ -8,9 +8,11 @@ use App\Models\InvoiceItem;
 use App\Models\Product;
 use App\Models\Tenant;
 use App\Models\TallyAttendanceType;
+use App\Models\TallyCompany;
 use App\Models\TallyConnection;
 use App\Models\TallyEmployee;
 use App\Models\TallyEmployeeGroup;
+use App\Models\TallyGodown;
 use App\Models\TallyLedger;
 use App\Models\TallyLedgerGroup;
 use App\Models\TallyPayHead;
@@ -43,20 +45,31 @@ class TallySeeder extends Seeder
             'last_synced_at'           => now()->subMinutes(30),
         ]);
 
+        // ── Company ───────────────────────────────────────────────────────
+        TallyCompany::firstOrCreate(
+            ['tally_connection_id' => $connection->id],
+            [
+                'company_guid'   => 'TILI-GUID-2024-001',
+                'company_name'   => 'Tili Pvt Ltd',
+                'licence_type'   => 'Silver',
+                'licence_number' => 'TILI-LIC-2024',
+            ]
+        );
+
         // ── Ledger Groups ─────────────────────────────────────────────────
         $groups = [];
         $groupData = [
-            [1, 1, 'Sundry Debtors',        null,  null,  'Assets',      true,  false, true],
-            [2, 2, 'Sundry Creditors',       null,  null,  'Liabilities', false, false, true],
-            [3, 3, 'Sales Accounts',         null,  null,  'Income',      true,  true,  true],
-            [4, 4, 'Purchase Accounts',      null,  null,  'Expenses',    true,  true,  true],
-            [5, 5, 'Bank Accounts',          null,  null,  'Assets',      false, false, false],
-            [6, 6, 'Cash-in-Hand',           null,  null,  'Assets',      false, false, false],
-            [7, 7, 'Duties & Taxes',         null,  null,  'Liabilities', false, false, true],
-            [8, 8, 'Indirect Expenses',      null,  null,  'Expenses',    true,  false, true],
+            [1, 1, 'Sundry Debtors',        null, null],
+            [2, 2, 'Sundry Creditors',       null, null],
+            [3, 3, 'Sales Accounts',         null, null],
+            [4, 4, 'Purchase Accounts',      null, null],
+            [5, 5, 'Bank Accounts',          null, null],
+            [6, 6, 'Cash-in-Hand',           null, null],
+            [7, 7, 'Duties & Taxes',         null, null],
+            [8, 8, 'Indirect Expenses',      null, null],
         ];
 
-        foreach ($groupData as [$tid_i, $alterId, $name, $underId, $underName, $nature, $isRev, $affGross, $isAdd]) {
+        foreach ($groupData as [$tid_i, $alterId, $name, $underId, $underName]) {
             $groups[$name] = TallyLedgerGroup::firstOrCreate(
                 ['tenant_id' => $tid, 'tally_id' => $tid_i],
                 [
@@ -64,10 +77,6 @@ class TallySeeder extends Seeder
                     'name'            => $name,
                     'under_id'        => $underId,
                     'under_name'      => $underName,
-                    'nature_of_group' => $nature,
-                    'is_revenue'      => $isRev,
-                    'affects_gross'   => $affGross,
-                    'is_addable'      => $isAdd,
                     'is_active'       => true,
                     'last_synced_at'  => now()->subHours(1),
                 ]
@@ -81,30 +90,26 @@ class TallySeeder extends Seeder
         // ── Ledgers ───────────────────────────────────────────────────────
         $ledgers = [];
         $ledgerData = [
-            // Debtors
-            [101, 101, 'Rahul Enterprises',   'Sundry Debtors',   'Assets',      'Debtors',   '27AABCP1234D1ZK', null,   'Regular',  'Rahul Sharma',    '9876543210', 'rahul@enterprises.com', '110001', 'Delhi',     'India', 0,   30, 500000,  'Dr', true,  false],
-            [102, 102, 'Priya Trading Co.',   'Sundry Debtors',   'Assets',      'Debtors',   '29AACCQ5678E2ZL', null,   'Regular',  'Priya Singh',     '9123456780', 'priya@trading.com',     '560001', 'Karnataka', 'India', 0,   45, 250000,  'Dr', true,  false],
-            [103, 103, 'Suresh & Sons',        'Sundry Debtors',   'Assets',      'Debtors',   null,              null,   'Regular',  'Suresh Kumar',    null,         'suresh@sons.com',       '400001', 'Maharashtra', 'India', 0, 30, 100000, 'Dr', true,  false],
-            // Creditors
-            [201, 201, 'Kapoor Suppliers',     'Sundry Creditors', 'Liabilities', 'Creditors', '07AAFPK9012F3ZM', null,   'Regular',  'Amit Kapoor',     '9871234560', 'kapoor@suppliers.com',  '110002', 'Delhi',     'India', 0,   60, 300000,  'Cr', false, false],
-            [202, 202, 'National Goods Ltd',   'Sundry Creditors', 'Liabilities', 'Creditors', '19AABPN3456G4ZN', null,   'Regular',  'Prakash Nair',    '9988776655', 'national@goods.in',     '682001', 'Kerala',    'India', 0,   30, 200000,  'Cr', false, false],
-            // Sales & Purchase
-            [301, 301, 'Sales - Domestic',     'Sales Accounts',   'Income',      null,        null,              null,   null,       null,              null,         null,                    null,     null,        null,    0,   0,  0,       'Cr', false, false],
-            [302, 302, 'Sales - Export',        'Sales Accounts',   'Income',      null,        null,              null,   null,       null,              null,         null,                    null,     null,        null,    0,   0,  0,       'Cr', false, false],
-            [401, 401, 'Purchase - Domestic',   'Purchase Accounts','Expenses',    null,        null,              null,   null,       null,              null,         null,                    null,     null,        null,    0,   0,  0,       'Dr', false, false],
-            // Bank & Cash
-            [501, 501, 'HDFC Bank A/c',         'Bank Accounts',    'Assets',      null,        null,              null,   null,       null,              null,         null,                    null,     null,        null,    0,   0,  500000,  'Dr', false, false],
-            [601, 601, 'Cash',                  'Cash-in-Hand',     'Assets',      null,        null,              null,   null,       null,              null,         null,                    null,     null,        null,    0,   0,  50000,   'Dr', false, false],
-            // GST
-            [701, 701, 'Output IGST',           'Duties & Taxes',   'Liabilities', null,        null,              null,   null,       null,              null,         null,                    null,     null,        null,    0,   0,  0,       'Cr', false, false],
-            [702, 702, 'Input IGST',            'Duties & Taxes',   'Assets',      null,        null,              null,   null,       null,              null,         null,                    null,     null,        null,    0,   0,  0,       'Dr', false, false],
-            [703, 703, 'Output CGST',           'Duties & Taxes',   'Liabilities', null,        null,              null,   null,       null,              null,         null,                    null,     null,        null,    0,   0,  0,       'Cr', false, false],
-            [704, 704, 'Output SGST',           'Duties & Taxes',   'Liabilities', null,        null,              null,   null,       null,              null,         null,                    null,     null,        null,    0,   0,  0,       'Cr', false, false],
+            // [tallyId, alterId, name, groupName, category, gstin, gstType, contact, mobile, email, pin, state, country, creditPeriod, creditLimit, openingBal, openingType, isBillWise, inventoryAffected]
+            [101, 101, 'Rahul Enterprises',   'Sundry Debtors',   'Debtors',   '27AABCP1234D1ZK', 'Regular', 'Rahul Sharma',  '9876543210', 'rahul@enterprises.com', '110001', 'Delhi',       'India', 30, 500000, 0,      'Dr', true,  false],
+            [102, 102, 'Priya Trading Co.',   'Sundry Debtors',   'Debtors',   '29AACCQ5678E2ZL', 'Regular', 'Priya Singh',   '9123456780', 'priya@trading.com',     '560001', 'Karnataka',   'India', 45, 250000, 0,      'Dr', true,  false],
+            [103, 103, 'Suresh & Sons',        'Sundry Debtors',   'Debtors',   null,              'Regular', 'Suresh Kumar',  null,         'suresh@sons.com',       '400001', 'Maharashtra', 'India', 30, 100000, 0,      'Dr', true,  false],
+            [201, 201, 'Kapoor Suppliers',     'Sundry Creditors', 'Creditors', '07AAFPK9012F3ZM', 'Regular', 'Amit Kapoor',   '9871234560', 'kapoor@suppliers.com',  '110002', 'Delhi',       'India', 60, 300000, 0,      'Cr', false, false],
+            [202, 202, 'National Goods Ltd',   'Sundry Creditors', 'Creditors', '19AABPN3456G4ZN', 'Regular', 'Prakash Nair',  '9988776655', 'national@goods.in',     '682001', 'Kerala',      'India', 30, 200000, 0,      'Cr', false, false],
+            [301, 301, 'Sales - Domestic',     'Sales Accounts',   null,        null,              null,      null,            null,         null,                    null,     null,          null,    0,  0,      0,      'Cr', false, false],
+            [302, 302, 'Sales - Export',        'Sales Accounts',   null,        null,              null,      null,            null,         null,                    null,     null,          null,    0,  0,      0,      'Cr', false, false],
+            [401, 401, 'Purchase - Domestic',   'Purchase Accounts',null,        null,              null,      null,            null,         null,                    null,     null,          null,    0,  0,      0,      'Dr', false, false],
+            [501, 501, 'HDFC Bank A/c',         'Bank Accounts',    null,        null,              null,      null,            null,         null,                    null,     null,          null,    0,  0,      500000, 'Dr', false, false],
+            [601, 601, 'Cash',                  'Cash-in-Hand',     null,        null,              null,      null,            null,         null,                    null,     null,          null,    0,  0,      50000,  'Dr', false, false],
+            [701, 701, 'Output IGST',           'Duties & Taxes',   null,        null,              null,      null,            null,         null,                    null,     null,          null,    0,  0,      0,      'Cr', false, false],
+            [702, 702, 'Input IGST',            'Duties & Taxes',   null,        null,              null,      null,            null,         null,                    null,     null,          null,    0,  0,      0,      'Dr', false, false],
+            [703, 703, 'Output CGST',           'Duties & Taxes',   null,        null,              null,      null,            null,         null,                    null,     null,          null,    0,  0,      0,      'Cr', false, false],
+            [704, 704, 'Output SGST',           'Duties & Taxes',   null,        null,              null,      null,            null,         null,                    null,     null,          null,    0,  0,      0,      'Cr', false, false],
         ];
 
         foreach ($ledgerData as [
-            $tallyId, $alterId, $name, $groupName, $parentGroup, $category,
-            $gstin, $pan, $gstType, $contact, $mobile, $email,
+            $tallyId, $alterId, $name, $groupName, $category,
+            $gstin, $gstType, $contact, $mobile, $email,
             $pin, $state, $country, $creditPeriod, $creditLimit, $openingBal, $openingType,
             $isBillWise, $inventoryAffected
         ]) {
@@ -125,10 +130,8 @@ class TallySeeder extends Seeder
                     'alter_id'              => $alterId,
                     'ledger_name'           => $name,
                     'group_name'            => $groupName,
-                    'parent_group'          => $parentGroup,
                     'ledger_category'       => $category,
                     'gstin_number'          => $gstin,
-                    'pan_number'            => $pan,
                     'gst_type'              => $gstType,
                     'contact_person'        => $contact,
                     'contact_person_mobile' => $mobile,
@@ -154,25 +157,22 @@ class TallySeeder extends Seeder
         // ── Stock Groups ──────────────────────────────────────────────────
         $stockGroups = [];
         $stockGroupData = [
-            [1001, 1001, 'Electronics',       null, null,       'Stock-in-Hand', true],
-            [1002, 1002, 'Furniture',         null, null,       'Stock-in-Hand', true],
-            [1003, 1003, 'Office Supplies',   null, null,       'Stock-in-Hand', false],
-            [1004, 1004, 'Laptops',           1001, 'Electronics', 'Stock-in-Hand', true],
-            [1005, 1005, 'Mobile Phones',     1001, 'Electronics', 'Stock-in-Hand', true],
+            [1001, 1001, 'Electronics',     null],
+            [1002, 1002, 'Furniture',       null],
+            [1003, 1003, 'Office Supplies', null],
+            [1004, 1004, 'Laptops',         'Electronics'],
+            [1005, 1005, 'Mobile Phones',   'Electronics'],
         ];
 
-        foreach ($stockGroupData as [$tallyId, $alterId, $name, $parentId, $parentName, $nature, $addQty]) {
+        foreach ($stockGroupData as [$tallyId, $alterId, $name, $parent]) {
             $stockGroups[$tallyId] = TallyStockGroup::firstOrCreate(
                 ['tenant_id' => $tid, 'tally_id' => $tallyId],
                 [
-                    'alter_id'              => $alterId,
-                    'name'                  => $name,
-                    'parent_id'             => $parentId,
-                    'parent_name'           => $parentName,
-                    'nature_of_group'       => $nature,
-                    'should_add_quantities' => $addQty,
-                    'is_active'             => true,
-                    'last_synced_at'        => now()->subHours(1),
+                    'alter_id'       => $alterId,
+                    'name'           => $name,
+                    'parent'         => $parent,
+                    'is_active'      => true,
+                    'last_synced_at' => now()->subHours(1),
                 ]
             );
         }
@@ -185,13 +185,33 @@ class TallySeeder extends Seeder
             [2003, 2003, 'Category C - Budget',   null],
         ];
 
-        foreach ($catData as [$tallyId, $alterId, $name, $parentName]) {
+        foreach ($catData as [$tallyId, $alterId, $name, $parent]) {
             $stockCategories[$tallyId] = TallyStockCategory::firstOrCreate(
                 ['tenant_id' => $tid, 'tally_id' => $tallyId],
                 [
                     'alter_id'       => $alterId,
                     'name'           => $name,
-                    'parent_name'    => $parentName,
+                    'parent'         => $parent,
+                    'is_active'      => true,
+                    'last_synced_at' => now()->subHours(1),
+                ]
+            );
+        }
+
+        // ── Godowns ───────────────────────────────────────────────────────
+        $godownData = [
+            [1, 1, 'Main Godown',      null,          'GUID-GDN-001'],
+            [2, 2, 'Secondary Godown', 'Main Godown', 'GUID-GDN-002'],
+        ];
+
+        foreach ($godownData as [$tallyId, $alterId, $name, $under, $guid]) {
+            TallyGodown::firstOrCreate(
+                ['tenant_id' => $tid, 'tally_id' => $tallyId],
+                [
+                    'alter_id'       => $alterId,
+                    'guid'           => $guid,
+                    'name'           => $name,
+                    'under'          => $under,
                     'is_active'      => true,
                     'last_synced_at' => now()->subHours(1),
                 ]
@@ -204,24 +224,24 @@ class TallySeeder extends Seeder
 
         $stockItems = [];
         $itemData = [
-            [3001, 3001, 'Dell Laptop 15"',       1004, 'Laptops',       2001, 'Category A - Premium',  'Nos', 18, 18, 9,  9,  '84713019', 75000,  70000,  80000,  10, 70000, 700000],
-            [3002, 3002, 'HP Laptop 14"',          1004, 'Laptops',       2002, 'Category B - Standard', 'Nos', 18, 18, 9,  9,  '84713019', 60000,  55000,  65000,  5,  55000, 275000],
-            [3003, 3003, 'Samsung Galaxy S24',     1005, 'Mobile Phones', 2001, 'Category A - Premium',  'Nos', 18, 18, 9,  9,  '85171200', 80000,  75000,  85000,  15, 75000, 1125000],
-            [3004, 3004, 'iPhone 15',              1005, 'Mobile Phones', 2001, 'Category A - Premium',  'Nos', 18, 18, 9,  9,  '85171200', 90000,  85000,  95000,  8,  85000, 680000],
-            [3005, 3005, 'Office Chair',           1002, 'Furniture',     2002, 'Category B - Standard', 'Nos', 18, 18, 9,  9,  '94017100', 12000,  10000,  15000,  20, 10000, 200000],
-            [3006, 3006, 'Standing Desk',          1002, 'Furniture',     2002, 'Category B - Standard', 'Nos', 18, 18, 9,  9,  '94031090', 25000,  22000,  28000,  10, 22000, 220000],
-            [3007, 3007, 'A4 Paper (Ream)',        1003, 'Office Supplies',2003, 'Category C - Budget',   'Pkt', 12, 12, 6,  6,  '48025590', 500,    450,    550,    100, 450,  45000],
-            [3008, 3008, 'Printer Cartridge',      1003, 'Office Supplies',2003, 'Category C - Budget',   'Nos', 18, 18, 9,  9,  '84439910', 1500,   1200,   1800,   50, 1200, 60000],
-            [3009, 3009, 'USB-C Hub',              1001, 'Electronics',   2002, 'Category B - Standard', 'Nos', 18, 18, 9,  9,  '85176900', 3500,   3000,   4000,   30, 3000, 90000],
-            [3010, 3010, 'Wireless Keyboard',      1001, 'Electronics',   2002, 'Category B - Standard', 'Nos', 18, 18, 9,  9,  '84716060', 2500,   2000,   3000,   25, 2000, 50000],
+            // [tallyId, alterId, name, stockGroupId, stockGroupName, stockCatId, categoryName, unit, igst, cgst, sgst, cess, hsn, mrp, openQty, openRate, openValue]
+            [3001, 3001, 'Dell Laptop 15"',       1004, 'Laptops',        2001, 'Category A - Premium',  'Nos', 18, 9,  9,  0, '84713019', 80000, 10, 70000, 700000],
+            [3002, 3002, 'HP Laptop 14"',          1004, 'Laptops',        2002, 'Category B - Standard', 'Nos', 18, 9,  9,  0, '84713019', 65000, 5,  55000, 275000],
+            [3003, 3003, 'Samsung Galaxy S24',     1005, 'Mobile Phones',  2001, 'Category A - Premium',  'Nos', 18, 9,  9,  0, '85171200', 85000, 15, 75000, 1125000],
+            [3004, 3004, 'iPhone 15',              1005, 'Mobile Phones',  2001, 'Category A - Premium',  'Nos', 18, 9,  9,  0, '85171200', 95000, 8,  85000, 680000],
+            [3005, 3005, 'Office Chair',           1002, 'Furniture',      2002, 'Category B - Standard', 'Nos', 18, 9,  9,  0, '94017100', 15000, 20, 10000, 200000],
+            [3006, 3006, 'Standing Desk',          1002, 'Furniture',      2002, 'Category B - Standard', 'Nos', 18, 9,  9,  0, '94031090', 28000, 10, 22000, 220000],
+            [3007, 3007, 'A4 Paper (Ream)',        1003, 'Office Supplies', 2003, 'Category C - Budget',   'Pkt', 12, 6,  6,  0, '48025590', 550,   100, 450,  45000],
+            [3008, 3008, 'Printer Cartridge',      1003, 'Office Supplies', 2003, 'Category C - Budget',   'Nos', 18, 9,  9,  0, '84439910', 1800, 50, 1200, 60000],
+            [3009, 3009, 'USB-C Hub',              1001, 'Electronics',    2002, 'Category B - Standard', 'Nos', 18, 9,  9,  0, '85176900', 4000,  30, 3000, 90000],
+            [3010, 3010, 'Wireless Keyboard',      1001, 'Electronics',    2002, 'Category B - Standard', 'Nos', 18, 9,  9,  0, '84716060', 3000,  25, 2000, 50000],
         ];
 
         foreach ($itemData as $i => [
             $tallyId, $alterId, $name, $stockGroupId, $stockGroupName,
             $stockCatId, $categoryName, $unit,
             $igst, $cgst, $sgst, $cess, $hsn,
-            $mrp, $stdCost, $stdPrice,
-            $openQty, $openRate, $openValue
+            $mrp, $openQty, $openRate, $openValue
         ]) {
             $mappedProductId = $productList->get($i)?->id;
 
@@ -244,15 +264,12 @@ class TallySeeder extends Seeder
                     'cess_rate'         => $cess,
                     'hsn_code'          => $hsn,
                     'mrp_rate'          => $mrp,
-                    'standard_cost'     => $stdCost,
-                    'standard_price'    => $stdPrice,
                     'opening_balance'   => $openQty,
                     'opening_rate'      => $openRate,
                     'opening_value'     => $openValue,
                     'closing_balance'   => $openQty - rand(1, 5),
                     'closing_rate'      => $openRate,
                     'closing_value'     => ($openQty - rand(1, 5)) * $openRate,
-                    'costing_method'    => 'FIFO',
                     'is_active'         => true,
                     'last_synced_at'    => now()->subHours(1),
                     'mapped_product_id' => $mappedProductId,
@@ -262,17 +279,16 @@ class TallySeeder extends Seeder
 
         // ── Vouchers ──────────────────────────────────────────────────────
         $voucherData = [
-            // [tally_id, alter_id, type, number, date, party_ledger_id, total, is_invoice, narration]
-            [4001, 4001, 'Sales',        'SV/2024/001', '2024-04-01', 101, 94400,  true,  'Sale of Dell Laptops to Rahul Enterprises'],
-            [4002, 4002, 'Sales',        'SV/2024/002', '2024-04-05', 102, 47200,  true,  'Sale of Office Chairs to Priya Trading Co.'],
-            [4003, 4003, 'Purchase',     'PV/2024/001', '2024-04-02', 201, 70800,  true,  'Purchase of Laptops from Kapoor Suppliers'],
-            [4004, 4004, 'Purchase',     'PV/2024/002', '2024-04-08', 202, 35400,  true,  'Purchase of Mobile Phones from National Goods Ltd'],
-            [4005, 4005, 'Receipt',      'RC/2024/001', '2024-04-10', 101, 94400,  false, 'Payment received from Rahul Enterprises against SV/2024/001'],
-            [4006, 4006, 'Payment',      'PY/2024/001', '2024-04-12', 201, 70800,  false, 'Payment made to Kapoor Suppliers against PV/2024/001'],
-            [4007, 4007, 'Credit Note',  'CN/2024/001', '2024-04-15', 102, 11800,  true,  'Return of defective chair by Priya Trading Co.'],
-            [4008, 4008, 'Journal',      'JV/2024/001', '2024-04-18', 702, 5000,   false, 'Input GST adjustment entry'],
-            [4009, 4009, 'Contra',       'CT/2024/001', '2024-04-20', 601, 20000,  false, 'Cash withdrawn from HDFC Bank'],
-            [4010, 4010, 'Debit Note',   'DN/2024/001', '2024-04-22', 201, 3540,   true,  'Debit note raised on Kapoor Suppliers for quality issue'],
+            [4001, 4001, 'Sales',       'SV/2024/001', '2024-04-01', 101, 94400,  true,  'Sale of Dell Laptops to Rahul Enterprises'],
+            [4002, 4002, 'Sales',       'SV/2024/002', '2024-04-05', 102, 47200,  true,  'Sale of Office Chairs to Priya Trading Co.'],
+            [4003, 4003, 'Purchase',    'PV/2024/001', '2024-04-02', 201, 70800,  true,  'Purchase of Laptops from Kapoor Suppliers'],
+            [4004, 4004, 'Purchase',    'PV/2024/002', '2024-04-08', 202, 35400,  true,  'Purchase of Mobile Phones from National Goods Ltd'],
+            [4005, 4005, 'Receipt',     'RC/2024/001', '2024-04-10', 101, 94400,  false, 'Payment received from Rahul Enterprises against SV/2024/001'],
+            [4006, 4006, 'Payment',     'PY/2024/001', '2024-04-12', 201, 70800,  false, 'Payment made to Kapoor Suppliers against PV/2024/001'],
+            [4007, 4007, 'Credit Note', 'CN/2024/001', '2024-04-15', 102, 11800,  true,  'Return of defective chair by Priya Trading Co.'],
+            [4008, 4008, 'Journal',     'JV/2024/001', '2024-04-18', 702, 5000,   false, 'Input GST adjustment entry'],
+            [4009, 4009, 'Contra',      'CT/2024/001', '2024-04-20', 601, 20000,  false, 'Cash withdrawn from HDFC Bank'],
+            [4010, 4010, 'Debit Note',  'DN/2024/001', '2024-04-22', 201, 3540,   true,  'Debit note raised on Kapoor Suppliers for quality issue'],
         ];
 
         $vouchers = [];
@@ -293,7 +309,7 @@ class TallySeeder extends Seeder
                     'is_deleted'            => false,
                     'place_of_supply'       => 'Delhi',
                     'narration'             => $narration,
-                    'buyer_name'            => $partyLedger?->mailing_name ?? $partyLedger?->ledger_name,
+                    'buyer_name'            => $partyLedger?->ledger_name,
                     'buyer_gstin'           => $partyLedger?->gstin_number,
                     'buyer_state'           => $partyLedger?->state_name,
                     'buyer_country'         => $partyLedger?->country_name ?? 'India',
@@ -303,9 +319,8 @@ class TallySeeder extends Seeder
             );
         }
 
-        // ── Inventory Entries (for Sales and Purchase vouchers) ───────────
+        // ── Inventory Entries ─────────────────────────────────────────────
         $inventoryEntryData = [
-            // [voucher_tally_id, stock_item_tally_id, qty, rate, amount, igst, tax_amount]
             [4001, 3001, 1, 80000, 80000, 18, 14400],
             [4002, 3005, 2, 10000, 20000, 18,  3600],
             [4003, 3001, 1, 60000, 60000, 18, 10800],
@@ -321,47 +336,46 @@ class TallySeeder extends Seeder
             TallyVoucherInventoryEntry::firstOrCreate(
                 ['tally_voucher_id' => $voucher->id, 'tally_stock_item_id' => $stockItem->id],
                 [
-                    'tenant_id'        => $tid,
-                    'stock_item_name'  => $stockItem->name,
-                    'hsn_code'         => $stockItem->hsn_code,
-                    'unit'             => $stockItem->unit_name,
-                    'igst_rate'        => $igstRate,
+                    'tenant_id'          => $tid,
+                    'stock_item_name'    => $stockItem->name,
+                    'hsn_code'           => $stockItem->hsn_code,
+                    'unit'               => $stockItem->unit_name,
+                    'igst_rate'          => $igstRate,
                     'is_deemed_positive' => true,
-                    'actual_qty'       => $qty,
-                    'billed_qty'       => $qty,
-                    'rate'             => $rate,
-                    'discount_percent' => 0,
-                    'amount'           => $amount,
-                    'tax_amount'       => $taxAmount,
-                    'sales_ledger'     => 'Sales - Domestic',
+                    'actual_qty'         => $qty,
+                    'billed_qty'         => $qty,
+                    'rate'               => $rate,
+                    'discount_percent'   => 0,
+                    'amount'             => $amount,
+                    'tax_amount'         => $taxAmount,
+                    'sales_ledger'       => 'Sales - Domestic',
                 ]
             );
         }
 
-        // ── Ledger Entries (for all vouchers) ─────────────────────────────
+        // ── Ledger Entries ────────────────────────────────────────────────
         $ledgerEntryData = [
-            // [voucher_tally_id, ledger_tally_id, amount, is_deemed_positive, is_party]
-            [4001, 101, 94400,  true,  true],   // Debtor Dr
-            [4001, 301, -80000, false, false],  // Sales Cr
-            [4001, 701, -14400, false, false],  // Output IGST Cr
+            [4001, 101, 94400,  true,  true],
+            [4001, 301, -80000, false, false],
+            [4001, 701, -14400, false, false],
 
             [4002, 102, 23600,  true,  true],
             [4002, 301, -20000, false, false],
             [4002, 701, -3600,  false, false],
 
-            [4003, 401, 60000,  true,  false],  // Purchase Dr
-            [4003, 702, 10800,  true,  false],  // Input IGST Dr
-            [4003, 201, -70800, false, true],   // Creditor Cr
+            [4003, 401, 60000,  true,  false],
+            [4003, 702, 10800,  true,  false],
+            [4003, 201, -70800, false, true],
 
             [4004, 401, 30000,  true,  false],
             [4004, 702, 5400,   true,  false],
             [4004, 202, -35400, false, true],
 
-            [4005, 501, 94400,  true,  false],  // Bank Dr
-            [4005, 101, -94400, false, true],   // Debtor Cr
+            [4005, 501, 94400,  true,  false],
+            [4005, 101, -94400, false, true],
 
-            [4006, 201, 70800,  true,  true],   // Creditor Dr
-            [4006, 501, -70800, false, false],  // Bank Cr
+            [4006, 201, 70800,  true,  true],
+            [4006, 501, -70800, false, false],
 
             [4007, 102, -11800, false, true],
             [4007, 301, 10000,  true,  false],
@@ -370,8 +384,8 @@ class TallySeeder extends Seeder
             [4008, 702, 5000,   true,  false],
             [4008, 701, -5000,  false, false],
 
-            [4009, 601, 20000,  true,  false],  // Cash Dr
-            [4009, 501, -20000, false, false],  // Bank Cr
+            [4009, 601, 20000,  true,  false],
+            [4009, 501, -20000, false, false],
 
             [4010, 401, 3000,   true,  false],
             [4010, 702, 540,    true,  false],
@@ -419,65 +433,61 @@ class TallySeeder extends Seeder
 
         // ── Sync Logs ─────────────────────────────────────────────────────
         $logData = [
-            ['ledger_groups',       'inbound', 'success', false, 8,  0, 0, 0, null],
-            ['ledgers',             'inbound', 'success', false, 14, 0, 0, 0, null],
-            ['stock_groups',        'inbound', 'success', false, 5,  0, 0, 0, null],
-            ['stock_categories',    'inbound', 'success', false, 3,  0, 0, 0, null],
-            ['stock_items',         'inbound', 'success', false, 10, 0, 0, 0, null],
-            ['vouchers_sales',      'inbound', 'success', false, 2,  0, 0, 0, null],
-            ['vouchers_purchase',   'inbound', 'success', false, 2,  0, 0, 0, null],
-            ['vouchers_receipt',    'inbound', 'success', false, 1,  0, 0, 0, null],
-            ['vouchers_payment',    'inbound', 'success', false, 1,  0, 0, 0, null],
-            ['vouchers_creditnote', 'inbound', 'success', false, 1,  0, 0, 0, null],
-            ['vouchers_journal',    'inbound', 'success', false, 1,  0, 0, 0, null],
-            ['vouchers_contra',     'inbound', 'success', false, 1,  0, 0, 0, null],
-            ['vouchers_debitnote',  'inbound', 'success', false, 1,  0, 0, 0, null],
-            // Second sync run (some updates)
-            ['ledger_groups',       'inbound', 'success', false, 0,  2, 6, 0, null],
-            ['ledgers',             'inbound', 'success', false, 0,  3, 11,0, null],
-            ['stock_items',         'inbound', 'success', false, 0,  4, 6, 0, null],
-            ['vouchers_sales',      'inbound', 'success', false, 1,  1, 0, 0, null],
-            ['vouchers_purchase',   'inbound', 'success', false, 0,  2, 0, 0, null],
-            // Statutory & payroll masters
-            ['statutory_masters',   'inbound', 'success', false, 8,  0, 0, 0, null],
-            ['employee_groups',     'inbound', 'success', false, 5,  0, 0, 0, null],
-            ['pay_heads',           'inbound', 'success', false, 10, 0, 0, 0, null],
-            ['attendance_types',    'inbound', 'success', false, 7,  0, 0, 0, null],
-            ['employees',           'inbound', 'success', false, 5,  0, 0, 0, null],
-            // Manual trigger
-            ['manual_trigger',      'inbound', 'success', true,  0,  0, 0, 0, null],
-            // Failed attempt
-            ['ledgers',             'inbound', 'failed',  false, 0,  0, 0, 3, 'Ledger "XYZ Corp" has duplicate tally_id 14 for this tenant'],
+            ['ledger_groups',       'inbound', 'success', false, 8,  0, 0, 0, 0, null],
+            ['ledgers',             'inbound', 'success', false, 14, 0, 0, 0, 0, null],
+            ['stock_groups',        'inbound', 'success', false, 5,  0, 0, 0, 0, null],
+            ['stock_categories',    'inbound', 'success', false, 3,  0, 0, 0, 0, null],
+            ['stock_items',         'inbound', 'success', false, 10, 0, 0, 0, 0, null],
+            ['vouchers_sales',      'inbound', 'success', false, 2,  0, 0, 0, 0, null],
+            ['vouchers_purchase',   'inbound', 'success', false, 2,  0, 0, 0, 0, null],
+            ['vouchers_receipt',    'inbound', 'success', false, 1,  0, 0, 0, 0, null],
+            ['vouchers_payment',    'inbound', 'success', false, 1,  0, 0, 0, 0, null],
+            ['vouchers_creditnote', 'inbound', 'success', false, 1,  0, 0, 0, 0, null],
+            ['vouchers_journal',    'inbound', 'success', false, 1,  0, 0, 0, 0, null],
+            ['vouchers_contra',     'inbound', 'success', false, 1,  0, 0, 0, 0, null],
+            ['vouchers_debitnote',  'inbound', 'success', false, 1,  0, 0, 0, 0, null],
+            ['ledger_groups',       'inbound', 'success', false, 0,  2, 6, 0, 0, null],
+            ['ledgers',             'inbound', 'success', false, 0,  3, 11,0, 0, null],
+            ['stock_items',         'inbound', 'success', false, 0,  4, 6, 0, 0, null],
+            ['vouchers_sales',      'inbound', 'success', false, 1,  1, 0, 0, 0, null],
+            ['vouchers_purchase',   'inbound', 'success', false, 0,  2, 0, 0, 0, null],
+            ['statutory_masters',   'inbound', 'success', false, 8,  0, 0, 0, 0, null],
+            ['employee_groups',     'inbound', 'success', false, 5,  0, 0, 0, 0, null],
+            ['pay_heads',           'inbound', 'success', false, 10, 0, 0, 0, 0, null],
+            ['attendance_types',    'inbound', 'success', false, 7,  0, 0, 0, 0, null],
+            ['employees',           'inbound', 'success', false, 5,  0, 0, 0, 0, null],
+            ['manual_trigger',      'inbound', 'success', true,  0,  0, 0, 0, 0, null],
+            ['ledgers',             'inbound', 'failed',  false, 0,  0, 0, 3, 0, 'Ledger "XYZ Corp" has duplicate tally_id 14 for this tenant'],
         ];
 
-        foreach ($logData as $i => [$entity, $direction, $status, $manual, $created, $updated, $skipped, $failed, $error]) {
+        foreach ($logData as $i => [$entity, $direction, $status, $manual, $created, $updated, $skipped, $failed, $deleted, $error]) {
             TallySyncLog::create([
-                'tenant_id'         => $tid,
-                'entity'            => $entity,
-                'direction'         => $direction,
-                'status'            => $status,
-                'triggered_manually' => $manual,
-                'records_created'   => $created,
-                'records_updated'   => $updated,
-                'records_skipped'   => $skipped,
-                'records_failed'    => $failed,
-                'error_message'     => $error,
-                'started_at'        => now()->subDays(1)->addMinutes($i * 3),
-                'completed_at'      => $status === 'failed' ? null : now()->subDays(1)->addMinutes($i * 3 + 1),
+                'tenant_id'              => $tid,
+                'entity'                 => $entity,
+                'direction'              => $direction,
+                'status'                 => $status,
+                'triggered_manually'     => $manual,
+                'records_created'        => $created,
+                'records_updated'        => $updated,
+                'records_skipped'        => $skipped,
+                'records_failed'         => $failed,
+                'records_deleted'        => $deleted,
+                'error_message'          => $error,
+                'started_at'             => now()->subDays(1)->addMinutes($i * 3),
+                'completed_at'           => $status === 'failed' ? null : now()->subDays(1)->addMinutes($i * 3 + 1),
             ]);
         }
 
         // ── Statutory Masters ─────────────────────────────────────────────
         $statutoryData = [
-            // [tally_id, alter_id, name, type, reg_number, state_code, reg_type, pan, tan, applicable_from, details]
-            [5001, 5001, 'GST Registration - Delhi',       'GST', '07AABCT1234A1ZK', '07', 'Regular',      'AABCT1234A', null,         '2017-07-01', ['GSTRate' => 18, 'FilingFrequency' => 'Monthly']],
-            [5002, 5002, 'GST Registration - Karnataka',   'GST', '29AABCT1234A2ZK', '29', 'Regular',      'AABCT1234A', null,         '2017-07-01', ['GSTRate' => 18, 'FilingFrequency' => 'Monthly']],
-            [5003, 5003, 'TDS - Section 194C (Contractor)','TDS', 'TDS-194C',         null, 'TDS Deductor', null,         'DELT12345A', '2023-04-01', ['Section' => '194C', 'Rate' => 1, 'ThresholdLimit' => 30000]],
-            [5004, 5004, 'TDS - Section 194J (Prof. Svc)', 'TDS', 'TDS-194J',         null, 'TDS Deductor', null,         'DELT12345A', '2023-04-01', ['Section' => '194J', 'Rate' => 10, 'ThresholdLimit' => 30000]],
-            [5005, 5005, 'TCS - Section 206C',             'TCS', 'TCS-206C',         null, 'TCS Collector',null,         'DELT12345A', '2023-04-01', ['Section' => '206C', 'Rate' => 0.1]],
-            [5006, 5006, 'PF Registration',                'PF',  'PF/DL/12345/001',  null, 'Employer',     null,         null,         '2020-01-01', ['EmployerRate' => 12, 'EmployeeRate' => 12, 'AdminCharge' => 0.5]],
-            [5007, 5007, 'ESI Registration',               'ESI', 'ESI/31/12345/001', null, 'Employer',     null,         null,         '2020-01-01', ['EmployerRate' => 3.25, 'EmployeeRate' => 0.75]],
-            [5008, 5008, 'Professional Tax - Delhi',       'PT',  'PT/DL/2024/001',   '07', 'PT Deductor',  null,         null,         '2023-04-01', ['MonthlyLimit' => 15000, 'TaxAmount' => 200]],
+            [5001, 5001, 'GST Registration - Delhi',        'GST', '07AABCT1234A1ZK', '07', 'Regular',       'AABCT1234A', null,         '2017-07-01', ['GSTRate' => 18, 'FilingFrequency' => 'Monthly']],
+            [5002, 5002, 'GST Registration - Karnataka',    'GST', '29AABCT1234A2ZK', '29', 'Regular',       'AABCT1234A', null,         '2017-07-01', ['GSTRate' => 18, 'FilingFrequency' => 'Monthly']],
+            [5003, 5003, 'TDS - Section 194C (Contractor)', 'TDS', 'TDS-194C',         null, 'TDS Deductor',  null,         'DELT12345A', '2023-04-01', ['Section' => '194C', 'Rate' => 1, 'ThresholdLimit' => 30000]],
+            [5004, 5004, 'TDS - Section 194J (Prof. Svc)',  'TDS', 'TDS-194J',         null, 'TDS Deductor',  null,         'DELT12345A', '2023-04-01', ['Section' => '194J', 'Rate' => 10, 'ThresholdLimit' => 30000]],
+            [5005, 5005, 'TCS - Section 206C',              'TCS', 'TCS-206C',         null, 'TCS Collector', null,         'DELT12345A', '2023-04-01', ['Section' => '206C', 'Rate' => 0.1]],
+            [5006, 5006, 'PF Registration',                 'PF',  'PF/DL/12345/001',  null, 'Employer',      null,         null,         '2020-01-01', ['EmployerRate' => 12, 'EmployeeRate' => 12, 'AdminCharge' => 0.5]],
+            [5007, 5007, 'ESI Registration',                'ESI', 'ESI/31/12345/001', null, 'Employer',      null,         null,         '2020-01-01', ['EmployerRate' => 3.25, 'EmployeeRate' => 0.75]],
+            [5008, 5008, 'Professional Tax - Delhi',        'PT',  'PT/DL/2024/001',   '07', 'PT Deductor',   null,         null,         '2023-04-01', ['MonthlyLimit' => 15000, 'TaxAmount' => 200]],
         ];
 
         foreach ($statutoryData as [$tallyId, $alterId, $name, $type, $regNo, $stateCode, $regType, $pan, $tan, $appFrom, $details]) {
@@ -501,22 +511,22 @@ class TallySeeder extends Seeder
         }
 
         // ── Employee Groups ───────────────────────────────────────────────
+        $empGroups = [];
         $empGroupData = [
-            [6001, 6001, 'Management',          null],
-            [6002, 6002, 'Operations',          null],
-            [6003, 6003, 'Sales & Marketing',   null],
-            [6004, 6004, 'Technology',          null],
-            [6005, 6005, 'Finance & Accounts',  null],
+            [6001, 6001, 'Management',         null],
+            [6002, 6002, 'Operations',         null],
+            [6003, 6003, 'Sales & Marketing',  null],
+            [6004, 6004, 'Technology',         null],
+            [6005, 6005, 'Finance & Accounts', null],
         ];
 
-        $empGroups = [];
-        foreach ($empGroupData as [$tallyId, $alterId, $name, $parentName]) {
+        foreach ($empGroupData as [$tallyId, $alterId, $name, $under]) {
             $empGroups[$tallyId] = TallyEmployeeGroup::firstOrCreate(
                 ['tenant_id' => $tid, 'tally_id' => $tallyId],
                 [
                     'alter_id'       => $alterId,
                     'name'           => $name,
-                    'parent_name'    => $parentName,
+                    'under'          => $under,
                     'is_active'      => true,
                     'last_synced_at' => now()->subHours(1),
                 ]
@@ -525,138 +535,120 @@ class TallySeeder extends Seeder
 
         // ── Pay Heads ─────────────────────────────────────────────────────
         $payHeadData = [
-            // [tally_id, alter_id, name, type, pay_slip_name, under_group, ledger_name, calc_type, rate, rate_period]
-            [7001, 7001, 'Basic Salary',              'Earning',                       'Basic',       'Salary Payable', 'Basic Salary Ledger',     'On Attendance',    null,  'Monthly'],
-            [7002, 7002, 'House Rent Allowance',      'Earning',                       'HRA',         'Salary Payable', 'HRA Ledger',              'As Computed Value',40,    'Monthly'],
-            [7003, 7003, 'Conveyance Allowance',      'Earning',                       'Conveyance',  'Salary Payable', 'Conveyance Ledger',        'Fixed',            1600,  'Monthly'],
-            [7004, 7004, 'Special Allowance',         'Earning',                       'Spl Allowance','Salary Payable','Special Allowance Ledger', 'As Computed Value',null,  'Monthly'],
-            [7005, 7005, 'PF - Employee',             'Employees\' Statutory Deductions','PF Emp',   'PF Payable',     'PF Employee Ledger',       'As Computed Value',12,    'Monthly'],
-            [7006, 7006, 'PF - Employer',             'Employer\'s Statutory Contributions','PF Emp\'s','PF Payable',  'PF Employer Ledger',       'As Computed Value',12,    'Monthly'],
-            [7007, 7007, 'ESI - Employee',            'Employees\' Statutory Deductions','ESI Emp',  'ESI Payable',    'ESI Employee Ledger',      'As Computed Value',0.75,  'Monthly'],
-            [7008, 7008, 'ESI - Employer',            'Employer\'s Statutory Contributions','ESI Emp\'s','ESI Payable', 'ESI Employer Ledger',     'As Computed Value',3.25,  'Monthly'],
-            [7009, 7009, 'TDS on Salary',             'Employees\' Statutory Deductions','TDS',      'TDS Payable',    'TDS Salary Ledger',        'As Computed Value',null,  'Monthly'],
-            [7010, 7010, 'Professional Tax',          'Employees\' Statutory Deductions','PT',       'PT Payable',     'Professional Tax Ledger',  'Fixed',            200,   'Monthly'],
+            // [tallyId, alterId, name, payType, incomeType, parentGroup, calcType, calcPeriod]
+            [7001, 7001, 'Basic Salary',         'Earning',                          null, 'Salary Payable', 'On Attendance',    'Monthly'],
+            [7002, 7002, 'House Rent Allowance', 'Earning',                          null, 'Salary Payable', 'As Computed Value','Monthly'],
+            [7003, 7003, 'Conveyance Allowance', 'Earning',                          null, 'Salary Payable', 'Fixed',            'Monthly'],
+            [7004, 7004, 'Special Allowance',    'Earning',                          null, 'Salary Payable', 'As Computed Value','Monthly'],
+            [7005, 7005, 'PF - Employee',        'Employees\' Statutory Deductions', null, 'PF Payable',     'As Computed Value','Monthly'],
+            [7006, 7006, 'PF - Employer',        'Employer\'s Statutory Contributions',null,'PF Payable',    'As Computed Value','Monthly'],
+            [7007, 7007, 'ESI - Employee',       'Employees\' Statutory Deductions', null, 'ESI Payable',    'As Computed Value','Monthly'],
+            [7008, 7008, 'ESI - Employer',       'Employer\'s Statutory Contributions',null,'ESI Payable',   'As Computed Value','Monthly'],
+            [7009, 7009, 'TDS on Salary',        'Employees\' Statutory Deductions', null, 'TDS Payable',    'As Computed Value','Monthly'],
+            [7010, 7010, 'Professional Tax',     'Employees\' Statutory Deductions', null, 'PT Payable',     'Fixed',            'Monthly'],
         ];
 
-        foreach ($payHeadData as [$tallyId, $alterId, $name, $type, $slipName, $underGroup, $ledgerName, $calcType, $rate, $ratePeriod]) {
+        foreach ($payHeadData as [$tallyId, $alterId, $name, $payType, $incomeType, $parentGroup, $calcType, $calcPeriod]) {
             TallyPayHead::firstOrCreate(
-                ['tenant_id' => $tid, 'tally_id' => $tallyId],
-                [
-                    'alter_id'         => $alterId,
-                    'name'             => $name,
-                    'pay_head_type'    => $type,
-                    'pay_slip_name'    => $slipName,
-                    'under_group'      => $underGroup,
-                    'ledger_name'      => $ledgerName,
-                    'calculation_type' => $calcType,
-                    'rate'             => $rate,
-                    'rate_period'      => $ratePeriod,
-                    'is_active'        => true,
-                    'last_synced_at'   => now()->subHours(1),
-                ]
-            );
-        }
-
-        // ── Attendance Types ──────────────────────────────────────────────
-        $attendanceData = [
-            [8001, 8001, 'Present',         'Attendance',              'Days'],
-            [8002, 8002, 'Casual Leave',    'Leave with Pay',          'Days'],
-            [8003, 8003, 'Sick Leave',      'Leave with Pay',          'Days'],
-            [8004, 8004, 'Unpaid Leave',    'Leave without Pay',       'Days'],
-            [8005, 8005, 'Holiday',         'Attendance',              'Days'],
-            [8006, 8006, 'Week Off',        'Attendance',              'Days'],
-            [8007, 8007, 'Overtime Hours',  'Productivity',            'Hours'],
-        ];
-
-        foreach ($attendanceData as [$tallyId, $alterId, $name, $type, $uom]) {
-            TallyAttendanceType::firstOrCreate(
-                ['tenant_id' => $tid, 'tally_id' => $tallyId],
-                [
-                    'alter_id'        => $alterId,
-                    'name'            => $name,
-                    'attendance_type' => $type,
-                    'unit_of_measure' => $uom,
-                    'is_active'       => true,
-                    'last_synced_at'  => now()->subHours(1),
-                ]
-            );
-        }
-
-        // ── Employees ─────────────────────────────────────────────────────
-        $employeeData = [
-            // [tally_id, alter_id, name, emp_no, group_id, designation, dept, doj, dob, gender, pan, pf, uan, esi, bank, acct, ifsc]
-            [9001, 9001, 'Arjun Mehta',      'EMP001', 6001, 'Director',         'Management',         '2019-06-01', '1980-03-15', 'Male',   'ABCPM1234E', 'PF/001', 'UAN001234567', null,         'HDFC Bank', '50100012345678', 'HDFC0001234'],
-            [9002, 9002, 'Sunita Sharma',    'EMP002', 6004, 'Senior Developer', 'Technology',         '2021-01-15', '1992-07-22', 'Female', 'BCDPS5678F', 'PF/002', 'UAN001234568', 'ESI0001',    'ICICI Bank','012345678901',   'ICIC0001234'],
-            [9003, 9003, 'Rakesh Gupta',     'EMP003', 6003, 'Sales Manager',    'Sales & Marketing',  '2020-08-10', '1988-11-05', 'Male',   'CDEPT9012G', 'PF/003', 'UAN001234569', 'ESI0002',    'SBI',       '30012345678',    'SBIN0001234'],
-            [9004, 9004, 'Pooja Nair',       'EMP004', 6005, 'Accountant',       'Finance & Accounts', '2022-03-01', '1995-04-18', 'Female', 'DEPQN3456H', 'PF/004', 'UAN001234570', 'ESI0003',    'HDFC Bank', '50100087654321', 'HDFC0005678'],
-            [9005, 9005, 'Vikram Singh',     'EMP005', 6002, 'Operations Lead',  'Operations',         '2020-11-20', '1990-09-30', 'Male',   'EFPVS7890I', 'PF/005', 'UAN001234571', 'ESI0004',    'Kotak Bank','1234567890',     'KKBK0001234'],
-        ];
-
-        foreach ($employeeData as [$tallyId, $alterId, $name, $empNo, $groupId, $designation, $dept, $doj, $dob, $gender, $pan, $pfNo, $uan, $esi, $bank, $acct, $ifsc]) {
-            TallyEmployee::firstOrCreate(
                 ['tenant_id' => $tid, 'tally_id' => $tallyId],
                 [
                     'alter_id'           => $alterId,
                     'name'               => $name,
-                    'employee_number'    => $empNo,
-                    'group_name'         => $empGroups[$groupId]?->name,
-                    'designation'        => $designation,
-                    'department'         => $dept,
-                    'date_of_joining'    => $doj,
-                    'date_of_birth'      => $dob,
-                    'gender'             => $gender,
-                    'pan'                => $pan,
-                    'pf_number'          => $pfNo,
-                    'uan_number'         => $uan,
-                    'esi_number'         => $esi,
-                    'bank_name'          => $bank,
-                    'bank_account_number'=> $acct,
-                    'bank_ifsc'          => $ifsc,
-                    'addresses'          => [['address' => 'Delhi NCR', 'state' => 'Delhi', 'country' => 'India']],
-                    'salary_details'     => ['BasicPercent' => 50, 'HRAPercent' => 40, 'PFApplicable' => true],
+                    'pay_type'           => $payType,
+                    'income_type'        => $incomeType,
+                    'parent_group'       => $parentGroup,
+                    'calculation_type'   => $calcType,
+                    'calculation_period' => $calcPeriod,
                     'is_active'          => true,
                     'last_synced_at'     => now()->subHours(1),
                 ]
             );
         }
 
-        // ── ISP / Lease Line dataset (mirrors Postman test session) ──────────
+        // ── Attendance Types ──────────────────────────────────────────────
+        $attendanceData = [
+            [8001, 8001, 'Present',        'Attendance',        'Days'],
+            [8002, 8002, 'Casual Leave',   'Leave with Pay',    'Days'],
+            [8003, 8003, 'Sick Leave',     'Leave with Pay',    'Days'],
+            [8004, 8004, 'Unpaid Leave',   'Leave without Pay', 'Days'],
+            [8005, 8005, 'Holiday',        'Attendance',        'Days'],
+            [8006, 8006, 'Week Off',       'Attendance',        'Days'],
+            [8007, 8007, 'Overtime Hours', 'Productivity',      'Hours'],
+        ];
 
-        // Ledger: BlueStar Technologies (customer)
+        foreach ($attendanceData as [$tallyId, $alterId, $name, $type, $period]) {
+            TallyAttendanceType::firstOrCreate(
+                ['tenant_id' => $tid, 'tally_id' => $tallyId],
+                [
+                    'alter_id'          => $alterId,
+                    'name'              => $name,
+                    'attendance_type'   => $type,
+                    'attendance_period' => $period,
+                    'is_active'         => true,
+                    'last_synced_at'    => now()->subHours(1),
+                ]
+            );
+        }
+
+        // ── Employees ─────────────────────────────────────────────────────
+        $employeeData = [
+            // [tallyId, alterId, name, empNo, groupId, designation, doj, dob, gender]
+            [9001, 9001, 'Arjun Mehta',   'EMP001', 6001, 'Director',         '2019-06-01', '1980-03-15', 'Male'],
+            [9002, 9002, 'Sunita Sharma', 'EMP002', 6004, 'Senior Developer', '2021-01-15', '1992-07-22', 'Female'],
+            [9003, 9003, 'Rakesh Gupta',  'EMP003', 6003, 'Sales Manager',    '2020-08-10', '1988-11-05', 'Male'],
+            [9004, 9004, 'Pooja Nair',    'EMP004', 6005, 'Accountant',       '2022-03-01', '1995-04-18', 'Female'],
+            [9005, 9005, 'Vikram Singh',  'EMP005', 6002, 'Operations Lead',  '2020-11-20', '1990-09-30', 'Male'],
+        ];
+
+        foreach ($employeeData as [$tallyId, $alterId, $name, $empNo, $groupId, $designation, $doj, $dob, $gender]) {
+            TallyEmployee::firstOrCreate(
+                ['tenant_id' => $tid, 'tally_id' => $tallyId],
+                [
+                    'alter_id'        => $alterId,
+                    'name'            => $name,
+                    'employee_number' => $empNo,
+                    'parent'          => $empGroups[$groupId]?->name,
+                    'designation'     => $designation,
+                    'date_of_joining' => $doj,
+                    'date_of_birth'   => $dob,
+                    'gender'          => $gender,
+                    'is_active'       => true,
+                    'last_synced_at'  => now()->subHours(1),
+                ]
+            );
+        }
+
+        // ── ISP / Lease Line dataset ──────────────────────────────────────
         $bluestarLedger = TallyLedger::firstOrCreate(
             ['tenant_id' => $tid, 'tally_id' => 105],
             [
-                'alter_id'                  => 205,
-                'ledger_name'               => 'BlueStar Technologies',
-                'group_name'                => 'Sundry Debtors',
-                'parent_group'              => 'Current Assets',
-                'ledger_category'           => 'customer',
-                'gstin_number'              => '27AABCT1234A1Z5',
-                'gst_type'                  => 'Regular',
-                'is_bill_wise_on'           => true,
-                'inventory_affected'        => false,
-                'is_cost_centre_applicable' => false,
-                'is_rcm_applicable'         => false,
-                'mailing_name'              => 'BlueStar Technologies Pvt Ltd',
-                'mobile_number'             => '9876543210',
-                'contact_person'            => 'Rajesh Kumar',
-                'contact_person_email'      => 'rajesh@bluestar.in',
-                'contact_person_mobile'     => '9876543210',
-                'addresses'                 => ['123 MG Road', 'Bangalore - 560001'],
-                'state_name'                => 'Karnataka',
-                'country_name'              => 'India',
-                'pin_code'                  => '560001',
-                'credit_period'             => 30,
-                'credit_limit'              => 500000,
-                'opening_balance'           => 125000,
-                'opening_balance_type'      => 'Dr',
-                'is_active'                 => true,
-                'last_synced_at'            => now()->subHours(1),
+                'alter_id'             => 205,
+                'ledger_name'          => 'BlueStar Technologies',
+                'group_name'           => 'Sundry Debtors',
+                'ledger_category'      => 'customer',
+                'gstin_number'         => '27AABCT1234A1Z5',
+                'gst_type'             => 'Regular',
+                'is_bill_wise_on'      => true,
+                'inventory_affected'   => false,
+                'mailing_name'         => 'BlueStar Technologies Pvt Ltd',
+                'mobile_number'        => '9876543210',
+                'contact_person'       => 'Rajesh Kumar',
+                'contact_person_email' => 'rajesh@bluestar.in',
+                'contact_person_mobile'=> '9876543210',
+                'addresses'            => ['123 MG Road', 'Bangalore - 560001'],
+                'state_name'           => 'Karnataka',
+                'country_name'         => 'India',
+                'pin_code'             => '560001',
+                'credit_period'        => 30,
+                'credit_limit'         => 500000,
+                'opening_balance'      => 125000,
+                'opening_balance_type' => 'Dr',
+                'is_active'            => true,
+                'last_synced_at'       => now()->subHours(1),
             ]
         );
         $ledgers[105] = $bluestarLedger;
 
-        // Client auto-map for BlueStar
         $bluestarClient = Client::firstOrCreate(
             ['tenant_id' => $tid, 'tally_ledger_id' => $bluestarLedger->id],
             [
@@ -670,91 +662,77 @@ class TallySeeder extends Seeder
         );
         $bluestarLedger->update(['mapped_client_id' => $bluestarClient->id]);
 
-        // Ledger: Sales - Lease Line
         $salesLeaseLedger = TallyLedger::firstOrCreate(
             ['tenant_id' => $tid, 'tally_id' => 305],
             [
-                'alter_id'                  => 305,
-                'ledger_name'               => 'Sales - Lease Line',
-                'group_name'                => 'Sales Accounts',
-                'parent_group'              => 'Income',
-                'ledger_category'           => 'income',
-                'is_bill_wise_on'           => false,
-                'inventory_affected'        => false,
-                'is_cost_centre_applicable' => false,
-                'is_rcm_applicable'         => false,
-                'is_active'                 => true,
-                'last_synced_at'            => now()->subHours(1),
+                'alter_id'           => 305,
+                'ledger_name'        => 'Sales - Lease Line',
+                'group_name'         => 'Sales Accounts',
+                'ledger_category'    => 'income',
+                'is_bill_wise_on'    => false,
+                'inventory_affected' => false,
+                'is_active'          => true,
+                'last_synced_at'     => now()->subHours(1),
             ]
         );
         $ledgers[305] = $salesLeaseLedger;
 
-        // Stock Group: Network Equipment
         TallyStockGroup::firstOrCreate(
             ['tenant_id' => $tid, 'tally_id' => 10],
             [
-                'alter_id'              => 55,
-                'name'                  => 'Network Equipment',
-                'parent_name'           => 'Primary',
-                'nature_of_group'       => 'Stock-in-Hand',
-                'should_add_quantities' => true,
-                'is_active'             => true,
-                'last_synced_at'        => now()->subHours(1),
-            ]
-        );
-
-        // Stock Category: Lease Line Services
-        TallyStockCategory::firstOrCreate(
-            ['tenant_id' => $tid, 'tally_id' => 5],
-            [
-                'alter_id'       => 11,
-                'name'           => 'Lease Line Services',
-                'parent_name'    => 'Primary',
+                'alter_id'       => 55,
+                'name'           => 'Network Equipment',
+                'parent'         => 'Primary',
                 'is_active'      => true,
                 'last_synced_at' => now()->subHours(1),
             ]
         );
 
-        // Stock Item: 30Mbps Lease Line
+        TallyStockCategory::firstOrCreate(
+            ['tenant_id' => $tid, 'tally_id' => 5],
+            [
+                'alter_id'       => 11,
+                'name'           => 'Lease Line Services',
+                'parent'         => 'Primary',
+                'is_active'      => true,
+                'last_synced_at' => now()->subHours(1),
+            ]
+        );
+
         $leaseLineItem = TallyStockItem::firstOrCreate(
             ['tenant_id' => $tid, 'tally_id' => 201],
             [
-                'alter_id'                   => 88,
-                'name'                       => '30Mbps Lease Line',
-                'description'                => 'Dedicated internet lease line 30Mbps',
-                'stock_group_id'             => 10,
-                'stock_group_name'           => 'Network Equipment',
-                'stock_category_id'          => 5,
-                'category_name'              => 'Lease Line Services',
-                'unit_id'                    => 3,
-                'unit_name'                  => 'Nos',
-                'denominator'                => 1,
-                'is_gst_applicable'          => true,
-                'taxability'                 => 'Taxable',
-                'calculation_type'           => 'On Value',
-                'igst_rate'                  => 18,
-                'sgst_rate'                  => 9,
-                'cgst_rate'                  => 9,
-                'cess_rate'                  => 0,
-                'hsn_code'                   => '998422',
-                'standard_cost'              => 0,
-                'standard_price'             => 15000,
-                'opening_balance'            => 0,
-                'opening_rate'               => 0,
-                'opening_value'              => 0,
-                'closing_balance'            => 0,
-                'closing_rate'               => 0,
-                'closing_value'              => 0,
-                'costing_method'             => 'FIFO',
-                'is_batch_applicable'        => false,
-                'is_expiry_date_applicable'  => false,
-                'is_active'                  => true,
-                'last_synced_at'             => now()->subHours(1),
+                'alter_id'          => 88,
+                'name'              => '30Mbps Lease Line',
+                'description'       => 'Dedicated internet lease line 30Mbps',
+                'stock_group_id'    => 10,
+                'stock_group_name'  => 'Network Equipment',
+                'stock_category_id' => 5,
+                'category_name'     => 'Lease Line Services',
+                'unit_id'           => 3,
+                'unit_name'         => 'Nos',
+                'denominator'       => 1,
+                'is_gst_applicable' => true,
+                'taxability'        => 'Taxable',
+                'calculation_type'  => 'On Value',
+                'igst_rate'         => 18,
+                'sgst_rate'         => 9,
+                'cgst_rate'         => 9,
+                'cess_rate'         => 0,
+                'hsn_code'          => '998422',
+                'mrp_rate'          => 15000,
+                'opening_balance'   => 0,
+                'opening_rate'      => 0,
+                'opening_value'     => 0,
+                'closing_balance'   => 0,
+                'closing_rate'      => 0,
+                'closing_value'     => 0,
+                'is_active'         => true,
+                'last_synced_at'    => now()->subHours(1),
             ]
         );
         $stockItems[201] = $leaseLineItem;
 
-        // Product auto-map for 30Mbps Lease Line
         $leaseLineProduct = Product::firstOrCreate(
             ['tenant_id' => $tid, 'tally_stock_item_id' => $leaseLineItem->id],
             [
@@ -769,7 +747,6 @@ class TallySeeder extends Seeder
         );
         $leaseLineItem->update(['mapped_product_id' => $leaseLineProduct->id]);
 
-        // Sales Vouchers + Invoices for BlueStar
         $igstLedger = $ledgers[701];
         foreach ([
             [5001, 300, '2024-25/INV/001', '2024-04-01', 'Monthly lease line charges for April 2024'],
@@ -820,9 +797,9 @@ class TallySeeder extends Seeder
             );
 
             foreach ([
-                [$bluestarLedger,   'BlueStar Technologies', 'Sundry Debtors',   17700,   true,  true],
-                [$salesLeaseLedger, 'Sales - Lease Line',    'Sales Accounts',   -15000,  false, false],
-                [$igstLedger,       'IGST @18%',             'Duties & Taxes',   -2700,   false, false],
+                [$bluestarLedger,   'BlueStar Technologies', 'Sundry Debtors', 17700,   true,  true],
+                [$salesLeaseLedger, 'Sales - Lease Line',    'Sales Accounts', -15000,  false, false],
+                [$igstLedger,       'IGST @18%',             'Duties & Taxes', -2700,   false, false],
             ] as [$ledger, $name, $group, $amount, $deemed, $isParty]) {
                 TallyVoucherLedgerEntry::firstOrCreate(
                     ['tally_voucher_id' => $voucher->id, 'tally_ledger_id' => $ledger->id],
@@ -871,6 +848,6 @@ class TallySeeder extends Seeder
             );
         }
 
-        $this->command->info('TallySeeder: seeded connection, 8 ledger groups, 14 ledgers, 5 stock groups, 3 categories, 10 stock items, 10 vouchers, 8 statutory masters, 5 employee groups, 10 pay heads, 7 attendance types, 5 employees, reports, sync logs for Tili.');
+        $this->command->info('TallySeeder: seeded connection, company, 8 ledger groups, 14 ledgers, 5 stock groups, 3 categories, 2 godowns, 10 stock items, 10 vouchers, 8 statutory masters, 5 employee groups, 10 pay heads, 7 attendance types, 5 employees, reports, sync logs for Tili.');
     }
 }

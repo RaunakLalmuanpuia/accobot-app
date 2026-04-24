@@ -52,7 +52,7 @@ trait TallySyncHelpers
     private function strip(array $item): array
     {
         return array_map(function ($v) {
-            if (is_string($v)) return ltrim($v, "\u{0004}");
+            if (is_string($v)) return trim(ltrim($v, "\u{0004}"));
             if (is_array($v))  return $this->strip($v);
             return $v;
         }, $item);
