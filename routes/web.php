@@ -20,6 +20,7 @@ use App\Http\Controllers\TallyConnectionController;
 use App\Http\Controllers\TallyDataController;
 use App\Http\Controllers\TallyMasterCrudController;
 use App\Http\Controllers\TallySyncController;
+use App\Http\Controllers\TallyVoucherCrudController;
 use App\Http\Controllers\TeamMemberController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\VendorController;
@@ -188,6 +189,11 @@ Route::middleware(['auth', 'verified', 'member'])
             Route::post('/tally/attendance-types', [TallyMasterCrudController::class, 'attendanceTypeStore'])->name('tally.attendance-types.store');
             Route::put('/tally/attendance-types/{attendanceType}', [TallyMasterCrudController::class, 'attendanceTypeUpdate'])->name('tally.attendance-types.update');
             Route::delete('/tally/attendance-types/{attendanceType}', [TallyMasterCrudController::class, 'attendanceTypeDestroy'])->name('tally.attendance-types.destroy');
+
+            // Vouchers
+            Route::post('/tally/vouchers', [TallyVoucherCrudController::class, 'voucherStore'])->name('tally.vouchers.store');
+            Route::put('/tally/vouchers/{voucher}', [TallyVoucherCrudController::class, 'voucherUpdate'])->name('tally.vouchers.update');
+            Route::delete('/tally/vouchers/{voucher}', [TallyVoucherCrudController::class, 'voucherDestroy'])->name('tally.vouchers.destroy');
         });
 
         // ── Banking / Narration ────────────────────────────────────────

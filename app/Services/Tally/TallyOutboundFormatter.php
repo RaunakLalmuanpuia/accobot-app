@@ -297,34 +297,81 @@ class TallyOutboundFormatter
                 'VoucherNumber' => $v->voucher_number,
                 'VoucherDate'   => $v->voucher_date?->format('Y-m-d'),
                 'Reference'     => $v->reference,
+                'ReferenceDate' => $v->reference_date,
                 'PartyName'     => $v->party_name,
                 'VoucherTotal'  => $v->voucher_total,
                 'IsInvoice'     => $this->boolStr($v->is_invoice),
                 'PlaceOfSupply' => $v->place_of_supply,
-                'BuyerName'     => $v->buyer_name,
-                'BuyerGSTIN'    => $v->buyer_gstin,
-                'BuyerState'    => $v->buyer_state,
-                'BuyerAddress'  => $v->buyer_address,
-                'BuyerEmail'    => $v->buyer_email,
-                'BuyerMobile'   => $v->buyer_mobile,
-                'Narration'     => $v->narration,
-                'IRN'           => $v->irn,
+                'VoucherCostCentre' => $v->cost_centre,
+
+                // Dispatch / shipping
+                'DeliveryNoteNo'   => $v->delivery_note_no,
+                'DeliveryNoteDate' => $v->delivery_note_date,
+                'DispatchDocNo'    => $v->dispatch_doc_no,
+                'DispatchThrough'  => $v->dispatch_through,
+                'Destination'      => $v->destination,
+                'CarrierName'      => $v->carrier_name,
+                'LRNo'             => $v->lr_no,
+                'LRDate'           => $v->lr_date,
+                'MotorVehicleNo'   => $v->motor_vehicle_no,
+
+                // Order
+                'OrderNo'          => $v->order_no,
+                'OrderDate'        => $v->order_date,
+                'TermsOfPayment'   => $v->terms_of_payment,
+                'OtherReferences'  => $v->other_references,
+                'TermsOfDelivery'  => $v->terms_of_delivery,
+
+                // Buyer
+                'BuyerName'                  => $v->buyer_name,
+                'BuyerAlias'                 => $v->buyer_alias,
+                'BuyerGSTIN'                 => $v->buyer_gstin,
+                'BuyerPinCode'               => $v->buyer_pin_code,
+                'BuyerState'                 => $v->buyer_state,
+                'BuyerCountryName'           => $v->buyer_country,
+                'BuyerGSTRegistrationType'   => $v->buyer_gst_registration_type,
+                'BuyerEmail'                 => $v->buyer_email,
+                'BuyerMobile'                => $v->buyer_mobile,
+                // Normalise to Tally's [{"BuyerAddress":"..."}] array format
+                'BuyerAddress' => is_array($v->buyer_address)
+                    ? $v->buyer_address
+                    : ($v->buyer_address ? [['BuyerAddress' => $v->buyer_address]] : []),
+
+                // Consignee
+                'ConsigneeName'                  => $v->consignee_name,
+                'ConsigneeGSTIN'                 => $v->consignee_gstin,
+                'ConsigneeTallyGroup'            => $v->consignee_tally_group,
+                'ConsigneePinCode'               => $v->consignee_pin_code,
+                'ConsigneeState'                 => $v->consignee_state,
+                'ConsigneeCountryName'           => $v->consignee_country,
+                'ConsigneeGSTRegistrationType'   => $v->consignee_gst_registration_type,
+
+                'Narration'           => $v->narration,
+                'IRN'                 => $v->irn,
                 'AcknowledgementNo'   => $v->acknowledgement_no,
                 'AcknowledgementDate' => $v->acknowledgement_date,
-                'QRCode'        => $v->qr_code,
+                'QRCode'              => $v->qr_code,
             ];
 
             $base['InventoryEntries'] = $v->inventoryEntries->map(fn ($ie) => [
                 'StockItemName'    => $ie->stock_item_name,
+                'ItemCode'         => $ie->item_code,
+                'GroupName'        => $ie->group_name,
                 'HSNCode'          => $ie->hsn_code,
                 'Unit'             => $ie->unit,
                 'IGSTRate'         => $ie->igst_rate,
+                'CessRate'         => $ie->cess_rate,
+                'IsDeemedPositive' => $this->boolStr($ie->is_deemed_positive),
                 'ActualQty'        => $ie->actual_qty,
                 'BilledQty'        => $ie->billed_qty,
                 'Rate'             => $ie->rate,
                 'DiscountPercent'  => $ie->discount_percent,
                 'Amount'           => $ie->amount,
                 'TaxAmount'        => $ie->tax_amount,
+                'MRP'              => $ie->mrp,
+                'SalesLedger'      => $ie->sales_ledger,
+                'GodownName'       => $ie->godown_name,
+                'BatchName'        => $ie->batch_name,
             ])->values()->all();
 
             $base['LedgerEntries'] = $v->ledgerEntries->map(fn ($le) => [
@@ -333,6 +380,9 @@ class TallyOutboundFormatter
                 'LedgerAmount'     => $le->ledger_amount,
                 'IsDeemedPositive' => $this->boolStr($le->is_deemed_positive),
                 'IsPartyLedger'    => $this->boolStr($le->is_party_ledger),
+                'IGSTRate'         => $le->igst_rate,
+                'HSNCode'          => $le->hsn_code,
+                'CessRate'         => $le->cess_rate,
                 'BillsAllocation'  => $le->bills_allocation ?? [],
             ])->values()->all();
 

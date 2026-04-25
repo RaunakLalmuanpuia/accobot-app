@@ -879,11 +879,13 @@ All pages show data to any user with `integrations.view`. Edit / New / Delete ac
 | StockItems.vue | tally.stock-items.index | Stock Items — Name, Group, Category, Unit, HSN, GST rates (IGST/SGST/CGST/CESS), Opening Balance |
 | StatutoryMasters.vue | tally.statutory-masters.index | Statutory Masters — Name, Type, Reg. No., State Code, Reg. Type, PAN, TAN, Applicable From |
 | Payroll.vue | tally.payroll.index | 4 tabs: Employees, Employee Groups, Pay Heads, Attendance Types — all with full CRUD |
-| Vouchers.vue | tally.vouchers.index | Read-only. Filter by type, click-through to detail. |
-| VoucherShow.vue | tally.vouchers.show | Read-only. Full voucher detail with inventory + ledger entries. |
+| Vouchers.vue | tally.vouchers.index | Full CRUD — all voucher parent fields (core, buyer, consignee, dispatch, order) in collapsible sections; full ledger entry fields (incl. igst_rate, hsn_code, cess_rate) and full inventory entry fields (incl. item_code, group_name, cess_rate, actual_qty, discount_percent, tax_amount, mrp, sales_ledger, godown_name, batch_name, is_deemed_positive). Sync status badge per row. |
+| VoucherShow.vue | tally.vouchers.show | Read-only detail with inventory + ledger entries. |
 
-#### New controller
+#### Controllers
 `TallyMasterCrudController` — 30 methods (store/update/destroy × 10 master entities). Handles both Option A (new Accobot-originated record) and Option B (editing an inbound-synced record). All saves trigger `TallyModelObserver` → outbound queue automatically.
+
+`TallyVoucherCrudController` — store/update/destroy for `TallyVoucher`. Validation covers all parent fields (core, buyer, consignee, dispatch, order) and all child entry fields matching the inbound JSON payload structure. Update delete-reinserts ledger entries and inventory entries in a `DB::transaction()`. Delete: soft-deletes if `tally_id` set, hard-deletes + purges queue if never synced. `validationRules()` extracted as private method to avoid duplication between store and update.
 
 ### Seeder
 
@@ -946,8 +948,9 @@ The "Tally" link appears in the top navigation for any user with `integrations.v
 |-------|---------------|
 | `TallyConnectionController` | show(), save(), regenerateToken(), destroy(), testConnection(). Manages the `tally_connections` row for a tenant. |
 | `TallySyncController` | index() (builds Sync.vue props: latest logs per entity, all logs, report snapshots, stats including statutory_masters + employees counts), trigger() (logs a manual trigger entry). |
-| `TallyDataController` | Data browse: ledgerGroups(), ledgers(), stockItems(), vouchers(), voucherShow(), statutoryMasters(), payroll(). Also passes `ledgerGroupNames`, `stockGroupNames`, `stockCategoryNames` for form autocomplete. |
+| `TallyDataController` | Data browse: ledgerGroups(), ledgers(), stockItems(), vouchers(), voucherShow(), statutoryMasters(), payroll(). Also passes `ledgerGroupNames`, `stockGroupNames`, `stockCategoryNames`, `ledgerNames`, `stockItemNames` for form autocomplete. |
 | `TallyMasterCrudController` | 30 methods. store/update/destroy for: LedgerGroup, Ledger, StockGroup, StockCategory, StockItem, StatutoryMaster, EmployeeGroup, Employee, PayHead, AttendanceType. |
+| `TallyVoucherCrudController` | 3 methods: voucherStore, voucherUpdate, voucherDestroy. Child entries (ledger + inventory) delete-reinserted in transaction on every update. |
 
 ---
 
