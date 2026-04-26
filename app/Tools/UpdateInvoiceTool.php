@@ -2,6 +2,7 @@
 
 namespace App\Tools;
 
+use App\Models\AuditEvent;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Product;
@@ -161,6 +162,12 @@ class UpdateInvoiceTool implements Tool
                 'currency'       => $invoice->currency,
                 'download_url'   => $downloadUrl,
             ];
+
+            AuditEvent::log(
+                'invoice.updated',
+                ['id' => $invoice->id, 'invoice_number' => $invoice->invoice_number, 'total' => $invoice->total, 'via' => 'ai_agent'],
+                null, null, 'system',
+            );
 
             $itemLines  = $invoice->items->map(fn ($i) => sprintf(
                 '   - %s × %s %s @ ₹%s = ₹%s',

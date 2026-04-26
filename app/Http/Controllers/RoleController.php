@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AuditEvent;
 use App\Models\Tenant;
 use App\Models\TenantRolePermission;
 use Illuminate\Http\Request;
@@ -132,6 +133,8 @@ class RoleController extends Controller
 
         $this->syncTenantPermissions($tenant->id, $role->id, $request->permissions ?? []);
 
+        AuditEvent::log('role.created', ['id' => $role->id, 'name' => $role->name]);
+
         return back();
     }
 
@@ -148,12 +151,20 @@ class RoleController extends Controller
 
         $this->syncTenantPermissions($tenant->id, $role->id, $request->permissions ?? []);
 
+        AuditEvent::log('role.updated', [
+            'id'          => $role->id,
+            'name'        => $role->name,
+            'permissions' => $request->permissions ?? [],
+        ]);
+
         return back();
     }
 
     public function destroy(Tenant $tenant, Role $role)
     {
         abort_if(in_array($role->name, self::SYSTEM_ROLES), 403, 'System roles cannot be deleted.');
+
+        AuditEvent::log('role.deleted', ['id' => $role->id, 'name' => $role->name]);
 
         TenantRolePermission::where('tenant_id', $tenant->id)
             ->where('role_id', $role->id)

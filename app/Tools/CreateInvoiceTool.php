@@ -2,6 +2,7 @@
 
 namespace App\Tools;
 
+use App\Models\AuditEvent;
 use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
@@ -148,6 +149,12 @@ class CreateInvoiceTool implements Tool
                     'total'       => $i->total,
                 ])->toArray(),
             ];
+
+            AuditEvent::log(
+                'invoice.created',
+                ['id' => $invoice->id, 'invoice_number' => $invoice->invoice_number, 'client_id' => $client->id, 'total' => $invoice->total, 'via' => 'ai_agent'],
+                null, null, 'system',
+            );
 
             $itemLines  = $invoice->items->map(fn ($i) => sprintf(
                 '   - %s × %s %s @ ₹%s = ₹%s',

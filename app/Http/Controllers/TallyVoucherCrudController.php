@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AuditEvent;
 use App\Models\TallyVoucher;
 use App\Models\TallyVoucherInventoryEntry;
 use App\Models\TallyVoucherLedgerEntry;
@@ -131,6 +132,13 @@ class TallyVoucherCrudController extends Controller
             }
         });
 
+        AuditEvent::log('tally.voucher.created', [
+            'id'           => $voucher->id,
+            'voucher_type' => $voucher->voucher_type,
+            'voucher_date' => $voucher->voucher_date,
+            'party_name'   => $voucher->party_name,
+            'total'        => $voucher->voucher_total,
+        ]);
         $this->logPayload($voucher);
         return back()->with('success', 'Voucher created and queued for Tally sync.');
     }
@@ -163,6 +171,10 @@ class TallyVoucherCrudController extends Controller
             }
         });
 
+        AuditEvent::log('tally.voucher.updated', [
+            'id'           => $voucher->id,
+            'voucher_type' => $voucher->voucher_type,
+        ]);
         $this->logPayload($voucher);
         return back()->with('success', 'Voucher updated and queued for Tally sync.');
     }
@@ -182,10 +194,12 @@ class TallyVoucherCrudController extends Controller
             $voucher->inventoryEntries()->delete();
             $voucher->employeeAllocations()->delete();
             $voucher->delete();
+            AuditEvent::log('tally.voucher.deleted', ['id' => $voucher->id, 'voucher_type' => $voucher->voucher_type]);
             return back()->with('success', 'Voucher deleted (was never synced to Tally).');
         }
 
         $voucher->update(['is_active' => false]);
+        AuditEvent::log('tally.voucher.deleted', ['id' => $voucher->id, 'voucher_type' => $voucher->voucher_type, 'deactivated' => true]);
         $this->logPayload($voucher);
         return back()->with('success', 'Voucher marked inactive and queued for deletion in Tally.');
     }

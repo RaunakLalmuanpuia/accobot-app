@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\Tally;
 
+use App\Models\AuditEvent;
 use App\Models\TallyAttendanceType;
 use App\Models\TallyEmployee;
 use App\Models\TallyEmployeeGroup;
@@ -146,6 +147,13 @@ class TallyConfirmController extends TallyBaseController
             $this->queue->markConfirmed((int) $conn->tenant_id, $modelClass, (int) $id);
 
             $this->markMappedSynced($record, $synced);
+        }
+
+        if ($updated > 0) {
+            AuditEvent::log('tally.outbound.confirmed', [
+                'model'   => class_basename($modelClass),
+                'updated' => $updated,
+            ], null, (string) $conn->tenant_id, 'integration');
         }
 
         return response()->json(['status' => 'ok', 'updated' => $updated]);

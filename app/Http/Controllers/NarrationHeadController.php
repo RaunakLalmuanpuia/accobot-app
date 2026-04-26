@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AuditEvent;
 use App\Models\NarrationHead;
 use App\Models\NarrationSubHead;
 use App\Models\Tenant;
@@ -60,7 +61,7 @@ class NarrationHeadController extends Controller
 
         $slug = $this->uniqueHeadSlug(Str::slug($request->name), $tenant->id);
 
-        $tenant->narrationHeads()->create([
+        $head = $tenant->narrationHeads()->create([
             'name'        => $request->name,
             'slug'        => $slug,
             'type'        => $request->type,
@@ -68,6 +69,8 @@ class NarrationHeadController extends Controller
             'sort_order'  => $request->sort_order ?? 0,
             'is_active'   => $request->boolean('is_active', true),
         ]);
+
+        AuditEvent::log('narration_head.created', ['id' => $head->id, 'name' => $head->name]);
 
         return back();
     }
@@ -92,12 +95,16 @@ class NarrationHeadController extends Controller
             'is_active'   => $request->boolean('is_active', true),
         ]);
 
+        AuditEvent::log('narration_head.updated', ['id' => $narrationHead->id, 'name' => $narrationHead->name]);
+
         return back();
     }
 
     public function destroy(Tenant $tenant, NarrationHead $narrationHead)
     {
         abort_if($narrationHead->tenant_id !== $tenant->id, 403);
+
+        AuditEvent::log('narration_head.deleted', ['id' => $narrationHead->id, 'name' => $narrationHead->name]);
 
         $narrationHead->subHeads()->delete();
         $narrationHead->delete();
@@ -123,7 +130,7 @@ class NarrationHeadController extends Controller
 
         $slug = $this->uniqueSubHeadSlug($narrationHead->id, Str::slug($request->name));
 
-        $narrationHead->subHeads()->create([
+        $subHead = $narrationHead->subHeads()->create([
             'name'           => $request->name,
             'slug'           => $slug,
             'ledger_code'    => $request->ledger_code,
@@ -132,6 +139,12 @@ class NarrationHeadController extends Controller
             'requires_party' => $request->boolean('requires_party', false),
             'sort_order'     => $request->sort_order ?? 0,
             'is_active'      => $request->boolean('is_active', true),
+        ]);
+
+        AuditEvent::log('narration_sub_head.created', [
+            'id'      => $subHead->id,
+            'name'    => $subHead->name,
+            'head_id' => $narrationHead->id,
         ]);
 
         return back();
@@ -162,6 +175,12 @@ class NarrationHeadController extends Controller
             'is_active'      => $request->boolean('is_active', true),
         ]);
 
+        AuditEvent::log('narration_sub_head.updated', [
+            'id'      => $narrationSubHead->id,
+            'name'    => $narrationSubHead->name,
+            'head_id' => $narrationHead->id,
+        ]);
+
         return back();
     }
 
@@ -169,6 +188,12 @@ class NarrationHeadController extends Controller
     {
         abort_if($narrationHead->tenant_id !== $tenant->id, 403);
         abort_if($narrationSubHead->narration_head_id !== $narrationHead->id, 403);
+
+        AuditEvent::log('narration_sub_head.deleted', [
+            'id'      => $narrationSubHead->id,
+            'name'    => $narrationSubHead->name,
+            'head_id' => $narrationHead->id,
+        ]);
 
         $narrationSubHead->delete();
 

@@ -21,6 +21,7 @@ use App\Http\Controllers\TallyDataController;
 use App\Http\Controllers\TallyMasterCrudController;
 use App\Http\Controllers\TallySyncController;
 use App\Http\Controllers\TallyVoucherCrudController;
+use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\TeamMemberController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\VendorController;
@@ -69,6 +70,8 @@ Route::middleware(['auth', 'verified', 'member'])
     ->group(function () {
 
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+        Route::get('/settings/audit', [AuditLogController::class, 'index'])->name('settings.audit')->middleware('tenant.permission:audit.view');
 
         Route::get('/settings/team', [TeamMemberController::class, 'index'])->name('team.index')->middleware('tenant.permission:members.view');
         Route::get('/settings/team/check-email', [TeamMemberController::class, 'checkEmail'])->name('team.check-email')->middleware('tenant.permission:members.invite');

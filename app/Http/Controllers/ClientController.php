@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AuditEvent;
 use App\Models\Client;
 use App\Models\Tenant;
 use Illuminate\Http\Request;
@@ -30,7 +31,9 @@ class ClientController extends Controller
             'notes'   => 'nullable|string',
         ]);
 
-        $tenant->clients()->create($request->only('name', 'email', 'phone', 'company', 'tax_id', 'address', 'notes'));
+        $client = $tenant->clients()->create($request->only('name', 'email', 'phone', 'company', 'tax_id', 'address', 'notes'));
+
+        AuditEvent::log('client.created', ['id' => $client->id, 'name' => $client->name]);
 
         return back();
     }
@@ -51,12 +54,16 @@ class ClientController extends Controller
 
         $client->update($request->only('name', 'email', 'phone', 'company', 'tax_id', 'address', 'notes'));
 
+        AuditEvent::log('client.updated', ['id' => $client->id, 'name' => $client->name]);
+
         return back();
     }
 
     public function destroy(Tenant $tenant, Client $client)
     {
         abort_if($client->tenant_id !== $tenant->id, 403);
+
+        AuditEvent::log('client.deleted', ['id' => $client->id, 'name' => $client->name]);
 
         $client->delete();
 

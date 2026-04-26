@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\Banking\IngestSmsTransactionAction;
 use App\Http\Requests\Banking\SmsIngestRequest;
+use App\Models\AuditEvent;
 use App\Models\Tenant;
 use Illuminate\Http\RedirectResponse;
 
@@ -18,6 +19,10 @@ class SmsIngestController extends Controller
             $tenant,
             $request->input('bank_account_name', '')
         );
+
+        AuditEvent::log('banking.sms.ingested', [
+            'bank_account_name' => $request->input('bank_account_name'),
+        ]);
 
         return back()->with('success', 'SMS processed and transaction added for review.');
     }

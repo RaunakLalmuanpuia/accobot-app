@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AuditEvent;
 use App\Models\Tenant;
 use App\Models\TallyConnection;
 use App\Models\TallyEmployee;
@@ -94,6 +95,8 @@ class TallySyncController extends Controller
             'completed_at'       => now(),
             'error_message'      => 'Manual sync reminder logged. Data flows from Tally connector — ensure connector is running.',
         ]);
+
+        AuditEvent::log('tally.sync.triggered');
 
         return back()->with('success', 'Sync reminder logged. Tally connector pushes data automatically.');
     }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\Tally;
 
+use App\Models\AuditEvent;
 use App\Models\TallyAttendanceType;
 use App\Models\TallyEmployee;
 use App\Models\TallyEmployeeGroup;
@@ -284,6 +285,13 @@ class TallyOutboundController extends TallyBaseController
             'count'     => count($data),
             'payload'   => $data,
         ]);
+        AuditEvent::log(
+            'tally.outbound.' . strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $entity)),
+            ['entity' => $entity, 'count' => count($data)],
+            null,
+            (string) $tenantId,
+            'integration',
+        );
     }
 
     private function resolveAndVerify(Request $request)

@@ -15,18 +15,20 @@ class TallyInboundMastersController extends TallyBaseController
         $conn  = $this->resolveAndLog($request);
         $items = $request->input('Data', []);
         $log   = $this->sync->syncLedgerGroups($conn, $items);
-
-        return response()->json($this->logResponse($log));
+        $data  = $this->logResponse($log);
+        $this->logAudit($conn, 'ledger_groups', $data);
+        return response()->json($data);
     }
 
     public function ledgers(Request $request): JsonResponse
     {
-        $conn      = $this->resolveAndLog($request);
-        $items     = $request->input('Data', []);
-        $fullSync  = (bool) $request->input('full_sync', false);
-        $log       = $this->sync->syncLedgers($conn, $items, $fullSync);
-
-        return response()->json($this->logResponse($log));
+        $conn     = $this->resolveAndLog($request);
+        $items    = $request->input('Data', []);
+        $fullSync = (bool) $request->input('full_sync', false);
+        $log      = $this->sync->syncLedgers($conn, $items, $fullSync);
+        $data     = $this->logResponse($log);
+        $this->logAudit($conn, 'ledgers', $data);
+        return response()->json($data);
     }
 
     public function stockItems(Request $request): JsonResponse
@@ -35,8 +37,9 @@ class TallyInboundMastersController extends TallyBaseController
         $items    = $request->input('Data', []);
         $fullSync = (bool) $request->input('full_sync', false);
         $log      = $this->sync->syncStockItems($conn, $items, $fullSync);
-
-        return response()->json($this->logResponse($log));
+        $data     = $this->logResponse($log);
+        $this->logAudit($conn, 'stock_items', $data);
+        return response()->json($data);
     }
 
     public function stockGroups(Request $request): JsonResponse
@@ -44,8 +47,9 @@ class TallyInboundMastersController extends TallyBaseController
         $conn  = $this->resolveAndLog($request);
         $items = $request->input('Data', []);
         $log   = $this->sync->syncStockGroups($conn, $items);
-
-        return response()->json($this->logResponse($log));
+        $data  = $this->logResponse($log);
+        $this->logAudit($conn, 'stock_groups', $data);
+        return response()->json($data);
     }
 
     public function stockCategories(Request $request): JsonResponse
@@ -53,8 +57,9 @@ class TallyInboundMastersController extends TallyBaseController
         $conn  = $this->resolveAndLog($request);
         $items = $request->input('Data', []);
         $log   = $this->sync->syncStockCategories($conn, $items);
-
-        return response()->json($this->logResponse($log));
+        $data  = $this->logResponse($log);
+        $this->logAudit($conn, 'stock_categories', $data);
+        return response()->json($data);
     }
 
     public function godowns(Request $request): JsonResponse
@@ -62,8 +67,9 @@ class TallyInboundMastersController extends TallyBaseController
         $conn  = $this->resolveAndLog($request);
         $items = $request->input('Data', []);
         $log   = $this->sync->syncGodowns($conn, $items);
-
-        return response()->json($this->logResponse($log));
+        $data  = $this->logResponse($log);
+        $this->logAudit($conn, 'godowns', $data);
+        return response()->json($data);
     }
 
     public function statutory(Request $request): JsonResponse
@@ -71,19 +77,8 @@ class TallyInboundMastersController extends TallyBaseController
         $conn  = $this->resolveAndLog($request);
         $items = $request->input('Data', []);
         $log   = $this->sync->syncStatutoryMasters($conn, $items);
-
-        return response()->json($this->logResponse($log));
-    }
-
-    private function logResponse($log): array
-    {
-        return [
-            'status'  => $log->status,
-            'created' => $log->records_created,
-            'updated' => $log->records_updated,
-            'deleted' => $log->records_deleted,
-            'skipped' => $log->records_skipped,
-            'failed'  => $log->records_failed,
-        ];
+        $data  = $this->logResponse($log);
+        $this->logAudit($conn, 'statutory_masters', $data);
+        return response()->json($data);
     }
 }

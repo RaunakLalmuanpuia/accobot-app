@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AuditEvent;
 use App\Models\Tenant;
 use App\Models\Vendor;
 use Illuminate\Http\Request;
@@ -30,7 +31,9 @@ class VendorController extends Controller
             'notes'   => 'nullable|string',
         ]);
 
-        $tenant->vendors()->create($request->only('name', 'email', 'phone', 'company', 'tax_id', 'address', 'notes'));
+        $vendor = $tenant->vendors()->create($request->only('name', 'email', 'phone', 'company', 'tax_id', 'address', 'notes'));
+
+        AuditEvent::log('vendor.created', ['id' => $vendor->id, 'name' => $vendor->name]);
 
         return back();
     }
@@ -51,12 +54,16 @@ class VendorController extends Controller
 
         $vendor->update($request->only('name', 'email', 'phone', 'company', 'tax_id', 'address', 'notes'));
 
+        AuditEvent::log('vendor.updated', ['id' => $vendor->id, 'name' => $vendor->name]);
+
         return back();
     }
 
     public function destroy(Tenant $tenant, Vendor $vendor)
     {
         abort_if($vendor->tenant_id !== $tenant->id, 403);
+
+        AuditEvent::log('vendor.deleted', ['id' => $vendor->id, 'name' => $vendor->name]);
 
         $vendor->delete();
 

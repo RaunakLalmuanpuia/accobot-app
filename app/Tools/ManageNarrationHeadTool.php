@@ -2,6 +2,7 @@
 
 namespace App\Tools;
 
+use App\Models\AuditEvent;
 use App\Models\NarrationHead;
 use App\Models\NarrationSubHead;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
@@ -131,6 +132,12 @@ class ManageNarrationHeadTool implements Tool
             'is_active'   => true,
         ]);
 
+        AuditEvent::log(
+            'narration_head.created',
+            ['id' => $head->id, 'name' => $head->name, 'type' => $head->type, 'via' => 'ai_agent'],
+            null, null, 'system',
+        );
+
         return "Narration head **{$head->name}** created (type: {$head->type}, head_id: {$head->id}).";
     }
 
@@ -156,6 +163,12 @@ class ManageNarrationHeadTool implements Tool
         }
 
         $head->update($changes);
+
+        AuditEvent::log(
+            'narration_head.updated',
+            ['id' => $head->id, 'name' => $head->name, 'changed' => array_keys($changes), 'via' => 'ai_agent'],
+            null, null, 'system',
+        );
 
         return "Narration head **{$head->name}** updated. Changed: " . implode(', ', array_keys($changes)) . '.';
     }
@@ -189,6 +202,12 @@ class ManageNarrationHeadTool implements Tool
             'is_active'         => true,
         ]);
 
+        AuditEvent::log(
+            'narration_sub_head.created',
+            ['id' => $sub->id, 'name' => $sub->name, 'head_id' => $head->id, 'via' => 'ai_agent'],
+            null, null, 'system',
+        );
+
         return "Sub-head **{$sub->name}** added under **{$head->name}** (sub_head_id: {$sub->id}).";
     }
 
@@ -217,6 +236,12 @@ class ManageNarrationHeadTool implements Tool
 
         $sub->update($changes);
 
+        AuditEvent::log(
+            'narration_sub_head.updated',
+            ['id' => $sub->id, 'name' => $sub->name, 'head_id' => $sub->narration_head_id, 'changed' => array_keys($changes), 'via' => 'ai_agent'],
+            null, null, 'system',
+        );
+
         return "Sub-head **{$sub->name}** under **{$sub->narrationHead->name}** updated. Changed: " . implode(', ', array_keys($changes)) . '.';
     }
 
@@ -237,6 +262,12 @@ class ManageNarrationHeadTool implements Tool
         $head->subHeads()->delete();
         $head->delete();
 
+        AuditEvent::log(
+            'narration_head.deleted',
+            ['id' => (int) $headId, 'name' => $name, 'sub_heads_deleted' => $subHeadCount, 'via' => 'ai_agent'],
+            null, null, 'system',
+        );
+
         $detail = $subHeadCount > 0 ? " (and {$subHeadCount} sub-head(s))" : '';
         return "Narration head **{$name}**{$detail} deleted.";
     }
@@ -254,7 +285,14 @@ class ManageNarrationHeadTool implements Tool
 
         $name     = $sub->name;
         $headName = $sub->narrationHead->name;
+        $headId   = $sub->narration_head_id;
         $sub->delete();
+
+        AuditEvent::log(
+            'narration_sub_head.deleted',
+            ['id' => (int) $subHeadId, 'name' => $name, 'head_id' => $headId, 'via' => 'ai_agent'],
+            null, null, 'system',
+        );
 
         return "Sub-head **{$name}** deleted from **{$headName}**.";
     }

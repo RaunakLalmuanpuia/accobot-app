@@ -2,6 +2,7 @@
 
 namespace App\Tools;
 
+use App\Models\AuditEvent;
 use App\Models\Product;
 use App\Services\EmbeddingService;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
@@ -283,6 +284,12 @@ class ManageProductTool implements Tool
             'description' => $product->description, 'category' => $product->category, 'sku' => $product->sku,
         ];
 
+        AuditEvent::log(
+            'product.created',
+            ['id' => $product->id, 'name' => $product->name, 'sku' => $product->sku, 'via' => 'ai_agent'],
+            null, null, 'system',
+        );
+
         return sprintf(
             "Product created successfully! **%s** — ₹%.2f/%s | Tax: %s%% (product_id: %d)",
             $product->name, (float) $product->unit_price, $product->unit, $product->tax_rate, $product->id
@@ -324,6 +331,12 @@ class ManageProductTool implements Tool
         }
 
         $product->update($changes);
+
+        AuditEvent::log(
+            'product.updated',
+            ['id' => $product->id, 'name' => $product->name, 'changed' => array_keys($changes), 'via' => 'ai_agent'],
+            null, null, 'system',
+        );
 
         try {
             $product->refresh();

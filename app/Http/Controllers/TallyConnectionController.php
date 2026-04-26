@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AuditEvent;
 use App\Models\Tenant;
 use App\Models\TallyConnection;
 use Illuminate\Http\Request;
@@ -46,6 +47,8 @@ class TallyConnectionController extends Controller
             TallyConnection::create(array_merge($data, ['tenant_id' => $tenant->id]));
         }
 
+        AuditEvent::log('tally.connection.saved', ['company_id' => $data['company_id']]);
+
         return back()->with('success', 'Tally connection saved.');
     }
 
@@ -57,11 +60,15 @@ class TallyConnectionController extends Controller
 
         $connection->regenerateToken();
 
+        AuditEvent::log('tally.connection.token_regenerated');
+
         return back()->with('success', 'Token regenerated.');
     }
 
     public function destroy(Request $request, Tenant $tenant)
     {
+        AuditEvent::log('tally.connection.deleted');
+
         TallyConnection::withoutGlobalScope('tenant')
             ->where('tenant_id', $tenant->id)
             ->delete();

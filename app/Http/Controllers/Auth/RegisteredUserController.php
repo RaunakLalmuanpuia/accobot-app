@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditEvent;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
@@ -46,6 +47,8 @@ class RegisteredUserController extends Controller
         event(new Registered($user));
 
         Auth::login($user);
+
+        AuditEvent::log('auth.user.registered', ['id' => $user->id, 'email' => $user->email], $user->id, null);
 
         // New users have no business yet — send to profile until assigned
         return redirect(route('profile.edit'));

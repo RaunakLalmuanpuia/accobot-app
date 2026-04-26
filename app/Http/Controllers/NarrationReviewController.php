@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\Banking\ReviewNarrationAction;
 use App\Http\Requests\Banking\NarrationReviewRequest;
+use App\Models\AuditEvent;
 use App\Models\BankTransaction;
 use App\Models\Tenant;
 use Illuminate\Http\RedirectResponse;
@@ -43,6 +44,14 @@ class NarrationReviewController extends Controller
 
             default   => abort(422, 'Invalid action.'),
         };
+
+        AuditEvent::log('narration.reviewed', [
+            'transaction_id'       => $transaction->id,
+            'action'               => $action,
+            'narration_head_id'    => $request->narration_head_id ?? null,
+            'narration_sub_head_id'=> $request->narration_sub_head_id ?? null,
+            'save_as_rule'         => (bool) $request->input('save_as_rule', false),
+        ]);
 
         return back()->with('success', "Transaction {$action}d successfully.");
     }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Agents\AccountingAgent;
 use App\Http\Controllers\Controller;
 use App\Models\AiUsageLog;
+use App\Models\AuditEvent;
 use App\Models\Tenant;
 use App\Tools\CreateInvoiceTool;
 use App\Tools\GetInvoiceTool;
@@ -82,6 +83,14 @@ class TenantChatController extends Controller
                     context:   ['history_turns' => count($history), 'channel' => 'api'],
                 );
 
+                AuditEvent::log('chat.message', [
+                    'channel'        => 'api',
+                    'message_length' => strlen($message),
+                    'history_turns'  => count($history),
+                    'tool_steps'     => $response->steps->count(),
+                    'success'        => true,
+                ]);
+
                 $payload = [
                     'type'            => 'reply',
                     'reply'           => (string) $response,
@@ -100,6 +109,14 @@ class TenantChatController extends Controller
                 Log::error('TenantChatController SSE error', [
                     'tenant' => $tenant->id,
                     'error'  => $e->getMessage(),
+                ]);
+
+                AuditEvent::log('chat.error', [
+                    'channel'        => 'api',
+                    'message_length' => strlen($message),
+                    'history_turns'  => count($history),
+                    'error'          => $e->getMessage(),
+                    'success'        => false,
                 ]);
 
                 AiUsageLog::fromError(

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AuditEvent;
 use App\Models\Product;
 use App\Models\Tenant;
 use Illuminate\Http\Request;
@@ -39,11 +40,13 @@ class ProductController extends Controller
             'is_active'      => 'boolean',
         ]);
 
-        $tenant->products()->create($request->only(
+        $product = $tenant->products()->create($request->only(
             'name', 'description', 'sku', 'unit', 'unit_price',
             'tax_rate', 'stock_quantity', 'category', 'sub_category',
             'main_group', 'sub_group', 'is_active'
         ));
+
+        AuditEvent::log('product.created', ['id' => $product->id, 'name' => $product->name, 'sku' => $product->sku]);
 
         return back();
     }
@@ -73,12 +76,16 @@ class ProductController extends Controller
             'main_group', 'sub_group', 'is_active'
         ));
 
+        AuditEvent::log('product.updated', ['id' => $product->id, 'name' => $product->name, 'sku' => $product->sku]);
+
         return back();
     }
 
     public function destroy(Tenant $tenant, Product $product)
     {
         abort_if($product->tenant_id !== $tenant->id, 403);
+
+        AuditEvent::log('product.deleted', ['id' => $product->id, 'name' => $product->name, 'sku' => $product->sku]);
 
         $product->delete();
 

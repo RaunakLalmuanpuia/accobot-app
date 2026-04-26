@@ -2,6 +2,7 @@
 
 namespace App\Tools;
 
+use App\Models\AuditEvent;
 use App\Models\BankTransaction;
 use App\Models\NarrationHead;
 use App\Models\NarrationSubHead;
@@ -242,6 +243,12 @@ class NarrateTransactionTool implements Tool
             'party_name'            => $partyName,
             'review_status'         => 'reviewed',
         ]);
+
+        AuditEvent::log(
+            'narration.saved',
+            ['transaction_id' => $transactionId, 'narration_head_id' => $headId, 'narration_sub_head_id' => $subHead?->id, 'via' => 'ai_agent'],
+            null, null, 'system',
+        );
 
         $head = $subHead?->narrationHead ?? ($headId ? NarrationHead::where('tenant_id', $tid)->find($headId) : null);
 

@@ -7,6 +7,7 @@ use App\Actions\Banking\IngestSmsTransactionAction;
 use App\Actions\Banking\ProcessStatementAction;
 use App\Actions\Banking\ReviewNarrationAction;
 use App\Http\Controllers\Controller;
+use App\Models\AuditEvent;
 use App\Models\BankTransaction;
 use App\Models\NarrationHead;
 use App\Models\Tenant;
@@ -132,6 +133,8 @@ class TenantBankingController extends Controller
             $request->input('bank_account_name', '')
         );
 
+        AuditEvent::log('banking.sms.ingested', ['bank_account_name' => $request->input('bank_account_name')]);
+
         return response()->json(['message' => 'SMS processed and transaction added for review.']);
     }
 
@@ -164,6 +167,11 @@ class TenantBankingController extends Controller
             $request->input('bank_account_name', '')
         );
 
+        AuditEvent::log('banking.email.ingested', [
+            'bank_account_name' => $request->input('bank_account_name'),
+            'subject'           => $request->input('email_subject'),
+        ]);
+
         return response()->json(['message' => 'Email processed and transaction added for review.']);
     }
 
@@ -195,6 +203,14 @@ class TenantBankingController extends Controller
             ? 422
             : 200;
 
+        AuditEvent::log('banking.statement.uploaded', [
+            'bank_account_name' => $request->input('bank_account_name'),
+            'imported'          => $result['imported'],
+            'duplicates'        => $result['duplicates'],
+            'failed'            => $result['failed'],
+            'total'             => $result['total'],
+        ]);
+
         return response()->json([
             'message'    => sprintf(
                 'Statement processed: %d imported, %d duplicates skipped, %d failed out of %d total.',
@@ -220,6 +236,8 @@ class TenantBankingController extends Controller
         abort_unless($request->user()->hasPermissionInTenant('transactions.review', $tenant), 403);
 
         $this->reviewAction->approve($transaction);
+
+        AuditEvent::log('narration.approved', ['transaction_id' => $transaction->id]);
 
         return response()->json(['message' => 'Transaction approved.']);
     }
@@ -267,6 +285,13 @@ class TenantBankingController extends Controller
             invoiceNumber:      $request->input('invoice_number'),
             unreconcile:        (bool) $request->input('unreconcile', false),
         );
+
+        AuditEvent::log('narration.corrected', [
+            'transaction_id'        => $transaction->id,
+            'narration_head_id'     => $request->input('narration_head_id'),
+            'narration_sub_head_id' => $request->input('narration_sub_head_id'),
+            'save_as_rule'          => (bool) $request->input('save_as_rule', false),
+        ]);
 
         return response()->json(['message' => 'Transaction corrected.']);
     }

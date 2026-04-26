@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\Banking\ProcessStatementAction;
 use App\Http\Requests\Banking\StatementUploadRequest;
+use App\Models\AuditEvent;
 use App\Models\Tenant;
 use Illuminate\Http\RedirectResponse;
 
@@ -22,6 +23,14 @@ class StatementUploadController extends Controller
             $request->input('bank_account_name', '')
         );
         $message = $this->buildMessage($result);
+
+        AuditEvent::log('banking.statement.uploaded', [
+            'bank_account_name' => $request->input('bank_account_name'),
+            'imported'          => $result['imported'],
+            'duplicates'        => $result['duplicates'],
+            'failed'            => $result['failed'],
+            'total'             => $result['total'],
+        ]);
 
         if ($result['total'] > 0 && $result['imported'] === 0 && $result['duplicates'] === 0) {
             return back()->withErrors(['statement' => $message]);

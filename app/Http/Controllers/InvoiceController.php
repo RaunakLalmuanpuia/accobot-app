@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AuditEvent;
 use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\Product;
@@ -85,6 +86,14 @@ class InvoiceController extends Controller
 
         $invoice->items()->createMany($itemsData);
 
+        AuditEvent::log('invoice.created', [
+            'id'             => $invoice->id,
+            'invoice_number' => $invoice->invoice_number,
+            'client_id'      => $invoice->client_id,
+            'total'          => $invoice->total,
+            'status'         => $invoice->status,
+        ]);
+
         return redirect()->route('invoices.index', ['tenant' => $tenant->id]);
     }
 
@@ -150,12 +159,26 @@ class InvoiceController extends Controller
         $invoice->items()->delete();
         $invoice->items()->createMany($itemsData);
 
+        AuditEvent::log('invoice.updated', [
+            'id'             => $invoice->id,
+            'invoice_number' => $invoice->invoice_number,
+            'client_id'      => $invoice->client_id,
+            'total'          => $invoice->total,
+            'status'         => $invoice->status,
+        ]);
+
         return redirect()->route('invoices.index', ['tenant' => $tenant->id]);
     }
 
     public function destroy(Tenant $tenant, Invoice $invoice)
     {
         abort_if((string) $invoice->tenant_id !== (string) $tenant->id, 403);
+
+        AuditEvent::log('invoice.deleted', [
+            'id'             => $invoice->id,
+            'invoice_number' => $invoice->invoice_number,
+            'total'          => $invoice->total,
+        ]);
 
         $invoice->items()->delete();
         $invoice->delete();

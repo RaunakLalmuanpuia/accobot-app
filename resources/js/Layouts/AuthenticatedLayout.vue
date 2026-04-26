@@ -243,6 +243,14 @@ function stopImpersonation() {
                                             :active="route().current('tally.sync.index') || route().current('tally.connection.show')"
                                         >Tally</NavLink>
                                     </template>
+
+                                    <template v-if="hasPermission('audit.view')">
+                                        <span class="self-center h-5 w-px bg-gray-200"></span>
+                                        <NavLink
+                                            :href="route('settings.audit', { tenant: currentTenantId() })"
+                                            :active="route().current('settings.audit')"
+                                        >Audit Log</NavLink>
+                                    </template>
                                 </template>
                             </div>
                         </div>

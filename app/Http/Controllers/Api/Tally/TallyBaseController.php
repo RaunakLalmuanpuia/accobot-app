@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Tally;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditEvent;
 use App\Models\TallyCompany;
 use App\Models\TallyConnection;
 use App\Models\TallyInboundLog;
@@ -61,6 +62,29 @@ class TallyBaseController extends Controller
                 'licence_number' => data_get($first, 'LicenceNumber'),
             ]
         );
+    }
+
+    protected function logAudit(TallyConnection $conn, string $entity, array $counts = []): void
+    {
+        AuditEvent::log(
+            "tally.inbound.{$entity}.synced",
+            array_merge(['entity' => $entity], $counts),
+            null,
+            (string) $conn->tenant_id,
+            'integration',
+        );
+    }
+
+    protected function logResponse($log): array
+    {
+        return [
+            'status'  => $log->status,
+            'created' => $log->records_created,
+            'updated' => $log->records_updated,
+            'deleted' => $log->records_deleted,
+            'skipped' => $log->records_skipped,
+            'failed'  => $log->records_failed,
+        ];
     }
 
     protected function resolveConnectionByCompanyId(Request $request, string $companyId): TallyConnection

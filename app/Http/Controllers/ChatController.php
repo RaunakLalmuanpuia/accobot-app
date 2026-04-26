@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Agents\AccountingAgent;
 use App\Models\AiUsageLog;
+use App\Models\AuditEvent;
 use App\Models\Tenant;
 use App\Tools\CreateInvoiceTool;
 use App\Tools\GetInvoiceTool;
@@ -77,6 +78,14 @@ class ChatController extends Controller
             $createdClient  = $clientTool->getLastClient();
             $createdProduct = $productTool->getLastProduct();
 
+            AuditEvent::log('chat.message', [
+                'channel'       => 'web',
+                'message_length' => strlen($userMessage),
+                'history_turns'  => count($history),
+                'tool_steps'     => $response->steps->count(),
+                'success'        => true,
+            ]);
+
             return response()->json([
                 'reply'           => (string) $response,
                 'clients'         => $clients,
@@ -90,6 +99,14 @@ class ChatController extends Controller
 
         } catch (\Exception $e) {
             Log::error('ChatController error', ['error' => $e->getMessage()]);
+
+            AuditEvent::log('chat.error', [
+                'channel'        => 'web',
+                'message_length' => strlen($userMessage),
+                'history_turns'  => count($history),
+                'error'          => $e->getMessage(),
+                'success'        => false,
+            ]);
 
             AiUsageLog::fromError(
                 e:        $e,

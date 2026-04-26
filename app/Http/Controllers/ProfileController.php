@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Models\AuditEvent;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -37,6 +38,8 @@ class ProfileController extends Controller
 
         $request->user()->save();
 
+        AuditEvent::log('profile.updated');
+
         return Redirect::route('profile.edit');
     }
 
@@ -50,6 +53,8 @@ class ProfileController extends Controller
         ]);
 
         $user = $request->user();
+
+        AuditEvent::log('profile.deleted', ['user_id' => $user->id, 'email' => $user->email]);
 
         Auth::logout();
 

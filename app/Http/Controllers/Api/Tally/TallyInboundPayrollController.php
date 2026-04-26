@@ -15,8 +15,9 @@ class TallyInboundPayrollController extends TallyBaseController
         $conn  = $this->resolveAndLog($request);
         $items = $request->input('Data', []);
         $log   = $this->sync->syncEmployeeGroups($conn, $items);
-
-        return response()->json($this->logResponse($log));
+        $data  = $this->logResponse($log);
+        $this->logAudit($conn, 'employee_groups', $data);
+        return response()->json($data);
     }
 
     public function employees(Request $request): JsonResponse
@@ -25,8 +26,9 @@ class TallyInboundPayrollController extends TallyBaseController
         $items    = $request->input('Data', []);
         $fullSync = (bool) $request->input('full_sync', false);
         $log      = $this->sync->syncEmployees($conn, $items, $fullSync);
-
-        return response()->json($this->logResponse($log));
+        $data     = $this->logResponse($log);
+        $this->logAudit($conn, 'employees', $data);
+        return response()->json($data);
     }
 
     public function payHeads(Request $request): JsonResponse
@@ -34,8 +36,9 @@ class TallyInboundPayrollController extends TallyBaseController
         $conn  = $this->resolveAndLog($request);
         $items = $request->input('Data', []);
         $log   = $this->sync->syncPayHeads($conn, $items);
-
-        return response()->json($this->logResponse($log));
+        $data  = $this->logResponse($log);
+        $this->logAudit($conn, 'pay_heads', $data);
+        return response()->json($data);
     }
 
     public function attendanceTypes(Request $request): JsonResponse
@@ -43,19 +46,8 @@ class TallyInboundPayrollController extends TallyBaseController
         $conn  = $this->resolveAndLog($request);
         $items = $request->input('Data', []);
         $log   = $this->sync->syncAttendanceTypes($conn, $items);
-
-        return response()->json($this->logResponse($log));
-    }
-
-    private function logResponse($log): array
-    {
-        return [
-            'status'  => $log->status,
-            'created' => $log->records_created,
-            'updated' => $log->records_updated,
-            'deleted' => $log->records_deleted,
-            'skipped' => $log->records_skipped,
-            'failed'  => $log->records_failed,
-        ];
+        $data  = $this->logResponse($log);
+        $this->logAudit($conn, 'attendance_types', $data);
+        return response()->json($data);
     }
 }

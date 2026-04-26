@@ -2,6 +2,7 @@
 
 namespace App\Tools;
 
+use App\Models\AuditEvent;
 use App\Models\Client;
 use App\Services\EmbeddingService;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
@@ -214,6 +215,12 @@ class ManageClientTool implements Tool
             'phone' => $client->phone, 'company' => $client->company, 'address' => $client->address,
         ];
 
+        AuditEvent::log(
+            'client.created',
+            ['id' => $client->id, 'name' => $client->name, 'via' => 'ai_agent'],
+            null, null, 'system',
+        );
+
         $details = array_filter([
             $client->company ? "Company: {$client->company}" : null,
             $client->email   ? "Email: {$client->email}"     : null,
@@ -249,6 +256,12 @@ class ManageClientTool implements Tool
         }
 
         $client->update($changes);
+
+        AuditEvent::log(
+            'client.updated',
+            ['id' => $client->id, 'name' => $client->name, 'changed' => array_keys($changes), 'via' => 'ai_agent'],
+            null, null, 'system',
+        );
 
         try {
             $client->refresh();
