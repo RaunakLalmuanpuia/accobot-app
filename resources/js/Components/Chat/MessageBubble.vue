@@ -1,19 +1,35 @@
 <template>
     <div class="flex flex-col mb-1" :class="isOwn ? 'items-end' : 'items-start'">
-        <span v-if="showSender && !isOwn" class="text-xs text-gray-500 mb-0.5 ml-1">{{ message.sender_name }}</span>
+        <span v-if="showSender && !isOwn" class="text-xs text-gray-500 mb-0.5 ml-1">{{ message.sender?.name ?? message.sender_name }}</span>
 
         <!-- Reply quote -->
         <div
             v-if="message.reply_to_message_id && message.replyTo"
             class="mb-1 px-2 py-1 rounded-lg border-l-2 border-violet-400 bg-gray-100 text-xs text-gray-500 max-w-xs truncate"
         >
-            <span class="font-medium">{{ message.replyTo.sender_name }}:</span>
+            <span class="font-medium">{{ message.replyTo.sender?.name ?? message.replyTo.sender_name }}:</span>
             {{ message.replyTo.body }}
         </div>
 
+        <!-- Bubble + reply button row -->
+        <div class="group flex items-center gap-1" :class="isOwn ? 'flex-row-reverse' : 'flex-row'">
+
+        <!-- Reply button (hover) -->
+        <button
+            v-if="message.type !== 'system' && !message.deleted_at"
+            @click="$emit('reply', message)"
+            class="opacity-0 group-hover:opacity-100 transition p-1 text-gray-400 hover:text-violet-600 shrink-0"
+            title="Reply"
+        >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M3 10h10a4 4 0 010 8H9m-6-8l4-4M3 10l4 4"/>
+            </svg>
+        </button>
+
         <!-- Bubble -->
         <div
-            class="group relative max-w-xs lg:max-w-md px-3 py-2 rounded-2xl text-sm break-words"
+            class="relative max-w-xs lg:max-w-md px-3 py-2 rounded-2xl text-sm break-words"
             :class="isOwn
                 ? 'bg-violet-600 text-white rounded-br-sm'
                 : 'bg-gray-100 text-gray-800 rounded-bl-sm'"
@@ -54,6 +70,8 @@
                 />
             </div>
         </div>
+
+        </div><!-- end bubble+reply row -->
 
         <!-- Reactions -->
         <ReactionPicker

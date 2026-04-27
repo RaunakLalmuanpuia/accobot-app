@@ -17,7 +17,7 @@ class BroadcastChatMessage implements ShouldBroadcast
 
     public function __construct(public ChatMessage $message)
     {
-        $this->message->load(['sender:id,name', 'attachments', 'reactions']);
+        $this->message->load(['sender:id,name', 'attachments', 'reactions', 'replyTo.sender:id,name']);
     }
 
     public function broadcastOn(): array
@@ -43,6 +43,11 @@ class BroadcastChatMessage implements ShouldBroadcast
             'type'                => $this->message->type,
             'metadata'            => $this->message->metadata,
             'reply_to_message_id' => $this->message->reply_to_message_id,
+            'replyTo'             => $this->message->replyTo ? [
+                'id'          => $this->message->replyTo->id,
+                'body'        => $this->message->replyTo->body,
+                'sender_name' => $this->message->replyTo->sender?->name,
+            ] : null,
             'attachments'         => $this->message->attachments->toArray(),
             'reactions'           => $this->message->reaction_summary,
             'edited_at'           => $this->message->edited_at?->toISOString(),

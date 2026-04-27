@@ -3,7 +3,7 @@
         <!-- Reply bar -->
         <div v-if="replyTo" class="flex items-center justify-between mb-2 px-3 py-1.5 rounded-lg bg-violet-50 border border-violet-200 text-sm">
             <div class="min-w-0">
-                <span class="font-medium text-violet-700">{{ replyTo.sender_name }}:</span>
+                <span class="font-medium text-violet-700">{{ replyTo.sender?.name ?? replyTo.sender_name }}:</span>
                 <span class="text-gray-600 ml-1 truncate">{{ replyTo.body }}</span>
             </div>
             <button @click="$emit('cancel-reply')" class="ml-2 text-gray-400 hover:text-gray-600 shrink-0">✕</button>
