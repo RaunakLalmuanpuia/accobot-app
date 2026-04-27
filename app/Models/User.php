@@ -135,4 +135,16 @@ class User extends Authenticatable
     {
         return $this->status === 'active';
     }
+
+    public function chatRooms(): BelongsToMany
+    {
+        return $this->belongsToMany(ChatRoom::class, 'chat_room_members')
+            ->withPivot('role', 'joined_at', 'last_read_message_id')
+            ->withTimestamps();
+    }
+
+    public function pushSubscriptions(): HasMany
+    {
+        return $this->hasMany(PushSubscription::class);
+    }
 }

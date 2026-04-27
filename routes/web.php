@@ -25,6 +25,11 @@ use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\TeamMemberController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\VendorController;
+use App\Http\Controllers\ChatRoomController;
+use App\Http\Controllers\ChatMessageController;
+use App\Http\Controllers\ChatReactionController;
+use App\Http\Controllers\ChatAttachmentController;
+use App\Http\Controllers\PushSubscriptionController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -228,6 +233,27 @@ Route::middleware(['auth', 'verified', 'member'])
             ->name('banking.transactions.statement')
             ->middleware('tenant.permission:transactions.import');
 
+        // ── Group Chat ─────────────────────────────────────────────────
+        Route::get('/groups', [ChatRoomController::class, 'index'])->name('chat.groups.index')->middleware('tenant.permission:chat.room.view');
+        Route::post('/groups', [ChatRoomController::class, 'store'])->name('chat.groups.store')->middleware('tenant.permission:chat.room.create');
+        Route::get('/groups/{room}', [ChatRoomController::class, 'show'])->name('chat.groups.show')->middleware('tenant.permission:chat.room.view');
+        Route::patch('/groups/{room}', [ChatRoomController::class, 'update'])->name('chat.groups.update')->middleware('tenant.permission:chat.room.manage');
+        Route::delete('/groups/{room}', [ChatRoomController::class, 'destroy'])->name('chat.groups.destroy')->middleware('tenant.permission:chat.room.manage');
+        Route::post('/groups/{room}/members', [ChatRoomController::class, 'addMember'])->name('chat.groups.members.store')->middleware('tenant.permission:chat.room.manage');
+        Route::delete('/groups/{room}/members/{user}', [ChatRoomController::class, 'removeMember'])->name('chat.groups.members.destroy')->middleware('tenant.permission:chat.room.manage');
+
+        Route::get('/groups/{room}/messages', [ChatMessageController::class, 'index'])->name('chat.messages.index')->middleware('tenant.permission:chat.message.send');
+        Route::post('/groups/{room}/messages', [ChatMessageController::class, 'store'])->name('chat.messages.store')->middleware('tenant.permission:chat.message.send');
+        Route::delete('/groups/{room}/messages/{message}', [ChatMessageController::class, 'destroy'])->name('chat.messages.destroy')->middleware('tenant.permission:chat.message.send');
+
+        Route::post('/groups/{room}/typing', [ChatMessageController::class, 'typing'])->name('chat.typing')->middleware('tenant.permission:chat.message.send');
+        Route::post('/groups/{room}/read', [ChatMessageController::class, 'markRead'])->name('chat.read')->middleware('tenant.permission:chat.message.send');
+
+        Route::post('/groups/{room}/messages/{message}/reactions', [ChatReactionController::class, 'toggle'])->name('chat.reactions.toggle')->middleware('tenant.permission:chat.message.send');
+
+        Route::post('/groups/{room}/attachments', [ChatAttachmentController::class, 'store'])->name('chat.attachments.store')->middleware('tenant.permission:chat.message.send');
+        Route::get('/groups/{room}/attachments/{attachment}/download', [ChatAttachmentController::class, 'download'])->name('chat.attachments.download')->middleware('tenant.permission:chat.message.send');
+
     });
 
 // ── Invitations (public token link, auth checked in controller) ───────
@@ -241,6 +267,12 @@ Route::middleware('throttle:20,1')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::post('/invite/{invitation}/accept', [InvitationController::class, 'acceptById'])->name('invitation.accept-by-id');
     Route::delete('/invite/{invitation}/decline', [InvitationController::class, 'declineById'])->name('invitation.decline-by-id');
+});
+
+// ── Push Subscriptions (auth only, not tenant-scoped) ────────────────
+Route::middleware('auth')->group(function () {
+    Route::post('/push/subscribe', [PushSubscriptionController::class, 'store'])->name('push.subscribe');
+    Route::delete('/push/subscribe', [PushSubscriptionController::class, 'destroy'])->name('push.unsubscribe');
 });
 
 // ── Profile (auth only, no tenant required) ───────────────────────────

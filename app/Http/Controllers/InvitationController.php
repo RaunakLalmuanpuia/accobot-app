@@ -8,6 +8,7 @@ use App\Models\Invitation;
 use App\Models\Tenant;
 use App\Models\TenantUserRole;
 use App\Models\User;
+use App\Services\ChatNotificationService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -151,6 +152,14 @@ class InvitationController extends Controller
             'invitation_id' => $invitation->id,
         ], tenantId: $invitation->tenant_id);
 
+        ChatNotificationService::notify(
+            tenantId:  $invitation->tenant_id,
+            title:     'New Member Joined',
+            body:      "{$user->name} has joined the team.",
+            eventType: 'member.joined',
+            data:      ['user_id' => $user->id],
+        );
+
         return redirect(route('dashboard', ['tenant' => $invitation->tenant_id]))
             ->with('success', 'Welcome to ' . $invitation->tenant->name . '!');
     }
@@ -197,6 +206,14 @@ class InvitationController extends Controller
         AuditEvent::log('member.invite.accepted', [
             'invitation_id' => $invitation->id,
         ], tenantId: $invitation->tenant_id);
+
+        ChatNotificationService::notify(
+            tenantId:  $invitation->tenant_id,
+            title:     'New Member Joined',
+            body:      auth()->user()->name . ' has joined the team.',
+            eventType: 'member.joined',
+            data:      ['user_id' => auth()->id()],
+        );
 
         return redirect(route('dashboard', ['tenant' => $invitation->tenant_id]));
     }

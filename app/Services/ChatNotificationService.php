@@ -1,0 +1,60 @@
+<?php
+
+namespace App\Services;
+
+use App\Events\BroadcastChatMessage;
+use App\Models\ChatMessage;
+use App\Models\ChatRoom;
+use App\Models\User;
+use App\Notifications\SystemNotification;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Notification;
+
+class ChatNotificationService
+{
+    /**
+     * Send a system notification to tenant members:
+     * - Posts a system message to the tenant's Notifications room
+     * - Sends a Laravel notification (DB + broadcast + web push) to the target users
+     *
+     * @param  Collection<User>|null  $users  Null → all tenant members
+     */
+    public static function notify(
+        string      $tenantId,
+        string      $title,
+        string      $body,
+        string      $eventType,
+        array       $data = [],
+        ?Collection $users = null,
+    ): void {
+        // Post to the Notifications chat room
+        $notifRoom = ChatRoom::notificationsChannelForTenant($tenantId);
+
+        $message = ChatMessage::create([
+            'tenant_id'    => $tenantId,
+            'chat_room_id' => $notifRoom->id,
+            'user_id'      => null,
+            'type'         => 'system',
+            'body'         => $body,
+            'metadata'     => ['event_type' => $eventType, ...$data],
+        ]);
+
+        BroadcastChatMessage::dispatch($message);
+
+        // Laravel notification (DB + broadcast + web push)
+        $recipients = $users ?? User::whereHas('tenants', fn ($q) => $q->where('tenants.id', $tenantId))->get();
+
+        if ($recipients->isNotEmpty()) {
+            Notification::send(
+                $recipients,
+                new SystemNotification(
+                    tenantId:  $tenantId,
+                    title:     $title,
+                    body:      $body,
+                    eventType: $eventType,
+                    data:      $data,
+                )
+            );
+        }
+    }
+}

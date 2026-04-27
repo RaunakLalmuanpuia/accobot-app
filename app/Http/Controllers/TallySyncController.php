@@ -17,6 +17,7 @@ use App\Models\TallyStockGroup;
 use App\Models\TallyStockItem;
 use App\Models\TallyCompany;
 use App\Models\TallyVoucher;
+use App\Services\ChatNotificationService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -99,6 +100,14 @@ class TallySyncController extends Controller
         ]);
 
         AuditEvent::log('tally.sync.triggered');
+
+        ChatNotificationService::notify(
+            tenantId:  $tenant->id,
+            title:     'Tally Sync Started',
+            body:      'A Tally data sync has been triggered.',
+            eventType: 'tally.sync.started',
+            data:      [],
+        );
 
         return back()->with('success', 'Sync reminder logged. Tally connector pushes data automatically.');
     }

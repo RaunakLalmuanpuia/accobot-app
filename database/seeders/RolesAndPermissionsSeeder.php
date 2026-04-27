@@ -78,6 +78,13 @@ class RolesAndPermissionsSeeder extends Seeder
             // Accounting Assistant (Chat)
             'chat.view',
 
+            // Group Chat
+            'chat.room.view',
+            'chat.room.create',
+            'chat.room.manage',
+            'chat.message.send',
+            'chat.message.delete',
+
             // Banking / Narration
             'transactions.view',
             'transactions.review',  // approve / reject a pending transaction
@@ -122,6 +129,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'integrations.view', 'integrations.manage',
             'audit.view',
             'chat.view',
+            'chat.room.view', 'chat.room.create', 'chat.room.manage', 'chat.message.send', 'chat.message.delete',
             'transactions.view', 'transactions.review', 'transactions.edit', 'transactions.import',
         ]);
 
@@ -136,6 +144,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'reports.view',   'reports.export',
             'integrations.view',
             'chat.view',
+            'chat.room.view', 'chat.room.create', 'chat.message.send', 'chat.message.delete',
             'transactions.view', 'transactions.review', 'transactions.edit', 'transactions.import',
         ]);
 
@@ -147,6 +156,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'narration_heads.view', 'narration_heads.create',
             'invoices.view', 'invoices.create', 'invoices.edit',
             'reports.view',
+            'chat.room.view', 'chat.message.send',
             'transactions.view', 'transactions.review',
         ]);
 
@@ -158,6 +168,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'narration_heads.view',
             'invoices.view',
             'reports.view',
+            'chat.room.view',
             'transactions.view',
         ]);
 
@@ -173,6 +184,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'invoices.view',
             'reports.view',
             'reports.export',
+            'chat.room.view',
             'transactions.view',
         ]);
 
@@ -194,6 +206,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'reports.view',   'reports.export',
             'integrations.view', 'integrations.manage',
             'audit.view',
+            'chat.room.view', 'chat.room.create', 'chat.room.manage', 'chat.message.send', 'chat.message.delete',
         ]);
 
         $caManager = Role::firstOrCreate(['name' => 'CAManager']);
@@ -205,6 +218,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'narration_heads.view',
             'reports.view',
             'reports.export',
+            'chat.room.view', 'chat.message.send',
         ]);
 
         $auditor = Role::firstOrCreate(['name' => 'Auditor']);
@@ -216,6 +230,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'invoices.view',
             'reports.view',
             'reports.export',
+            'chat.room.view',
         ]);
 
         $caStaff = Role::firstOrCreate(['name' => 'CAStaff']);
@@ -225,6 +240,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'products.view',
             'narration_heads.view',
             'reports.view',
+            'chat.room.view', 'chat.message.send',
         ]);
 
         $integration = Role::firstOrCreate(['name' => 'IntegrationUser']);

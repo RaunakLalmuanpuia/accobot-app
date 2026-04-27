@@ -3,9 +3,11 @@
 namespace App\Providers;
 
 use App\Mail\GmailTransport;
+use App\Models\ChatRoom;
 use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\Product;
+use App\Models\Tenant;
 use App\Models\TallyAttendanceType;
 use App\Models\TallyCompany;
 use App\Models\TallyEmployee;
@@ -64,6 +66,16 @@ class AppServiceProvider extends ServiceProvider
         foreach ([Client::class, Vendor::class, Product::class, Invoice::class] as $model) {
             $model::observe(TallyAccobotObserver::class);
         }
+
+        // Auto-create the system Notifications chat room for every new tenant
+        Tenant::created(function (Tenant $tenant) {
+            ChatRoom::create([
+                'tenant_id' => $tenant->id,
+                'name'      => 'Notifications',
+                'type'      => 'notifications',
+                'is_system' => true,
+            ]);
+        });
 
         Vite::prefetch(concurrency: 3);
 

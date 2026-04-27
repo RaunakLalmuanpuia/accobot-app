@@ -23,8 +23,10 @@
     "dependencies": {
         "@tailwindcss/typography": "^0.5.19",
         "chart.js": "^4.5.1",
+        "laravel-echo": "^2.3.4",
         "lucide-vue-next": "^1.0.0",
         "marked": "^18.0.0",
+        "pusher-js": "^8.5.0",
         "vue-chartjs": "^5.3.3"
     }
 }

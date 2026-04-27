@@ -7,6 +7,7 @@ import NavLink from '@/Components/NavLink.vue';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue';
 import { Link, router, usePage } from '@inertiajs/vue3'
 import { hasPermission } from '@/utils/permissions';
+import { usePushNotifications } from '@/composables/usePushNotifications';
 
 const showingNavigationDropdown = ref(false)
 const showInvitations = ref(false)
@@ -43,7 +44,12 @@ function closeDropdowns(e) {
         showMasterDropdown.value = false
     }
 }
-onMounted(() => document.addEventListener('click', closeDropdowns))
+const { subscribe: subscribePush } = usePushNotifications();
+
+onMounted(() => {
+    document.addEventListener('click', closeDropdowns);
+    if (currentTenantId()) subscribePush();
+});
 onUnmounted(() => document.removeEventListener('click', closeDropdowns))
 
 const pendingInvitations = () => page.props.auth.pending_invitations ?? []
@@ -220,7 +226,7 @@ function stopImpersonation() {
                                         </div>
                                     </template>
 
-                                    <template v-if="hasPermission('chat.view') || hasPermission('transactions.view')">
+                                    <template v-if="hasPermission('chat.view') || hasPermission('chat.room.view') || hasPermission('transactions.view')">
                                         <span class="self-center h-5 w-px bg-gray-200"></span>
 
                                         <NavLink
@@ -228,6 +234,12 @@ function stopImpersonation() {
                                             :href="route('chat.index', { tenant: currentTenantId() })"
                                             :active="route().current('chat.index')"
                                         >Assistant</NavLink>
+
+                                        <NavLink
+                                            v-if="hasPermission('chat.room.view')"
+                                            :href="route('chat.groups.index', { tenant: currentTenantId() })"
+                                            :active="route().current('chat.groups.*')"
+                                        >Groups</NavLink>
 
                                         <NavLink
                                             v-if="hasPermission('transactions.view')"

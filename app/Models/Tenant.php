@@ -60,4 +60,9 @@ class Tenant extends Model
     {
         return $this->hasMany(TenantUserRole::class);
     }
+
+    public function chatRooms(): HasMany
+    {
+        return $this->hasMany(ChatRoom::class);
+    }
 }

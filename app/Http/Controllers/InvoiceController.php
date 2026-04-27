@@ -7,6 +7,7 @@ use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\Product;
 use App\Models\Tenant;
+use App\Services\ChatNotificationService;
 use Illuminate\Http\Request;
 
 class InvoiceController extends Controller
@@ -94,6 +95,14 @@ class InvoiceController extends Controller
             'status'         => $invoice->status,
         ]);
 
+        ChatNotificationService::notify(
+            tenantId:  $tenant->id,
+            title:     'Invoice Created',
+            body:      "Invoice {$invoice->invoice_number} has been created.",
+            eventType: 'invoice.created',
+            data:      ['invoice_id' => $invoice->id],
+        );
+
         return redirect()->route('invoices.index', ['tenant' => $tenant->id]);
     }
 
@@ -166,6 +175,16 @@ class InvoiceController extends Controller
             'total'          => $invoice->total,
             'status'         => $invoice->status,
         ]);
+
+        if ($invoice->wasChanged('status') && $invoice->status === 'paid') {
+            ChatNotificationService::notify(
+                tenantId:  $tenant->id,
+                title:     'Invoice Paid',
+                body:      "Invoice {$invoice->invoice_number} has been marked as paid.",
+                eventType: 'invoice.paid',
+                data:      ['invoice_id' => $invoice->id],
+            );
+        }
 
         return redirect()->route('invoices.index', ['tenant' => $tenant->id]);
     }

@@ -7,6 +7,7 @@ use App\Models\Invitation;
 use App\Models\Tenant;
 use App\Models\TenantUserRole;
 use App\Models\User;
+use App\Services\ChatNotificationService;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
 
@@ -98,6 +99,14 @@ class TeamMemberController extends Controller
             'target_user_id' => $user->id,
             'role_id'        => $role->id,
         ]);
+
+        ChatNotificationService::notify(
+            tenantId:  $tenant->id,
+            title:     'New Team Member',
+            body:      "{$user->name} has been added to the team.",
+            eventType: 'member.added',
+            data:      ['user_id' => $user->id],
+        );
 
         return back()->with('success', "{$user->name} added to the team.");
     }

@@ -14,6 +14,7 @@ return [
     ['label' => 'Accounting',   'perms' => ['invoices.view', 'invoices.create', 'invoices.edit', 'invoices.delete', 'reports.view', 'reports.export']],
     ['label' => 'Banking',      'perms' => ['transactions.view', 'transactions.review', 'transactions.edit', 'transactions.import']],
     ['label' => 'Assistant',    'perms' => ['chat.view']],
+    ['label' => 'Group Chat',   'perms' => ['chat.room.view', 'chat.room.create', 'chat.room.manage', 'chat.message.send', 'chat.message.delete']],
     ['label' => 'Integrations', 'perms' => ['integrations.view', 'integrations.manage']],
     ['label' => 'Settings',     'perms' => ['tenant.view_settings', 'tenant.update_settings']],
     ['label' => 'Audit',        'perms' => ['audit.view']],
