@@ -18,7 +18,7 @@ const activeTab = ref('masters')
 const expandedLog = ref(null)
 
 const masterEntities = [
-    'ledger_groups', 'ledgers', 'stock_groups', 'stock_categories', 'stock_items', 'godowns', 'statutory_masters',
+    'ledger_groups', 'ledgers', 'stock_groups', 'stock_categories', 'stock_items', 'godowns', 'statutory_masters', 'company_master',
 ]
 const payrollEntities = [
     'employee_groups', 'employees', 'pay_heads', 'attendance_types',
@@ -37,6 +37,7 @@ function entityLabel(entity) {
         stock_items:           'Stock Items',
         godowns:               'Godowns',
         statutory_masters:     'Statutory Masters',
+        company_master:        'Companies',
         employee_groups:       'Employee Groups',
         employees:             'Employees',
         pay_heads:             'Pay Heads',
@@ -167,6 +168,11 @@ function toggleLog(id) {
                        class="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 text-center hover:border-violet-300 hover:shadow-md transition group">
                         <p class="text-2xl font-bold text-gray-900">{{ stats.total_statutory_masters }}</p>
                         <p class="text-xs text-gray-400 mt-0.5 group-hover:text-violet-600 transition">Statutory →</p>
+                    </a>
+                    <a :href="route('tally.companies.index', { tenant: tenant.id })"
+                       class="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 text-center hover:border-violet-300 hover:shadow-md transition group">
+                        <p class="text-2xl font-bold text-gray-900">{{ stats.total_companies }}</p>
+                        <p class="text-xs text-gray-400 mt-0.5 group-hover:text-violet-600 transition">Companies →</p>
                     </a>
                     <a :href="route('tally.payroll.index', { tenant: tenant.id })"
                        class="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 text-center hover:border-violet-300 hover:shadow-md transition group">

@@ -15,6 +15,7 @@ use App\Models\TallyGodown;
 use App\Models\TallyStockCategory;
 use App\Models\TallyStockGroup;
 use App\Models\TallyStockItem;
+use App\Models\TallyCompany;
 use App\Models\TallyVoucher;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -60,6 +61,7 @@ class TallySyncController extends Controller
             'total_vouchers'          => TallyVoucher::withoutGlobalScope('tenant')->where('tenant_id', $tenant->id)->where('is_active', true)->count(),
             'total_statutory_masters' => TallyStatutoryMaster::withoutGlobalScope('tenant')->where('tenant_id', $tenant->id)->where('is_active', true)->count(),
             'total_employees'         => TallyEmployee::withoutGlobalScope('tenant')->where('tenant_id', $tenant->id)->where('is_active', true)->count(),
+            'total_companies'         => TallyCompany::withoutGlobalScope('tenant')->where('tenant_id', $tenant->id)->count(),
             'last_synced_at'          => $connection?->last_synced_at,
         ];
 
