@@ -17,7 +17,7 @@
 11. [Confirmation POST — Tally Writes Back Its IDs](#11-confirmation-post--tally-writes-back-its-ids)
 12. [Report Snapshots](#12-report-snapshots)
 13. [Sync Logs & Observability](#13-sync-logs--observability)
-14. [All 66 API Endpoints](#14-all-66-api-endpoints)
+14. [All 68 API Endpoints](#14-all-68-api-endpoints)
 15. [Web UI Routes & Pages](#15-web-ui-routes--pages)
 16. [Service & Controller Map](#16-service--controller-map)
 17. [Full File Map](#17-full-file-map)
@@ -92,7 +92,7 @@ After Tally creates an Accobot-originated record (from Flow 2), it POSTs back th
 
 ## 3. Authentication & Tenant Resolution
 
-All 63 API endpoints (inbound, outbound, confirmation) use the same token-based auth. There is **no Sanctum** involved — the Tally connector is not a user.
+All 68 API endpoints (inbound, outbound, confirmation) use the same token-based auth. There is **no Sanctum** involved — the Tally connector is not a user.
 
 ### How it works
 
@@ -704,11 +704,11 @@ Because Accobot cannot pull from Tally, this button does not trigger a data pull
 
 ---
 
-## 14. All 66 API Endpoints
+## 14. All 68 API Endpoints
 
 All routes are in `routes/api.php`. All are throttled at 120 requests/minute. None require Sanctum — token auth only.
 
-### Inbound POST — 22 endpoints
+### Inbound POST — 26 endpoints
 
 | Endpoint | Controller | Entity |
 |----------|-----------|--------|
@@ -717,10 +717,9 @@ All routes are in `routes/api.php`. All are throttled at 120 requests/minute. No
 | POST /api/tally/inbound/masters/stock-items | `@stockItems` | tally_stock_items |
 | POST /api/tally/inbound/masters/stock-groups | `@stockGroups` | tally_stock_groups |
 | POST /api/tally/inbound/masters/stock-categories | `@stockCategories` | tally_stock_categories |
+| POST /api/tally/inbound/masters/godowns | `@godowns` | tally_godowns |
 | POST /api/tally/inbound/masters/statutory | `@statutory` | tally_statutory_masters |
 | POST /api/tally/inbound/masters/company | `@company` | tally_companies |
-| GET /api/MastersAPI/company-master | `TallyOutboundController@companyMaster` | tally_companies (pending queue) |
-| POST /api/MastersAPI/update-company-master | `TallyConfirmController@companyMaster` | tally_companies.tally_id |
 | POST /api/tally/inbound/payroll/employee-groups | `TallyInboundPayrollController@employeeGroups` | tally_employee_groups |
 | POST /api/tally/inbound/payroll/employees | `@employees` | tally_employees |
 | POST /api/tally/inbound/payroll/pay-heads | `@payHeads` | tally_pay_heads |
@@ -745,7 +744,7 @@ All routes are in `routes/api.php`. All are throttled at 120 requests/minute. No
 
 The `employees` endpoint also accepts `"full_sync": true` — after processing, any employee not present in the payload is marked `is_active = false`.
 
-### Outbound GET — 18 endpoints
+### Outbound GET — 21 endpoints
 
 | Endpoint | Returns |
 |----------|---------|
@@ -755,6 +754,7 @@ The `employees` endpoint also accepts `"full_sync": true` — after processing, 
 | GET /api/MastersAPI/stock-group | tally_stock_groups |
 | GET /api/MastersAPI/stock-category | tally_stock_categories |
 | GET /api/MastersAPI/statutory-master | tally_statutory_masters |
+| GET /api/MastersAPI/company-master | tally_companies |
 | GET /api/PayrollAPI/employee-group | tally_employee_groups |
 | GET /api/PayrollAPI/employee | tally_employees |
 | GET /api/PayrollAPI/pay-head | tally_pay_heads |
@@ -772,7 +772,7 @@ The `employees` endpoint also accepts `"full_sync": true` — after processing, 
 
 **Response format:** `{ "Data": [...] }` — Tally-compatible field names and casing
 
-### Confirmation POST — 23 endpoints
+### Confirmation POST — 21 endpoints
 
 | Endpoint | Writes TallyId to |
 |----------|------------------|
@@ -782,6 +782,7 @@ The `employees` endpoint also accepts `"full_sync": true` — after processing, 
 | POST /api/MastersAPI/update-stock-group | tally_stock_groups.tally_id |
 | POST /api/MastersAPI/update-stock-category | tally_stock_categories.tally_id |
 | POST /api/MastersAPI/update-statutory-master | tally_statutory_masters.tally_id |
+| POST /api/MastersAPI/update-company-master | tally_companies.tally_id |
 | POST /api/PayrollAPI/update-employee-group | tally_employee_groups.tally_id |
 | POST /api/PayrollAPI/update-employee | tally_employees.tally_id |
 | POST /api/PayrollAPI/update-pay-head | tally_pay_heads.tally_id |

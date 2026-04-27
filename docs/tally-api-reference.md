@@ -1,6 +1,6 @@
 # Tally Connector — API Reference
 
-Complete request/response reference for all 63 Accobot-Tally API endpoints.  
+Complete request/response reference for all 68 Accobot-Tally API endpoints.  
 Base URL: `https://<your-accobot-domain>/api`
 
 ---
@@ -472,7 +472,7 @@ Syncs Tally stock items (products/services). Auto-creates/updates a **Product** 
 
 ---
 
-### 1.6 POST `/api/tally/inbound/masters/statutory`
+### 1.7 POST `/api/tally/inbound/masters/statutory`
 
 Syncs Tally statutory registrations — GST, TDS, TCS, PF, ESI, PT, etc.
 
@@ -518,6 +518,49 @@ Syncs Tally statutory registrations — GST, TDS, TCS, PF, ESI, PT, etc.
 ```json
 { "status": "success", "created": 1, "updated": 0, "deleted": 0, "skipped": 0, "failed": 0 }
 ```
+
+---
+
+### 1.8 POST `/api/tally/inbound/masters/company`
+
+Syncs Tally company details. Upserts on `Guid` — no `TallyId` or `Action` field required. Sent by the connector when a company is loaded in Tally.
+
+**Request Body**
+
+```json
+{
+  "Data": [
+    {
+      "Guid": "644e52fa-2de6-4bf6-aabd-e2a3533780a7",
+      "CompanyName": "Aignite",
+      "Address": "Add1",
+      "State": "Dubai",
+      "Country": "UAE",
+      "TallySerialNo": "775580148",
+      "TallyLicenseType": "Gold"
+    }
+  ]
+}
+```
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `Data` | array | yes | Array of company objects |
+| `Guid` | string | yes | Tally company GUID — used as the unique key for upsert |
+| `CompanyName` | string | no | Company name |
+| `Address` | string | no | Address |
+| `State` | string | no | State / emirate |
+| `Country` | string | no | Country |
+| `TallySerialNo` | string | no | Tally serial number |
+| `TallyLicenseType` | string | no | Tally licence type e.g. `"Gold"`, `"Silver"` |
+
+**Response**
+
+```json
+{ "status": "success", "created": 1, "updated": 0, "deleted": 0, "skipped": 0, "failed": 0 }
+```
+
+> Note: `failed` increments if `Guid` is absent from a record — all other fields are optional.
 
 ---
 
@@ -714,6 +757,99 @@ Syncs Tally attendance and leave type definitions.
 | `Name` | string | yes | Type name |
 | `AttendanceType` | string | no | `"Attendance"`, `"Leave with Pay"`, `"Leave without Pay"`, `"Productivity"` |
 | `UnitOfMeasure` | string | no | `"Days"`, `"Hours"`, `"Pieces"` |
+
+**Response**
+
+```json
+{ "status": "success", "created": 1, "updated": 0, "deleted": 0, "skipped": 0, "failed": 0 }
+```
+
+---
+
+### 1b.5 POST `/api/tally/inbound/payroll/salary-voucher`
+
+Syncs Tally payroll (salary) vouchers with per-employee pay head breakdowns. Stored in `tally_vouchers` with `voucher_type = "Payroll"`.
+
+**Request Body**
+
+```json
+{
+  "Data": [
+    {
+      "MasterID": 8001,
+      "AlterID": 50,
+      "Action": "Create",
+      "VoucherType": "Payroll",
+      "VoucherNumber": "PAY/2024-25/001",
+      "VoucherDate": "20240430",
+      "Narration": "April 2024 salary",
+      "EmployeeAllocations": [
+        {
+          "EmployeeName": "Arjun Mehta",
+          "EmployeeGroup": "Management",
+          "PayHeadEntries": [
+            { "PayHead": "Basic Salary", "Amount": 30000 },
+            { "PayHead": "HRA", "Amount": 10000 }
+          ],
+          "NetPayable": 40000
+        }
+      ]
+    }
+  ]
+}
+```
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `MasterID` | integer | yes | Tally's voucher master ID (`ID`/`Id` also accepted) |
+| `AlterID` | integer | no | Alter/version ID |
+| `Action` | string | no | `"Create"` or `"Delete"` |
+| `VoucherNumber` | string | no | Voucher number |
+| `VoucherDate` | string | yes | Date `"YYYYMMDD"` or `"YYYY-MM-DD"` |
+| `Narration` | string | no | Narration |
+| `EmployeeAllocations` | array | no | Per-employee breakdown; stored as JSON |
+
+**Response**
+
+```json
+{ "status": "success", "created": 1, "updated": 0, "deleted": 0, "skipped": 0, "failed": 0 }
+```
+
+---
+
+### 1b.6 POST `/api/tally/inbound/payroll/attendance-voucher`
+
+Syncs Tally attendance vouchers with per-employee attendance entries. Stored in `tally_vouchers` with `voucher_type = "Attendance"`.
+
+**Request Body**
+
+```json
+{
+  "Data": [
+    {
+      "MasterID": 9001,
+      "AlterID": 51,
+      "Action": "Create",
+      "VoucherType": "Attendance",
+      "VoucherNumber": "ATT/2024-25/001",
+      "VoucherDate": "20240430",
+      "Narration": "April 2024 attendance",
+      "EmployeeAllocations": [
+        {
+          "EmployeeName": "Arjun Mehta",
+          "EmployeeGroup": "Management",
+          "AttendanceEntries": [
+            { "AttendanceType": "Present", "AttendanceValue": 26 },
+            { "AttendanceType": "Casual Leave", "AttendanceValue": 2 }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+Fields match 1b.5 except `EmployeeAllocations` contains `AttendanceEntries` instead of `PayHeadEntries`; no `NetPayable`.
 
 **Response**
 
@@ -1684,6 +1820,39 @@ Returns all active statutory masters.
 
 ---
 
+### 4.7 GET `/api/MastersAPI/company-master`
+
+Returns pending company records for the tenant (queued when the user edits company details in the Accobot UI).
+
+**Response**
+
+```json
+{
+  "Data": [
+    {
+      "AccobotId": 1,
+      "ID": null,
+      "Action": "Create",
+      "Guid": "644e52fa-2de6-4bf6-aabd-e2a3533780a7",
+      "CompanyName": "Aignite",
+      "Address": "Add1",
+      "State": "Dubai",
+      "Country": "UAE",
+      "TallySerialNo": "775580148",
+      "TallyLicenseType": "Gold"
+    }
+  ]
+}
+```
+
+| Field | Description |
+|---|---|
+| `AccobotId` | Accobot primary key — must be echoed in confirmation |
+| `ID` | Tally's assigned ID — `null` for new records |
+| `Guid` | Company GUID from inbound sync |
+
+---
+
 ## 4b. Outbound: Payroll (Tally reads Accobot)
 
 ---
@@ -1798,6 +1967,77 @@ Returns all active attendance types.
       "Name": "Present",
       "AttendanceType": "Attendance",
       "UnitOfMeasure": "Days"
+    }
+  ]
+}
+```
+
+---
+
+### 4b.5 GET `/api/PayrollAPI/salary-voucher`
+
+Returns pending salary (payroll) vouchers with per-employee pay head breakdowns.
+
+**Response**
+
+```json
+{
+  "Data": [
+    {
+      "AccobotId": 50,
+      "MasterID": null,
+      "AlterID": null,
+      "Action": "Create",
+      "VoucherType": "Payroll",
+      "VoucherNumber": "PAY/2024-25/001",
+      "VoucherDate": "2024-04-30",
+      "Narration": "April 2024 salary",
+      "EmployeeAllocations": [
+        {
+          "EmployeeName": "Arjun Mehta",
+          "EmployeeGroup": "Management",
+          "PayHeadEntries": [
+            { "PayHead": "Basic Salary", "Amount": 30000 },
+            { "PayHead": "HRA", "Amount": 10000 }
+          ],
+          "NetPayable": 40000
+        }
+      ]
+    }
+  ]
+}
+```
+
+---
+
+### 4b.6 GET `/api/PayrollAPI/attendance-voucher`
+
+Returns pending attendance vouchers with per-employee attendance breakdowns.
+
+**Response**
+
+```json
+{
+  "Data": [
+    {
+      "AccobotId": 51,
+      "MasterID": null,
+      "AlterID": null,
+      "Action": "Create",
+      "VoucherType": "Attendance",
+      "VoucherNumber": "ATT/2024-25/001",
+      "VoucherDate": "2024-04-30",
+      "Narration": "April 2024 attendance",
+      "EmployeeAllocations": [
+        {
+          "EmployeeName": "Arjun Mehta",
+          "EmployeeGroup": "Management",
+          "AttendanceEntries": [
+            { "AttendanceType": "Present", "AttendanceValue": 26 },
+            { "AttendanceType": "Casual Leave", "AttendanceValue": 2 }
+          ]
+        }
+      ]
     }
   ]
 }
@@ -2163,6 +2403,48 @@ Updates `tally_attendance_types` with Tally-assigned ID.
 
 ---
 
+### 6.19 POST `/api/PayrollAPI/update-salary-voucher`
+
+Updates `tally_vouchers` (Payroll type) with Tally-assigned ID.
+
+```json
+{
+  "Data": [
+    { "AccobotId": 50, "TallyId": 8001, "IsSynced": false }
+  ]
+}
+```
+
+---
+
+### 6.20 POST `/api/PayrollAPI/update-attendance-voucher`
+
+Updates `tally_vouchers` (Attendance type) with Tally-assigned ID.
+
+```json
+{
+  "Data": [
+    { "AccobotId": 51, "TallyId": 9001, "IsSynced": false }
+  ]
+}
+```
+
+---
+
+### 6.21 POST `/api/MastersAPI/update-company-master`
+
+Updates `tally_companies` with Tally-assigned ID.
+
+```json
+{
+  "Data": [
+    { "AccobotId": 1, "TallyId": 1001, "IsSynced": false }
+  ]
+}
+```
+
+---
+
 ## 7. Known Limitations
 
 ### Accobot-side edits now propagate to Tally via the outbound queue
@@ -2223,7 +2505,7 @@ All Tally API routes are throttled at **120 requests per minute**. Exceeding thi
 
 ---
 
-## 9. Quick Reference — All 63 Endpoints
+## 9. Quick Reference — All 68 Endpoints
 
 ### Inbound POST — `Authorization: Bearer <token>`
 
@@ -2234,6 +2516,15 @@ All Tally API routes are throttled at **120 requests per minute**. Exceeding thi
 | POST | `/api/tally/inbound/masters/stock-groups` | Sync stock groups |
 | POST | `/api/tally/inbound/masters/stock-categories` | Sync stock categories |
 | POST | `/api/tally/inbound/masters/stock-items` | Sync stock items → auto-maps Products |
+| POST | `/api/tally/inbound/masters/godowns` | Sync godowns (warehouses) |
+| POST | `/api/tally/inbound/masters/statutory` | Sync Statutory masters (GST/TDS/TCS) |
+| POST | `/api/tally/inbound/masters/company` | Sync company details (upserts on Guid) |
+| POST | `/api/tally/inbound/payroll/employee-groups` | Sync Employee groups |
+| POST | `/api/tally/inbound/payroll/employees` | Sync Employees |
+| POST | `/api/tally/inbound/payroll/pay-heads` | Sync Pay heads (salary components) |
+| POST | `/api/tally/inbound/payroll/attendance-types` | Sync Attendance types |
+| POST | `/api/tally/inbound/payroll/salary-voucher` | Sync Salary (payroll) vouchers |
+| POST | `/api/tally/inbound/payroll/attendance-voucher` | Sync Attendance vouchers |
 | POST | `/api/tally/inbound/vouchers/sales` | Sync Sales vouchers → auto-maps Invoices |
 | POST | `/api/tally/inbound/vouchers/purchase` | Sync Purchase vouchers |
 | POST | `/api/tally/inbound/vouchers/credit-note` | Sync Credit Notes |
@@ -2242,11 +2533,6 @@ All Tally API routes are throttled at **120 requests per minute**. Exceeding thi
 | POST | `/api/tally/inbound/vouchers/payment` | Sync Payment vouchers |
 | POST | `/api/tally/inbound/vouchers/contra` | Sync Contra vouchers |
 | POST | `/api/tally/inbound/vouchers/journal` | Sync Journal vouchers |
-| POST | `/api/tally/inbound/masters/statutory` | Sync Statutory masters (GST/TDS/TCS) |
-| POST | `/api/tally/inbound/payroll/employee-groups` | Sync Employee groups |
-| POST | `/api/tally/inbound/payroll/employees` | Sync Employees |
-| POST | `/api/tally/inbound/payroll/pay-heads` | Sync Pay heads (salary components) |
-| POST | `/api/tally/inbound/payroll/attendance-types` | Sync Attendance types |
 | POST | `/api/tally/inbound/reports/balance-sheet` | Store Balance Sheet snapshot |
 | POST | `/api/tally/inbound/reports/profit-loss` | Store P&L snapshot |
 | POST | `/api/tally/inbound/reports/cash-flow` | Store Cash Flow snapshot |
@@ -2261,6 +2547,14 @@ All Tally API routes are throttled at **120 requests per minute**. Exceeding thi
 | GET | `/api/MastersAPI/stock-master` | Fetch pending stock items |
 | GET | `/api/MastersAPI/stock-group` | Fetch pending stock groups |
 | GET | `/api/MastersAPI/stock-category` | Fetch pending stock categories |
+| GET | `/api/MastersAPI/statutory-master` | Fetch pending Statutory masters |
+| GET | `/api/MastersAPI/company-master` | Fetch pending company records |
+| GET | `/api/PayrollAPI/employee-group` | Fetch pending Employee groups |
+| GET | `/api/PayrollAPI/employee` | Fetch pending Employees |
+| GET | `/api/PayrollAPI/pay-head` | Fetch pending Pay heads |
+| GET | `/api/PayrollAPI/attendance-type` | Fetch pending Attendance types |
+| GET | `/api/PayrollAPI/salary-voucher` | Fetch pending Salary vouchers |
+| GET | `/api/PayrollAPI/attendance-voucher` | Fetch pending Attendance vouchers |
 | GET | `/api/VoucherAPI/sales-voucher` | Fetch pending Sales vouchers |
 | GET | `/api/VoucherAPI/purchase-voucher` | Fetch pending Purchase vouchers |
 | GET | `/api/VoucherAPI/debitNote-voucher` | Fetch pending Debit Note vouchers |
@@ -2269,21 +2563,24 @@ All Tally API routes are throttled at **120 requests per minute**. Exceeding thi
 | GET | `/api/VoucherAPI/payment-voucher` | Fetch pending Payment vouchers |
 | GET | `/api/VoucherAPI/contra-voucher` | Fetch pending Contra vouchers |
 | GET | `/api/VoucherAPI/journal-voucher` | Fetch pending Journal vouchers |
-| GET | `/api/MastersAPI/statutory-master` | Fetch pending Statutory masters |
-| GET | `/api/PayrollAPI/employee-group` | Fetch pending Employee groups |
-| GET | `/api/PayrollAPI/employee` | Fetch pending Employees |
-| GET | `/api/PayrollAPI/pay-head` | Fetch pending Pay heads |
-| GET | `/api/PayrollAPI/attendance-type` | Fetch pending Attendance types |
 
 ### Confirmation POST — `Authorization: Bearer <token>`
 
 | Method | Path | Description |
 |---|---|---|
+| POST | `/api/MastersAPI/update-ledger-group` | Write back Tally ID to ledger group |
 | POST | `/api/MastersAPI/update-ledger-master` | Write back Tally ID to ledger |
 | POST | `/api/MastersAPI/update-stock-master` | Write back Tally ID to stock item |
-| POST | `/api/MastersAPI/update-ledger-group` | Write back Tally ID to ledger group |
 | POST | `/api/MastersAPI/update-stock-group` | Write back Tally ID to stock group |
 | POST | `/api/MastersAPI/update-stock-category` | Write back Tally ID to stock category |
+| POST | `/api/MastersAPI/update-statutory-master` | Write back Tally ID to Statutory master |
+| POST | `/api/MastersAPI/update-company-master` | Write back Tally ID to company |
+| POST | `/api/PayrollAPI/update-employee-group` | Write back Tally ID to Employee group |
+| POST | `/api/PayrollAPI/update-employee` | Write back Tally ID to Employee |
+| POST | `/api/PayrollAPI/update-pay-head` | Write back Tally ID to Pay head |
+| POST | `/api/PayrollAPI/update-attendance-type` | Write back Tally ID to Attendance type |
+| POST | `/api/PayrollAPI/update-salary-voucher` | Write back Tally ID to Salary voucher |
+| POST | `/api/PayrollAPI/update-attendance-voucher` | Write back Tally ID to Attendance voucher |
 | POST | `/api/VoucherAPI/update-sales-voucher` | Write back Tally ID to Sales voucher |
 | POST | `/api/VoucherAPI/update-purchase-voucher` | Write back Tally ID to Purchase voucher |
 | POST | `/api/VoucherAPI/update-debitnote-voucher` | Write back Tally ID to Debit Note |
@@ -2292,8 +2589,3 @@ All Tally API routes are throttled at **120 requests per minute**. Exceeding thi
 | POST | `/api/VoucherAPI/update-payment-voucher` | Write back Tally ID to Payment voucher |
 | POST | `/api/VoucherAPI/update-contra-voucher` | Write back Tally ID to Contra voucher |
 | POST | `/api/VoucherAPI/update-journal-voucher` | Write back Tally ID to Journal voucher |
-| POST | `/api/MastersAPI/update-statutory-master` | Write back Tally ID to Statutory master |
-| POST | `/api/PayrollAPI/update-employee-group` | Write back Tally ID to Employee group |
-| POST | `/api/PayrollAPI/update-employee` | Write back Tally ID to Employee |
-| POST | `/api/PayrollAPI/update-pay-head` | Write back Tally ID to Pay head |
-| POST | `/api/PayrollAPI/update-attendance-type` | Write back Tally ID to Attendance type |
