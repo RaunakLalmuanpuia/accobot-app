@@ -713,12 +713,20 @@ Send a message. Upload attachments first via the attachment endpoint, then inclu
     "body": "Got it!",
     "type": "text",
     "created_at": "2026-04-27T10:05:00Z",
+    "reply_to_message_id": "uuid-or-null",
+    "reply_to": {
+      "id": "uuid",
+      "body": "Original message text",
+      "sender_name": "CA1"
+    },
     "sender": { "id": 1, "name": "CA1" },
     "reaction_summary": [],
     "attachments": []
   }
 }
 ```
+
+`reply_to` is `null` when the message is not a reply.
 
 ---
 
@@ -1059,12 +1067,19 @@ Fires when a message is sent, edited, or deleted.
   "user_id": 1,
   "chat_room_id": "uuid",
   "created_at": "...",
-  "sender": { "id": 1, "name": "CA1" },
+  "sender_name": "CA1",
+  "reply_to_message_id": "uuid-or-null",
+  "reply_to": {
+    "id": "uuid",
+    "body": "Original message text",
+    "sender_name": "CA1"
+  },
   "reaction_summary": [],
-  "reply_to": null,
   "attachments": []
 }
 ```
+
+`reply_to` is `null` when the message is not a reply. Use `reply_to` to render a quoted-message block above the bubble.
 
 Logic:
 - If a message with this `id` already exists in your list → **replace it** (handles soft-deletes and edits)

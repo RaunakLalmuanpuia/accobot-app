@@ -2,15 +2,6 @@
     <div class="flex flex-col mb-1" :class="isOwn ? 'items-end' : 'items-start'">
         <span v-if="showSender && !isOwn" class="text-xs text-gray-500 mb-0.5 ml-1">{{ message.sender?.name ?? message.sender_name }}</span>
 
-        <!-- Reply quote -->
-        <div
-            v-if="message.reply_to_message_id && message.replyTo"
-            class="mb-1 px-2 py-1 rounded-lg border-l-2 border-violet-400 bg-gray-100 text-xs text-gray-500 max-w-xs truncate"
-        >
-            <span class="font-medium">{{ message.replyTo.sender?.name ?? message.replyTo.sender_name }}:</span>
-            {{ message.replyTo.body }}
-        </div>
-
         <!-- Bubble + reply button row -->
         <div class="group flex items-center gap-1" :class="isOwn ? 'flex-row-reverse' : 'flex-row'">
 
@@ -34,6 +25,18 @@
                 ? 'bg-violet-600 text-white rounded-br-sm'
                 : 'bg-gray-100 text-gray-800 rounded-bl-sm'"
         >
+            <!-- Reply quote (inside bubble) -->
+            <div
+                v-if="message.reply_to_message_id && message.reply_to"
+                class="mb-2 px-2 py-1.5 rounded-lg text-xs border-l-2 overflow-hidden"
+                :class="isOwn
+                    ? 'bg-violet-500 border-violet-200 text-violet-100'
+                    : 'bg-gray-200 border-violet-400 text-gray-600'"
+            >
+                <p class="font-semibold truncate mb-0.5">{{ message.reply_to.sender?.name ?? message.reply_to.sender_name }}</p>
+                <p class="truncate opacity-80">{{ message.reply_to.body }}</p>
+            </div>
+
             <!-- System message -->
             <template v-if="message.type === 'system'">
                 <span class="italic opacity-75">{{ message.body }}</span>

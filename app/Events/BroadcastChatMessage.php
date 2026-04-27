@@ -43,7 +43,7 @@ class BroadcastChatMessage implements ShouldBroadcast
             'type'                => $this->message->type,
             'metadata'            => $this->message->metadata,
             'reply_to_message_id' => $this->message->reply_to_message_id,
-            'replyTo'             => $this->message->replyTo ? [
+            'reply_to'            => $this->message->replyTo ? [
                 'id'          => $this->message->replyTo->id,
                 'body'        => $this->message->replyTo->body,
                 'sender_name' => $this->message->replyTo->sender?->name,

@@ -98,7 +98,7 @@ class ChatMessageController extends Controller
             'message_id' => $message->id,
         ], tenantId: $tenant->id);
 
-        $message->load(['sender:id,name', 'attachments', 'reactions']);
+        $message->load(['sender:id,name', 'attachments', 'reactions', 'replyTo.sender:id,name']);
 
         return response()->json(['data' => $message], 201);
     }
