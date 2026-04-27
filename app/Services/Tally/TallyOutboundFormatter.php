@@ -159,6 +159,22 @@ class TallyOutboundFormatter
         return $this->formatVouchers($vouchers);
     }
 
+    public function formatCompanyMasters(Collection $companies): array
+    {
+        return $companies->map(fn ($c) => [
+            'AccobotId'       => $c->id,
+            'ID'              => $c->tally_id,
+            'Action'          => $c->action ?? 'Create',
+            'Guid'            => $c->company_guid,
+            'CompanyName'     => $c->company_name,
+            'Address'         => $c->address,
+            'State'           => $c->state,
+            'Country'         => $c->country,
+            'TallySerialNo'   => $c->tally_serial_no,
+            'TallyLicenseType' => $c->licence_type,
+        ])->values()->all();
+    }
+
     public function formatStatutoryMasters(Collection $items): array
     {
         return $items->map(fn ($s) => [

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Tenant;
 use App\Models\TallyAttendanceType;
+use App\Models\TallyCompany;
 use App\Models\TallyGodown;
 use App\Models\TallyStockCategory;
 use App\Models\TallyStockGroup;
@@ -162,6 +163,21 @@ class TallyDataController extends Controller
                 ->where('is_active', true)
                 ->orderBy('name')
                 ->pluck('name'),
+        ]);
+    }
+
+    public function companies(Tenant $tenant)
+    {
+        $map = $this->queueMap($tenant->id, TallyCompany::class);
+        return inertia('Tally/Companies', [
+            'tenant' => $tenant,
+            'items'  => $this->addSyncStatus(
+                TallyCompany::where('tenant_id', $tenant->id)
+                    ->orderBy('company_name')
+                    ->get(['id', 'tally_id', 'company_guid', 'company_name', 'address', 'state',
+                           'country', 'tally_serial_no', 'licence_type']),
+                $map
+            ),
         ]);
     }
 

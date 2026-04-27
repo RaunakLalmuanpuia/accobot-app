@@ -9,6 +9,7 @@ use App\Models\TallyEmployeeGroup;
 use App\Models\TallyLedger;
 use App\Models\TallyLedgerGroup;
 use App\Models\TallyPayHead;
+use App\Models\TallyCompany;
 use App\Models\TallyStatutoryMaster;
 use App\Models\TallyStockCategory;
 use App\Models\TallyStockGroup;
@@ -339,6 +340,66 @@ class TallyMasterCrudController extends Controller
 
     // ── Statutory Masters ──────────────────────────────────────────────────────
 
+    // ── Companies ──────────────────────────────────────────────────────────────
+
+    public function companyStore(Request $request, Tenant $tenant)
+    {
+        $data = $request->validate([
+            'company_name'    => 'required|string|max:255',
+            'address'         => 'nullable|string|max:500',
+            'state'           => 'nullable|string|max:100',
+            'country'         => 'nullable|string|max:100',
+            'tally_serial_no' => 'nullable|string|max:100',
+            'licence_type'    => 'nullable|string|max:100',
+        ]);
+
+        $connection = \App\Models\TallyConnection::where('tenant_id', $tenant->id)->first();
+        abort_if(!$connection, 422, 'No Tally connection configured for this tenant.');
+
+        $record = TallyCompany::create(array_merge($data, [
+            'tenant_id'           => $tenant->id,
+            'tally_connection_id' => $connection->id,
+            'company_guid'        => (string) \Illuminate\Support\Str::uuid(),
+            'action'              => 'Create',
+        ]));
+
+        $this->logPayload($record, 'created');
+        return back()->with('success', 'Company created and queued for Tally sync.');
+    }
+
+    public function companyUpdate(Request $request, Tenant $tenant, TallyCompany $company)
+    {
+        abort_unless($company->tenant_id === $tenant->id, 404);
+
+        $data = $request->validate([
+            'company_name'    => 'required|string|max:255',
+            'address'         => 'nullable|string|max:500',
+            'state'           => 'nullable|string|max:100',
+            'country'         => 'nullable|string|max:100',
+            'tally_serial_no' => 'nullable|string|max:100',
+            'licence_type'    => 'nullable|string|max:100',
+        ]);
+
+        $company->update($data);
+
+        if (! $company->wasChanged()) {
+            return back()->with('info', 'No changes detected.');
+        }
+
+        $this->logPayload($company, 'updated');
+        return back()->with('success', 'Company updated and queued for Tally sync.');
+    }
+
+    public function companyDestroy(Tenant $tenant, TallyCompany $company)
+    {
+        abort_unless($company->tenant_id === $tenant->id, 404);
+
+        $this->purgeFromQueue($tenant->id, TallyCompany::class, $company->id);
+        AuditEvent::log('tally.company.deleted', ['id' => $company->id, 'name' => $company->company_name]);
+        $company->delete();
+        return back()->with('success', 'Company deleted.');
+    }
+
     public function statutoryMasterStore(Request $request, Tenant $tenant)
     {
         $data = $request->validate([
@@ -657,6 +718,7 @@ class TallyMasterCrudController extends Controller
             $record instanceof TallyStockGroup      => 'stock_group',
             $record instanceof TallyStockCategory   => 'stock_category',
             $record instanceof TallyStockItem       => 'stock_item',
+            $record instanceof TallyCompany         => 'company',
             $record instanceof TallyStatutoryMaster => 'statutory_master',
             $record instanceof TallyEmployeeGroup   => 'employee_group',
             $record instanceof TallyEmployee        => 'employee',
@@ -684,6 +746,7 @@ class TallyMasterCrudController extends Controller
             $record instanceof TallyStockGroup      => $this->formatter->formatStockGroups($collection),
             $record instanceof TallyStockCategory   => $this->formatter->formatStockCategories($collection),
             $record instanceof TallyStockItem       => $this->formatter->formatStockItems($collection),
+            $record instanceof TallyCompany         => $this->formatter->formatCompanyMasters($collection),
             $record instanceof TallyStatutoryMaster => $this->formatter->formatStatutoryMasters($collection),
             $record instanceof TallyEmployeeGroup   => $this->formatter->formatEmployeeGroups($collection),
             $record instanceof TallyEmployee        => $this->formatter->formatEmployees($collection),

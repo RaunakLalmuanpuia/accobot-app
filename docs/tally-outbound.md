@@ -365,6 +365,51 @@ Response:
 
 ---
 
+### GET `/api/MastersAPI/company-master`
+
+Returns pending company records for the tenant (queued when the user edits company details in Accobot).
+
+**Response:**
+```json
+{
+  "Data": [
+    {
+      "AccobotId": 1,
+      "ID": null,
+      "Action": "Create",
+      "Guid": "644e52fa-2de6-4bf6-aabd-e2a3533780a7",
+      "CompanyName": "Aignite",
+      "Address": "Add1",
+      "State": "Dubai",
+      "Country": "UAE",
+      "TallySerialNo": "775580148",
+      "TallyLicenseType": "Gold"
+    }
+  ]
+}
+```
+
+Field notes:
+- `ID` — Tally's assigned ID. `null` for new records; set for updates.
+- `Guid` — the company GUID from Tally, used as the unique identifier.
+
+**Confirmation — POST `/api/MastersAPI/update-company-master`**
+
+```json
+{
+  "Data": [
+    { "AccobotId": 1, "TallyId": 1001, "IsSynced": false }
+  ]
+}
+```
+
+Response:
+```json
+{ "status": "ok", "updated": 1 }
+```
+
+---
+
 ## Payroll API
 
 ### GET `/api/PayrollAPI/employee-group`
@@ -1052,6 +1097,7 @@ Confirmation:
 | `/api/MastersAPI/stock-category` | `/api/MastersAPI/update-stock-category` |
 | `/api/MastersAPI/stock-master` | `/api/MastersAPI/update-stock-master` |
 | `/api/MastersAPI/statutory-master` | `/api/MastersAPI/update-statutory-master` |
+| `/api/MastersAPI/company-master` | `/api/MastersAPI/update-company-master` |
 | `/api/PayrollAPI/employee-group` | `/api/PayrollAPI/update-employee-group` |
 | `/api/PayrollAPI/employee` | `/api/PayrollAPI/update-employee` |
 | `/api/PayrollAPI/pay-head` | `/api/PayrollAPI/update-pay-head` |

@@ -122,6 +122,8 @@ Route::prefix('MastersAPI')->middleware('throttle:120,1')->group(function () {
     Route::post('update-stock-category',  [TallyConfirmController::class, 'stockCategory']);
     Route::get('statutory-master',        [TallyOutboundController::class, 'statutoryMaster']);
     Route::post('update-statutory-master', [TallyConfirmController::class, 'statutoryMaster']);
+    Route::get('company-master',           [TallyOutboundController::class, 'companyMaster']);
+    Route::post('update-company-master',   [TallyConfirmController::class, 'companyMaster']);
 });
 
 Route::prefix('PayrollAPI')->middleware('throttle:120,1')->group(function () {

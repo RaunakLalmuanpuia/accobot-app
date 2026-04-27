@@ -9,7 +9,10 @@ class TallyCompany extends Model
 {
     protected $fillable = [
         'tally_connection_id',
+        'tenant_id',
         'company_guid',
+        'tally_id',
+        'action',
         'company_name',
         'address',
         'state',

@@ -7,6 +7,7 @@ use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\Product;
 use App\Models\TallyAttendanceType;
+use App\Models\TallyCompany;
 use App\Models\TallyEmployee;
 use App\Models\TallyEmployeeGroup;
 use App\Models\TallyLedger;
@@ -55,6 +56,7 @@ class AppServiceProvider extends ServiceProvider
             TallyEmployee::class,
             TallyPayHead::class,
             TallyAttendanceType::class,
+            TallyCompany::class,
         ] as $model) {
             $model::observe(TallyModelObserver::class);
         }

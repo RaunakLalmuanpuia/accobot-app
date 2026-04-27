@@ -9,6 +9,7 @@ use App\Models\TallyEmployeeGroup;
 use App\Models\TallyLedger;
 use App\Models\TallyLedgerGroup;
 use App\Models\TallyPayHead;
+use App\Models\TallyCompany;
 use App\Models\TallyStatutoryMaster;
 use App\Models\TallyStockCategory;
 use App\Models\TallyStockGroup;
@@ -292,6 +293,21 @@ class TallyOutboundController extends TallyBaseController
             (string) $tenantId,
             'integration',
         );
+    }
+
+    public function companyMaster(Request $request): JsonResponse
+    {
+        $conn = $this->resolveAndVerify($request);
+        $ids  = $this->queue->pendingIds((int) $conn->tenant_id, TallyCompany::class);
+
+        $companies = TallyCompany::withoutGlobalScope('tenant')
+            ->where('tenant_id', $conn->tenant_id)
+            ->whereIn('id', $ids)
+            ->get();
+
+        $data = $this->formatter->formatCompanyMasters($companies);
+        $this->logOutbound('CompanyMaster', (int) $conn->tenant_id, $data);
+        return response()->json(['Data' => $data]);
     }
 
     private function resolveAndVerify(Request $request)

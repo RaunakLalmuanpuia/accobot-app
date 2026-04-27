@@ -139,6 +139,7 @@ Route::middleware(['auth', 'verified', 'member'])
         Route::get('/tally/vouchers', [TallyDataController::class, 'vouchers'])->name('tally.vouchers.index')->middleware('tenant.permission:integrations.view');
         Route::get('/tally/vouchers/{voucher}', [TallyDataController::class, 'voucherShow'])->name('tally.vouchers.show')->middleware('tenant.permission:integrations.view');
         Route::get('/tally/statutory-masters', [TallyDataController::class, 'statutoryMasters'])->name('tally.statutory-masters.index')->middleware('tenant.permission:integrations.view');
+        Route::get('/tally/companies', [TallyDataController::class, 'companies'])->name('tally.companies.index')->middleware('tenant.permission:integrations.view');
         Route::get('/tally/payroll', [TallyDataController::class, 'payroll'])->name('tally.payroll.index')->middleware('tenant.permission:integrations.view');
 
         // ── Tally Master CRUD (manage permission required) ─────────────
@@ -172,6 +173,11 @@ Route::middleware(['auth', 'verified', 'member'])
             Route::post('/tally/statutory-masters', [TallyMasterCrudController::class, 'statutoryMasterStore'])->name('tally.statutory-masters.store');
             Route::put('/tally/statutory-masters/{statutoryMaster}', [TallyMasterCrudController::class, 'statutoryMasterUpdate'])->name('tally.statutory-masters.update');
             Route::delete('/tally/statutory-masters/{statutoryMaster}', [TallyMasterCrudController::class, 'statutoryMasterDestroy'])->name('tally.statutory-masters.destroy');
+
+            // Companies
+            Route::post('/tally/companies', [TallyMasterCrudController::class, 'companyStore'])->name('tally.companies.store');
+            Route::put('/tally/companies/{company}', [TallyMasterCrudController::class, 'companyUpdate'])->name('tally.companies.update');
+            Route::delete('/tally/companies/{company}', [TallyMasterCrudController::class, 'companyDestroy'])->name('tally.companies.destroy');
 
             // Employee Groups
             Route::post('/tally/employee-groups', [TallyMasterCrudController::class, 'employeeGroupStore'])->name('tally.employee-groups.store');

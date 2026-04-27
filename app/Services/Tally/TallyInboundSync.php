@@ -589,12 +589,14 @@ class TallyInboundSync
                 ];
 
                 if ($existing) {
-                    $existing->update($data);
+                    $existing->updateQuietly($data);
                     $log->records_updated++;
                 } else {
                     TallyCompany::create(array_merge($data, [
                         'tally_connection_id' => $conn->id,
+                        'tenant_id'           => $conn->tenant_id,
                         'company_guid'        => $guid,
+                        'action'              => 'Create',
                     ]));
                     $log->records_created++;
                 }

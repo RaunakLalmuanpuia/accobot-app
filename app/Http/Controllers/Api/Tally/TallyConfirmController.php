@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Tally;
 
 use App\Models\AuditEvent;
 use App\Models\TallyAttendanceType;
+use App\Models\TallyCompany;
 use App\Models\TallyEmployee;
 use App\Models\TallyEmployeeGroup;
 use App\Models\TallyLedger;
@@ -90,6 +91,11 @@ class TallyConfirmController extends TallyBaseController
     public function statutoryMaster(Request $request): JsonResponse
     {
         return $this->handle($request, TallyStatutoryMaster::class);
+    }
+
+    public function companyMaster(Request $request): JsonResponse
+    {
+        return $this->handle($request, TallyCompany::class);
     }
 
     public function employeeGroup(Request $request): JsonResponse
