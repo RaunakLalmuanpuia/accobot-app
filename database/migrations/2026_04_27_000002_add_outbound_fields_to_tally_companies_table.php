@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('tally_companies', function (Blueprint $table) {
-            $table->unsignedBigInteger('tenant_id')->nullable()->after('tally_connection_id')->index();
+            $table->uuid('tenant_id')->nullable()->after('tally_connection_id')->index();
             $table->unsignedBigInteger('tally_id')->nullable()->after('company_guid');
             $table->string('action')->nullable()->after('tally_id');
         });
