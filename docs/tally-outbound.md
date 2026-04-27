@@ -79,14 +79,13 @@ The token identifies the tenant. There is no `companyId` in any outbound route.
 
 ---
 
-## Outbound GET Endpoints
+## Masters API
 
-The connector calls these to fetch pending records. Each returns only the records for the authenticated tenant that are currently `pending` in the queue. Returns `{ "Data": [] }` when nothing is pending.
+### GET `/api/MastersAPI/ledger-group`
 
-### Masters
+Returns pending ledger groups for the tenant.
 
-#### GET `/api/MastersAPI/ledger-group`
-
+**Response:**
 ```json
 {
   "Data": [
@@ -104,8 +103,28 @@ The connector calls these to fetch pending records. Each returns only the record
 }
 ```
 
-#### GET `/api/MastersAPI/ledger-master`
+**Confirmation — POST `/api/MastersAPI/update-ledger-group`**
 
+```json
+{
+  "Data": [
+    { "AccobotId": 7, "TallyId": 4001, "IsSynced": true }
+  ]
+}
+```
+
+Response:
+```json
+{ "status": "ok", "updated": 1 }
+```
+
+---
+
+### GET `/api/MastersAPI/ledger-master`
+
+Returns pending ledgers for the tenant.
+
+**Response:**
 ```json
 {
   "Data": [
@@ -137,19 +156,41 @@ The connector calls these to fetch pending records. Each returns only the record
       "OpeningBalanceType": null,
       "Aliases": [],
       "Description": null,
-      "Notes": null
+      "Notes": null,
+      "BankDetails": []
     }
   ]
 }
 ```
 
 Field notes:
-- `ID` — Tally's master ID. `null` for new records (`Action: Create`); set for updates.
+- `ID` — Tally's master ID. `null` for new records (`Action: Create`); set for updates/deletes.
 - `AccobotId` — Accobot's primary key. The connector must echo this in the confirmation.
+- `BankDetails` — array of bank account objects if populated; `[]` when none.
 - `Action: Delete` — connector should delete the ledger in Tally; `ID` will be set.
 
-#### GET `/api/MastersAPI/stock-group`
+**Confirmation — POST `/api/MastersAPI/update-ledger-master`**
 
+```json
+{
+  "Data": [
+    { "AccobotId": 42, "TallyId": 5501, "IsSynced": true }
+  ]
+}
+```
+
+Response:
+```json
+{ "status": "ok", "updated": 1 }
+```
+
+`IsSynced: true` causes Accobot to stamp `tally_synced_at` on the mapped Client or Vendor record.
+
+---
+
+### GET `/api/MastersAPI/stock-group`
+
+**Response:**
 ```json
 {
   "Data": [
@@ -166,8 +207,26 @@ Field notes:
 }
 ```
 
-#### GET `/api/MastersAPI/stock-category`
+**Confirmation — POST `/api/MastersAPI/update-stock-group`**
 
+```json
+{
+  "Data": [
+    { "AccobotId": 3, "TallyId": 4599, "IsSynced": true }
+  ]
+}
+```
+
+Response:
+```json
+{ "status": "ok", "updated": 1 }
+```
+
+---
+
+### GET `/api/MastersAPI/stock-category`
+
+**Response:**
 ```json
 {
   "Data": [
@@ -184,8 +243,26 @@ Field notes:
 }
 ```
 
-#### GET `/api/MastersAPI/stock-master`
+**Confirmation — POST `/api/MastersAPI/update-stock-category`**
 
+```json
+{
+  "Data": [
+    { "AccobotId": 5, "TallyId": 4591, "IsSynced": true }
+  ]
+}
+```
+
+Response:
+```json
+{ "status": "ok", "updated": 1 }
+```
+
+---
+
+### GET `/api/MastersAPI/stock-master`
+
+**Response:**
 ```json
 {
   "Data": [
@@ -227,8 +304,28 @@ Field notes:
 }
 ```
 
-#### GET `/api/MastersAPI/statutory-master`
+`IsSynced: true` stamps `tally_synced_at` on the mapped Product record.
 
+**Confirmation — POST `/api/MastersAPI/update-stock-master`**
+
+```json
+{
+  "Data": [
+    { "AccobotId": 18, "TallyId": 241, "IsSynced": true }
+  ]
+}
+```
+
+Response:
+```json
+{ "status": "ok", "updated": 1 }
+```
+
+---
+
+### GET `/api/MastersAPI/statutory-master`
+
+**Response:**
 ```json
 {
   "Data": [
@@ -251,12 +348,28 @@ Field notes:
 }
 ```
 
+**Confirmation — POST `/api/MastersAPI/update-statutory-master`**
+
+```json
+{
+  "Data": [
+    { "AccobotId": 2, "TallyId": 301, "IsSynced": false }
+  ]
+}
+```
+
+Response:
+```json
+{ "status": "ok", "updated": 1 }
+```
+
 ---
 
-### Payroll
+## Payroll API
 
-#### GET `/api/PayrollAPI/employee-group`
+### GET `/api/PayrollAPI/employee-group`
 
+**Response:**
 ```json
 {
   "Data": [
@@ -273,8 +386,26 @@ Field notes:
 }
 ```
 
-#### GET `/api/PayrollAPI/employee`
+**Confirmation — POST `/api/PayrollAPI/update-employee-group`**
 
+```json
+{
+  "Data": [
+    { "AccobotId": 4, "TallyId": 401, "IsSynced": true }
+  ]
+}
+```
+
+Response:
+```json
+{ "status": "ok", "updated": 1 }
+```
+
+---
+
+### GET `/api/PayrollAPI/employee`
+
+**Response:**
 ```json
 {
   "Data": [
@@ -295,14 +426,36 @@ Field notes:
       "Gender": "Male",
       "FatherName": "Suresh Kumar",
       "SpouseName": null,
-      "Aliases": []
+      "Aliases": [
+        { "Alias": "RK" }
+      ]
     }
   ]
 }
 ```
 
-#### GET `/api/PayrollAPI/pay-head`
+`Aliases` is an array of objects `{ "Alias": "..." }`, not a flat string array.
 
+**Confirmation — POST `/api/PayrollAPI/update-employee`**
+
+```json
+{
+  "Data": [
+    { "AccobotId": 11, "TallyId": 4588, "IsSynced": true }
+  ]
+}
+```
+
+Response:
+```json
+{ "status": "ok", "updated": 1 }
+```
+
+---
+
+### GET `/api/PayrollAPI/pay-head`
+
+**Response:**
 ```json
 {
   "Data": [
@@ -323,8 +476,26 @@ Field notes:
 }
 ```
 
-#### GET `/api/PayrollAPI/attendance-type`
+**Confirmation — POST `/api/PayrollAPI/update-pay-head`**
 
+```json
+{
+  "Data": [
+    { "AccobotId": 6, "TallyId": 601, "IsSynced": true }
+  ]
+}
+```
+
+Response:
+```json
+{ "status": "ok", "updated": 1 }
+```
+
+---
+
+### GET `/api/PayrollAPI/attendance-type`
+
+**Response:**
 ```json
 {
   "Data": [
@@ -341,14 +512,139 @@ Field notes:
 }
 ```
 
+**Confirmation — POST `/api/PayrollAPI/update-attendance-type`**
+
+```json
+{
+  "Data": [
+    { "AccobotId": 2, "TallyId": 701, "IsSynced": true }
+  ]
+}
+```
+
+Response:
+```json
+{ "status": "ok", "updated": 1 }
+```
+
 ---
 
-### Vouchers
+### GET `/api/PayrollAPI/salary-voucher`
 
-All voucher GET endpoints return the same structure. The `VoucherType` field distinguishes them.
+Returns pending salary (payroll) vouchers with per-employee pay head breakdowns.
 
-#### GET `/api/VoucherAPI/sales-voucher`
+**Response:**
+```json
+{
+  "Data": [
+    {
+      "AccobotId": 50,
+      "MasterID": null,
+      "AlterID": null,
+      "Action": "Create",
+      "VoucherType": "Payroll",
+      "VoucherNumber": "PAY/2024-25/001",
+      "VoucherDate": "2024-04-30",
+      "Narration": "April 2024 salary",
+      "EmployeeAllocations": [
+        {
+          "EmployeeName": "Raj Kumar",
+          "EmployeeGroup": "Management",
+          "PayHeadEntries": [
+            { "PayHead": "Basic Salary", "Amount": 30000 },
+            { "PayHead": "HRA", "Amount": 10000 }
+          ],
+          "NetPayable": 40000
+        }
+      ]
+    }
+  ]
+}
+```
 
+Field notes:
+- `MasterID` — Tally's voucher master ID. `null` for new records; set for updates/deletes.
+- `PayHeadEntries` — stored as-is from inbound sync; structure matches the Tally payroll spec.
+
+**Confirmation — POST `/api/PayrollAPI/update-salary-voucher`**
+
+```json
+{
+  "Data": [
+    { "AccobotId": 50, "TallyId": 8001, "IsSynced": false }
+  ]
+}
+```
+
+Response:
+```json
+{ "status": "ok", "updated": 1 }
+```
+
+---
+
+### GET `/api/PayrollAPI/attendance-voucher`
+
+Returns pending attendance vouchers with per-employee attendance breakdowns.
+
+**Response:**
+```json
+{
+  "Data": [
+    {
+      "AccobotId": 51,
+      "MasterID": null,
+      "AlterID": null,
+      "Action": "Create",
+      "VoucherType": "Attendance",
+      "VoucherNumber": "ATT/2024-25/001",
+      "VoucherDate": "2024-04-30",
+      "Narration": "April 2024 attendance",
+      "EmployeeAllocations": [
+        {
+          "EmployeeName": "Raj Kumar",
+          "EmployeeGroup": "Management",
+          "AttendanceEntries": [
+            { "AttendanceType": "Present", "AttendanceValue": 26 },
+            { "AttendanceType": "Casual Leave", "AttendanceValue": 2 }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+`AttendanceEntries` — stored as-is from inbound sync; structure matches the Tally attendance spec. No `NetPayable` on attendance vouchers.
+
+**Confirmation — POST `/api/PayrollAPI/update-attendance-voucher`**
+
+```json
+{
+  "Data": [
+    { "AccobotId": 51, "TallyId": 9001, "IsSynced": false }
+  ]
+}
+```
+
+Response:
+```json
+{ "status": "ok", "updated": 1 }
+```
+
+---
+
+## Voucher API
+
+All voucher GET endpoints share the same field structure. `VoucherType` distinguishes them. `InventoryEntries` is always present — it is `[]` for non-inventory vouchers (Receipt, Payment, Contra, Journal).
+
+### Full field reference
+
+The sales voucher below shows every possible field. Other voucher types carry the same fields with their respective `VoucherType` values.
+
+### GET `/api/VoucherAPI/sales-voucher`
+
+**Response:**
 ```json
 {
   "Data": [
@@ -361,33 +657,76 @@ All voucher GET endpoints return the same structure. The `VoucherType` field dis
       "VoucherNumber": "INV/2024-25/001",
       "VoucherDate": "2024-04-05",
       "Reference": null,
+      "ReferenceDate": null,
       "PartyName": "Acme Pvt Ltd",
-      "VoucherTotal": 35964.04,
+      "VoucherTotal": 35400,
       "IsInvoice": "Yes",
       "PlaceOfSupply": "Maharashtra",
+      "VoucherCostCentre": null,
+
+      "DeliveryNoteNo": null,
+      "DeliveryNoteDate": null,
+      "DispatchDocNo": null,
+      "DispatchThrough": null,
+      "Destination": null,
+      "CarrierName": null,
+      "LRNo": null,
+      "LRDate": null,
+      "MotorVehicleNo": null,
+
+      "OrderNo": null,
+      "OrderDate": null,
+      "TermsOfPayment": null,
+      "OtherReferences": null,
+      "TermsOfDelivery": null,
+
       "BuyerName": "Acme Pvt Ltd",
+      "BuyerAlias": null,
       "BuyerGSTIN": "27AABCT1234A1Z5",
+      "BuyerPinCode": "400001",
       "BuyerState": "Maharashtra",
-      "BuyerAddress": null,
+      "BuyerCountryName": "India",
+      "BuyerGSTRegistrationType": "Regular",
       "BuyerEmail": "raj@acme.com",
       "BuyerMobile": "9876543210",
+      "BuyerAddress": [
+        { "BuyerAddress": "123 MG Road, Mumbai" }
+      ],
+
+      "ConsigneeName": null,
+      "ConsigneeGSTIN": null,
+      "ConsigneeTallyGroup": null,
+      "ConsigneePinCode": null,
+      "ConsigneeState": null,
+      "ConsigneeCountryName": null,
+      "ConsigneeGSTRegistrationType": null,
+
       "Narration": null,
       "IRN": null,
       "AcknowledgementNo": null,
       "AcknowledgementDate": null,
       "QRCode": null,
+
       "InventoryEntries": [
         {
           "StockItemName": "Dell Laptop 15",
+          "ItemCode": "DL15",
+          "GroupName": "Electronics",
           "HSNCode": "8471",
           "Unit": "NOS",
           "IGSTRate": 18,
+          "CessRate": 0,
+          "IsDeemedPositive": "No",
           "ActualQty": 2,
           "BilledQty": 2,
           "Rate": 15000,
           "DiscountPercent": 0,
           "Amount": 30000,
-          "TaxAmount": 5400
+          "TaxAmount": 5400,
+          "MRP": null,
+          "SalesLedger": "Sales Account",
+          "GodownName": null,
+          "BatchName": null
         }
       ],
       "LedgerEntries": [
@@ -397,6 +736,9 @@ All voucher GET endpoints return the same structure. The `VoucherType` field dis
           "LedgerAmount": 35400,
           "IsDeemedPositive": "Yes",
           "IsPartyLedger": "Yes",
+          "IGSTRate": null,
+          "HSNCode": null,
+          "CessRate": null,
           "BillsAllocation": []
         },
         {
@@ -405,6 +747,9 @@ All voucher GET endpoints return the same structure. The `VoucherType` field dis
           "LedgerAmount": 5400,
           "IsDeemedPositive": "No",
           "IsPartyLedger": "No",
+          "IGSTRate": 18,
+          "HSNCode": "8471",
+          "CessRate": null,
           "BillsAllocation": []
         }
       ]
@@ -413,147 +758,13 @@ All voucher GET endpoints return the same structure. The `VoucherType` field dis
 }
 ```
 
-Other voucher endpoints (`purchase-voucher`, `debitNote-voucher`, `creditNote-voucher`, `receipt-voucher`, `payment-voucher`, `contra-voucher`, `journal-voucher`) return the same structure with their respective `VoucherType` values.
-
 Field notes:
-- `MasterID` — Tally's master ID. `null` for new records; set for updates/deletes.
-- `Action: Delete` — connector should void/delete the voucher in Tally.
+- `MasterID` — Tally's voucher master ID. `null` for new records; set for updates/deletes.
+- `BuyerAddress` — always an array of `{ "BuyerAddress": "..." }` objects, never a raw string.
+- `IsDeemedPositive` / `IsPartyLedger` / `IsInvoice` — always `"Yes"` or `"No"` (string), never a boolean.
+- `IGSTRate`, `HSNCode`, `CessRate` on `LedgerEntries` — populated only for tax ledgers; `null` for party ledgers.
 
----
-
-## Confirmation POST Endpoints
-
-After the connector writes a record into Tally, it posts back with the assigned Tally ID. Accobot stores this and marks the queue entry as confirmed.
-
-**Required body fields per item:**
-
-| Field | Type | Description |
-|---|---|---|
-| `AccobotId` | integer | Accobot's primary key (from the GET response) |
-| `TallyId` | integer | The ID Tally assigned after creating/updating the record |
-| `IsSynced` | boolean | `true` = propagate `tally_synced_at` to mapped Client/Vendor/Product/Invoice |
-
-### Masters
-
-#### POST `/api/MastersAPI/update-ledger-group`
-
-```json
-{
-  "Data": [
-    { "AccobotId": 7, "TallyId": 4001, "IsSynced": true }
-  ]
-}
-```
-
-Response:
-```json
-{ "status": "ok", "updated": 1 }
-```
-
-#### POST `/api/MastersAPI/update-ledger-master`
-
-```json
-{
-  "Data": [
-    { "AccobotId": 42, "TallyId": 5501, "IsSynced": true }
-  ]
-}
-```
-
-Response:
-```json
-{ "status": "ok", "updated": 1 }
-```
-
-#### POST `/api/MastersAPI/update-stock-group`
-
-```json
-{
-  "Data": [
-    { "AccobotId": 3, "TallyId": 4599, "IsSynced": true }
-  ]
-}
-```
-
-#### POST `/api/MastersAPI/update-stock-category`
-
-```json
-{
-  "Data": [
-    { "AccobotId": 5, "TallyId": 4591, "IsSynced": true }
-  ]
-}
-```
-
-#### POST `/api/MastersAPI/update-stock-master`
-
-```json
-{
-  "Data": [
-    { "AccobotId": 18, "TallyId": 241, "IsSynced": true }
-  ]
-}
-```
-
-#### POST `/api/MastersAPI/update-statutory-master`
-
-```json
-{
-  "Data": [
-    { "AccobotId": 2, "TallyId": 301, "IsSynced": false }
-  ]
-}
-```
-
----
-
-### Payroll
-
-#### POST `/api/PayrollAPI/update-employee-group`
-
-```json
-{
-  "Data": [
-    { "AccobotId": 4, "TallyId": 401, "IsSynced": true }
-  ]
-}
-```
-
-#### POST `/api/PayrollAPI/update-employee`
-
-```json
-{
-  "Data": [
-    { "AccobotId": 11, "TallyId": 4588, "IsSynced": true }
-  ]
-}
-```
-
-#### POST `/api/PayrollAPI/update-pay-head`
-
-```json
-{
-  "Data": [
-    { "AccobotId": 6, "TallyId": 601, "IsSynced": true }
-  ]
-}
-```
-
-#### POST `/api/PayrollAPI/update-attendance-type`
-
-```json
-{
-  "Data": [
-    { "AccobotId": 2, "TallyId": 701, "IsSynced": true }
-  ]
-}
-```
-
----
-
-### Vouchers
-
-#### POST `/api/VoucherAPI/update-sales-voucher`
+**Confirmation — POST `/api/VoucherAPI/update-sales-voucher`**
 
 ```json
 {
@@ -568,23 +779,212 @@ Response:
 { "status": "ok", "updated": 1 }
 ```
 
-Other voucher confirmation endpoints follow the same pattern:
+`IsSynced: true` stamps `tally_synced_at` on the mapped Invoice record.
 
-| Endpoint | Example `TallyId` |
-|---|---|
-| POST `/api/VoucherAPI/update-purchase-voucher` | 6001 |
-| POST `/api/VoucherAPI/update-debitnote-voucher` | 8001 |
-| POST `/api/VoucherAPI/update-creditnote-voucher` | 7001 |
-| POST `/api/VoucherAPI/update-receipt-voucher` | 9001 |
-| POST `/api/VoucherAPI/update-payment-voucher` | 10001 |
-| POST `/api/VoucherAPI/update-contra-voucher` | 11001 |
-| POST `/api/VoucherAPI/update-journal-voucher` | 12001 |
+---
+
+### GET `/api/VoucherAPI/purchase-voucher`
+
+Same structure as sales-voucher. `VoucherType` is `"Purchase"`. `InventoryEntries` is populated for goods-received bills.
+
+**Confirmation — POST `/api/VoucherAPI/update-purchase-voucher`**
+
+```json
+{
+  "Data": [
+    { "AccobotId": 102, "TallyId": 6001, "IsSynced": false }
+  ]
+}
+```
+
+Response:
+```json
+{ "status": "ok", "updated": 1 }
+```
+
+---
+
+### GET `/api/VoucherAPI/debitNote-voucher`
+
+Same structure. `VoucherType` is `"Debit Note"`. `InventoryEntries` is populated for goods-return debit notes.
+
+**Confirmation — POST `/api/VoucherAPI/update-debitnote-voucher`**
+
+```json
+{
+  "Data": [
+    { "AccobotId": 103, "TallyId": 8001, "IsSynced": false }
+  ]
+}
+```
+
+Response:
+```json
+{ "status": "ok", "updated": 1 }
+```
+
+---
+
+### GET `/api/VoucherAPI/creditNote-voucher`
+
+Same structure. `VoucherType` is `"Credit Note"`. `InventoryEntries` is populated for goods-return credit notes.
+
+**Confirmation — POST `/api/VoucherAPI/update-creditnote-voucher`**
+
+```json
+{
+  "Data": [
+    { "AccobotId": 104, "TallyId": 7001, "IsSynced": false }
+  ]
+}
+```
+
+Response:
+```json
+{ "status": "ok", "updated": 1 }
+```
+
+---
+
+### GET `/api/VoucherAPI/receipt-voucher`
+
+Same structure. `VoucherType` is `"Receipt"`. `InventoryEntries` is always `[]`.
+
+**Response (abbreviated — non-inventory fields only):**
+```json
+{
+  "Data": [
+    {
+      "AccobotId": 200,
+      "MasterID": null,
+      "AlterID": null,
+      "Action": "Create",
+      "VoucherType": "Receipt",
+      "VoucherNumber": "RCP/2024-25/001",
+      "VoucherDate": "2024-04-10",
+      "Reference": "INV/2024-25/001",
+      "ReferenceDate": null,
+      "PartyName": "Acme Pvt Ltd",
+      "VoucherTotal": 35400,
+      "IsInvoice": "No",
+      "PlaceOfSupply": null,
+      "VoucherCostCentre": null,
+      "Narration": "Receipt against INV-001",
+      "InventoryEntries": [],
+      "LedgerEntries": [
+        {
+          "LedgerName": "Acme Pvt Ltd",
+          "LedgerGroup": "Sundry Debtors",
+          "LedgerAmount": 35400,
+          "IsDeemedPositive": "Yes",
+          "IsPartyLedger": "Yes",
+          "IGSTRate": null,
+          "HSNCode": null,
+          "CessRate": null,
+          "BillsAllocation": [
+            { "BillName": "INV/2024-25/001", "BillAmount": 35400 }
+          ]
+        },
+        {
+          "LedgerName": "HDFC Bank",
+          "LedgerGroup": "Bank Accounts",
+          "LedgerAmount": 35400,
+          "IsDeemedPositive": "No",
+          "IsPartyLedger": "No",
+          "IGSTRate": null,
+          "HSNCode": null,
+          "CessRate": null,
+          "BillsAllocation": []
+        }
+      ]
+    }
+  ]
+}
+```
+
+**Confirmation — POST `/api/VoucherAPI/update-receipt-voucher`**
+
+```json
+{
+  "Data": [
+    { "AccobotId": 200, "TallyId": 9001, "IsSynced": false }
+  ]
+}
+```
+
+Response:
+```json
+{ "status": "ok", "updated": 1 }
+```
+
+---
+
+### GET `/api/VoucherAPI/payment-voucher`
+
+Same structure. `VoucherType` is `"Payment"`. `InventoryEntries` is always `[]`.
+
+**Confirmation — POST `/api/VoucherAPI/update-payment-voucher`**
+
+```json
+{
+  "Data": [
+    { "AccobotId": 201, "TallyId": 10001, "IsSynced": false }
+  ]
+}
+```
+
+Response:
+```json
+{ "status": "ok", "updated": 1 }
+```
+
+---
+
+### GET `/api/VoucherAPI/contra-voucher`
+
+Same structure. `VoucherType` is `"Contra"`. `InventoryEntries` is always `[]`. Used for bank-to-cash or cash-to-bank transfers.
+
+**Confirmation — POST `/api/VoucherAPI/update-contra-voucher`**
+
+```json
+{
+  "Data": [
+    { "AccobotId": 202, "TallyId": 11001, "IsSynced": false }
+  ]
+}
+```
+
+Response:
+```json
+{ "status": "ok", "updated": 1 }
+```
+
+---
+
+### GET `/api/VoucherAPI/journal-voucher`
+
+Same structure. `VoucherType` is `"Journal"`. `InventoryEntries` is always `[]`.
+
+**Confirmation — POST `/api/VoucherAPI/update-journal-voucher`**
+
+```json
+{
+  "Data": [
+    { "AccobotId": 203, "TallyId": 12001, "IsSynced": false }
+  ]
+}
+```
+
+Response:
+```json
+{ "status": "ok", "updated": 1 }
+```
 
 ---
 
 ## Batch confirmations
 
-Multiple records can be confirmed in a single request:
+Multiple records can be confirmed in a single request to any confirmation endpoint:
 
 ```json
 {
@@ -614,14 +1014,17 @@ When a record is deactivated in Accobot:
 3. Connector deletes/voids the record in Tally.
 4. Connector posts confirmation as usual.
 
+Example — delete a ledger:
 ```json
 {
   "Data": [
     {
       "AccobotId": 42,
       "ID": 5501,
+      "AlterID": null,
       "Action": "Delete",
       "LedgerName": "Acme Pvt Ltd",
+      "GroupName": "Sundry Debtors",
       ...
     }
   ]
@@ -636,6 +1039,33 @@ Confirmation:
   ]
 }
 ```
+
+---
+
+## Endpoint summary
+
+| GET endpoint | Confirmation POST |
+|---|---|
+| `/api/MastersAPI/ledger-group` | `/api/MastersAPI/update-ledger-group` |
+| `/api/MastersAPI/ledger-master` | `/api/MastersAPI/update-ledger-master` |
+| `/api/MastersAPI/stock-group` | `/api/MastersAPI/update-stock-group` |
+| `/api/MastersAPI/stock-category` | `/api/MastersAPI/update-stock-category` |
+| `/api/MastersAPI/stock-master` | `/api/MastersAPI/update-stock-master` |
+| `/api/MastersAPI/statutory-master` | `/api/MastersAPI/update-statutory-master` |
+| `/api/PayrollAPI/employee-group` | `/api/PayrollAPI/update-employee-group` |
+| `/api/PayrollAPI/employee` | `/api/PayrollAPI/update-employee` |
+| `/api/PayrollAPI/pay-head` | `/api/PayrollAPI/update-pay-head` |
+| `/api/PayrollAPI/attendance-type` | `/api/PayrollAPI/update-attendance-type` |
+| `/api/PayrollAPI/salary-voucher` | `/api/PayrollAPI/update-salary-voucher` |
+| `/api/PayrollAPI/attendance-voucher` | `/api/PayrollAPI/update-attendance-voucher` |
+| `/api/VoucherAPI/sales-voucher` | `/api/VoucherAPI/update-sales-voucher` |
+| `/api/VoucherAPI/purchase-voucher` | `/api/VoucherAPI/update-purchase-voucher` |
+| `/api/VoucherAPI/debitNote-voucher` | `/api/VoucherAPI/update-debitnote-voucher` |
+| `/api/VoucherAPI/creditNote-voucher` | `/api/VoucherAPI/update-creditnote-voucher` |
+| `/api/VoucherAPI/receipt-voucher` | `/api/VoucherAPI/update-receipt-voucher` |
+| `/api/VoucherAPI/payment-voucher` | `/api/VoucherAPI/update-payment-voucher` |
+| `/api/VoucherAPI/contra-voucher` | `/api/VoucherAPI/update-contra-voucher` |
+| `/api/VoucherAPI/journal-voucher` | `/api/VoucherAPI/update-journal-voucher` |
 
 ---
 
