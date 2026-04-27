@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\Api\MobileAuthController;
+use App\Http\Controllers\Api\MobileGroupChatController;
 use App\Http\Controllers\Api\Tally\TallyConfirmController;
+use Illuminate\Support\Facades\Broadcast;
 use App\Http\Controllers\Api\Tally\TallyInboundMastersController;
 use App\Http\Controllers\Api\Tally\TallyInboundPayrollController;
 use App\Http\Controllers\Api\Tally\TallyInboundReportsController;
@@ -20,6 +22,12 @@ use Illuminate\Support\Facades\Route;
 | Web SPA uses cookie-based auth via web.php routes.
 |
 */
+
+// ── Mobile: WebSocket channel auth (Sanctum Bearer token) ────────────
+// Pusher SDK must set authEndpoint to "/api/mobile/broadcasting/auth"
+Route::post('mobile/broadcasting/auth', function () {
+    return Broadcast::auth(request());
+})->middleware('auth:sanctum')->name('api.mobile.broadcasting.auth');
 
 // ── Mobile auth (public) ──────────────────────────────────────────────
 Route::prefix('mobile')->name('api.mobile.')->middleware('throttle:10,1')->group(function () {
@@ -75,6 +83,40 @@ Route::prefix('mobile/tenants/{tenant}')
         Route::prefix('banking/transactions/{transaction}')->name('banking.transactions.')->group(function () {
             Route::post('approve', [TenantBankingController::class, 'approve'])->name('approve');
             Route::post('correct', [TenantBankingController::class, 'correct'])->name('correct');
+        });
+
+        // ── Group Chat ────────────────────────────────────────────────
+        Route::prefix('groups')->name('groups.')->middleware('tenant.permission:chat.room.view')->group(function () {
+            Route::get('',    [MobileGroupChatController::class, 'rooms'])->name('index');
+            Route::post('',   [MobileGroupChatController::class, 'createRoom'])->name('store')
+                ->middleware('tenant.permission:chat.room.create');
+
+            Route::prefix('{room}')->group(function () {
+                Route::get('',    [MobileGroupChatController::class, 'showRoom'])->name('show');
+
+                // Messages
+                Route::get('messages',    [MobileGroupChatController::class, 'messages'])->name('messages.index');
+                Route::post('messages',   [MobileGroupChatController::class, 'sendMessage'])->name('messages.store')
+                    ->middleware('tenant.permission:chat.message.send');
+                Route::delete('messages/{message}', [MobileGroupChatController::class, 'deleteMessage'])->name('messages.destroy');
+
+                // Reactions
+                Route::post('messages/{message}/reactions', [MobileGroupChatController::class, 'toggleReaction'])->name('reactions.toggle');
+
+                // Read receipts & typing
+                Route::post('read',   [MobileGroupChatController::class, 'markRead'])->name('read');
+                Route::post('typing', [MobileGroupChatController::class, 'typing'])->name('typing');
+
+                // Attachments
+                Route::post('attachments',               [MobileGroupChatController::class, 'uploadAttachment'])->name('attachments.store');
+                Route::get('attachments/{attachment}',   [MobileGroupChatController::class, 'downloadAttachment'])->name('attachments.download');
+
+                // Members (manage permission required)
+                Route::post('members',         [MobileGroupChatController::class, 'addMember'])->name('members.store')
+                    ->middleware('tenant.permission:chat.room.manage');
+                Route::delete('members/{user}', [MobileGroupChatController::class, 'removeMember'])->name('members.destroy')
+                    ->middleware('tenant.permission:chat.room.manage');
+            });
         });
     });
 

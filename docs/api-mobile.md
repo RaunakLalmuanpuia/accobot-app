@@ -549,6 +549,347 @@ data: [DONE]
 
 ---
 
+### Tenant — Group Chat
+
+All group chat routes require:
+- Valid Bearer token
+- User must be a **member of the tenant** (`member` middleware)
+- At minimum the `chat.room.view` permission (see per-endpoint notes)
+
+Base prefix: `/api/mobile/tenants/{tenant}/groups`
+
+---
+
+#### `GET /api/mobile/tenants/{tenant}/groups`
+
+**Permission required:** `chat.room.view`
+
+Returns all chat rooms the authenticated user belongs to, sorted newest-activity first. System rooms (Notifications) appear in the list. Includes `unread_count` per room.
+
+**Response `200`**
+```json
+{
+  "data": [
+    {
+      "id": "uuid",
+      "name": "General",
+      "type": "group",
+      "is_system": false,
+      "unread_count": 3,
+      "latest_message": {
+        "id": "uuid",
+        "body": "Hey team!",
+        "created_at": "2026-04-27T10:00:00Z",
+        "sender": { "id": 1, "name": "CA1" }
+      },
+      "members": [
+        { "user": { "id": 1, "name": "CA1" }, "role": "admin" }
+      ]
+    }
+  ]
+}
+```
+
+---
+
+#### `POST /api/mobile/tenants/{tenant}/groups`
+
+**Permission required:** `chat.room.create`
+
+Create a new group chat room. The creator is automatically added as admin.
+
+**Request body**
+
+| Field | Type | Required | Notes |
+|---|---|:---:|---|
+| `name` | string | Yes | Room name (max 255) |
+| `description` | string | No | Optional description (max 1000) |
+| `member_ids` | array | No | Additional member user IDs (integers) |
+
+**Response `201`**
+```json
+{
+  "data": {
+    "id": "uuid",
+    "name": "Finance Team",
+    "type": "group",
+    "is_system": false,
+    "members": [
+      { "user": { "id": 1, "name": "CA1" }, "role": "admin" }
+    ]
+  }
+}
+```
+
+---
+
+#### `GET /api/mobile/tenants/{tenant}/groups/{room}`
+
+**Permission required:** `chat.room.view`
+
+Returns room details, members, and the most recent 50 messages. Use `can_load_more` to decide whether to show a "load earlier" control.
+
+**Response `200`**
+```json
+{
+  "room": {
+    "id": "uuid",
+    "name": "General",
+    "type": "group",
+    "is_system": false,
+    "members": [
+      { "user": { "id": 1, "name": "CA1" }, "role": "admin" }
+    ]
+  },
+  "messages": [ /* message objects — see GET messages */ ],
+  "can_load_more": true
+}
+```
+
+---
+
+#### `GET /api/mobile/tenants/{tenant}/groups/{room}/messages`
+
+**Permission required:** `chat.room.view`
+
+Cursor-paginated message history (50 per page). Pass `before_id` to load older messages.
+
+**Query params**
+
+| Param | Type | Notes |
+|---|---|---|
+| `before_id` | UUID | Fetch messages older than this message ID |
+
+**Response `200`**
+```json
+{
+  "data": [
+    {
+      "id": "uuid",
+      "body": "Hello!",
+      "type": "text",
+      "created_at": "2026-04-27T10:00:00Z",
+      "sender": { "id": 1, "name": "CA1" },
+      "reaction_summary": [
+        { "emoji": "👍", "count": 2, "users": [1, 2] }
+      ],
+      "reply_to": null,
+      "attachments": []
+    }
+  ],
+  "can_load_more": false
+}
+```
+
+---
+
+#### `POST /api/mobile/tenants/{tenant}/groups/{room}/messages`
+
+**Permission required:** `chat.message.send`
+
+Send a message. Upload attachments first via the attachment endpoint, then include their IDs here.
+
+**Request body**
+
+| Field | Type | Required | Notes |
+|---|---|:---:|---|
+| `body` | string | No* | Message text (max 4000). Required if no `attachment_ids`. |
+| `reply_to_message_id` | UUID | No | Message ID to reply to (must be in same room) |
+| `attachment_ids` | array | No* | Up to 5 pre-uploaded attachment UUIDs |
+
+**Response `201`**
+```json
+{
+  "data": {
+    "id": "uuid",
+    "body": "Got it!",
+    "type": "text",
+    "created_at": "2026-04-27T10:05:00Z",
+    "sender": { "id": 1, "name": "CA1" },
+    "reaction_summary": [],
+    "attachments": []
+  }
+}
+```
+
+---
+
+#### `DELETE /api/mobile/tenants/{tenant}/groups/{room}/messages/{message}`
+
+Delete a message. The message body is wiped and the record is soft-deleted. A broadcast update is fired so other clients remove it from view. Users may delete their own messages; `chat.message.delete` permission allows deleting others'.
+
+**Response `200`**
+```json
+{ "ok": true }
+```
+
+**Errors**
+
+| Status | Reason |
+|---|---|
+| `403` | Not the message owner and missing `chat.message.delete` permission |
+
+---
+
+#### `POST /api/mobile/tenants/{tenant}/groups/{room}/messages/{message}/reactions`
+
+**Permission required:** `chat.room.view`
+
+Toggle an emoji reaction on a message. Calling with the same emoji twice removes the reaction.
+
+**Request body**
+
+| Field | Type | Required | Notes |
+|---|---|:---:|---|
+| `emoji` | string | Yes | Single emoji character (max 10 bytes) |
+
+**Response `200`**
+```json
+{
+  "reaction_summary": [
+    { "emoji": "👍", "count": 3, "users": [1, 2, 3] }
+  ]
+}
+```
+
+---
+
+#### `POST /api/mobile/tenants/{tenant}/groups/{room}/read`
+
+**Permission required:** `chat.room.view`
+
+Mark a message as the user's last-read watermark. Broadcasts a read receipt to other room members.
+
+**Request body**
+
+| Field | Type | Required | Notes |
+|---|---|:---:|---|
+| `message_id` | UUID | Yes | ID of the latest message the user has seen |
+
+**Response `200`**
+```json
+{ "ok": true }
+```
+
+---
+
+#### `POST /api/mobile/tenants/{tenant}/groups/{room}/typing`
+
+**Permission required:** `chat.room.view`
+
+Broadcast a typing indicator. Call with `typing: true` when the user starts typing, `typing: false` when they stop. Indicators auto-expire after 5 seconds of silence on the receiving side.
+
+**Request body**
+
+| Field | Type | Required | Notes |
+|---|---|:---:|---|
+| `typing` | boolean | Yes | `true` = started typing, `false` = stopped |
+
+**Response `200`**
+```json
+{ "ok": true }
+```
+
+---
+
+#### `POST /api/mobile/tenants/{tenant}/groups/{room}/attachments`
+
+**Permission required:** `chat.room.view`
+
+Upload a file attachment (step 1 of 2). The returned `id` is passed to the send-message endpoint as `attachment_ids[]`. Files not linked to a message within 1 hour are automatically purged.
+
+**Content-Type:** `multipart/form-data`
+
+**Request fields**
+
+| Field | Type | Required | Notes |
+|---|---|:---:|---|
+| `file` | file | Yes | jpg, jpeg, png, gif, webp, pdf, doc, docx, xls, xlsx, txt, csv — max **20 MB** |
+
+**Response `201`**
+```json
+{
+  "data": {
+    "id": "uuid",
+    "original_filename": "invoice.pdf",
+    "mime_type": "application/pdf",
+    "size_bytes": 102400
+  }
+}
+```
+
+---
+
+#### `GET /api/mobile/tenants/{tenant}/groups/{room}/attachments/{attachment}`
+
+**Permission required:** `chat.room.view` (member of room)
+
+Download an attachment as a binary stream. Set `Accept` to `*/*` and stream the response body to disk or display inline.
+
+**Response `200`** — binary file stream with `Content-Disposition: attachment`
+
+---
+
+#### `POST /api/mobile/tenants/{tenant}/groups/{room}/members`
+
+**Permission required:** `chat.room.manage`
+
+Add a tenant member to the room.
+
+**Request body**
+
+| Field | Type | Required | Notes |
+|---|---|:---:|---|
+| `user_id` | integer | Yes | Must be a member of the tenant |
+| `role` | string | No | `"admin"` or `"member"` (default `"member"`) |
+
+**Response `200`**
+```json
+{ "ok": true }
+```
+
+---
+
+#### `DELETE /api/mobile/tenants/{tenant}/groups/{room}/members/{user}`
+
+**Permission required:** `chat.room.manage`
+
+Remove a member from the room.
+
+**Response `200`**
+```json
+{ "ok": true }
+```
+
+---
+
+### Real-Time (WebSocket)
+
+The mobile app connects to Laravel Reverb using the **Pusher protocol**. Use the official Pusher native SDK for iOS/Android.
+
+**Connection details** (from your `.env` / app config):
+
+| Key | Value |
+|---|---|
+| App key | `REVERB_APP_KEY` |
+| Host | `REVERB_HOST` |
+| Port | `REVERB_PORT` (443 for prod) |
+| Scheme | `https` |
+| Cluster | `mt1` (ignored by Reverb, required by SDK) |
+
+**Auth endpoint:** `POST /broadcasting/auth` (include `Authorization: Bearer <token>` header)
+
+**Channels to subscribe to:**
+
+| Channel | Type | Events |
+|---|---|---|
+| `presence-room.{tenantId}.{roomId}` | Presence | `.chat.message`, `.chat.typing`, `.chat.reaction`, `.chat.read` |
+| `private-user.{userId}` | Private | `.system.notification` |
+
+**Event payloads** match those documented in the SSE/broadcast sections above.
+
+---
+
 ## Error Response Format
 
 All validation errors return standard Laravel format:
@@ -593,6 +934,331 @@ Permission errors:
 | `POST .../banking/transactions/{id}/approve` | `transactions.review` |
 | `POST .../banking/transactions/{id}/correct` | `transactions.edit` |
 | `POST .../chat` | `chat.view` |
+| `GET .../groups` | `chat.room.view` |
+| `POST .../groups` | `chat.room.create` |
+| `GET .../groups/{room}` | `chat.room.view` + member |
+| `GET .../groups/{room}/messages` | `chat.room.view` + member |
+| `POST .../groups/{room}/messages` | `chat.message.send` + member |
+| `DELETE .../groups/{room}/messages/{id}` | Own message or `chat.message.delete` |
+| `POST .../groups/{room}/messages/{id}/reactions` | `chat.room.view` + member |
+| `POST .../groups/{room}/read` | `chat.room.view` + member |
+| `POST .../groups/{room}/typing` | `chat.room.view` + member |
+| `POST .../groups/{room}/attachments` | `chat.room.view` + member |
+| `GET .../groups/{room}/attachments/{id}` | `chat.room.view` + member |
+| `POST .../groups/{room}/members` | `chat.room.manage` |
+| `DELETE .../groups/{room}/members/{user}` | `chat.room.manage` |
+
+---
+
+## Mobile Developer Implementation Guide
+
+This section describes exactly what the mobile app must implement to achieve full feature parity with the web group chat. The REST endpoints above handle all data operations. Real-time updates come via the Pusher native SDK connected to Laravel Reverb.
+
+---
+
+### 1. Authentication
+
+Every HTTP request requires a Bearer token in the `Authorization` header:
+```
+Authorization: Bearer <token>
+```
+
+Obtain the token from `POST /api/mobile/login`. Store it in **Keychain** (iOS) or **Keystore** (Android). Tokens do not expire — revoke on logout via `POST /api/mobile/logout`.
+
+---
+
+### 2. Room List Screen
+
+Call `GET /api/mobile/tenants/{tenant}/groups`.
+
+- `unread_count` is calculated server-side — use it directly for the badge
+- Sort: system rooms (`is_system: true`) pinned to the top, then by `updated_at` descending
+- Show the `latest_message.body` as the preview line and `latest_message.created_at` as the timestamp
+- Show an unread badge when `unread_count > 0`; cap display at `9+`
+
+---
+
+### 3. Room Screen — Initial Load
+
+Call `GET /api/mobile/tenants/{tenant}/groups/{room}`.
+
+Response contains:
+- `room` — room metadata + full members list
+- `messages` — last 50 messages, already in chronological order (oldest first)
+- `can_load_more` — whether older messages exist
+
+On open: scroll to the bottom, then immediately call mark-read (§8).
+
+---
+
+### 4. Real-Time — WebSocket Connection
+
+The mobile app must use the **native Pusher SDK**, not a browser library.
+
+- iOS: [pusher-swift](https://github.com/pusher/pusher-websocket-swift)
+- Android: [pusher-java-client](https://github.com/pusher/pusher-websocket-java)
+
+**Connection config:**
+
+| Key | Value |
+|---|---|
+| `appKey` | `REVERB_APP_KEY` (get from backend team) |
+| `host` | `REVERB_HOST` |
+| `port` | `443` (prod) / `8080` (local) |
+| `useTLS` | `true` (prod) / `false` (local) |
+| `cluster` | `"mt1"` — required by the SDK but ignored by Reverb |
+
+**WebSocket auth endpoint** — configure the Pusher SDK to use:
+```
+POST /api/mobile/broadcasting/auth
+Authorization: Bearer <token>
+```
+This is a dedicated Sanctum-protected endpoint. Do **not** use the default `/broadcasting/auth` (that one is session/cookie only).
+
+---
+
+### 5. Channels to Subscribe To
+
+Subscribe to these when the user opens a room:
+
+**Presence channel** — `presence-room.{tenantId}.{roomId}`
+
+All chat events flow through here. The presence protocol also gives you the online member list automatically.
+
+| SDK event | Meaning |
+|---|---|
+| `pusher:subscription_succeeded` | Gives `members` map — use for online avatars |
+| `pusher:member_added` | User came online — add green dot |
+| `pusher:member_removed` | User went offline — remove green dot |
+
+**Private channel** — `private-user.{userId}`
+
+Subscribe once on login (not per-room). Receives system notifications (invoice paid, member joined, Tally sync, etc.) even when no room is open.
+
+---
+
+### 6. Events to Handle
+
+#### `.chat.message`
+
+Fires when a message is sent, edited, or deleted.
+
+```json
+{
+  "id": "uuid",
+  "body": "Hello!",
+  "type": "text",
+  "user_id": 1,
+  "chat_room_id": "uuid",
+  "created_at": "...",
+  "sender": { "id": 1, "name": "CA1" },
+  "reaction_summary": [],
+  "reply_to": null,
+  "attachments": []
+}
+```
+
+Logic:
+- If a message with this `id` already exists in your list → **replace it** (handles soft-deletes and edits)
+- Otherwise → **append** it and scroll to bottom
+- Then call mark-read (§8)
+
+#### `.chat.typing`
+
+```json
+{ "user_id": 1, "user_name": "CA1", "typing": true }
+```
+
+- Ignore events where `user_id` equals your own user ID
+- Show a typing indicator (e.g. "CA1 is typing…") when `typing: true`
+- Remove it when `typing: false`
+- Auto-clear after 5 seconds of no events as a safety net
+
+#### `.chat.reaction`
+
+```json
+{ "message_id": "uuid", "emoji": "👍", "user_id": 1, "action": "added" }
+```
+
+Update `reaction_summary` on the matching message in your local list:
+- `action: "added"` → increment count, add `user_id` to `users` array
+- `action: "removed"` → decrement count, remove `user_id`; delete the entry if count reaches 0
+
+#### `.chat.read`
+
+```json
+{ "user_id": 1, "last_read_message_id": "uuid" }
+```
+
+Maintain a `readMap` of `{ user_id → last_read_message_id }`. Use it to render read receipts:
+- **✓ (grey)** — message sent, not yet read by all
+- **✓✓ (violet/blue)** — read by everyone
+
+#### `.system.notification` (private-user channel)
+
+```json
+{
+  "title": "Invoice Paid",
+  "body": "INV-0001 has been marked as paid.",
+  "data": { "url": "/t/{tenantId}/groups" }
+}
+```
+
+Show an in-app banner. If the app is in the foreground, display it inline. Tapping navigates to the groups screen.
+
+---
+
+### 7. Sending a Message
+
+**If no attachments:**
+```
+POST /api/mobile/tenants/{tenant}/groups/{room}/messages
+{ "body": "Hello!", "reply_to_message_id": null }
+```
+
+**If there are attachments — two steps:**
+
+Step 1: Upload each file individually:
+```
+POST /api/mobile/tenants/{tenant}/groups/{room}/attachments
+Content-Type: multipart/form-data
+file: <binary>
+```
+Returns `{ "data": { "id": "uuid", ... } }`. Collect all IDs.
+
+Step 2: Send the message with the IDs:
+```
+POST /api/mobile/tenants/{tenant}/groups/{room}/messages
+{ "body": "See attached", "attachment_ids": ["uuid1", "uuid2"] }
+```
+
+**Deduplication:** Add the returned message to your local list immediately (optimistic). The `.chat.message` broadcast may arrive first — match by `id` and skip the duplicate.
+
+---
+
+### 8. Mark Read
+
+Call in three situations:
+1. When the room screen opens
+2. When a new message arrives via `.chat.message`
+3. When the user scrolls to the bottom (if there were unread messages above)
+
+```
+POST /api/mobile/tenants/{tenant}/groups/{room}/read
+{ "message_id": "<id of the last visible message>" }
+```
+
+This broadcasts a `.chat.read` event to all room members so their read receipts update.
+
+---
+
+### 9. Typing Indicator
+
+When the user starts typing:
+```
+POST /api/mobile/tenants/{tenant}/groups/{room}/typing
+{ "typing": true }
+```
+
+When they stop (or after 3 seconds of no keystroke):
+```
+POST /api/mobile/tenants/{tenant}/groups/{room}/typing
+{ "typing": false }
+```
+
+**Debounce rule:** send `true` at most once per 3 seconds while typing is active. Send `false` exactly once when they stop. Do not spam the endpoint on every keystroke.
+
+---
+
+### 10. Load Earlier Messages
+
+When the user scrolls to the top and `can_load_more` is true:
+```
+GET /api/mobile/tenants/{tenant}/groups/{room}/messages?before_id=<oldest message id in your list>
+```
+
+Returns up to 50 older messages in chronological order. **Prepend** them to your list. Update `can_load_more` from the response. Maintain the scroll position so the user doesn't jump.
+
+---
+
+### 11. Emoji Reactions
+
+Tap an emoji to toggle it on/off:
+```
+POST /api/mobile/tenants/{tenant}/groups/{room}/messages/{message}/reactions
+{ "emoji": "👍" }
+```
+
+Calling with the same emoji twice removes the reaction. Response returns the updated `reaction_summary`. Also handle reactions from others via the `.chat.reaction` broadcast event.
+
+Highlight the emoji button in violet when the current user's ID is in `reaction_summary[n].users`.
+
+---
+
+### 12. Delete a Message
+
+```
+DELETE /api/mobile/tenants/{tenant}/groups/{room}/messages/{message}
+```
+
+The server wipes the body and fires a `.chat.message` broadcast with `body: null` and `deleted_at` set. Handle the broadcast event to show a "This message was deleted" placeholder — do not remove the bubble entirely.
+
+Users can only delete their own messages unless they have the `chat.message.delete` permission.
+
+---
+
+### 13. Room Management
+
+**Create a room** (requires `chat.room.create`):
+```
+POST /api/mobile/tenants/{tenant}/groups
+{ "name": "Finance Team", "description": "...", "member_ids": [2, 3] }
+```
+
+**Add a member** (requires `chat.room.manage`):
+```
+POST /api/mobile/tenants/{tenant}/groups/{room}/members
+{ "user_id": 5, "role": "member" }
+```
+
+**Remove a member** (requires `chat.room.manage`):
+```
+DELETE /api/mobile/tenants/{tenant}/groups/{room}/members/{user}
+```
+
+---
+
+### 14. Push Notifications — Known Gap
+
+**The backend currently only supports browser Web Push (VAPID).** Native mobile push (FCM for Android, APNs for iOS) is not yet implemented.
+
+Until FCM/APNs support is added:
+- System notifications arrive **only while the WebSocket is connected** (app in foreground)
+- There are **no background push notifications** on mobile
+
+When FCM/APNs is added, the mobile developer will need to:
+1. Call a new endpoint (TBD) to register the device push token after login
+2. Call it again whenever the OS assigns a new token (e.g. after app reinstall)
+3. Deregister on logout
+
+---
+
+### Feature Parity Summary
+
+| Feature | Mobile status |
+|---|---|
+| Room list + unread counts | Full parity |
+| Real-time messages | Full parity (Pusher native SDK) |
+| Typing indicators | Full parity |
+| Read receipts (✓ / ✓✓) | Full parity |
+| Emoji reactions | Full parity |
+| File attachments (upload + download) | Full parity |
+| Reply-to messages | Full parity |
+| Load earlier messages (cursor) | Full parity |
+| Online member presence | Full parity |
+| Delete messages | Full parity |
+| System notifications (foreground) | Full parity |
+| System notifications (background push) | **Not yet — FCM/APNs pending** |
 
 ---
 

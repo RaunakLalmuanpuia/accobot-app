@@ -18,6 +18,8 @@
 8. [Phase 8 — Permissions](#phase-8--permissions)
 9. [Phase 9 — File Attachments](#phase-9--file-attachments)
 10. [Phase 10 — Deployment / Ops](#phase-10--deployment--ops)
+11. [Phase 11 — Mobile API ✅ DONE](#phase-11--mobile-api--done-2026-04-27)
+12. [Phase 12 — Native Mobile Push Notifications (PENDING)](#phase-12--native-mobile-push-notifications-pending)
 
 ---
 
@@ -1423,6 +1425,84 @@ Route::get('/health/reverb', function () {
 
 ---
 
+## Phase 11 — Mobile API ✅ DONE (2026-04-27)
+
+### 11.1 Overview
+
+Full REST API for native mobile (iOS/Android) providing feature parity with the web group chat. Mobile uses the native Pusher SDK connected to Reverb for real-time, not Laravel Echo.
+
+### 11.2 Broadcasting Auth Fix
+
+The default `broadcasting/auth` route uses `web` (session) middleware and rejects Bearer tokens. A dedicated Sanctum-compatible endpoint was added:
+
+**Route:** `POST /api/mobile/broadcasting/auth` (middleware: `auth:sanctum`)
+
+The mobile Pusher SDK must set its `authEndpoint` to this URL and include `Authorization: Bearer <token>` in the request.
+
+**File:** `routes/api.php` — registered before the mobile auth group.
+
+### 11.3 Controller
+
+**File:** `app/Http/Controllers/Api/MobileGroupChatController.php`
+
+14 methods — identical logic to the web controllers but returns JSON instead of Inertia responses:
+
+| Method | Endpoint | Notes |
+|---|---|---|
+| `rooms` | `GET /groups` | Includes unread counts |
+| `createRoom` | `POST /groups` | Creator auto-added as admin |
+| `showRoom` | `GET /groups/{room}` | Returns room + 50 messages + can_load_more |
+| `messages` | `GET /groups/{room}/messages` | Cursor pagination via `?before_id=` |
+| `sendMessage` | `POST /groups/{room}/messages` | Same two-step attachment flow as web |
+| `deleteMessage` | `DELETE /groups/{room}/messages/{message}` | Wipes body, soft-deletes, broadcasts |
+| `toggleReaction` | `POST /groups/{room}/messages/{message}/reactions` | Toggle add/remove |
+| `markRead` | `POST /groups/{room}/read` | Upserts MessageRead, broadcasts receipt |
+| `typing` | `POST /groups/{room}/typing` | Fires BroadcastTyping (ShouldBroadcastNow) |
+| `uploadAttachment` | `POST /groups/{room}/attachments` | Step 1 of 2 (orphan until message sent) |
+| `downloadAttachment` | `GET /groups/{room}/attachments/{attachment}` | Streamed binary response |
+| `addMember` | `POST /groups/{room}/members` | Requires `chat.room.manage` |
+| `removeMember` | `DELETE /groups/{room}/members/{user}` | Requires `chat.room.manage` |
+
+### 11.4 Routes
+
+All 14 routes added to `routes/api.php` under the existing `mobile/tenants/{tenant}` tenant-scoped group (middleware: `auth:sanctum`, `member`).
+
+Top-level group: `tenant.permission:chat.room.view`
+Per-route overrides:
+- `POST /groups` → also `tenant.permission:chat.room.create`
+- `POST /groups/{room}/messages` → also `tenant.permission:chat.message.send`
+- `POST /groups/{room}/members` and `DELETE .../members/{user}` → also `tenant.permission:chat.room.manage`
+
+### 11.5 Documentation
+
+`docs/api-mobile.md` updated with:
+- Full endpoint reference for all 14 group chat routes (request/response shapes)
+- "Real-Time (WebSocket)" section in the Group Chat section (channels, auth endpoint)
+- "Mobile Developer Implementation Guide" section — 14 numbered steps covering: auth, room list, initial load, WebSocket + Pusher SDK config, all 5 events to handle, two-step message send, mark-read triggers, typing debounce, load-earlier pagination, reactions, delete, room management, and the FCM/APNs gap
+
+### 11.6 Known Gap — Native Push Notifications
+
+The backend sends Web Push via VAPID (`minishlink/web-push`), which is browser-only. Mobile will receive system notifications only while the WebSocket connection is active (app in foreground). Background push requires Phase 12.
+
+---
+
+## Phase 12 — Native Mobile Push Notifications (PENDING)
+
+Required for background push on iOS and Android.
+
+### Tasks:
+1. Add `laravel-notification-channels/fcm` (or `kreait/laravel-firebase`) for FCM
+2. Add `laravel-notification-channels/apn` for APNs
+3. Create `device_push_tokens` table: `user_id, platform (ios|android), token, created_at, updated_at` — UNIQUE(user_id, token)
+4. Add `DevicePushToken` model
+5. Add API endpoint: `POST /api/mobile/push/register-token` — registers FCM/APNs token on login
+6. Add API endpoint: `DELETE /api/mobile/push/register-token` — deregisters on logout
+7. Add FCM/APNs channels to `SystemNotification::via()` — check notifiable's platform
+8. Update `docs/api-mobile.md` with the token registration endpoints
+9. Update permission summary and seeded credentials tables if needed
+
+---
+
 ## Implementation Sequencing (Recommended Order)
 
 1. **Phase 1** — Install packages, configure `.env` and `broadcasting.php` ✅ DONE
@@ -1434,7 +1514,9 @@ Route::get('/health/reverb', function () {
 7. **Phase 9** — Configure attachment validation and orphan cleanup command ✅ DONE
 8. **Phase 6** — `SystemNotification`, `WebPushChannel`, hook into existing controllers ✅ DONE
 9. **Phase 7** — Build Vue pages and components, update `bootstrap.js`, add SW ✅ DONE
-10. **Phase 10** — Supervisor configs, nginx proxy, production `.env` values
+10. **Phase 11** — Mobile API: MobileGroupChatController, 14 routes, broadcasting auth fix ✅ DONE
+11. **Phase 10** — Supervisor configs, nginx proxy, production `.env` values
+12. **Phase 12** — Native FCM/APNs push for mobile background notifications
 
 ---
 
