@@ -17,7 +17,7 @@
 11. [Confirmation POST — Tally Writes Back Its IDs](#11-confirmation-post--tally-writes-back-its-ids)
 12. [Report Snapshots](#12-report-snapshots)
 13. [Sync Logs & Observability](#13-sync-logs--observability)
-14. [All 63 API Endpoints](#14-all-63-api-endpoints)
+14. [All 64 API Endpoints](#14-all-64-api-endpoints)
 15. [Web UI Routes & Pages](#15-web-ui-routes--pages)
 16. [Service & Controller Map](#16-service--controller-map)
 17. [Full File Map](#17-full-file-map)
@@ -704,7 +704,7 @@ Because Accobot cannot pull from Tally, this button does not trigger a data pull
 
 ---
 
-## 14. All 63 API Endpoints
+## 14. All 64 API Endpoints
 
 All routes are in `routes/api.php`. All are throttled at 120 requests/minute. None require Sanctum — token auth only.
 
@@ -718,6 +718,7 @@ All routes are in `routes/api.php`. All are throttled at 120 requests/minute. No
 | POST /api/tally/inbound/masters/stock-groups | `@stockGroups` | tally_stock_groups |
 | POST /api/tally/inbound/masters/stock-categories | `@stockCategories` | tally_stock_categories |
 | POST /api/tally/inbound/masters/statutory | `@statutory` | tally_statutory_masters |
+| POST /api/tally/inbound/masters/company | `@company` | tally_companies |
 | POST /api/tally/inbound/payroll/employee-groups | `TallyInboundPayrollController@employeeGroups` | tally_employee_groups |
 | POST /api/tally/inbound/payroll/employees | `@employees` | tally_employees |
 | POST /api/tally/inbound/payroll/pay-heads | `@payHeads` | tally_pay_heads |

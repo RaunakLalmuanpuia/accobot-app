@@ -11,6 +11,10 @@ class TallyCompany extends Model
         'tally_connection_id',
         'company_guid',
         'company_name',
+        'address',
+        'state',
+        'country',
+        'tally_serial_no',
         'licence_type',
         'licence_number',
     ];

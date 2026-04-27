@@ -81,4 +81,14 @@ class TallyInboundMastersController extends TallyBaseController
         $this->logAudit($conn, 'statutory_masters', $data);
         return response()->json($data);
     }
+
+    public function company(Request $request): JsonResponse
+    {
+        $conn  = $this->resolveAndLog($request);
+        $items = $request->input('Data', []);
+        $log   = $this->sync->syncCompanyMaster($conn, $items);
+        $data  = $this->logResponse($log);
+        $this->logAudit($conn, 'company_master', $data);
+        return response()->json($data);
+    }
 }

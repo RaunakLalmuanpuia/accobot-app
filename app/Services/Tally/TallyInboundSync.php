@@ -15,6 +15,7 @@ use App\Models\TallySyncLog;
 use App\Models\TallyStockCategory;
 use App\Models\TallyStockGroup;
 use App\Models\TallyStockItem;
+use App\Models\TallyCompany;
 use App\Models\TallyGodown;
 use App\Models\TallyStatutoryMaster;
 use App\Models\TallyEmployee;
@@ -554,6 +555,49 @@ class TallyInboundSync
                     ->where('voucher_type', $type)
                     ->whereNotIn('tally_id', $seenIds)
                     ->update(['is_active' => false]);
+            }
+        } catch (\Throwable $e) {
+            return $this->failLog($log, $e->getMessage());
+        }
+
+        return $this->completeLog($log, $conn);
+    }
+
+    public function syncCompanyMaster(TallyConnection $conn, array $items): TallySyncLog
+    {
+        $log = $this->startLog($conn, 'company_master');
+
+        try {
+            foreach ($items as $raw) {
+                $item = $this->strip($raw);
+                $guid = $item['Guid'] ?? null;
+
+                if (empty($guid)) { $log->records_failed++; continue; }
+
+                $existing = TallyCompany::withoutGlobalScope('tenant')
+                    ->where('tally_connection_id', $conn->id)
+                    ->where('company_guid', $guid)
+                    ->first();
+
+                $data = [
+                    'company_name'    => $item['CompanyName'] ?? null,
+                    'address'         => $item['Address'] ?? null,
+                    'state'           => $item['State'] ?? null,
+                    'country'         => $item['Country'] ?? null,
+                    'tally_serial_no' => $item['TallySerialNo'] ?? null,
+                    'licence_type'    => $item['TallyLicenseType'] ?? null,
+                ];
+
+                if ($existing) {
+                    $existing->update($data);
+                    $log->records_updated++;
+                } else {
+                    TallyCompany::create(array_merge($data, [
+                        'tally_connection_id' => $conn->id,
+                        'company_guid'        => $guid,
+                    ]));
+                    $log->records_created++;
+                }
             }
         } catch (\Throwable $e) {
             return $this->failLog($log, $e->getMessage());
