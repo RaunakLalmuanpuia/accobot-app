@@ -54,7 +54,14 @@ class ChatRoom extends Model
 
     public function latestMessage(): HasOne
     {
-        return $this->hasOne(ChatMessage::class)->latestOfMany('created_at');
+        // ofMany/latestOfMany always adds MAX(id) as a tie-breaker join, which fails on
+        // UUID primary keys in PostgreSQL. Use a correlated subquery on created_at instead.
+        return $this->hasOne(ChatMessage::class, 'chat_room_id')
+            ->whereRaw('"chat_messages"."created_at" = (
+                select max("created_at") from "chat_messages" as "lm"
+                where "lm"."chat_room_id" = "chat_messages"."chat_room_id"
+                and "lm"."deleted_at" is null
+            )');
     }
 
     public function scopeForUser(Builder $query, int $userId): void
