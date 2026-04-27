@@ -63,7 +63,15 @@ class MobileGroupChatController extends Controller
             return $room;
         });
 
-        return response()->json(['data' => $rooms]);
+        $tenantUsers = $tenant->users()
+            ->select('users.id', 'users.name')
+            ->orderBy('users.name')
+            ->get();
+
+        return response()->json([
+            'data'         => $rooms,
+            'tenant_users' => $tenantUsers,
+        ]);
     }
 
     /**
@@ -130,8 +138,14 @@ class MobileGroupChatController extends Controller
             ->reverse()
             ->values();
 
+        $tenantUsers = $tenant->users()
+            ->select('users.id', 'users.name')
+            ->orderBy('users.name')
+            ->get();
+
         return response()->json([
             'room'          => $room->load('members.user:id,name'),
+            'tenant_users'  => $tenantUsers,
             'messages'      => $messages,
             'can_load_more' => $messages->count() === 50,
         ]);

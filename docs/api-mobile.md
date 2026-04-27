@@ -564,7 +564,7 @@ Base prefix: `/api/mobile/tenants/{tenant}/groups`
 
 **Permission required:** `chat.room.view`
 
-Returns all chat rooms the authenticated user belongs to, sorted newest-activity first. System rooms (Notifications) appear in the list. Includes `unread_count` per room.
+Returns all chat rooms the authenticated user belongs to, sorted newest-activity first. System rooms (Notifications) appear in the list. Includes `unread_count` per room and `tenant_users` (all users in the tenant) for the invite UI when creating a new room.
 
 **Response `200`**
 ```json
@@ -586,6 +586,10 @@ Returns all chat rooms the authenticated user belongs to, sorted newest-activity
         { "user": { "id": 1, "name": "CA1" }, "role": "admin" }
       ]
     }
+  ],
+  "tenant_users": [
+    { "id": 1, "name": "CA1" },
+    { "id": 2, "name": "Fela" }
   ]
 }
 ```
@@ -627,7 +631,7 @@ Create a new group chat room. The creator is automatically added as admin.
 
 **Permission required:** `chat.room.view`
 
-Returns room details, members, and the most recent 50 messages. Use `can_load_more` to decide whether to show a "load earlier" control.
+Returns room details, members, the most recent 50 messages, and `tenant_users` (all users in the tenant). Use `can_load_more` to decide whether to show a "load earlier" control. Use `tenant_users` minus current `room.members` to populate the Add Member picker.
 
 **Response `200`**
 ```json
@@ -642,7 +646,11 @@ Returns room details, members, and the most recent 50 messages. Use `can_load_mo
     ]
   },
   "messages": [ /* message objects — see GET messages */ ],
-  "can_load_more": true
+  "can_load_more": true,
+  "tenant_users": [
+    { "id": 1, "name": "CA1" },
+    { "id": 2, "name": "Fela" }
+  ]
 }
 ```
 
