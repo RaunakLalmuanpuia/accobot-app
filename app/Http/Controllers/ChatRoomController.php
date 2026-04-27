@@ -47,9 +47,15 @@ class ChatRoomController extends Controller
             return $room;
         });
 
+        $tenantUsers = $tenant->users()
+            ->select('users.id', 'users.name')
+            ->orderBy('users.name')
+            ->get();
+
         return Inertia::render('Chat/Groups/Index', [
-            'tenant' => $tenant,
-            'rooms'  => $rooms,
+            'tenant'      => $tenant,
+            'rooms'       => $rooms,
+            'tenantUsers' => $tenantUsers,
         ]);
     }
 
@@ -128,11 +134,19 @@ class ChatRoomController extends Controller
             ->orderByDesc('updated_at')
             ->get(['id', 'name', 'type', 'is_system', 'updated_at']);
 
+        $memberIds = $room->members()->pluck('user_id');
+
+        $tenantUsers = $tenant->users()
+            ->select('users.id', 'users.name')
+            ->orderBy('users.name')
+            ->get();
+
         return Inertia::render('Chat/Groups/Show', [
-            'tenant'   => $tenant,
-            'room'     => $room->load('members.user:id,name'),
-            'messages' => $messages,
-            'rooms'    => $rooms,
+            'tenant'      => $tenant,
+            'room'        => $room->load('members.user:id,name'),
+            'messages'    => $messages,
+            'rooms'       => $rooms,
+            'tenantUsers' => $tenantUsers,
         ]);
     }
 

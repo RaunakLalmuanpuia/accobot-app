@@ -71,6 +71,25 @@
                             <input v-model="form.description" type="text" maxlength="1000"
                                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400" />
                         </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Members (optional)</label>
+                            <div class="border border-gray-300 rounded-lg max-h-40 overflow-y-auto divide-y divide-gray-100">
+                                <label
+                                    v-for="user in otherUsers"
+                                    :key="user.id"
+                                    class="flex items-center gap-3 px-3 py-2 hover:bg-violet-50 cursor-pointer"
+                                >
+                                    <input
+                                        type="checkbox"
+                                        :value="user.id"
+                                        v-model="form.member_ids"
+                                        class="accent-violet-600"
+                                    />
+                                    <span class="text-sm text-gray-700">{{ user.name }}</span>
+                                </label>
+                                <p v-if="otherUsers.length === 0" class="px-3 py-2 text-sm text-gray-400">No other members to add.</p>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="flex justify-end gap-2 mt-5">
@@ -89,15 +108,21 @@
 
 <script setup>
 import { computed, ref } from 'vue';
-import { Link, useForm } from '@inertiajs/vue3';
+import { Link, useForm, usePage } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 
 const props = defineProps({
-    tenant: Object,
-    rooms:  Array,
+    tenant:      Object,
+    rooms:       Array,
+    tenantUsers: Array,
 });
 
-const showCreate = ref(false);
+const page        = usePage();
+const authUserId  = computed(() => page.props.auth.user.id);
+const showCreate  = ref(false);
+
+// Exclude the current user from the member picker (they're added as creator automatically)
+const otherUsers = computed(() => props.tenantUsers.filter(u => u.id !== authUserId.value));
 
 const sortedRooms = computed(() => {
     return [...props.rooms].sort((a, b) => {
@@ -107,7 +132,7 @@ const sortedRooms = computed(() => {
     });
 });
 
-const form = useForm({ name: '', description: '' });
+const form = useForm({ name: '', description: '', member_ids: [] });
 
 function createRoom() {
     form.post(route('chat.groups.store', { tenant: props.tenant.id }), {

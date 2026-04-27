@@ -10,7 +10,7 @@
                 </Link>
                 <div>
                     <h2 class="text-lg font-semibold text-gray-800">{{ room.name }}</h2>
-                    <p class="text-xs text-gray-500">{{ onlineUsers.length }} online</p>
+                    <p class="text-xs text-gray-500">{{ onlineUsers.length }} online · {{ currentRoom.members.length }} members</p>
                 </div>
             </div>
         </template>
@@ -51,8 +51,7 @@
                         :key="msg.id"
                         :message="msg"
                         :is-own="msg.user_id === authUserId"
-                        :show-sender="!room.is_system"
-                        :current-user-id="authUserId"
+                        :show-sender="!room.is_system"                        :current-user-id="authUserId"
                         :reads="readMap"
                         :members="room.members"
                         @react="toggleReaction"
@@ -73,9 +72,14 @@
 
             <!-- Members sidebar -->
             <MembersSidebar
-                :members="room.members"
+                :members="currentRoom.members"
                 :online-user-ids="onlineUsers.map(u => u.id)"
+                :tenant-users="tenantUsers"
+                :can-manage="canManage && !room.is_system"
+                :current-user-id="authUserId"
                 class="hidden xl:flex"
+                @add="addMember"
+                @remove="removeMember"
             />
         </div>
     </AuthenticatedLayout>
@@ -91,16 +95,20 @@ import MembersSidebar from '@/Components/Chat/MembersSidebar.vue';
 import TypingIndicator from '@/Components/Chat/TypingIndicator.vue';
 
 const props = defineProps({
-    tenant:   Object,
-    room:     Object,
-    messages: Array,
-    rooms:    Array,
+    tenant:      Object,
+    room:        Object,
+    messages:    Array,
+    rooms:       Array,
+    tenantUsers: Array,
 });
 
 const page         = usePage();
 const authUserId   = computed(() => page.props.auth.user.id);
+const canManage    = computed(() => page.props.auth.permissions?.includes('chat.room.manage'));
 const messagesEl   = ref(null);
 const messages     = ref([...props.messages]);
+// Reactive copy so member add/remove updates the sidebar without a page reload
+const currentRoom  = ref({ ...props.room, members: [...props.room.members] });
 const onlineUsers  = ref([]);
 const typingUsers  = ref([]);
 const replyTo      = ref(null);
@@ -168,6 +176,23 @@ async function sendMessage({ body, files, reply_to_message_id }) {
     replyTo.value = null;
     scrollBottom();
     markRead();
+}
+
+// Add / remove member
+async function addMember(userId) {
+    await window.axios.post(
+        route('chat.groups.members.store', { tenant: props.tenant.id, room: currentRoom.value.id }),
+        { user_id: userId }
+    );
+    const user = props.tenantUsers.find(u => u.id === userId);
+    if (user) currentRoom.value.members.push({ user, role: 'member' });
+}
+
+async function removeMember(userId) {
+    await window.axios.delete(
+        route('chat.groups.members.destroy', { tenant: props.tenant.id, room: currentRoom.value.id, user: userId })
+    );
+    currentRoom.value.members = currentRoom.value.members.filter(m => m.user?.id !== userId);
 }
 
 // Toggle reaction
@@ -248,7 +273,7 @@ onMounted(() => {
     scrollBottom();
     markRead();
 
-    channel = window.Echo.join(`presence-room.${props.tenant.id}.${props.room.id}`)
+    channel = window.Echo.join(`presence-room.${props.tenant.id}.${currentRoom.value.id}`)
         .here((users) => { onlineUsers.value = users; })
         .joining((user) => { onlineUsers.value.push(user); })
         .leaving((user) => { onlineUsers.value = onlineUsers.value.filter(u => u.id !== user.id); })
@@ -259,6 +284,6 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-    window.Echo.leave(`presence-room.${props.tenant.id}.${props.room.id}`);
+    window.Echo.leave(`presence-room.${props.tenant.id}.${currentRoom.value.id}`);
 });
 </script>
