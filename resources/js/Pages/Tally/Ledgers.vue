@@ -5,9 +5,9 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import { hasPermission } from '@/utils/permissions'
 
 const props = defineProps({
-    tenant:           Object,
-    ledgers:          Array,
-    ledgerGroupNames: Array,
+    tenant:       Object,
+    ledgers:      Array,
+    ledgerGroups: Array,
 })
 
 const canManage = hasPermission('integrations.manage')
@@ -67,16 +67,41 @@ const isEditing = computed(() => modal.value && modal.value !== 'create')
 const form = useForm({
     ledger_name:          '',
     group_name:           '',
+    parent_group:         '',
+    is_bill_wise_on:      false,
+    inventory_affected:   false,
     gstin_number:         '',
     pan_number:           '',
     gst_type:             '',
-    state_name:           '',
+    mailing_name:         '',
     mobile_number:        '',
+    contact_person:       '',
+    contact_person_email:   '',
+    contact_person_website: '',
+    contact_person_mobile:  '',
+    addresses:            [],
+    state_name:           '',
+    country_name:         '',
+    pin_code:             '',
+    credit_period:        '',
     credit_limit:         '',
     opening_balance:      '',
     opening_balance_type: '',
+    aliases:              [],
+    description:          '',
+    notes:                '',
     bank_details:         [],
 })
+
+function onGroupChange() {
+    const selected = props.ledgerGroups.find(g => g.name === form.group_name)
+    form.parent_group = selected?.under_name ?? ''
+}
+
+function addAddress()     { form.addresses.push({ Address: '' }) }
+function removeAddress(i) { form.addresses.splice(i, 1) }
+function addAlias()       { form.aliases.push({ Alias: '' }) }
+function removeAlias(i)   { form.aliases.splice(i, 1) }
 
 function emptyBank() {
     return { BankName: '', IFSCode: '', AccountNumber: '', PaymentFavouring: '', TransactionName: '', TransactionType: '' }
@@ -91,17 +116,32 @@ function openCreate() {
 }
 
 function openEdit(ledger) {
-    form.ledger_name          = ledger.ledger_name
-    form.group_name           = ledger.group_name ?? ''
-    form.gstin_number         = ledger.gstin_number ?? ''
-    form.pan_number           = ledger.pan_number ?? ''
-    form.gst_type             = ledger.gst_type ?? ''
-    form.state_name           = ledger.state_name ?? ''
-    form.mobile_number        = ledger.mobile_number ?? ''
-    form.credit_limit         = ledger.credit_limit ?? ''
-    form.opening_balance      = ledger.opening_balance ?? ''
-    form.opening_balance_type = ledger.opening_balance_type ?? ''
-    form.bank_details         = ledger.bank_details ? JSON.parse(JSON.stringify(ledger.bank_details)) : []
+    form.ledger_name           = ledger.ledger_name
+    form.group_name            = ledger.group_name ?? ''
+    form.parent_group          = ledger.parent_group ?? ''
+    form.is_bill_wise_on       = ledger.is_bill_wise_on ?? false
+    form.inventory_affected    = ledger.inventory_affected ?? false
+    form.gstin_number          = ledger.gstin_number ?? ''
+    form.pan_number            = ledger.pan_number ?? ''
+    form.gst_type              = ledger.gst_type ?? ''
+    form.mailing_name          = ledger.mailing_name ?? ''
+    form.mobile_number         = ledger.mobile_number ?? ''
+    form.contact_person        = ledger.contact_person ?? ''
+    form.contact_person_email   = ledger.contact_person_email ?? ''
+    form.contact_person_website = ledger.contact_person_website ?? ''
+    form.contact_person_mobile  = ledger.contact_person_mobile ?? ''
+    form.addresses             = ledger.addresses ? JSON.parse(JSON.stringify(ledger.addresses)) : []
+    form.state_name            = ledger.state_name ?? ''
+    form.country_name          = ledger.country_name ?? ''
+    form.pin_code              = ledger.pin_code ?? ''
+    form.credit_period         = ledger.credit_period ?? ''
+    form.credit_limit          = ledger.credit_limit ?? ''
+    form.opening_balance       = ledger.opening_balance ?? ''
+    form.opening_balance_type  = ledger.opening_balance_type ?? ''
+    form.aliases               = ledger.aliases ? JSON.parse(JSON.stringify(ledger.aliases)) : []
+    form.description           = ledger.description ?? ''
+    form.notes                 = ledger.notes ?? ''
+    form.bank_details          = ledger.bank_details ? JSON.parse(JSON.stringify(ledger.bank_details)) : []
     form.clearErrors()
     modal.value = ledger
 }
@@ -261,6 +301,8 @@ function destroy(ledger) {
                 </div>
 
                 <form @submit.prevent="submit" class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+
+                    <!-- Basic -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">
                             Ledger Name <span class="text-red-500">*</span>
@@ -272,15 +314,41 @@ function destroy(ledger) {
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Group</label>
-                        <input v-model="form.group_name" type="text"
-                               list="ledger-group-options"
-                               placeholder="e.g. Sundry Debtors"
-                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                        <datalist id="ledger-group-options">
-                            <option v-for="n in ledgerGroupNames" :key="n" :value="n" />
-                        </datalist>
+                        <select v-model="form.group_name" @change="onGroupChange"
+                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
+                            <option value="">— Select Group —</option>
+                            <option v-for="g in ledgerGroups" :key="g.id" :value="g.name">{{ g.name }}</option>
+                        </select>
+                        <p v-if="form.parent_group" class="mt-1 text-xs text-gray-400">Under: {{ form.parent_group }}</p>
+                        <p v-if="form.errors.group_name" class="mt-1 text-xs text-red-500">{{ form.errors.group_name }}</p>
                     </div>
 
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Mailing Name</label>
+                        <input v-model="form.mailing_name" type="text" placeholder="e.g. ABC Traders Pvt Ltd"
+                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Bill-wise</label>
+                            <select v-model="form.is_bill_wise_on"
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
+                                <option :value="true">Yes</option>
+                                <option :value="false">No</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Inventory Affected</label>
+                            <select v-model="form.inventory_affected"
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
+                                <option :value="false">No</option>
+                                <option :value="true">Yes</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Tax -->
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">GSTIN</label>
@@ -294,30 +362,100 @@ function destroy(ledger) {
                         </div>
                     </div>
 
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">GST Type</label>
+                        <select v-model="form.gst_type"
+                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
+                            <option value="">— Select —</option>
+                            <option>Regular</option>
+                            <option>Composition</option>
+                            <option>Unregistered</option>
+                            <option>Consumer</option>
+                            <option>Overseas</option>
+                        </select>
+                    </div>
+
+                    <!-- Contact -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Contact Person</label>
+                        <input v-model="form.contact_person" type="text" placeholder="e.g. Rajesh Kumar"
+                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                    </div>
+
                     <div class="grid grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">GST Type</label>
-                            <select v-model="form.gst_type"
-                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
-                                <option value="">— Select —</option>
-                                <option>Regular</option>
-                                <option>Composition</option>
-                                <option>Unregistered</option>
-                                <option>Consumer</option>
-                                <option>Overseas</option>
-                            </select>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Mobile</label>
+                            <input v-model="form.mobile_number" type="text" placeholder="9876543210"
+                                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
                         </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Contact Mobile</label>
+                            <input v-model="form.contact_person_mobile" type="text" placeholder="9876543210"
+                                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Contact Email</label>
+                            <input v-model="form.contact_person_email" type="email" placeholder="e.g. contact@example.in"
+                                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                            <p v-if="form.errors.contact_person_email" class="mt-1 text-xs text-red-500">{{ form.errors.contact_person_email }}</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Website</label>
+                            <input v-model="form.contact_person_website" type="url" placeholder="e.g. https://example.in"
+                                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                        </div>
+                    </div>
+
+                    <!-- Address -->
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="text-sm font-medium text-gray-700">Addresses</label>
+                            <button type="button" @click="addAddress"
+                                    class="text-xs text-violet-600 hover:text-violet-800 font-medium">+ Add Line</button>
+                        </div>
+                        <div v-for="(a, i) in form.addresses" :key="i" class="flex gap-2 mb-2">
+                            <input v-model="a.Address" type="text" placeholder="Address line"
+                                   class="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                            <button type="button" @click="removeAddress(i)"
+                                    class="text-xs text-red-400 hover:text-red-600 px-1">✕</button>
+                        </div>
+                        <p v-if="!form.addresses.length" class="text-xs text-gray-400">No address lines added.</p>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">State</label>
                             <input v-model="form.state_name" type="text" placeholder="e.g. Maharashtra"
                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
                         </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Country</label>
+                            <input v-model="form.country_name" type="text" placeholder="e.g. India"
+                                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                        </div>
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Mobile</label>
-                        <input v-model="form.mobile_number" type="text" placeholder="e.g. 9876543210"
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Pin Code</label>
+                        <input v-model="form.pin_code" type="text" placeholder="e.g. 400001"
                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                    </div>
+
+                    <!-- Credit & Balance -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Credit Period (days)</label>
+                            <input v-model="form.credit_period" type="number" min="0" placeholder="e.g. 30"
+                                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Credit Limit</label>
+                            <input v-model="form.credit_limit" type="number" step="0.01" placeholder="0.00"
+                                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                        </div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-3">
@@ -335,6 +473,35 @@ function destroy(ledger) {
                                 <option value="Cr">Cr (Credit)</option>
                             </select>
                         </div>
+                    </div>
+
+                    <!-- Aliases -->
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="text-sm font-medium text-gray-700">Aliases</label>
+                            <button type="button" @click="addAlias"
+                                    class="text-xs text-violet-600 hover:text-violet-800 font-medium">+ Add</button>
+                        </div>
+                        <div v-for="(al, i) in form.aliases" :key="i" class="flex gap-2 mb-2">
+                            <input v-model="al.Alias" type="text" placeholder="Alias name"
+                                   class="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                            <button type="button" @click="removeAlias(i)"
+                                    class="text-xs text-red-400 hover:text-red-600 px-1">✕</button>
+                        </div>
+                        <p v-if="!form.aliases.length" class="text-xs text-gray-400">No aliases added.</p>
+                    </div>
+
+                    <!-- Notes -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                        <textarea v-model="form.description" rows="2" placeholder="Optional description"
+                                  class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 resize-none" />
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                        <textarea v-model="form.notes" rows="2" placeholder="Optional notes"
+                                  class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 resize-none" />
                     </div>
 
                     <!-- Bank Details -->

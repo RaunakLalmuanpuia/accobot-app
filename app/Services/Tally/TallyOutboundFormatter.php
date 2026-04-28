@@ -39,6 +39,7 @@ class TallyOutboundFormatter
             'MobileNumber'             => $l->mobile_number,
             'ContactPerson'            => $l->contact_person,
             'ContactPersonEmail'       => $l->contact_person_email,
+            'ContactPersonWebsite'     => $l->contact_person_website,
             'ContactPersonMobile'      => $l->contact_person_mobile,
             'Addresses'                => $l->addresses ?? [],
             'StateName'                => $l->state_name,

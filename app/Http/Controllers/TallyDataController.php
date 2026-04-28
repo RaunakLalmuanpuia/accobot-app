@@ -61,17 +61,23 @@ class TallyDataController extends Controller
                     ->orderBy('ledger_name')
                     ->get([
                         'id', 'tally_id', 'ledger_name', 'group_name', 'parent_group',
-                        'gstin_number', 'pan_number', 'gst_type', 'state_name', 'country_name',
-                        'mobile_number', 'opening_balance', 'opening_balance_type', 'credit_limit',
-                        'bank_details', 'aliases', 'is_active', 'last_synced_at',
+                        'is_bill_wise_on', 'inventory_affected',
+                        'gstin_number', 'pan_number', 'gst_type',
+                        'mailing_name', 'mobile_number', 'contact_person',
+                        'contact_person_email', 'contact_person_website', 'contact_person_mobile',
+                        'addresses', 'state_name', 'country_name', 'pin_code',
+                        'credit_period', 'credit_limit',
+                        'opening_balance', 'opening_balance_type',
+                        'aliases', 'description', 'notes', 'bank_details',
+                        'is_active', 'last_synced_at',
                         'mapped_client_id', 'mapped_vendor_id',
                     ]),
                 $map
             ),
-            'ledgerGroupNames' => TallyLedgerGroup::where('tenant_id', $tenant->id)
+            'ledgerGroups' => TallyLedgerGroup::where('tenant_id', $tenant->id)
                 ->where('is_active', true)
                 ->orderBy('name')
-                ->pluck('name'),
+                ->get(['id', 'name', 'under_name']),
         ]);
     }
 

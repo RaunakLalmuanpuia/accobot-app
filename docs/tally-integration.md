@@ -878,7 +878,7 @@ All pages show data to any user with `integrations.view`. Edit / New / Delete ac
 | Page | Route | CRUD entities |
 |------|-------|---------------|
 | LedgerGroups.vue | tally.ledger-groups.index | Ledger Groups — Name, Under, Nature of Group |
-| Ledgers.vue | tally.ledgers.index | Ledgers — Name, Group, GSTIN, PAN, GST Type, State, Mobile, Opening Balance |
+| Ledgers.vue | tally.ledgers.index | Full CRUD slide-over. Group is a dropdown from TallyLedgerGroups (auto-fills ParentGroup from under_name). All outbound fields covered: LedgerName, Group/ParentGroup, MailingName, IsBillWiseOn, InventoryAffected, GSTIN, PAN, GSTType, ContactPerson, Mobile, ContactPersonEmail, ContactPersonMobile, Addresses (dynamic), State, Country, PinCode, CreditPeriod, CreditLimit, OpeningBalance/Type, Aliases (dynamic), Description, Notes, BankDetails (dynamic). |
 | StockMasters.vue | tally.stock-masters.index | Stock Groups + Stock Categories (tabs). Godowns tab is read-only (inbound only). |
 | StockItems.vue | tally.stock-items.index | Stock Items — Name, Group, Category, Unit, HSN, GST rates (IGST/SGST/CGST/CESS), Opening Balance |
 | StatutoryMasters.vue | tally.statutory-masters.index | Statutory Masters — Name, Type, Reg. No., State Code, Reg. Type, PAN, TAN, Applicable From |
@@ -952,7 +952,7 @@ The "Tally" link appears in the top navigation for any user with `integrations.v
 |-------|---------------|
 | `TallyConnectionController` | show(), save(), regenerateToken(), destroy(), testConnection(). Manages the `tally_connections` row for a tenant. |
 | `TallySyncController` | index() (builds Sync.vue props: latest logs per entity, all logs, report snapshots, stats including statutory_masters + employees counts), trigger() (logs a manual trigger entry). |
-| `TallyDataController` | Data browse: ledgerGroups(), ledgers(), stockItems(), vouchers(), voucherShow(), statutoryMasters(), payroll(). Also passes `ledgerGroupNames`, `stockGroupNames`, `stockCategoryNames`, `ledgerNames`, `stockItemNames` for form autocomplete. |
+| `TallyDataController` | Data browse: ledgerGroups(), ledgers(), stockItems(), vouchers(), voucherShow(), statutoryMasters(), payroll(). Passes `ledgerGroups` (id/name/under_name objects) for the ledger group dropdown; `stockGroupNames`, `stockCategoryNames`, `ledgerNames`, `stockItemNames` for other form autocomplete. |
 | `TallyMasterCrudController` | 30 methods. store/update/destroy for: LedgerGroup, Ledger, StockGroup, StockCategory, StockItem, StatutoryMaster, EmployeeGroup, Employee, PayHead, AttendanceType. |
 | `TallyVoucherCrudController` | 3 methods: voucherStore, voucherUpdate, voucherDestroy. Child entries (ledger + inventory) delete-reinserted in transaction on every update. |
 
