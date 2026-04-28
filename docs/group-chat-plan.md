@@ -1411,7 +1411,29 @@ When deploying chat for the first time:
 9. Verify Reverb is running: `curl -I http://localhost:8080/app`
 10. Verify broadcasting auth works: test from browser dev tools in Echo
 
-### 10.5 Health Monitoring
+### 10.5 Production Deployment Notes (2026-04-28)
+
+**Server**: DigitalOcean droplet, `accobot.eightsis.com`, nginx/1.24.0 (Ubuntu)
+
+**App path on server**: Update `/etc/supervisor/conf.d/accobot-reverb.conf` if app path changes — the initial config used `/var/www/accobot` which did not exist; corrected to the actual deploy path.
+
+**Build workflow**: Assets are committed to git (`public/build` is NOT in `.gitignore`). Build must be done locally, not on the server. A `.env.production` file (gitignored, lives only on the dev machine) overrides `VITE_*` vars for production builds:
+
+```
+VITE_REVERB_APP_KEY=1tltozh2680jfq0jtgaj
+VITE_REVERB_HOST=accobot.eightsis.com
+VITE_REVERB_PORT=443
+VITE_REVERB_SCHEME=https
+VITE_VAPID_PUBLIC_KEY=<key>
+```
+
+Without `.env.production`, `VITE_REVERB_HOST` inherits `localhost` from `REVERB_HOST`, causing the browser to attempt `wss://localhost:8080/...` instead of `wss://accobot.eightsis.com/...`.
+
+**Supervisor**: `accobot-reverb` process running, confirmed `RUNNING` with pid. Queue workers already existed as `accobot-worker`.
+
+**WebSocket verified**: `wss://accobot.eightsis.com/app/...` returns `101 Switching Protocols`. Real-time messaging confirmed working without page refresh.
+
+### 10.6 Health Monitoring
 
 Add a simple health check route:
 
@@ -1515,7 +1537,7 @@ Required for background push on iOS and Android.
 8. **Phase 6** — `SystemNotification`, `WebPushChannel`, hook into existing controllers ✅ DONE
 9. **Phase 7** — Build Vue pages and components, update `bootstrap.js`, add SW ✅ DONE
 10. **Phase 11** — Mobile API: MobileGroupChatController, 14 routes, broadcasting auth fix ✅ DONE
-11. **Phase 10** — Supervisor configs, nginx proxy, production `.env` values
+11. **Phase 10** — Supervisor configs, nginx proxy, production `.env` values ✅ DONE (2026-04-28)
 12. **Phase 12** — Native FCM/APNs push for mobile background notifications
 
 ---
