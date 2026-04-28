@@ -39,6 +39,8 @@ class TallyOutboundFormatter
             'MobileNumber'             => $l->mobile_number,
             'ContactPerson'            => $l->contact_person,
             'ContactPersonEmail'       => $l->contact_person_email,
+            'ContactPersonEmailCC'     => $l->contact_person_email_cc,
+            'ContactPersonFax'         => $l->contact_person_fax,
             'ContactPersonWebsite'     => $l->contact_person_website,
             'ContactPersonMobile'      => $l->contact_person_mobile,
             'Addresses'                => $l->addresses ?? [],
@@ -53,6 +55,7 @@ class TallyOutboundFormatter
             'Description'              => $l->description,
             'Notes'                    => $l->notes,
             'BankDetails'              => $l->bank_details ?? [],
+            'BillAllocations'          => $l->bill_allocations ?? [],
         ])->values()->all();
     }
 

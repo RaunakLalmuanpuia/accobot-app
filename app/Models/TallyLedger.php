@@ -21,7 +21,7 @@ class TallyLedger extends Model
         'addresses', 'state_name', 'country_name', 'pin_code',
         'credit_period', 'credit_limit',
         'opening_balance', 'opening_balance_type',
-        'aliases', 'description', 'notes', 'bank_details',
+        'aliases', 'description', 'notes', 'bank_details', 'bill_allocations',
         'is_active', 'last_synced_at',
         'mapped_client_id', 'mapped_vendor_id',
     ];
@@ -32,7 +32,8 @@ class TallyLedger extends Model
         'is_active'        => 'boolean',
         'addresses'        => 'array',
         'aliases'          => 'array',
-        'bank_details'     => 'array',
+        'bank_details'       => 'array',
+        'bill_allocations'   => 'array',
         'credit_limit'                => 'decimal:2',
         'opening_balance'             => 'decimal:2',
         'last_synced_at'              => 'datetime',

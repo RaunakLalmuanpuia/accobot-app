@@ -140,6 +140,7 @@ class TallyInboundSync
                     'description'                => $item['Description'] ?? null,
                     'notes'                      => $item['Notes'] ?? null,
                     'bank_details'               => $item['BankDetails'] ?? null,
+                    'bill_allocations'           => $item['BillAllocations'] ?? null,
                     'is_active'                  => true,
                     'last_synced_at'             => now(),
                 ];
