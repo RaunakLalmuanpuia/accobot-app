@@ -32,6 +32,19 @@ class MobileGroupChatController extends Controller
         );
     }
 
+    private function appendDownloadUrls(\Illuminate\Support\Collection $messages, Tenant $tenant, ChatRoom $room): void
+    {
+        foreach ($messages as $message) {
+            foreach ($message->attachments as $attachment) {
+                $attachment->download_url = route('api.mobile.tenant.groups.attachments.download', [
+                    'tenant'     => $tenant->id,
+                    'room'       => $room->id,
+                    'attachment' => $attachment->id,
+                ]);
+            }
+        }
+    }
+
     /**
      * GET /api/mobile/tenants/{tenant}/groups
      */
@@ -138,6 +151,8 @@ class MobileGroupChatController extends Controller
             ->reverse()
             ->values();
 
+        $this->appendDownloadUrls($messages, $tenant, $room);
+
         $tenantUsers = $tenant->users()
             ->select('users.id', 'users.name')
             ->orderBy('users.name')
@@ -173,6 +188,8 @@ class MobileGroupChatController extends Controller
             ->get()
             ->reverse()
             ->values();
+
+        $this->appendDownloadUrls($messages, $tenant, $room);
 
         return response()->json([
             'data'          => $messages,
@@ -234,6 +251,8 @@ class MobileGroupChatController extends Controller
         ], tenantId: $tenant->id);
 
         $message->load(['sender:id,name', 'attachments', 'reactions', 'replyTo.sender:id,name']);
+
+        $this->appendDownloadUrls(collect([$message]), $tenant, $room);
 
         return response()->json(['data' => $message], 201);
     }

@@ -128,6 +128,16 @@ class ChatRoomController extends Controller
             ->reverse()
             ->values();
 
+        foreach ($messages as $message) {
+            foreach ($message->attachments as $attachment) {
+                $attachment->download_url = route('chat.attachments.download', [
+                    'tenant'     => $tenant->id,
+                    'room'       => $room->id,
+                    'attachment' => $attachment->id,
+                ]);
+            }
+        }
+
         $rooms = ChatRoom::where('tenant_id', $tenant->id)
             ->forUser(auth()->id())
             ->with('latestMessage.sender:id,name')

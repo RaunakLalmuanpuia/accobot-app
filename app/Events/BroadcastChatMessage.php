@@ -48,7 +48,13 @@ class BroadcastChatMessage implements ShouldBroadcast
                 'body'        => $this->message->replyTo->body,
                 'sender_name' => $this->message->replyTo->sender?->name,
             ] : null,
-            'attachments'         => $this->message->attachments->toArray(),
+            'attachments'         => $this->message->attachments->map(fn ($att) => array_merge($att->toArray(), [
+                'download_url' => route('chat.attachments.download', [
+                    'tenant'     => $this->message->tenant_id,
+                    'room'       => $this->message->chat_room_id,
+                    'attachment' => $att->id,
+                ]),
+            ]))->toArray(),
             'reactions'           => $this->message->reaction_summary,
             'edited_at'           => $this->message->edited_at?->toISOString(),
             'deleted_at'          => $this->message->deleted_at?->toISOString(),

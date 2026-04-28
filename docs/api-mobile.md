@@ -682,7 +682,15 @@ Cursor-paginated message history (50 per page). Pass `before_id` to load older m
         { "emoji": "👍", "count": 2, "users": [1, 2] }
       ],
       "reply_to": null,
-      "attachments": []
+      "attachments": [
+        {
+          "id": "uuid",
+          "original_filename": "photo.jpg",
+          "mime_type": "image/jpeg",
+          "size_bytes": 51200,
+          "download_url": "https://app.example.com/api/mobile/tenants/{tenant}/groups/{room}/attachments/{id}"
+        }
+      ]
     }
   ],
   "can_load_more": false

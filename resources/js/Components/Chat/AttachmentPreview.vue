@@ -2,7 +2,7 @@
     <div class="flex items-center gap-2 mt-1">
         <template v-if="isImage">
             <img
-                :src="attachment.signed_url"
+                :src="downloadUrl"
                 :alt="attachment.original_filename"
                 class="max-w-[200px] max-h-[200px] rounded-lg object-cover cursor-pointer"
                 @click="download"
@@ -11,7 +11,7 @@
         <template v-else>
             <a
                 :href="downloadUrl"
-                target="_blank"
+                :download="attachment.original_filename"
                 class="flex items-center gap-2 px-3 py-2 bg-white/20 rounded-lg hover:bg-white/30 transition text-sm"
             >
                 <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
