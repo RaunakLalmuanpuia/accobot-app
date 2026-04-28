@@ -14,6 +14,7 @@ use App\Models\TallyStatutoryMaster;
 use App\Models\TallyStockCategory;
 use App\Models\TallyStockGroup;
 use App\Models\TallyStockItem;
+use App\Models\TallyUnit;
 use App\Models\TallyVoucher;
 use App\Services\Tally\TallyOutboundQueueService;
 use Illuminate\Http\JsonResponse;
@@ -22,6 +23,11 @@ use Illuminate\Http\Request;
 class TallyConfirmController extends TallyBaseController
 {
     public function __construct(private TallyOutboundQueueService $queue) {}
+
+    public function unitMaster(Request $request): JsonResponse
+    {
+        return $this->handle($request, TallyUnit::class);
+    }
 
     public function ledgerMaster(Request $request): JsonResponse
     {

@@ -128,6 +128,7 @@ Route::prefix('tally/inbound')->middleware('throttle:120,1')->group(function () 
     Route::post('masters/stock-groups',     [TallyInboundMastersController::class, 'stockGroups']);
     Route::post('masters/stock-categories', [TallyInboundMastersController::class, 'stockCategories']);
     Route::post('masters/godowns',          [TallyInboundMastersController::class, 'godowns']);
+    Route::post('masters/units',            [TallyInboundMastersController::class, 'units']);
     Route::post('masters/statutory',        [TallyInboundMastersController::class, 'statutory']);
     Route::post('masters/company',          [TallyInboundMastersController::class, 'company']);
     Route::post('payroll/employee-groups',  [TallyInboundPayrollController::class, 'employeeGroups']);
@@ -166,6 +167,8 @@ Route::prefix('MastersAPI')->middleware('throttle:120,1')->group(function () {
     Route::post('update-statutory-master', [TallyConfirmController::class, 'statutoryMaster']);
     Route::get('company-master',           [TallyOutboundController::class, 'companyMaster']);
     Route::post('update-company-master',   [TallyConfirmController::class, 'companyMaster']);
+    Route::get('unit-master',              [TallyOutboundController::class, 'unitMaster']);
+    Route::post('update-unit-master',      [TallyConfirmController::class, 'unitMaster']);
 });
 
 Route::prefix('PayrollAPI')->middleware('throttle:120,1')->group(function () {

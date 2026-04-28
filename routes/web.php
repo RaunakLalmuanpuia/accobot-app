@@ -139,6 +139,7 @@ Route::middleware(['auth', 'verified', 'member'])
         Route::post('/tally/sync', [TallySyncController::class, 'trigger'])->name('tally.sync.trigger')->middleware('tenant.permission:integrations.manage');
         Route::get('/tally/ledger-groups', [TallyDataController::class, 'ledgerGroups'])->name('tally.ledger-groups.index')->middleware('tenant.permission:integrations.view');
         Route::get('/tally/ledgers', [TallyDataController::class, 'ledgers'])->name('tally.ledgers.index')->middleware('tenant.permission:integrations.view');
+        Route::get('/tally/units', [TallyDataController::class, 'units'])->name('tally.units.index')->middleware('tenant.permission:integrations.view');
         Route::get('/tally/stock-masters', [TallyDataController::class, 'stockMasters'])->name('tally.stock-masters.index')->middleware('tenant.permission:integrations.view');
         Route::get('/tally/stock-items', [TallyDataController::class, 'stockItems'])->name('tally.stock-items.index')->middleware('tenant.permission:integrations.view');
         Route::get('/tally/vouchers', [TallyDataController::class, 'vouchers'])->name('tally.vouchers.index')->middleware('tenant.permission:integrations.view');
@@ -160,6 +161,14 @@ Route::middleware(['auth', 'verified', 'member'])
             Route::delete('/tally/ledgers/{ledger}', [TallyMasterCrudController::class, 'ledgerDestroy'])->name('tally.ledgers.destroy');
 
             // Stock Groups
+            Route::post('/tally/godowns', [TallyMasterCrudController::class, 'godownStore'])->name('tally.godowns.store');
+            Route::put('/tally/godowns/{godown}', [TallyMasterCrudController::class, 'godownUpdate'])->name('tally.godowns.update');
+            Route::delete('/tally/godowns/{godown}', [TallyMasterCrudController::class, 'godownDestroy'])->name('tally.godowns.destroy');
+
+            Route::post('/tally/units', [TallyMasterCrudController::class, 'unitStore'])->name('tally.units.store');
+            Route::put('/tally/units/{unit}', [TallyMasterCrudController::class, 'unitUpdate'])->name('tally.units.update');
+            Route::delete('/tally/units/{unit}', [TallyMasterCrudController::class, 'unitDestroy'])->name('tally.units.destroy');
+
             Route::post('/tally/stock-groups', [TallyMasterCrudController::class, 'stockGroupStore'])->name('tally.stock-groups.store');
             Route::put('/tally/stock-groups/{stockGroup}', [TallyMasterCrudController::class, 'stockGroupUpdate'])->name('tally.stock-groups.update');
             Route::delete('/tally/stock-groups/{stockGroup}', [TallyMasterCrudController::class, 'stockGroupDestroy'])->name('tally.stock-groups.destroy');

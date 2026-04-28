@@ -6,6 +6,7 @@ use App\Models\Tenant;
 use App\Models\TallyAttendanceType;
 use App\Models\TallyCompany;
 use App\Models\TallyGodown;
+use App\Models\TallyUnit;
 use App\Models\TallyStockCategory;
 use App\Models\TallyStockGroup;
 use App\Models\TallyEmployee;
@@ -78,6 +79,20 @@ class TallyDataController extends Controller
                 ->where('is_active', true)
                 ->orderBy('name')
                 ->get(['id', 'name', 'under_name']),
+        ]);
+    }
+
+    public function units(Tenant $tenant)
+    {
+        $map = $this->queueMap($tenant->id, TallyUnit::class);
+        return inertia('Tally/Units', [
+            'tenant' => $tenant,
+            'units'  => $this->addSyncStatus(
+                TallyUnit::where('tenant_id', $tenant->id)
+                    ->orderBy('name')
+                    ->get(['id', 'tally_id', 'name', 'symbol', 'formal_name', 'decimal_places', 'uqc', 'is_active', 'last_synced_at']),
+                $map
+            ),
         ]);
     }
 

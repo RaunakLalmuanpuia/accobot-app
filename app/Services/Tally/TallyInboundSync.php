@@ -17,6 +17,7 @@ use App\Models\TallyStockGroup;
 use App\Models\TallyStockItem;
 use App\Models\TallyCompany;
 use App\Models\TallyGodown;
+use App\Models\TallyUnit;
 use App\Models\TallyStatutoryMaster;
 use App\Models\TallyEmployee;
 use App\Models\TallyVoucher;
@@ -645,6 +646,51 @@ class TallyInboundSync
 
                 if ($existing) { $existing->update($data); $log->records_updated++; }
                 else { TallyGodown::create($data); $log->records_created++; }
+            }
+        } catch (\Throwable $e) {
+            return $this->failLog($log, $e->getMessage());
+        }
+
+        return $this->completeLog($log, $conn);
+    }
+
+    public function syncUnits(TallyConnection $conn, array $items): TallySyncLog
+    {
+        $log = $this->startLog($conn, 'units');
+
+        try {
+            foreach ($items as $raw) {
+                $item    = $this->strip($raw);
+                $tallyId = (int) ($item['TallyId'] ?? $item['ID'] ?? $item['Id'] ?? 0);
+                if (!$tallyId) { $log->records_failed++; continue; }
+
+                $alterId  = (int) ($item['AlterID'] ?? $item['AlterId'] ?? 0);
+                $existing = TallyUnit::withoutGlobalScope('tenant')
+                    ->where('tenant_id', $conn->tenant_id)
+                    ->where('tally_id', $tallyId)->first();
+
+                $action = $item['Action'] ?? 'Create';
+                if ($action === 'Delete') {
+                    if ($existing) { $existing->update(['is_active' => false]); $log->records_deleted++; }
+                    continue;
+                }
+
+                $data = [
+                    'tenant_id'      => $conn->tenant_id,
+                    'tally_id'       => $tallyId,
+                    'alter_id'       => $alterId,
+                    'action'         => $action,
+                    'name'           => $item['Name'] ?? '',
+                    'symbol'         => $item['Symbol'] ?? null,
+                    'formal_name'    => $item['FormalName'] ?? null,
+                    'decimal_places' => (int) ($item['DecimalPlaces'] ?? 0),
+                    'uqc'            => $item['UQC'] ?? null,
+                    'is_active'      => true,
+                    'last_synced_at' => now(),
+                ];
+
+                if ($existing) { $existing->update($data); $log->records_updated++; }
+                else { TallyUnit::create($data); $log->records_created++; }
             }
         } catch (\Throwable $e) {
             return $this->failLog($log, $e->getMessage());

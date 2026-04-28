@@ -56,6 +56,49 @@ const filteredGodowns = computed(() => {
     )
 })
 
+const godownModal     = ref(null)
+const isEditingGodown = computed(() => godownModal.value && godownModal.value !== 'create')
+const godownForm      = useForm({ name: '', under: '' })
+
+const godownUnderOptions = computed(() =>
+    props.godowns.filter(g => g.is_active).map(g => g.name)
+)
+
+function openCreateGodown() {
+    godownForm.reset()
+    godownForm.clearErrors()
+    godownModal.value = 'create'
+}
+
+function openEditGodown(godown) {
+    godownForm.name  = godown.name
+    godownForm.under = godown.under ?? ''
+    godownForm.clearErrors()
+    godownModal.value = godown
+}
+
+function closeGodownModal() {
+    godownModal.value = null
+    godownForm.reset()
+}
+
+function submitGodown() {
+    if (!isEditingGodown.value) {
+        godownForm.post(route('tally.godowns.store', { tenant: props.tenant.id }), {
+            onSuccess: () => closeGodownModal(),
+        })
+    } else {
+        godownForm.put(route('tally.godowns.update', { tenant: props.tenant.id, godown: godownModal.value.id }), {
+            onSuccess: () => closeGodownModal(),
+        })
+    }
+}
+
+function destroyGodown(godown) {
+    if (!confirm(`Delete "${godown.name}"?`)) return
+    router.delete(route('tally.godowns.destroy', { tenant: props.tenant.id, godown: godown.id }))
+}
+
 // ── Helpers ────────────────────────────────────────────────────────────────────
 function formatDate(d) {
     if (!d) return '—'
@@ -191,6 +234,11 @@ function destroyCat(cat) {
                             @click="openCreateCat"
                             class="inline-flex items-center rounded-lg bg-violet-600 px-3 py-2 text-sm font-medium text-white hover:bg-violet-700 transition">
                         + New Category
+                    </button>
+                    <button v-if="canManage && activeTab === 'godowns'"
+                            @click="openCreateGodown"
+                            class="inline-flex items-center rounded-lg bg-violet-600 px-3 py-2 text-sm font-medium text-white hover:bg-violet-700 transition">
+                        + New Godown
                     </button>
                     <Link :href="route('tally.stock-items.index', { tenant: tenant.id })"
                           class="text-sm text-violet-600 hover:text-violet-800 font-medium">
@@ -339,7 +387,7 @@ function destroyCat(cat) {
                     </div>
                 </template>
 
-                <!-- ── Godowns tab (read-only) ── -->
+                <!-- ── Godowns tab ── -->
                 <template v-if="activeTab === 'godowns'">
                     <div class="flex items-center gap-3">
                         <input v-model="godownSearch" type="text" placeholder="Search godowns…"
@@ -351,16 +399,17 @@ function destroyCat(cat) {
                         <div class="grid grid-cols-12 px-6 py-3 bg-gray-50 border-b border-gray-100 text-xs font-semibold uppercase tracking-wide text-gray-400">
                             <div class="col-span-4">Name</div>
                             <div class="col-span-3">Under</div>
-                            <div class="col-span-3">GUID</div>
+                            <div class="col-span-2">GUID</div>
                             <div class="col-span-1 text-center">Status</div>
                             <div class="col-span-1">Last Synced</div>
+                            <div class="col-span-1 text-right" v-if="canManage">Actions</div>
                         </div>
 
                         <div v-for="godown in filteredGodowns" :key="godown.id"
                              class="grid grid-cols-12 items-center px-6 py-4 border-b border-gray-50 last:border-0 hover:bg-gray-50/60 transition">
                             <div class="col-span-4 text-sm font-medium text-gray-900">{{ godown.name }}</div>
                             <div class="col-span-3 text-sm text-gray-500">{{ godown.under ?? '—' }}</div>
-                            <div class="col-span-3 text-xs text-gray-400 font-mono truncate">{{ godown.guid ?? '—' }}</div>
+                            <div class="col-span-2 text-xs text-gray-400 font-mono truncate">{{ godown.guid ?? '—' }}</div>
                             <div class="col-span-1 text-center">
                                 <span :class="godown.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'"
                                       class="text-xs px-2 py-0.5 rounded-full font-medium">
@@ -368,6 +417,12 @@ function destroyCat(cat) {
                                 </span>
                             </div>
                             <div class="col-span-1 text-xs text-gray-400">{{ formatDate(godown.last_synced_at) }}</div>
+                            <div class="col-span-1 text-right" v-if="canManage">
+                                <button @click="openEditGodown(godown)"
+                                        class="text-xs text-violet-600 hover:text-violet-800 font-medium">Edit</button>
+                                <button @click="destroyGodown(godown)"
+                                        class="text-xs text-red-500 hover:text-red-700 font-medium ml-2">Del</button>
+                            </div>
                         </div>
 
                         <p v-if="!filteredGodowns.length" class="text-center text-gray-400 py-12 text-sm">No godowns found.</p>
@@ -412,6 +467,49 @@ function destroyCat(cat) {
                             {{ isEditingGroup ? 'Update' : 'Create' }}
                         </button>
                         <button type="button" @click="closeGroupModal"
+                                class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 transition">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </Teleport>
+
+    <!-- Godown slide-over -->
+    <Teleport to="body">
+        <div v-if="godownModal !== null" class="fixed inset-0 z-40 flex justify-end">
+            <div class="absolute inset-0 bg-black/30" @click="closeGodownModal" />
+            <div class="relative z-50 w-full max-w-md bg-white shadow-xl flex flex-col">
+                <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-base font-semibold text-gray-900">
+                        {{ isEditingGodown ? 'Edit Godown' : 'New Godown' }}
+                    </h2>
+                    <button @click="closeGodownModal" class="text-gray-400 hover:text-gray-600 text-lg leading-none">✕</button>
+                </div>
+                <form @submit.prevent="submitGodown" class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Name <span class="text-red-500">*</span></label>
+                        <input v-model="godownForm.name" type="text" placeholder="e.g. Main Warehouse"
+                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                        <p v-if="godownForm.errors.name" class="mt-1 text-xs text-red-500">{{ godownForm.errors.name }}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Under</label>
+                        <input v-model="godownForm.under" type="text"
+                               list="gd-under-options"
+                               placeholder="e.g. All Godowns"
+                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                        <datalist id="gd-under-options">
+                            <option v-for="n in godownUnderOptions" :key="n" :value="n" />
+                        </datalist>
+                    </div>
+                    <div class="flex gap-3 pt-2 border-t border-gray-100">
+                        <button type="submit" :disabled="godownForm.processing"
+                                class="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 transition disabled:opacity-50">
+                            {{ isEditingGodown ? 'Update' : 'Create' }}
+                        </button>
+                        <button type="button" @click="closeGodownModal"
                                 class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 transition">
                             Cancel
                         </button>

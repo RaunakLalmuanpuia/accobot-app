@@ -12,6 +12,7 @@ use App\Models\TallyReport;
 use App\Models\TallyStatutoryMaster;
 use App\Models\TallySyncLog;
 use App\Models\TallyGodown;
+use App\Models\TallyUnit;
 use App\Models\TallyStockCategory;
 use App\Models\TallyStockGroup;
 use App\Models\TallyStockItem;
@@ -59,6 +60,7 @@ class TallySyncController extends Controller
             'total_stock_categories'  => TallyStockCategory::withoutGlobalScope('tenant')->where('tenant_id', $tenant->id)->where('is_active', true)->count(),
             'total_stock_items'       => TallyStockItem::withoutGlobalScope('tenant')->where('tenant_id', $tenant->id)->where('is_active', true)->count(),
             'total_godowns'           => TallyGodown::withoutGlobalScope('tenant')->where('tenant_id', $tenant->id)->where('is_active', true)->count(),
+            'total_units'             => TallyUnit::withoutGlobalScope('tenant')->where('tenant_id', $tenant->id)->where('is_active', true)->count(),
             'total_vouchers'          => TallyVoucher::withoutGlobalScope('tenant')->where('tenant_id', $tenant->id)->where('is_active', true)->count(),
             'total_statutory_masters' => TallyStatutoryMaster::withoutGlobalScope('tenant')->where('tenant_id', $tenant->id)->where('is_active', true)->count(),
             'total_employees'         => TallyEmployee::withoutGlobalScope('tenant')->where('tenant_id', $tenant->id)->where('is_active', true)->count(),

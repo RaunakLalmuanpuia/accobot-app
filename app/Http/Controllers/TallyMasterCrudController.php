@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\AuditEvent;
 use App\Models\TallyAttendanceType;
+use App\Models\TallyGodown;
+use App\Models\TallyUnit;
 use App\Models\TallyEmployee;
 use App\Models\TallyEmployeeGroup;
 use App\Models\TallyLedger;
@@ -733,6 +735,111 @@ class TallyMasterCrudController extends Controller
         return back()->with('success', 'Attendance type marked inactive and queued for deletion in Tally.');
     }
 
+    // ── Godowns ────────────────────────────────────────────────────────────────
+
+    public function godownStore(Request $request, Tenant $tenant)
+    {
+        $data = $request->validate([
+            'name'  => 'required|string|max:255',
+            'under' => 'nullable|string|max:255',
+        ]);
+
+        $record = TallyGodown::create(array_merge($data, [
+            'tenant_id' => $tenant->id,
+            'is_active' => true,
+        ]));
+
+        AuditEvent::log('tally.godown.created', ['id' => $record->id, 'name' => $record->name]);
+        return back()->with('success', 'Godown created.');
+    }
+
+    public function godownUpdate(Request $request, Tenant $tenant, TallyGodown $godown)
+    {
+        abort_unless($godown->tenant_id === $tenant->id, 404);
+
+        $data = $request->validate([
+            'name'  => 'required|string|max:255',
+            'under' => 'nullable|string|max:255',
+        ]);
+
+        $godown->update($data);
+
+        if (! $godown->wasChanged()) {
+            return back()->with('info', 'No changes detected.');
+        }
+
+        AuditEvent::log('tally.godown.updated', ['id' => $godown->id, 'name' => $godown->name]);
+        return back()->with('success', 'Godown updated.');
+    }
+
+    public function godownDestroy(Tenant $tenant, TallyGodown $godown)
+    {
+        abort_unless($godown->tenant_id === $tenant->id, 404);
+
+        $godown->delete();
+        AuditEvent::log('tally.godown.deleted', ['id' => $godown->id]);
+        return back()->with('success', 'Godown deleted.');
+    }
+
+    // ── Units ──────────────────────────────────────────────────────────────────
+
+    public function unitStore(Request $request, Tenant $tenant)
+    {
+        $data = $request->validate([
+            'name'           => 'required|string|max:255',
+            'symbol'         => 'nullable|string|max:50',
+            'formal_name'    => 'nullable|string|max:255',
+            'decimal_places' => 'nullable|integer|min:0|max:9',
+            'uqc'            => 'nullable|string|max:100',
+        ]);
+
+        $record = TallyUnit::create(array_merge($data, [
+            'tenant_id' => $tenant->id,
+            'is_active' => true,
+        ]));
+
+        $this->logPayload($record, 'created');
+        return back()->with('success', 'Unit created and queued for Tally sync.');
+    }
+
+    public function unitUpdate(Request $request, Tenant $tenant, TallyUnit $unit)
+    {
+        abort_unless($unit->tenant_id === $tenant->id, 404);
+
+        $data = $request->validate([
+            'name'           => 'required|string|max:255',
+            'symbol'         => 'nullable|string|max:50',
+            'formal_name'    => 'nullable|string|max:255',
+            'decimal_places' => 'nullable|integer|min:0|max:9',
+            'uqc'            => 'nullable|string|max:100',
+        ]);
+
+        $unit->update($data);
+
+        if (! $unit->wasChanged()) {
+            return back()->with('info', 'No changes detected.');
+        }
+
+        $this->logPayload($unit, 'updated');
+        return back()->with('success', 'Unit updated and queued for Tally sync.');
+    }
+
+    public function unitDestroy(Tenant $tenant, TallyUnit $unit)
+    {
+        abort_unless($unit->tenant_id === $tenant->id, 404);
+
+        if (! $unit->tally_id) {
+            $this->purgeFromQueue($tenant->id, TallyUnit::class, $unit->id);
+            $unit->delete();
+            AuditEvent::log('tally.unit.deleted', ['id' => $unit->id]);
+            return back()->with('success', 'Unit deleted (was never synced to Tally).');
+        }
+
+        $unit->update(['is_active' => false]);
+        $this->logPayload($unit, 'deleted');
+        return back()->with('success', 'Unit marked inactive and queued for deletion in Tally.');
+    }
+
     // ── Helpers ────────────────────────────────────────────────────────────────
 
     private function purgeFromQueue(string $tenantId, string $entityType, int $entityId): void
@@ -758,6 +865,7 @@ class TallyMasterCrudController extends Controller
             $record instanceof TallyEmployee        => 'employee',
             $record instanceof TallyPayHead         => 'pay_head',
             $record instanceof TallyAttendanceType  => 'attendance_type',
+            $record instanceof TallyUnit            => 'unit',
             default                                 => 'master',
         };
 
@@ -786,6 +894,7 @@ class TallyMasterCrudController extends Controller
             $record instanceof TallyEmployee        => $this->formatter->formatEmployees($collection),
             $record instanceof TallyPayHead         => $this->formatter->formatPayHeads($collection),
             $record instanceof TallyAttendanceType  => $this->formatter->formatAttendanceTypes($collection),
+            $record instanceof TallyUnit            => $this->formatter->formatUnits($collection),
             default                                 => [],
         };
 

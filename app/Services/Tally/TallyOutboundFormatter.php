@@ -164,6 +164,21 @@ class TallyOutboundFormatter
         return $this->formatVouchers($vouchers);
     }
 
+    public function formatUnits(Collection $units): array
+    {
+        return $units->map(fn ($u) => $this->dropNulls([
+            'AccobotId'     => $u->id,
+            'TallyId'       => $u->tally_id,
+            'AlterID'       => $u->alter_id,
+            'Action'        => $u->action,
+            'Name'          => $u->name,
+            'Symbol'        => $u->symbol,
+            'FormalName'    => $u->formal_name,
+            'DecimalPlaces' => $u->decimal_places,
+            'UQC'           => $u->uqc,
+        ]))->values()->all();
+    }
+
     public function formatCompanyMasters(Collection $companies): array
     {
         return $companies->map(fn ($c) => $this->dropNulls([

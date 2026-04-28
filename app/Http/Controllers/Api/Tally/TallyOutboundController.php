@@ -14,6 +14,7 @@ use App\Models\TallyStatutoryMaster;
 use App\Models\TallyStockCategory;
 use App\Models\TallyStockGroup;
 use App\Models\TallyStockItem;
+use App\Models\TallyUnit;
 use App\Models\TallyVoucher;
 use App\Services\Tally\TallyOutboundFormatter;
 use App\Services\Tally\TallyOutboundQueueService;
@@ -70,6 +71,21 @@ class TallyOutboundController extends TallyBaseController
 
         $data = $this->formatter->formatStockItems($items);
         $this->logOutbound('StockItem', $conn->tenant_id, $data);
+        return response()->json(['Data' => $data]);
+    }
+
+    public function unitMaster(Request $request): JsonResponse
+    {
+        $conn = $this->resolveAndVerify($request);
+        $ids  = $this->queue->pendingIds($conn->tenant_id, TallyUnit::class);
+
+        $units = TallyUnit::withoutGlobalScope('tenant')
+            ->where('tenant_id', $conn->tenant_id)
+            ->whereIn('id', $ids)
+            ->get();
+
+        $data = $this->formatter->formatUnits($units);
+        $this->logOutbound('Unit', $conn->tenant_id, $data);
         return response()->json(['Data' => $data]);
     }
 
