@@ -10,7 +10,7 @@ class TallyOutboundFormatter
     {
         return $groups->map(fn ($g) => [
             'AccobotId'      => $g->id,
-            'ID'             => $g->tally_id,
+            'TallyId'        => $g->tally_id,
             'AlterID'        => $g->alter_id,
             'Action'         => $g->action,
             'Name'           => $g->name,
@@ -24,7 +24,7 @@ class TallyOutboundFormatter
     {
         return $ledgers->map(fn ($l) => [
             'AccobotId'                => $l->id,
-            'ID'                       => $l->tally_id,
+            'TallyId'                  => $l->tally_id,
             'AlterID'                  => $l->alter_id,
             'Action'                   => $l->action,
             'LedgerName'               => $l->ledger_name,
@@ -60,7 +60,7 @@ class TallyOutboundFormatter
     {
         return $items->map(fn ($s) => [
             'AccobotId'              => $s->id,
-            'ID'                     => $s->tally_id,
+            'TallyId'                => $s->tally_id,
             'AlterID'                => $s->alter_id,
             'Action'                 => $s->action,
             'Name'                   => $s->name,
@@ -98,7 +98,7 @@ class TallyOutboundFormatter
     {
         return $groups->map(fn ($g) => [
             'AccobotId'           => $g->id,
-            'ID'                  => $g->tally_id,
+            'TallyId'             => $g->tally_id,
             'AlterID'             => $g->alter_id,
             'Action'              => $g->action,
             'Name'                => $g->name,
@@ -111,7 +111,7 @@ class TallyOutboundFormatter
     {
         return $cats->map(fn ($c) => [
             'AccobotId'  => $c->id,
-            'ID'         => $c->tally_id,
+            'TallyId'    => $c->tally_id,
             'AlterID'    => $c->alter_id,
             'Action'     => $c->action,
             'Name'    => $c->name,
@@ -164,7 +164,7 @@ class TallyOutboundFormatter
     {
         return $companies->map(fn ($c) => [
             'AccobotId'       => $c->id,
-            'ID'              => $c->tally_id,
+            'TallyId'         => $c->tally_id,
             'Action'          => $c->action ?? 'Create',
             'Guid'            => $c->company_guid,
             'CompanyName'     => $c->company_name,
@@ -180,7 +180,7 @@ class TallyOutboundFormatter
     {
         return $items->map(fn ($s) => [
             'AccobotId'          => $s->id,
-            'ID'                 => $s->tally_id,
+            'TallyId'            => $s->tally_id,
             'AlterID'            => $s->alter_id,
             'Action'             => $s->action,
             'Name'               => $s->name,
@@ -199,7 +199,7 @@ class TallyOutboundFormatter
     {
         return $groups->map(fn ($g) => [
             'AccobotId'  => $g->id,
-            'ID'         => $g->tally_id,
+            'TallyId'    => $g->tally_id,
             'AlterID'    => $g->alter_id,
             'Action'     => $g->action,
             'Name'                => $g->name,
@@ -212,7 +212,7 @@ class TallyOutboundFormatter
     {
         return $employees->map(fn ($e) => [
             'AccobotId'         => $e->id,
-            'ID'                => $e->tally_id,
+            'TallyId'           => $e->tally_id,
             'AlterID'           => $e->alter_id,
             'Action'            => $e->action,
             'Name'             => $e->name,
@@ -235,7 +235,7 @@ class TallyOutboundFormatter
     {
         return $payHeads->map(fn ($p) => [
             'AccobotId'       => $p->id,
-            'ID'              => $p->tally_id,
+            'TallyId'         => $p-> ,
             'AlterID'         => $p->alter_id,
             'Action'          => $p->action,
             'Name'               => $p->name,
@@ -252,7 +252,7 @@ class TallyOutboundFormatter
     {
         return $types->map(fn ($t) => [
             'AccobotId'      => $t->id,
-            'ID'             => $t->tally_id,
+            'TallyId'        => $t->tally_id,
             'AlterID'        => $t->alter_id,
             'Action'         => $t->action,
             'Name'           => $t->name,
@@ -265,7 +265,7 @@ class TallyOutboundFormatter
     {
         return $vouchers->map(fn ($v) => [
             'AccobotId'     => $v->id,
-            'MasterID'      => $v->tally_id,
+            'TallyId'       => $v->tally_id,
             'AlterID'       => $v->alter_id,
             'Action'        => $v->action,
             'VoucherType'   => $v->voucher_type,
@@ -285,7 +285,7 @@ class TallyOutboundFormatter
     {
         return $vouchers->map(fn ($v) => [
             'AccobotId'     => $v->id,
-            'MasterID'      => $v->tally_id,
+            'TallyId'       => $v->tally_id,
             'AlterID'       => $v->alter_id,
             'Action'        => $v->action,
             'VoucherType'   => $v->voucher_type,
@@ -307,7 +307,7 @@ class TallyOutboundFormatter
         return $vouchers->map(function ($v) {
             $base = [
                 'AccobotId'     => $v->id,
-                'MasterID'      => $v->tally_id,
+                'TallyId'       => $v->tally_id,
                 'AlterID'       => $v->alter_id,
                 'Action'        => $v->action,
                 'VoucherType'   => $v->voucher_type,

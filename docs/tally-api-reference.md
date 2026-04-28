@@ -482,7 +482,7 @@ Syncs Tally statutory registrations — GST, TDS, TCS, PF, ESI, PT, etc.
 {
   "Data": [
     {
-      "ID": 301,
+      "TallyId": 301,
       "AlterID": 120,
       "Action": "Create",
       "Name": "GST - Maharashtra",
@@ -578,7 +578,7 @@ Syncs Tally employee group hierarchy.
 {
   "Data": [
     {
-      "ID": 401,
+      "TallyId": 401,
       "AlterID": 10,
       "Action": "Create",
       "Name": "Management",
@@ -615,7 +615,7 @@ Syncs Tally employee masters with full payroll and statutory details.
   "full_sync": false,
   "Data": [
     {
-      "ID": 501,
+      "TallyId": 501,
       "AlterID": 200,
       "Action": "Create",
       "Name": "Arjun Mehta",
@@ -690,7 +690,7 @@ Syncs Tally pay heads (salary components — earnings, deductions, statutory).
 {
   "Data": [
     {
-      "ID": 601,
+      "TallyId": 601,
       "AlterID": 30,
       "Action": "Create",
       "Name": "Basic Salary",
@@ -738,7 +738,7 @@ Syncs Tally attendance and leave type definitions.
 {
   "Data": [
     {
-      "ID": 701,
+      "TallyId": 701,
       "AlterID": 5,
       "Action": "Create",
       "Name": "Present",
@@ -776,7 +776,7 @@ Syncs Tally payroll (salary) vouchers with per-employee pay head breakdowns. Sto
 {
   "Data": [
     {
-      "MasterID": 8001,
+      "TallyId": 8001,
       "AlterID": 50,
       "Action": "Create",
       "VoucherType": "Payroll",
@@ -827,7 +827,7 @@ Syncs Tally attendance vouchers with per-employee attendance entries. Stored in 
 {
   "Data": [
     {
-      "MasterID": 9001,
+      "TallyId": 9001,
       "AlterID": 51,
       "Action": "Create",
       "VoucherType": "Attendance",
@@ -979,7 +979,7 @@ The real connector sends this key as lowercase `ledgerentries`. `LedgerEntries` 
   "full_sync": false,
   "data": [
     {
-      "MasterID": 5001,
+      "TallyId": 5001,
       "AlterID": 300,
       "Action": "Create",
       "VoucherNumber": "1",
@@ -1106,7 +1106,7 @@ Purchase invoice. Stored in `tally_vouchers` with `voucher_type = "Purchase"`. N
 {
   "data": [
     {
-      "MasterID": 6001,
+      "TallyId": 6001,
       "AlterID": 410,
       "Action": "Create",
       "VoucherNumber": "PUR/2024-25/001",
@@ -1159,7 +1159,7 @@ Credit note (sales return). `voucher_type = "CreditNote"`.
 {
   "data": [
     {
-      "MasterID": 7001,
+      "TallyId": 7001,
       "AlterID": 500,
       "Action": "Create",
       "VoucherNumber": "CN/2024-25/001",
@@ -1218,7 +1218,7 @@ Receipt voucher — money received from party. `voucher_type = "Receipt"`.
 {
   "data": [
     {
-      "MasterID": 13,
+      "TallyId": 13,
       "AlterID": 35,
       "Action": "Update",
       "VoucherNumber": "3",
@@ -1289,7 +1289,7 @@ Payment voucher — money paid to party. `voucher_type = "Payment"`.
 {
   "data": [
     {
-      "MasterID": 25,
+      "TallyId": 25,
       "AlterID": 30,
       "Action": "Update",
       "VoucherNumber": "7",
@@ -1342,7 +1342,7 @@ Contra voucher — inter-bank / cash-bank transfers. `voucher_type = "Contra"`.
 {
   "data": [
     {
-      "MasterID": 27,
+      "TallyId": 27,
       "AlterID": 29,
       "Action": "Create",
       "VoucherNumber": "2",
@@ -1410,7 +1410,7 @@ Journal voucher — adjustment entries. `voucher_type = "Journal"`.
 {
   "data": [
     {
-      "MasterID": 17,
+      "TallyId": 17,
       "AlterID": 38,
       "Action": "Update",
       "VoucherNumber": "5",
@@ -1467,7 +1467,7 @@ To soft-delete a voucher, send `"Action": "Delete"` with the same `MasterID`:
 {
   "data": [
     {
-      "MasterID": 5001,
+      "TallyId": 5001,
       "AlterID": 301,
       "Action": "Delete"
     }
@@ -1611,7 +1611,7 @@ Authorization: Bearer <token>
   "Data": [
     {
       "AccobotId": 1,
-      "ID": 1,
+      "TallyId": 1,
       "AlterID": 42,
       "Action": "Create",
       "Name": "Sundry Debtors",
@@ -1645,7 +1645,7 @@ Authorization: Bearer <token>
   "Data": [
     {
       "AccobotId": 101,
-      "ID": 101,
+      "TallyId": 101,
       "AlterID": 205,
       "Action": "Create",
       "LedgerName": "BlueStar Technologies",
@@ -1694,7 +1694,7 @@ Returns all active stock items.
   "Data": [
     {
       "AccobotId": 201,
-      "ID": 201,
+      "TallyId": 201,
       "AlterID": 88,
       "Action": "Create",
       "Name": "30Mbps Lease Line",
@@ -1752,7 +1752,7 @@ Returns all active stock groups.
   "Data": [
     {
       "AccobotId": 10,
-      "ID": 10,
+      "TallyId": 10,
       "AlterID": 55,
       "Action": "Create",
       "Name": "Network Equipment",
@@ -1778,7 +1778,7 @@ Returns all active stock categories.
   "Data": [
     {
       "AccobotId": 5,
-      "ID": 5,
+      "TallyId": 5,
       "AlterID": 11,
       "Action": "Create",
       "Name": "Lease Line Services",
@@ -1801,7 +1801,7 @@ Returns all active statutory masters.
   "Data": [
     {
       "AccobotId": 301,
-      "ID": 301,
+      "TallyId": 301,
       "AlterID": 120,
       "Action": "Create",
       "Name": "GST - Maharashtra",
@@ -1831,7 +1831,7 @@ Returns pending company records for the tenant (queued when the user edits compa
   "Data": [
     {
       "AccobotId": 1,
-      "ID": null,
+      "TallyId": null,
       "Action": "Create",
       "Guid": "644e52fa-2de6-4bf6-aabd-e2a3533780a7",
       "CompanyName": "Aignite",
@@ -1868,7 +1868,7 @@ Returns all active employee groups.
   "Data": [
     {
       "AccobotId": 401,
-      "ID": 401,
+      "TallyId": 401,
       "AlterID": 10,
       "Action": "Create",
       "Name": "Management",
@@ -1891,7 +1891,7 @@ Returns all active employees with full payroll details.
   "Data": [
     {
       "AccobotId": 501,
-      "ID": 501,
+      "TallyId": 501,
       "AlterID": 200,
       "Action": "Create",
       "Name": "Arjun Mehta",
@@ -1932,7 +1932,7 @@ Returns all active pay heads.
   "Data": [
     {
       "AccobotId": 601,
-      "ID": 601,
+      "TallyId": 601,
       "AlterID": 30,
       "Action": "Create",
       "Name": "Basic Salary",
@@ -1961,7 +1961,7 @@ Returns all active attendance types.
   "Data": [
     {
       "AccobotId": 701,
-      "ID": 701,
+      "TallyId": 701,
       "AlterID": 5,
       "Action": "Create",
       "Name": "Present",
@@ -1985,7 +1985,7 @@ Returns pending salary (payroll) vouchers with per-employee pay head breakdowns.
   "Data": [
     {
       "AccobotId": 50,
-      "MasterID": null,
+      "TallyId": null,
       "AlterID": null,
       "Action": "Create",
       "VoucherType": "Payroll",
@@ -2021,7 +2021,7 @@ Returns pending attendance vouchers with per-employee attendance breakdowns.
   "Data": [
     {
       "AccobotId": 51,
-      "MasterID": null,
+      "TallyId": null,
       "AlterID": null,
       "Action": "Create",
       "VoucherType": "Attendance",
@@ -2060,7 +2060,7 @@ Returns all active Sales vouchers with inventory and ledger entries.
   "Data": [
     {
       "AccobotId": 42,
-      "MasterID": 5001,
+      "TallyId": 5001,
       "AlterID": 300,
       "Action": "Create",
       "VoucherType": "Sales",

@@ -1536,6 +1536,7 @@ Required for background push on iOS and Android.
 7. **Phase 9** — Configure attachment validation and orphan cleanup command ✅ DONE
 8. **Phase 6** — `SystemNotification`, `WebPushChannel`, hook into existing controllers ✅ DONE
 9. **Phase 7** — Build Vue pages and components, update `bootstrap.js`, add SW ✅ DONE
+   - **2026-04-28 UI refresh**: Full responsive overhaul — mobile drawers for room list and members sidebar, date separators in message stream, message grouping (consecutive same-user within 5 min), system messages as centered pills, sender avatars on received messages, search filter on Index, improved modal UX
 10. **Phase 11** — Mobile API: MobileGroupChatController, 14 routes, broadcasting auth fix ✅ DONE
 11. **Phase 10** — Supervisor configs, nginx proxy, production `.env` values ✅ DONE (2026-04-28)
 12. **Phase 12** — Native FCM/APNs push for mobile background notifications
