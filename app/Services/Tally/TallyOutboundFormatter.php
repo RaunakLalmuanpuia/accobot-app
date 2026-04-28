@@ -194,18 +194,77 @@ class TallyOutboundFormatter
 
     public function formatCompanyMasters(Collection $companies): array
     {
-        return $companies->map(fn ($c) => $this->dropNulls([
-            'AccobotId'        => $c->id,
-            'TallyId'          => $c->tally_id,
-            'Action'           => $c->action ?? 'Create',
-            'Guid'             => $c->company_guid,
-            'CompanyName'      => $c->company_name,
-            'Address'          => $c->address,
-            'State'            => $c->state,
-            'Country'          => $c->country,
-            'TallySerialNo'    => $c->tally_serial_no,
-            'TallyLicenseType' => $c->licence_type,
-        ]))->values()->all();
+        return $companies->map(function ($c) {
+            $flags    = $c->feature_flags ?? [];
+            $deductor = $c->deductor_details ?? [];
+            $legacy   = $c->legacy_tax_details ?? [];
+
+            return $this->nullToEmpty(array_merge([
+                'AccobotId'        => $c->id,
+                'TallyId'          => $c->tally_id,
+                'Action'           => $c->action ?? 'Create',
+                'Guid'             => $c->company_guid,
+                // Core identity
+                'CompanyName'      => $c->company_name,
+                'FormalName'       => $c->formal_name,
+                'NameAlias'        => $c->name_alias,
+                'Email'            => $c->email,
+                'PhoneNumber'      => $c->phone_number,
+                'FaxNumber'        => $c->fax_number,
+                'Website'          => $c->website,
+                'MobileNumbers'    => $c->mobile_numbers,
+                'Address'          => $c->address,
+                'Address1'         => $c->address1,
+                'Address2'         => $c->address2,
+                'Address3'         => $c->address3,
+                'Address4'         => $c->address4,
+                'Address5'         => $c->address5,
+                'State'            => $c->state,
+                'PriorState'       => $c->prior_state,
+                'Country'          => $c->country,
+                'CountryISDCode'   => $c->country_isd_code,
+                'Pincode'          => $c->pincode,
+                'BranchName'       => $c->branch_name,
+                'BranchName2'      => $c->branch_name2,
+                'Logopath'         => $c->logo_path,
+                'PriceLevel'       => $c->price_level,
+                'ConnectName'      => $c->connect_name,
+                'DBName'           => $c->db_name,
+                'CompanyNumber'    => $c->company_number,
+                'StatutoryVersion' => $c->statutory_version,
+                'CorporateIdentityNo' => $c->corporate_identity_no,
+                'TallySerialNo'    => $c->tally_serial_no,
+                'TallyLicenseType' => $c->licence_type,
+                // Tax registration
+                'IncomeTaxNumber'    => $c->income_tax_number,
+                'SalesTaxNumber'     => $c->sales_tax_number,
+                'InterstateSTNumber' => $c->interstate_st_number,
+                'TANumber'           => $c->ta_number,
+                // GST
+                'GSTRegistrationNumber' => $c->gst_registration_number,
+                'GSTRegistrationType'   => $c->gst_registration_type,
+                'GSTApplicableDate'     => $c->gst_applicable_date,
+                'GSTApplicability'      => $c->gst_applicability,
+                'CmpTypeOfSupply'       => $c->cmp_type_of_supply,
+                'HSNApplicability'      => $c->hsn_applicability,
+                'eWayBillApplicableType'      => $c->eway_bill_applicable_type,
+                'eWayBillInterStateThreshold' => $c->eway_bill_interstate_threshold,
+                // Financial periods
+                'StartingFrom'      => $c->starting_from,
+                'BooksFrom'         => $c->books_from,
+                'AuditedUpto'       => $c->audited_upto,
+                'FIFOApplicableFrom' => $c->fifo_applicable_from,
+                'ReturnsStartFrom'  => $c->returns_start_from,
+                'ThisYearBeg'       => $c->this_year_beg,
+                'ThisYearEnd'       => $c->this_year_end,
+                'PrevYearBeg'       => $c->prev_year_beg,
+                'PrevYearEnd'       => $c->prev_year_end,
+                'ThisQuarterBeg'    => $c->this_quarter_beg,
+                'ThisQuarterEnd'    => $c->this_quarter_end,
+                'PrevQuarterBeg'    => $c->prev_quarter_beg,
+                'PrevQuarterEnd'    => $c->prev_quarter_end,
+            ], $flags, $deductor, $legacy));
+        })->values()->all();
     }
 
     public function formatStatutoryMasters(Collection $items): array

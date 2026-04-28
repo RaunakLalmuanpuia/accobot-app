@@ -60,7 +60,7 @@ Accobot replicates the `cloud-tally.in` connector API exactly — same paths, sa
               └────────────────────┘
 ```
 
-Each tenant has exactly **one** `tally_connections` row. That row holds the bearer token the connector uses for every request. When the connector pushes data, Accobot auto-upserts a `tally_companies` row capturing the company name, GUID, licence type, and licence number from the payload.
+Each tenant has exactly **one** `tally_connections` row. That row holds the bearer token the connector uses for every request. When the connector pushes data, Accobot upserts a `tally_companies` row with the full company payload: identity, address, GST/TAN/PAN, financial period dates, feature flags (all `Is*` fields), deductor/person-responsible details, and legacy VAT/CMP/CST/ST/Excise/PF/ESI fields. The last three groups are stored as jsonb columns (`feature_flags`, `deductor_details`, `legacy_tax_details`); all individually queryable fields are stored as separate columns.
 
 ---
 

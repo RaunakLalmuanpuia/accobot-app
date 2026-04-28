@@ -392,16 +392,54 @@ class TallyMasterCrudController extends Controller
 
     // ── Companies ──────────────────────────────────────────────────────────────
 
+    private function companyRules(): array
+    {
+        return [
+            'company_name'       => 'required|string|max:255',
+            'formal_name'        => 'nullable|string|max:255',
+            'name_alias'         => 'nullable|string|max:255',
+            'email'              => 'nullable|email|max:255',
+            'phone_number'       => 'nullable|string|max:50',
+            'fax_number'         => 'nullable|string|max:50',
+            'website'            => 'nullable|url|max:255',
+            'mobile_numbers'     => 'nullable|string|max:255',
+            'address'            => 'nullable|string|max:500',
+            'address1'           => 'nullable|string|max:255',
+            'address2'           => 'nullable|string|max:255',
+            'address3'           => 'nullable|string|max:255',
+            'address4'           => 'nullable|string|max:255',
+            'address5'           => 'nullable|string|max:255',
+            'state'              => 'nullable|string|max:100',
+            'prior_state'        => 'nullable|string|max:100',
+            'country'            => 'nullable|string|max:100',
+            'country_isd_code'   => 'nullable|string|max:10',
+            'pincode'            => 'nullable|string|max:20',
+            'branch_name'        => 'nullable|string|max:255',
+            'branch_name2'       => 'nullable|string|max:255',
+            'connect_name'       => 'nullable|string|max:255',
+            'db_name'            => 'nullable|string|max:255',
+            'corporate_identity_no' => 'nullable|string|max:100',
+            'tally_serial_no'    => 'nullable|string|max:100',
+            'licence_type'       => 'nullable|string|max:100',
+            'income_tax_number'  => 'nullable|string|max:50',
+            'sales_tax_number'   => 'nullable|string|max:50',
+            'interstate_st_number' => 'nullable|string|max:50',
+            'ta_number'          => 'nullable|string|max:50',
+            'gst_registration_number' => 'nullable|string|max:20',
+            'gst_registration_type'   => 'nullable|string|max:50',
+            'gst_applicability'  => 'nullable|string|max:50',
+            'cmp_type_of_supply' => 'nullable|string|max:50',
+            'hsn_applicability'  => 'nullable|string|max:50',
+            'eway_bill_applicable_type'      => 'nullable|string|max:100',
+            'eway_bill_interstate_threshold' => 'nullable|string|max:50',
+            'starting_from'      => 'nullable|string|max:50',
+            'books_from'         => 'nullable|string|max:50',
+        ];
+    }
+
     public function companyStore(Request $request, Tenant $tenant)
     {
-        $data = $request->validate([
-            'company_name'    => 'required|string|max:255',
-            'address'         => 'nullable|string|max:500',
-            'state'           => 'nullable|string|max:100',
-            'country'         => 'nullable|string|max:100',
-            'tally_serial_no' => 'nullable|string|max:100',
-            'licence_type'    => 'nullable|string|max:100',
-        ]);
+        $data = $request->validate($this->companyRules());
 
         $connection = \App\Models\TallyConnection::where('tenant_id', $tenant->id)->first();
         abort_if(!$connection, 422, 'No Tally connection configured for this tenant.');
@@ -421,14 +459,7 @@ class TallyMasterCrudController extends Controller
     {
         abort_unless($company->tenant_id === $tenant->id, 404);
 
-        $data = $request->validate([
-            'company_name'    => 'required|string|max:255',
-            'address'         => 'nullable|string|max:500',
-            'state'           => 'nullable|string|max:100',
-            'country'         => 'nullable|string|max:100',
-            'tally_serial_no' => 'nullable|string|max:100',
-            'licence_type'    => 'nullable|string|max:100',
-        ]);
+        $data = $request->validate($this->companyRules());
 
         $company->update($data);
 

@@ -195,8 +195,21 @@ class TallyDataController extends Controller
             'items'  => $this->addSyncStatus(
                 TallyCompany::where('tenant_id', $tenant->id)
                     ->orderBy('company_name')
-                    ->get(['id', 'tally_id', 'company_guid', 'company_name', 'address', 'state',
-                           'country', 'tally_serial_no', 'licence_type']),
+                    ->get([
+                        'id', 'tally_id', 'company_guid', 'company_name', 'formal_name', 'name_alias',
+                        'email', 'phone_number', 'fax_number', 'website', 'mobile_numbers',
+                        'address', 'address1', 'address2', 'address3', 'address4', 'address5',
+                        'state', 'prior_state', 'country', 'country_isd_code', 'pincode',
+                        'branch_name', 'branch_name2', 'connect_name', 'db_name',
+                        'company_number', 'statutory_version', 'corporate_identity_no',
+                        'tally_serial_no', 'licence_type',
+                        'income_tax_number', 'sales_tax_number', 'ta_number',
+                        'gst_registration_number', 'gst_registration_type', 'gst_applicability',
+                        'eway_bill_applicable_type',
+                        'starting_from', 'books_from', 'audited_upto',
+                        'this_year_beg', 'this_year_end', 'prev_year_beg', 'prev_year_end',
+                        'feature_flags', 'deductor_details',
+                    ]),
                 $map
             ),
         ]);
