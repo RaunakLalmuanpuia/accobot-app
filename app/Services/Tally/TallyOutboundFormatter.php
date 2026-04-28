@@ -22,40 +22,41 @@ class TallyOutboundFormatter
 
     public function formatLedgers(Collection $ledgers): array
     {
-        return $ledgers->map(fn ($l) => $this->dropNulls([
-            'AccobotId'                => $l->id,
-            'TallyId'                  => $l->tally_id,
-            'AlterID'                  => $l->alter_id,
-            'Action'                   => $l->action,
-            'LedgerName'               => $l->ledger_name,
-            'GroupName'                => $l->group_name,
-            'ParentGroup'              => $l->parent_group,
-            'IsBillWiseOn'             => $this->boolStr($l->is_bill_wise_on),
-            'InventoryAffected'        => $this->boolStr($l->inventory_affected),
-            'GSTINNumber'              => $l->gstin_number,
-            'PANNumber'                => $l->pan_number,
-            'GSTType'                  => $l->gst_type,
-            'MailingName'              => $l->mailing_name,
-            'MobileNumber'             => $l->mobile_number,
-            'ContactPerson'            => $l->contact_person,
-            'ContactPersonEmail'       => $l->contact_person_email,
-            'ContactPersonEmailCC'     => $l->contact_person_email_cc,
-            'ContactPersonFax'         => $l->contact_person_fax,
-            'ContactPersonWebsite'     => $l->contact_person_website,
-            'ContactPersonMobile'      => $l->contact_person_mobile,
-            'Addresses'                => $l->addresses ?? [],
-            'StateName'                => $l->state_name,
-            'CountryName'              => $l->country_name,
-            'PinCode'                  => $l->pin_code,
-            'CreditPeriod'             => $l->credit_period,
-            'CreditLimit'              => $l->credit_limit,
-            'OpeningBalance'           => $l->opening_balance,
-            'OpeningBalanceType'       => $l->opening_balance_type,
-            'Aliases'                  => $l->aliases ?? [],
-            'Description'              => $l->description,
-            'Notes'                    => $l->notes,
-            'BankDetails'              => $l->bank_details ?? [],
-            'BillAllocations'          => $l->bill_allocations ?? [],
+        return $ledgers->map(fn ($l) => $this->nullToEmpty([
+            'AccobotId'             => $l->id,
+            'TallyId'               => $l->tally_id,
+            'ERPID'                 => '',
+            'AlterID'               => $l->alter_id,
+            'LedgerName'            => $l->ledger_name,
+            'Action'                => $l->action,
+            'Group'                 => $l->group_name,
+            'ParentGroup'           => $l->parent_group,
+            'Description'           => $l->description,
+            'Notes'                 => $l->notes,
+            'CreditPeriod'          => $l->credit_period,
+            'CreditLimit'           => $l->credit_limit,
+            'InventoryAffected'     => $l->inventory_affected,
+            'StateName'             => $l->state_name,
+            'CountryName'           => $l->country_name,
+            'PinCode'               => $l->pin_code,
+            'Mobile_Number'         => $l->mobile_number,
+            'ContactPerson'         => $l->contact_person,
+            'ContactPerson_Email'   => $l->contact_person_email,
+            'ContactPerson_EmailCC' => $l->contact_person_email_cc,
+            'ContactPerson_Fax'     => $l->contact_person_fax,
+            'ContactPerson_Website' => $l->contact_person_website,
+            'ContactPerson_Mobile'  => $l->contact_person_mobile,
+            'Opening_Balance'       => $l->opening_balance,
+            'Opening_Balance_Type'  => $l->opening_balance_type,
+            'GSTIN_Number'          => $l->gstin_number,
+            'PAN_Number'            => $l->pan_number,
+            'IsBillWiseOn'          => $this->boolStr($l->is_bill_wise_on),
+            'MailingName'           => $l->mailing_name,
+            'GST_Type'              => $l->gst_type,
+            'LedgerAddress'         => $l->addresses ?? [],
+            'BillAllocations'       => $l->bill_allocations ?? [],
+            'Aliases'               => $l->aliases ?? [],
+            'BankDetails'           => $l->bank_details ?? [],
         ]))->values()->all();
     }
 
@@ -416,6 +417,11 @@ class TallyOutboundFormatter
     private function dropNulls(array $record): array
     {
         return array_filter($record, fn($v) => !is_null($v));
+    }
+
+    private function nullToEmpty(array $record): array
+    {
+        return array_map(fn($v) => is_null($v) ? '' : $v, $record);
     }
 
     private function boolStr(?bool $v): string
