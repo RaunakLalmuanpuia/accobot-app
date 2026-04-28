@@ -1,6 +1,7 @@
 <template>
     <AuthenticatedLayout>
         <template #header>
+
             <div class="flex items-center gap-3">
                 <Link :href="route('chat.groups.index', { tenant: tenant.id })"
                     class="text-gray-400 hover:text-gray-600">
