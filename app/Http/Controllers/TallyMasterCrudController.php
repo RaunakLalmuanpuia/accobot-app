@@ -99,6 +99,8 @@ class TallyMasterCrudController extends Controller
             'mobile_number'                     => 'nullable|string|max:20',
             'contact_person'                    => 'nullable|string|max:255',
             'contact_person_email'              => 'nullable|email|max:255',
+            'contact_person_email_cc'           => 'nullable|email|max:255',
+            'contact_person_fax'                => 'nullable|string|max:50',
             'contact_person_website'            => 'nullable|url|max:255',
             'contact_person_mobile'             => 'nullable|string|max:20',
             'addresses'                         => 'nullable|array',
@@ -121,6 +123,11 @@ class TallyMasterCrudController extends Controller
             'bank_details.*.PaymentFavouring'   => 'nullable|string|max:255',
             'bank_details.*.TransactionName'    => 'nullable|string|max:255',
             'bank_details.*.TransactionType'    => 'nullable|string|max:100',
+            'bill_allocations'                  => 'nullable|array',
+            'bill_allocations.*.Date'           => 'nullable|date',
+            'bill_allocations.*.BillName'       => 'nullable|string|max:255',
+            'bill_allocations.*.Amount'         => 'nullable|numeric',
+            'bill_allocations.*.AmountType'     => 'nullable|in:Dr,Cr',
         ]);
 
         $record = TallyLedger::create(array_merge($data, [
@@ -149,6 +156,8 @@ class TallyMasterCrudController extends Controller
             'mobile_number'                     => 'nullable|string|max:20',
             'contact_person'                    => 'nullable|string|max:255',
             'contact_person_email'              => 'nullable|email|max:255',
+            'contact_person_email_cc'           => 'nullable|email|max:255',
+            'contact_person_fax'                => 'nullable|string|max:50',
             'contact_person_website'            => 'nullable|url|max:255',
             'contact_person_mobile'             => 'nullable|string|max:20',
             'addresses'                         => 'nullable|array',
@@ -171,6 +180,11 @@ class TallyMasterCrudController extends Controller
             'bank_details.*.PaymentFavouring'   => 'nullable|string|max:255',
             'bank_details.*.TransactionName'    => 'nullable|string|max:255',
             'bank_details.*.TransactionType'    => 'nullable|string|max:100',
+            'bill_allocations'                  => 'nullable|array',
+            'bill_allocations.*.Date'           => 'nullable|date',
+            'bill_allocations.*.BillName'       => 'nullable|string|max:255',
+            'bill_allocations.*.Amount'         => 'nullable|numeric',
+            'bill_allocations.*.AmountType'     => 'nullable|in:Dr,Cr',
         ]);
 
         $ledger->update($data);

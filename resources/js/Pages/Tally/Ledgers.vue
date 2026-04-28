@@ -76,9 +76,11 @@ const form = useForm({
     mailing_name:         '',
     mobile_number:        '',
     contact_person:       '',
-    contact_person_email:   '',
-    contact_person_website: '',
-    contact_person_mobile:  '',
+    contact_person_email:    '',
+    contact_person_email_cc: '',
+    contact_person_fax:      '',
+    contact_person_website:  '',
+    contact_person_mobile:   '',
     addresses:            [],
     state_name:           '',
     country_name:         '',
@@ -91,6 +93,7 @@ const form = useForm({
     description:          '',
     notes:                '',
     bank_details:         [],
+    bill_allocations:     [],
 })
 
 function onGroupChange() {
@@ -108,6 +111,12 @@ function emptyBank() {
 }
 function addBank() { form.bank_details.push(emptyBank()) }
 function removeBank(i) { form.bank_details.splice(i, 1) }
+
+function emptyBill() {
+    return { Date: '', BillName: '', Amount: '', AmountType: 'Dr' }
+}
+function addBill() { form.bill_allocations.push(emptyBill()) }
+function removeBill(i) { form.bill_allocations.splice(i, 1) }
 
 function openCreate() {
     form.reset()
@@ -127,9 +136,11 @@ function openEdit(ledger) {
     form.mailing_name          = ledger.mailing_name ?? ''
     form.mobile_number         = ledger.mobile_number ?? ''
     form.contact_person        = ledger.contact_person ?? ''
-    form.contact_person_email   = ledger.contact_person_email ?? ''
-    form.contact_person_website = ledger.contact_person_website ?? ''
-    form.contact_person_mobile  = ledger.contact_person_mobile ?? ''
+    form.contact_person_email    = ledger.contact_person_email ?? ''
+    form.contact_person_email_cc = ledger.contact_person_email_cc ?? ''
+    form.contact_person_fax      = ledger.contact_person_fax ?? ''
+    form.contact_person_website  = ledger.contact_person_website ?? ''
+    form.contact_person_mobile   = ledger.contact_person_mobile ?? ''
     form.addresses             = ledger.addresses ? JSON.parse(JSON.stringify(ledger.addresses)) : []
     form.state_name            = ledger.state_name ?? ''
     form.country_name          = ledger.country_name ?? ''
@@ -142,6 +153,7 @@ function openEdit(ledger) {
     form.description           = ledger.description ?? ''
     form.notes                 = ledger.notes ?? ''
     form.bank_details          = ledger.bank_details ? JSON.parse(JSON.stringify(ledger.bank_details)) : []
+    form.bill_allocations      = ledger.bill_allocations ? JSON.parse(JSON.stringify(ledger.bill_allocations)) : []
     form.clearErrors()
     modal.value = ledger
 }
@@ -292,7 +304,7 @@ function destroy(ledger) {
     <Teleport to="body">
         <div v-if="modal !== null" class="fixed inset-0 z-40 flex justify-end">
             <div class="absolute inset-0 bg-black/30" @click="closeModal" />
-            <div class="relative z-50 w-full max-w-md bg-white shadow-xl flex flex-col">
+            <div class="relative z-50 w-full max-w-xl bg-white shadow-xl flex flex-col">
                 <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
                     <h2 class="text-base font-semibold text-gray-900">
                         {{ isEditing ? 'Edit Ledger' : 'New Ledger' }}
@@ -401,6 +413,20 @@ function destroy(ledger) {
                             <input v-model="form.contact_person_email" type="email" placeholder="e.g. contact@example.in"
                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
                             <p v-if="form.errors.contact_person_email" class="mt-1 text-xs text-red-500">{{ form.errors.contact_person_email }}</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Email CC</label>
+                            <input v-model="form.contact_person_email_cc" type="email" placeholder="e.g. cc@example.in"
+                                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                            <p v-if="form.errors.contact_person_email_cc" class="mt-1 text-xs text-red-500">{{ form.errors.contact_person_email_cc }}</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Fax</label>
+                            <input v-model="form.contact_person_fax" type="text" placeholder="e.g. 0111234567"
+                                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Website</label>
@@ -560,6 +586,51 @@ function destroy(ledger) {
                             </div>
                         </div>
                         <p v-if="!form.bank_details.length" class="text-xs text-gray-400">No bank accounts added.</p>
+                    </div>
+
+                    <!-- Bill Allocations -->
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="text-sm font-medium text-gray-700">Bill Allocations</label>
+                            <button type="button" @click="addBill"
+                                    class="text-xs text-violet-600 hover:text-violet-800 font-medium">+ Add</button>
+                        </div>
+                        <div v-for="(bill, i) in form.bill_allocations" :key="i"
+                             class="border border-gray-200 rounded-lg p-3 space-y-2 mb-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-medium text-gray-500">Bill {{ i + 1 }}</span>
+                                <button type="button" @click="removeBill(i)"
+                                        class="text-xs text-red-400 hover:text-red-600">Remove</button>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-xs text-gray-500 mb-0.5">Bill Name</label>
+                                    <input v-model="bill.BillName" type="text" placeholder="e.g. INV-001"
+                                           class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-gray-500 mb-0.5">Date</label>
+                                    <input v-model="bill.Date" type="date"
+                                           class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-xs text-gray-500 mb-0.5">Amount</label>
+                                    <input v-model="bill.Amount" type="number" step="0.01" placeholder="0.00"
+                                           class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-gray-500 mb-0.5">Dr / Cr</label>
+                                    <select v-model="bill.AmountType"
+                                            class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500">
+                                        <option value="Dr">Dr (Debit)</option>
+                                        <option value="Cr">Cr (Credit)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <p v-if="!form.bill_allocations.length" class="text-xs text-gray-400">No bill allocations added.</p>
                     </div>
 
                     <div class="flex gap-3 pt-2 border-t border-gray-100">

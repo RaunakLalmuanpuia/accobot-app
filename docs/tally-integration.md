@@ -225,6 +225,8 @@ All account masters — customers, vendors, bank accounts, tax ledgers, expense 
 | Credit | credit_period, credit_limit |
 | Opening Balance | opening_balance, opening_balance_type (Dr/Cr) |
 | Other | aliases (jsonb), description, notes |
+| Bank | bank_details (jsonb) — array of {BankName, IFSCode, AccountNumber, PaymentFavouring, TransactionName, TransactionType} |
+| Bills | bill_allocations (jsonb) — array of {Date, BillName, Amount, AmountType (Dr/Cr)} |
 | Mapping | mapped_client_id FK → clients, mapped_vendor_id FK → vendors |
 
 #### tally_stock_items
