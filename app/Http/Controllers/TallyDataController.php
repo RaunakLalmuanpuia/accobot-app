@@ -20,10 +20,10 @@ use Illuminate\Support\Facades\DB;
 
 class TallyDataController extends Controller
 {
-    private function queueMap(string|int $tenantId, string $entityClass): array
+    private function queueMap(string $tenantId, string $entityClass): array
     {
         return DB::table('tally_outbound_queue')
-            ->where('tenant_id', (int) $tenantId)
+            ->where('tenant_id', $tenantId)
             ->where('entity_type', $entityClass)
             ->pluck('status', 'entity_id')
             ->all();

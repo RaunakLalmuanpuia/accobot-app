@@ -185,7 +185,7 @@ class TallyVoucherCrudController extends Controller
 
         if (! $voucher->tally_id) {
             DB::table('tally_outbound_queue')
-                ->where('tenant_id', (int) $tenant->id)
+                ->where('tenant_id', $tenant->id)
                 ->where('entity_type', TallyVoucher::class)
                 ->where('entity_id', $voucher->id)
                 ->delete();

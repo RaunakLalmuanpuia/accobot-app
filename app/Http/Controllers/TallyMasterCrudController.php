@@ -701,7 +701,7 @@ class TallyMasterCrudController extends Controller
 
     // ── Helpers ────────────────────────────────────────────────────────────────
 
-    private function purgeFromQueue(int $tenantId, string $entityType, int $entityId): void
+    private function purgeFromQueue(string $tenantId, string $entityType, int $entityId): void
     {
         DB::table('tally_outbound_queue')
             ->where('tenant_id', $tenantId)
