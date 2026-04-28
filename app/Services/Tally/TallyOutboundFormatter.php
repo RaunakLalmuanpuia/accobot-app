@@ -164,6 +164,19 @@ class TallyOutboundFormatter
         return $this->formatVouchers($vouchers);
     }
 
+    public function formatGodowns(Collection $godowns): array
+    {
+        return $godowns->map(fn ($g) => $this->dropNulls([
+            'AccobotId' => $g->id,
+            'TallyId'   => $g->tally_id,
+            'AlterID'   => $g->alter_id,
+            'Action'    => $g->action,
+            'Name'      => $g->name,
+            'Under'     => $g->under,
+            'Guid'      => $g->guid,
+        ]))->values()->all();
+    }
+
     public function formatUnits(Collection $units): array
     {
         return $units->map(fn ($u) => $this->dropNulls([
