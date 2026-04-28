@@ -16,13 +16,15 @@ class TallyVoucherLedgerEntry extends Model
         'ledger_amount', 'is_deemed_positive', 'is_party_ledger',
         'igst_rate', 'hsn_code', 'cess_rate',
         'bills_allocation',
+        'bank_allocation_details',
     ];
 
     protected $casts = [
-        'ledger_amount'      => 'decimal:2',
-        'is_deemed_positive' => 'boolean',
-        'is_party_ledger'    => 'boolean',
-        'bills_allocation'   => 'array',
+        'ledger_amount'          => 'decimal:2',
+        'is_deemed_positive'     => 'boolean',
+        'is_party_ledger'        => 'boolean',
+        'bills_allocation'       => 'array',
+        'bank_allocation_details' => 'array',
     ];
 
     public function voucher(): BelongsTo

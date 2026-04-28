@@ -78,9 +78,14 @@ class TallyVoucherCrudController extends Controller
             'ledger_entries.*.ledger_amount'      => 'required|numeric',
             'ledger_entries.*.is_deemed_positive' => 'boolean',
             'ledger_entries.*.is_party_ledger'    => 'boolean',
-            'ledger_entries.*.igst_rate'          => 'nullable|string|max:20',
-            'ledger_entries.*.hsn_code'           => 'nullable|string|max:20',
-            'ledger_entries.*.cess_rate'          => 'nullable|string|max:20',
+            'ledger_entries.*.igst_rate'                          => 'nullable|string|max:20',
+            'ledger_entries.*.hsn_code'                           => 'nullable|string|max:20',
+            'ledger_entries.*.cess_rate'                          => 'nullable|string|max:20',
+            'ledger_entries.*.bills_allocation'                   => 'nullable|array',
+            'ledger_entries.*.bills_allocation.*.AgstType'        => 'nullable|string|max:50',
+            'ledger_entries.*.bills_allocation.*.Reference'       => 'nullable|string|max:255',
+            'ledger_entries.*.bills_allocation.*.CreditPeriod'    => 'nullable|string|max:50',
+            'ledger_entries.*.bills_allocation.*.Amount'          => 'nullable|numeric',
 
             // Inventory entries
             'inventory_entries'                       => 'nullable|array',

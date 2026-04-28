@@ -296,7 +296,8 @@ Ledger movements (debit/credit) within a voucher. Also deleted and re-inserted o
 | ledger_amount | |
 | is_deemed_positive, is_party_ledger | |
 | igst_rate, hsn_code, cess_rate | stored as string (Tally format) |
-| bills_allocation | jsonb |
+| bills_allocation | jsonb — stores `BillsAllocation` from inbound |
+| bank_allocation_details | jsonb — stores `BankAllocationDetails` from inbound (added 2026-04-28; previously merged into bills_allocation) |
 
 #### tally_reports
 Financial report snapshots — insert-only, never updated.

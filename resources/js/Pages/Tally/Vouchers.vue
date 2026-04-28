@@ -155,10 +155,17 @@ function emptyLedger() {
         ledger_name: '', ledger_group: '', ledger_amount: '',
         is_deemed_positive: true, is_party_ledger: false,
         igst_rate: '', hsn_code: '', cess_rate: '',
+        bills_allocation: [],
     }
 }
 function addLedger()     { form.ledger_entries.push(emptyLedger()) }
 function removeLedger(i) { form.ledger_entries.splice(i, 1) }
+
+function emptyBillRef() {
+    return { AgstType: 'New Ref', Reference: '', CreditPeriod: '', Amount: '' }
+}
+function addBillRef(i)      { form.ledger_entries[i].bills_allocation.push(emptyBillRef()) }
+function removeBillRef(i, j) { form.ledger_entries[i].bills_allocation.splice(j, 1) }
 
 function emptyInventory() {
     return {
@@ -245,6 +252,7 @@ function openEdit(v) {
         igst_rate:          str(le.igst_rate),
         hsn_code:           str(le.hsn_code),
         cess_rate:          str(le.cess_rate),
+        bills_allocation:   le.bills_allocation ? JSON.parse(JSON.stringify(le.bills_allocation)) : [],
     }))
     form.inventory_entries = (v.inventory_entries ?? []).map(ie => ({
         stock_item_name:   str(ie.stock_item_name),
@@ -796,6 +804,48 @@ function destroy(v) {
                                     <input v-model="le.cess_rate" type="text"
                                            class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
                                 </div>
+                            </div>
+
+                            <!-- Bill References -->
+                            <div class="pt-1">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-xs font-medium text-gray-500">Bill References</span>
+                                    <button type="button" @click="addBillRef(i)"
+                                            class="text-xs text-violet-600 hover:text-violet-800 font-medium">+ Add</button>
+                                </div>
+                                <div v-for="(br, j) in le.bills_allocation" :key="j"
+                                     class="grid grid-cols-4 gap-1.5 mb-1.5 items-end">
+                                    <div>
+                                        <label class="block text-xs text-gray-400 mb-0.5">Type</label>
+                                        <select v-model="br.AgstType"
+                                                class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500">
+                                            <option>New Ref</option>
+                                            <option>Agst Ref</option>
+                                            <option>On Account</option>
+                                            <option>Advance</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs text-gray-400 mb-0.5">Reference</label>
+                                        <input v-model="br.Reference" type="text" placeholder="e.g. 3"
+                                               class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs text-gray-400 mb-0.5">Credit Period</label>
+                                        <input v-model="br.CreditPeriod" type="text" placeholder="e.g. 30 Days"
+                                               class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                                    </div>
+                                    <div class="flex gap-1">
+                                        <div class="flex-1">
+                                            <label class="block text-xs text-gray-400 mb-0.5">Amount</label>
+                                            <input v-model="br.Amount" type="number" step="0.01" placeholder="0.00"
+                                                   class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                                        </div>
+                                        <button type="button" @click="removeBillRef(i, j)"
+                                                class="text-red-400 hover:text-red-600 text-xs self-end pb-1">✕</button>
+                                    </div>
+                                </div>
+                                <p v-if="!le.bills_allocation.length" class="text-xs text-gray-400 italic">No bill references.</p>
                             </div>
                         </div>
                         <p v-if="!form.ledger_entries.length" class="text-xs text-gray-400">No ledger entries. Click + Add Entry.</p>

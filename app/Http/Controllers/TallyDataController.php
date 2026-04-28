@@ -141,7 +141,7 @@ class TallyDataController extends Controller
             'vouchers'       => $this->addSyncStatus(
                 TallyVoucher::where('tenant_id', $tenant->id)
                     ->with([
-                        'ledgerEntries:id,tally_voucher_id,ledger_name,ledger_group,ledger_amount,is_deemed_positive,is_party_ledger,igst_rate,hsn_code,cess_rate',
+                        'ledgerEntries:id,tally_voucher_id,ledger_name,ledger_group,ledger_amount,is_deemed_positive,is_party_ledger,igst_rate,hsn_code,cess_rate,bills_allocation',
                         'inventoryEntries:id,tally_voucher_id,stock_item_name,item_code,group_name,hsn_code,unit,igst_rate,cess_rate,is_deemed_positive,actual_qty,billed_qty,rate,discount_percent,amount,tax_amount,mrp,sales_ledger,godown_name,batch_name',
                     ])
                     ->orderByDesc('voucher_date')

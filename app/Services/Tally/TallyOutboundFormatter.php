@@ -320,6 +320,7 @@ class TallyOutboundFormatter
                 'IsInvoice'     => $this->boolStr($v->is_invoice),
                 'PlaceOfSupply' => $v->place_of_supply,
                 'VoucherCostCentre' => $v->cost_centre,
+                'IsDeleted'         => $this->boolStr($v->is_deleted),
 
                 // Dispatch / shipping
                 'DeliveryNoteNo'   => $v->delivery_note_no,
@@ -386,9 +387,11 @@ class TallyOutboundFormatter
                 'Amount'           => $ie->amount,
                 'TaxAmount'        => $ie->tax_amount,
                 'MRP'              => $ie->mrp,
-                'SalesLedger'      => $ie->sales_ledger,
-                'GodownName'       => $ie->godown_name,
-                'BatchName'        => $ie->batch_name,
+                'SalesLedger'           => $ie->sales_ledger,
+                'GodownName'            => $ie->godown_name,
+                'BatchName'             => $ie->batch_name,
+                'BatchAllocations'      => $ie->batch_allocations ?? [],
+                'AccountingAllocations' => $ie->accounting_allocations ?? [],
             ])->values()->all();
 
             $base['LedgerEntries'] = $v->ledgerEntries->map(fn ($le) => [
@@ -400,7 +403,8 @@ class TallyOutboundFormatter
                 'IGSTRate'         => $le->igst_rate,
                 'HSNCode'          => $le->hsn_code,
                 'CessRate'         => $le->cess_rate,
-                'BillsAllocation'  => $le->bills_allocation ?? [],
+                'BillsAllocation'        => $le->bills_allocation ?? [],
+                'BankAllocationDetails'  => $le->bank_allocation_details ?? [],
             ])->values()->all();
 
             return $base;

@@ -530,7 +530,8 @@ class TallyInboundSync
                                 'igst_rate'          => $le['IGSTRate'] ?? null,
                                 'hsn_code'           => $le['HSNCode'] ?? null,
                                 'cess_rate'          => $le['Cess_Rate'] ?? $le['CessRate'] ?? null,
-                                'bills_allocation'   => $le['BillsAllocation'] ?? $le['BankAllocationDetails'] ?? null,
+                                'bills_allocation'        => $le['BillsAllocation'] ?? null,
+                                'bank_allocation_details' => $le['BankAllocationDetails'] ?? null,
                             ]);
                         }
                     });
