@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\DB;
 
 class TallyOutboundQueueService
 {
-    public function queue(int $tenantId, string $entityType, int $entityId): void
+    public function queue(string $tenantId, string $entityType, int $entityId): void
     {
         DB::table('tally_outbound_queue')->upsert(
             [
@@ -23,7 +23,7 @@ class TallyOutboundQueueService
         );
     }
 
-    public function markConfirmed(int $tenantId, string $entityType, int $entityId): void
+    public function markConfirmed(string $tenantId, string $entityType, int $entityId): void
     {
         TallyOutboundQueue::where('tenant_id', $tenantId)
             ->where('entity_type', $entityType)
@@ -32,7 +32,7 @@ class TallyOutboundQueueService
     }
 
     /** Returns array of entity IDs that have a pending queue entry for the given type. */
-    public function pendingIds(int $tenantId, string $entityType): array
+    public function pendingIds(string $tenantId, string $entityType): array
     {
         return TallyOutboundQueue::where('tenant_id', $tenantId)
             ->where('entity_type', $entityType)

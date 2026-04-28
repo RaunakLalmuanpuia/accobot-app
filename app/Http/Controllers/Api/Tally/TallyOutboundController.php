@@ -31,7 +31,7 @@ class TallyOutboundController extends TallyBaseController
     public function ledgerGroup(Request $request): JsonResponse
     {
         $conn = $this->resolveAndVerify($request);
-        $ids  = $this->queue->pendingIds((int) $conn->tenant_id, TallyLedgerGroup::class);
+        $ids  = $this->queue->pendingIds($conn->tenant_id, TallyLedgerGroup::class);
 
         $groups = TallyLedgerGroup::withoutGlobalScope('tenant')
             ->where('tenant_id', $conn->tenant_id)
@@ -39,14 +39,14 @@ class TallyOutboundController extends TallyBaseController
             ->get();
 
         $data = $this->formatter->formatLedgerGroups($groups);
-        $this->logOutbound('LedgerGroup', (int) $conn->tenant_id, $data);
+        $this->logOutbound('LedgerGroup', $conn->tenant_id, $data);
         return response()->json(['Data' => $data]);
     }
 
     public function ledgerMaster(Request $request): JsonResponse
     {
         $conn = $this->resolveAndVerify($request);
-        $ids  = $this->queue->pendingIds((int) $conn->tenant_id, TallyLedger::class);
+        $ids  = $this->queue->pendingIds($conn->tenant_id, TallyLedger::class);
 
         $ledgers = TallyLedger::withoutGlobalScope('tenant')
             ->where('tenant_id', $conn->tenant_id)
@@ -54,14 +54,14 @@ class TallyOutboundController extends TallyBaseController
             ->get();
 
         $data = $this->formatter->formatLedgers($ledgers);
-        $this->logOutbound('Ledger', (int) $conn->tenant_id, $data);
+        $this->logOutbound('Ledger', $conn->tenant_id, $data);
         return response()->json(['Data' => $data]);
     }
 
     public function stockMaster(Request $request): JsonResponse
     {
         $conn = $this->resolveAndVerify($request);
-        $ids  = $this->queue->pendingIds((int) $conn->tenant_id, TallyStockItem::class);
+        $ids  = $this->queue->pendingIds($conn->tenant_id, TallyStockItem::class);
 
         $items = TallyStockItem::withoutGlobalScope('tenant')
             ->where('tenant_id', $conn->tenant_id)
@@ -69,14 +69,14 @@ class TallyOutboundController extends TallyBaseController
             ->get();
 
         $data = $this->formatter->formatStockItems($items);
-        $this->logOutbound('StockItem', (int) $conn->tenant_id, $data);
+        $this->logOutbound('StockItem', $conn->tenant_id, $data);
         return response()->json(['Data' => $data]);
     }
 
     public function stockGroup(Request $request): JsonResponse
     {
         $conn = $this->resolveAndVerify($request);
-        $ids  = $this->queue->pendingIds((int) $conn->tenant_id, TallyStockGroup::class);
+        $ids  = $this->queue->pendingIds($conn->tenant_id, TallyStockGroup::class);
 
         $groups = TallyStockGroup::withoutGlobalScope('tenant')
             ->where('tenant_id', $conn->tenant_id)
@@ -84,14 +84,14 @@ class TallyOutboundController extends TallyBaseController
             ->get();
 
         $data = $this->formatter->formatStockGroups($groups);
-        $this->logOutbound('StockGroup', (int) $conn->tenant_id, $data);
+        $this->logOutbound('StockGroup', $conn->tenant_id, $data);
         return response()->json(['Data' => $data]);
     }
 
     public function stockCategory(Request $request): JsonResponse
     {
         $conn = $this->resolveAndVerify($request);
-        $ids  = $this->queue->pendingIds((int) $conn->tenant_id, TallyStockCategory::class);
+        $ids  = $this->queue->pendingIds($conn->tenant_id, TallyStockCategory::class);
 
         $cats = TallyStockCategory::withoutGlobalScope('tenant')
             ->where('tenant_id', $conn->tenant_id)
@@ -99,7 +99,7 @@ class TallyOutboundController extends TallyBaseController
             ->get();
 
         $data = $this->formatter->formatStockCategories($cats);
-        $this->logOutbound('StockCategory', (int) $conn->tenant_id, $data);
+        $this->logOutbound('StockCategory', $conn->tenant_id, $data);
         return response()->json(['Data' => $data]);
     }
 
@@ -146,7 +146,7 @@ class TallyOutboundController extends TallyBaseController
     public function statutoryMaster(Request $request): JsonResponse
     {
         $conn = $this->resolveAndVerify($request);
-        $ids  = $this->queue->pendingIds((int) $conn->tenant_id, TallyStatutoryMaster::class);
+        $ids  = $this->queue->pendingIds($conn->tenant_id, TallyStatutoryMaster::class);
 
         $items = TallyStatutoryMaster::withoutGlobalScope('tenant')
             ->where('tenant_id', $conn->tenant_id)
@@ -154,14 +154,14 @@ class TallyOutboundController extends TallyBaseController
             ->get();
 
         $data = $this->formatter->formatStatutoryMasters($items);
-        $this->logOutbound('StatutoryMaster', (int) $conn->tenant_id, $data);
+        $this->logOutbound('StatutoryMaster', $conn->tenant_id, $data);
         return response()->json(['Data' => $data]);
     }
 
     public function employeeGroup(Request $request): JsonResponse
     {
         $conn   = $this->resolveAndVerify($request);
-        $ids    = $this->queue->pendingIds((int) $conn->tenant_id, TallyEmployeeGroup::class);
+        $ids    = $this->queue->pendingIds($conn->tenant_id, TallyEmployeeGroup::class);
 
         $groups = TallyEmployeeGroup::withoutGlobalScope('tenant')
             ->where('tenant_id', $conn->tenant_id)
@@ -169,14 +169,14 @@ class TallyOutboundController extends TallyBaseController
             ->get();
 
         $data = $this->formatter->formatEmployeeGroups($groups);
-        $this->logOutbound('EmployeeGroup', (int) $conn->tenant_id, $data);
+        $this->logOutbound('EmployeeGroup', $conn->tenant_id, $data);
         return response()->json(['Data' => $data]);
     }
 
     public function employee(Request $request): JsonResponse
     {
         $conn      = $this->resolveAndVerify($request);
-        $ids       = $this->queue->pendingIds((int) $conn->tenant_id, TallyEmployee::class);
+        $ids       = $this->queue->pendingIds($conn->tenant_id, TallyEmployee::class);
 
         $employees = TallyEmployee::withoutGlobalScope('tenant')
             ->where('tenant_id', $conn->tenant_id)
@@ -184,14 +184,14 @@ class TallyOutboundController extends TallyBaseController
             ->get();
 
         $data = $this->formatter->formatEmployees($employees);
-        $this->logOutbound('Employee', (int) $conn->tenant_id, $data);
+        $this->logOutbound('Employee', $conn->tenant_id, $data);
         return response()->json(['Data' => $data]);
     }
 
     public function payHead(Request $request): JsonResponse
     {
         $conn     = $this->resolveAndVerify($request);
-        $ids      = $this->queue->pendingIds((int) $conn->tenant_id, TallyPayHead::class);
+        $ids      = $this->queue->pendingIds($conn->tenant_id, TallyPayHead::class);
 
         $payHeads = TallyPayHead::withoutGlobalScope('tenant')
             ->where('tenant_id', $conn->tenant_id)
@@ -199,14 +199,14 @@ class TallyOutboundController extends TallyBaseController
             ->get();
 
         $data = $this->formatter->formatPayHeads($payHeads);
-        $this->logOutbound('PayHead', (int) $conn->tenant_id, $data);
+        $this->logOutbound('PayHead', $conn->tenant_id, $data);
         return response()->json(['Data' => $data]);
     }
 
     public function attendanceType(Request $request): JsonResponse
     {
         $conn  = $this->resolveAndVerify($request);
-        $ids   = $this->queue->pendingIds((int) $conn->tenant_id, TallyAttendanceType::class);
+        $ids   = $this->queue->pendingIds($conn->tenant_id, TallyAttendanceType::class);
 
         $types = TallyAttendanceType::withoutGlobalScope('tenant')
             ->where('tenant_id', $conn->tenant_id)
@@ -214,7 +214,7 @@ class TallyOutboundController extends TallyBaseController
             ->get();
 
         $data = $this->formatter->formatAttendanceTypes($types);
-        $this->logOutbound('AttendanceType', (int) $conn->tenant_id, $data);
+        $this->logOutbound('AttendanceType', $conn->tenant_id, $data);
         return response()->json(['Data' => $data]);
     }
 
@@ -231,7 +231,7 @@ class TallyOutboundController extends TallyBaseController
     private function payrollVoucherResponse(Request $request, string $type): JsonResponse
     {
         $conn = $this->resolveAndVerify($request);
-        $ids  = $this->queue->pendingIds((int) $conn->tenant_id, TallyVoucher::class);
+        $ids  = $this->queue->pendingIds($conn->tenant_id, TallyVoucher::class);
 
         $vouchers = TallyVoucher::withoutGlobalScope('tenant')
             ->with('employeeAllocations')
@@ -244,14 +244,14 @@ class TallyOutboundController extends TallyBaseController
             ? $this->formatter->formatSalaryVouchers($vouchers)
             : $this->formatter->formatAttendanceVouchers($vouchers);
 
-        $this->logOutbound($type . 'Voucher', (int) $conn->tenant_id, $data);
+        $this->logOutbound($type . 'Voucher', $conn->tenant_id, $data);
         return response()->json(['Data' => $data]);
     }
 
     private function voucherResponse(Request $request, string $type): JsonResponse
     {
         $conn = $this->resolveAndVerify($request);
-        $ids  = $this->queue->pendingIds((int) $conn->tenant_id, TallyVoucher::class);
+        $ids  = $this->queue->pendingIds($conn->tenant_id, TallyVoucher::class);
 
         $vouchers = TallyVoucher::withoutGlobalScope('tenant')
             ->with(['inventoryEntries', 'ledgerEntries'])
@@ -271,11 +271,11 @@ class TallyOutboundController extends TallyBaseController
             'Journal'    => $this->formatter->formatJournalVouchers($vouchers),
         };
 
-        $this->logOutbound($type . 'Voucher', (int) $conn->tenant_id, $data);
+        $this->logOutbound($type . 'Voucher', $conn->tenant_id, $data);
         return response()->json(['Data' => $data]);
     }
 
-    private function logOutbound(string $entity, int $tenantId, array $data): void
+    private function logOutbound(string $entity, string $tenantId, array $data): void
     {
         if (empty($data)) {
             return;
@@ -298,7 +298,7 @@ class TallyOutboundController extends TallyBaseController
     public function companyMaster(Request $request): JsonResponse
     {
         $conn = $this->resolveAndVerify($request);
-        $ids  = $this->queue->pendingIds((int) $conn->tenant_id, TallyCompany::class);
+        $ids  = $this->queue->pendingIds($conn->tenant_id, TallyCompany::class);
 
         $companies = TallyCompany::withoutGlobalScope('tenant')
             ->where('tenant_id', $conn->tenant_id)
@@ -306,7 +306,7 @@ class TallyOutboundController extends TallyBaseController
             ->get();
 
         $data = $this->formatter->formatCompanyMasters($companies);
-        $this->logOutbound('CompanyMaster', (int) $conn->tenant_id, $data);
+        $this->logOutbound('CompanyMaster', $conn->tenant_id, $data);
         return response()->json(['Data' => $data]);
     }
 

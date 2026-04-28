@@ -49,7 +49,7 @@ class TallyAccobotObserver
     private function handleClient(Client $client): void
     {
         if ($client->tally_ledger_id) {
-            $this->queue->queue((int) $client->tenant_id, TallyLedger::class, (int) $client->tally_ledger_id);
+            $this->queue->queue($client->tenant_id, TallyLedger::class, (int) $client->tally_ledger_id);
             return;
         }
 
@@ -69,7 +69,7 @@ class TallyAccobotObserver
     private function handleVendor(Vendor $vendor): void
     {
         if ($vendor->tally_ledger_id) {
-            $this->queue->queue((int) $vendor->tenant_id, TallyLedger::class, (int) $vendor->tally_ledger_id);
+            $this->queue->queue($vendor->tenant_id, TallyLedger::class, (int) $vendor->tally_ledger_id);
             return;
         }
 
@@ -88,7 +88,7 @@ class TallyAccobotObserver
     private function handleProduct(Product $product): void
     {
         if ($product->tally_stock_item_id) {
-            $this->queue->queue((int) $product->tenant_id, TallyStockItem::class, (int) $product->tally_stock_item_id);
+            $this->queue->queue($product->tenant_id, TallyStockItem::class, (int) $product->tally_stock_item_id);
             return;
         }
 
@@ -107,7 +107,7 @@ class TallyAccobotObserver
     private function handleInvoice(Invoice $invoice): void
     {
         if ($invoice->tally_voucher_id) {
-            $this->queue->queue((int) $invoice->tenant_id, TallyVoucher::class, (int) $invoice->tally_voucher_id);
+            $this->queue->queue($invoice->tenant_id, TallyVoucher::class, (int) $invoice->tally_voucher_id);
             return;
         }
 

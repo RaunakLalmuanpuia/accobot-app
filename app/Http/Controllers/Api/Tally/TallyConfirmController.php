@@ -150,7 +150,7 @@ class TallyConfirmController extends TallyBaseController
             $record->updateQuietly(['tally_id' => (int) $tallyId]);
             $updated++;
 
-            $this->queue->markConfirmed((int) $conn->tenant_id, $modelClass, (int) $id);
+            $this->queue->markConfirmed($conn->tenant_id, $modelClass, (int) $id);
 
             $this->markMappedSynced($record, $synced);
         }

@@ -65,6 +65,10 @@ The `Action` field is computed automatically by the observer. A deactivated reco
 
 Re-editing a `confirmed` record resets its status to `pending` and re-queues it.
 
+### Schema note
+
+`tally_outbound_queue.tenant_id` is a `uuid` column (migrated 2026-04-28 from `unsignedBigInteger`). All service methods accept `string $tenantId`; never cast `$conn->tenant_id` to `int`.
+
 ---
 
 ## Authentication

@@ -41,7 +41,7 @@ class TallyModelObserver
         }
 
         $this->queue->queue(
-            (int) $model->tenant_id,
+            $model->tenant_id,
             $model::class,
             (int) $model->id,
         );
