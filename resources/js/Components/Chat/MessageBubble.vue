@@ -77,6 +77,22 @@
                             :attachment="att"
                             :download-url="att.download_url"
                         />
+                        <!-- Invoice download button -->
+                        <a
+                            v-if="message.metadata?.download_url"
+                            :href="message.metadata.download_url"
+                            target="_blank"
+                            class="mt-2 inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg transition"
+                            :class="isOwn
+                                ? 'bg-violet-500 text-violet-100 hover:bg-violet-400'
+                                : 'bg-violet-50 text-violet-700 hover:bg-violet-100 border border-violet-200'"
+                        >
+                            <svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            View Invoice
+                        </a>
                     </template>
 
                     <!-- Timestamp + read receipt -->

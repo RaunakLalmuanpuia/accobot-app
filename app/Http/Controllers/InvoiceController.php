@@ -96,12 +96,23 @@ class InvoiceController extends Controller
         ]);
 
         ChatNotificationService::notify(
-            tenantId:         $tenant->id,
-            title:            'Invoice Created',
-            body:             "Invoice {$invoice->invoice_number} has been created.",
-            eventType:        'invoice.created',
-            data:             ['invoice_id' => $invoice->id],
-            postToGroupRooms: true,
+            tenantId:  $tenant->id,
+            title:     'Invoice Created',
+            body:      "Invoice {$invoice->invoice_number} has been created.",
+            eventType: 'invoice.created',
+            data:      ['invoice_id' => $invoice->id],
+        );
+
+        $invoice->load('client:id,name');
+        ChatNotificationService::postAsUser(
+            tenantId: $tenant->id,
+            userId:   auth()->id(),
+            body:     "Created invoice {$invoice->invoice_number} for {$invoice->client->name} — {$invoice->currency} " . number_format((float) $invoice->total, 2),
+            metadata: [
+                'event_type'   => 'invoice.created',
+                'invoice_id'   => $invoice->id,
+                'download_url' => route('invoices.download', ['tenant' => $tenant->id, 'invoice' => $invoice->id]),
+            ],
         );
 
         return redirect()->route('invoices.index', ['tenant' => $tenant->id]);
@@ -179,12 +190,23 @@ class InvoiceController extends Controller
 
         if ($invoice->wasChanged('status') && $invoice->status === 'paid') {
             ChatNotificationService::notify(
-                tenantId:         $tenant->id,
-                title:            'Invoice Paid',
-                body:             "Invoice {$invoice->invoice_number} has been marked as paid.",
-                eventType:        'invoice.paid',
-                data:             ['invoice_id' => $invoice->id],
-                postToGroupRooms: true,
+                tenantId:  $tenant->id,
+                title:     'Invoice Paid',
+                body:      "Invoice {$invoice->invoice_number} has been marked as paid.",
+                eventType: 'invoice.paid',
+                data:      ['invoice_id' => $invoice->id],
+            );
+
+            $invoice->loadMissing('client:id,name');
+            ChatNotificationService::postAsUser(
+                tenantId: $tenant->id,
+                userId:   auth()->id(),
+                body:     "Marked invoice {$invoice->invoice_number} for {$invoice->client->name} as paid — {$invoice->currency} " . number_format((float) $invoice->total, 2),
+                metadata: [
+                    'event_type'   => 'invoice.paid',
+                    'invoice_id'   => $invoice->id,
+                    'download_url' => route('invoices.download', ['tenant' => $tenant->id, 'invoice' => $invoice->id]),
+                ],
             );
         }
 

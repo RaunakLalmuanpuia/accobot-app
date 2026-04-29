@@ -453,7 +453,9 @@ Static helper used by controllers to fire a system notification + insert a syste
 | `TeamMemberController` | `store()` | `member.added` | |
 | `InvitationController` | `accept()` / `acceptById()` | `member.joined` | |
 
-The `postToGroupRooms: true` flag causes `notify()` to also insert the same system message into every `type = 'group'` chat room for the tenant and broadcast it over each room's presence channel. Use it for events users should see inline in their day-to-day chat rooms.
+The `postToGroupRooms: true` flag causes `notify()` to also insert the same system message into every `type = 'group'` chat room for the tenant and broadcast it over each room's presence channel. Use it for background/automated events (e.g. Tally sync) that have no specific user actor.
+
+For user-triggered actions (invoice creation, etc.), use `ChatNotificationService::postAsUser(tenantId, userId, body, metadata)` instead — this posts a `type=text` message as the real user so the bubble appears under their name and avatar. Pass `download_url` in `metadata` to render a "View Invoice →" download button inside the bubble.
 
 ### Auto-create Notifications room
 

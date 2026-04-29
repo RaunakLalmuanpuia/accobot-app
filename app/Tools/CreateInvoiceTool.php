@@ -157,13 +157,15 @@ class CreateInvoiceTool implements Tool
                 null, null, 'system',
             );
 
-            ChatNotificationService::notify(
-                tenantId:         $tid,
-                title:            'Invoice Created',
-                body:             "Invoice {$invoice->invoice_number} has been created.",
-                eventType:        'invoice.created',
-                data:             ['invoice_id' => $invoice->id],
-                postToGroupRooms: true,
+            ChatNotificationService::postAsUser(
+                tenantId: $tid,
+                userId:   auth()->id(),
+                body:     "Created invoice {$invoice->invoice_number} for {$client->name} — {$invoice->currency} " . number_format((float) $invoice->total, 2),
+                metadata: [
+                    'event_type'   => 'invoice.created',
+                    'invoice_id'   => $invoice->id,
+                    'download_url' => route('invoices.download', ['tenant' => $tid, 'invoice' => $invoice->id]),
+                ],
             );
 
             $itemLines  = $invoice->items->map(fn ($i) => sprintf(

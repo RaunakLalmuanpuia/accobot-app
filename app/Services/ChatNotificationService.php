@@ -79,4 +79,34 @@ class ChatNotificationService
             );
         }
     }
+
+    /**
+     * Post a plain text message as a specific user to every group room in the tenant.
+     * Use this when a user action (e.g. creating an invoice) should appear as their
+     * own message in the chat, with optional metadata for rendering extra UI (e.g. a download button).
+     */
+    public static function postAsUser(
+        string $tenantId,
+        int    $userId,
+        string $body,
+        array  $metadata = [],
+    ): void {
+        $groupRooms = ChatRoom::withoutGlobalScope('tenant')
+            ->where('tenant_id', $tenantId)
+            ->where('type', 'group')
+            ->get();
+
+        foreach ($groupRooms as $room) {
+            $message = ChatMessage::create([
+                'tenant_id'    => $tenantId,
+                'chat_room_id' => $room->id,
+                'user_id'      => $userId,
+                'type'         => 'text',
+                'body'         => $body,
+                'metadata'     => $metadata,
+            ]);
+
+            BroadcastChatMessage::dispatch($message);
+        }
+    }
 }
