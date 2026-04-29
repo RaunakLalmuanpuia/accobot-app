@@ -26,6 +26,7 @@ class ChatNotificationService
         string      $eventType,
         array       $data = [],
         ?Collection $users = null,
+        bool        $postToGroupRooms = false,
     ): void {
         // Post to the Notifications chat room
         $notifRoom = ChatRoom::notificationsChannelForTenant($tenantId);
@@ -40,6 +41,27 @@ class ChatNotificationService
         ]);
 
         BroadcastChatMessage::dispatch($message);
+
+        // Also post to all group chat rooms so members see it inline
+        if ($postToGroupRooms) {
+            $groupRooms = ChatRoom::withoutGlobalScope('tenant')
+                ->where('tenant_id', $tenantId)
+                ->where('type', 'group')
+                ->get();
+
+            foreach ($groupRooms as $groupRoom) {
+                $groupMessage = ChatMessage::create([
+                    'tenant_id'    => $tenantId,
+                    'chat_room_id' => $groupRoom->id,
+                    'user_id'      => null,
+                    'type'         => 'system',
+                    'body'         => $body,
+                    'metadata'     => ['event_type' => $eventType, ...$data],
+                ]);
+
+                BroadcastChatMessage::dispatch($groupMessage);
+            }
+        }
 
         // Laravel notification (DB + broadcast + web push)
         $recipients = $users ?? User::whereHas('tenants', fn ($q) => $q->where('tenants.id', $tenantId))->get();

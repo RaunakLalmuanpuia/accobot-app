@@ -96,11 +96,12 @@ class InvoiceController extends Controller
         ]);
 
         ChatNotificationService::notify(
-            tenantId:  $tenant->id,
-            title:     'Invoice Created',
-            body:      "Invoice {$invoice->invoice_number} has been created.",
-            eventType: 'invoice.created',
-            data:      ['invoice_id' => $invoice->id],
+            tenantId:         $tenant->id,
+            title:            'Invoice Created',
+            body:             "Invoice {$invoice->invoice_number} has been created.",
+            eventType:        'invoice.created',
+            data:             ['invoice_id' => $invoice->id],
+            postToGroupRooms: true,
         );
 
         return redirect()->route('invoices.index', ['tenant' => $tenant->id]);
@@ -178,11 +179,12 @@ class InvoiceController extends Controller
 
         if ($invoice->wasChanged('status') && $invoice->status === 'paid') {
             ChatNotificationService::notify(
-                tenantId:  $tenant->id,
-                title:     'Invoice Paid',
-                body:      "Invoice {$invoice->invoice_number} has been marked as paid.",
-                eventType: 'invoice.paid',
-                data:      ['invoice_id' => $invoice->id],
+                tenantId:         $tenant->id,
+                title:            'Invoice Paid',
+                body:             "Invoice {$invoice->invoice_number} has been marked as paid.",
+                eventType:        'invoice.paid',
+                data:             ['invoice_id' => $invoice->id],
+                postToGroupRooms: true,
             );
         }
 

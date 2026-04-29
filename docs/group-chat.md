@@ -443,14 +443,17 @@ VAPID config lives in `config/services.php` under the `vapid` key.
 
 Static helper used by controllers to fire a system notification + insert a system message into the tenant Notifications room in one call. Hook points:
 
-| Controller | Method | Event type |
-|---|---|---|
-| `InvoiceController` | `update()` when status → `paid` | `invoice.paid` |
-| `InvoiceController` | `store()` | `invoice.created` |
-| `TallySyncController` | `trigger()` | `tally.sync.started` |
-| Tally inbound job | `handle()` on finish | `tally.sync.completed` |
-| `TeamMemberController` | `store()` | `member.added` |
-| `InvitationController` | `accept()` / `acceptById()` | `member.joined` |
+| Controller | Method | Event type | Group rooms |
+|---|---|---|---|
+| `InvoiceController` | `store()` | `invoice.created` | ✓ |
+| `InvoiceController` | `update()` when status → `paid` | `invoice.paid` | ✓ |
+| `CreateInvoiceTool` | `handle()` (AI agent) | `invoice.created` | ✓ |
+| `TallySyncController` | `trigger()` | `tally.sync.started` | |
+| Tally inbound job | `handle()` on finish | `tally.sync.completed` | |
+| `TeamMemberController` | `store()` | `member.added` | |
+| `InvitationController` | `accept()` / `acceptById()` | `member.joined` | |
+
+The `postToGroupRooms: true` flag causes `notify()` to also insert the same system message into every `type = 'group'` chat room for the tenant and broadcast it over each room's presence channel. Use it for events users should see inline in their day-to-day chat rooms.
 
 ### Auto-create Notifications room
 

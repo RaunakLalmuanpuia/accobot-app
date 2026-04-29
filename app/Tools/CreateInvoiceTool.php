@@ -7,6 +7,7 @@ use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Product;
+use App\Services\ChatNotificationService;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -154,6 +155,15 @@ class CreateInvoiceTool implements Tool
                 'invoice.created',
                 ['id' => $invoice->id, 'invoice_number' => $invoice->invoice_number, 'client_id' => $client->id, 'total' => $invoice->total, 'via' => 'ai_agent'],
                 null, null, 'system',
+            );
+
+            ChatNotificationService::notify(
+                tenantId:         $tid,
+                title:            'Invoice Created',
+                body:             "Invoice {$invoice->invoice_number} has been created.",
+                eventType:        'invoice.created',
+                data:             ['invoice_id' => $invoice->id],
+                postToGroupRooms: true,
             );
 
             $itemLines  = $invoice->items->map(fn ($i) => sprintf(
