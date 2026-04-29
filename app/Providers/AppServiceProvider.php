@@ -71,12 +71,19 @@ class AppServiceProvider extends ServiceProvider
             $model::observe(TallyAccobotObserver::class);
         }
 
-        // Auto-create the system Notifications chat room for every new tenant
+        // Auto-create system chat rooms for every new tenant
         Tenant::created(function (Tenant $tenant) {
             ChatRoom::create([
                 'tenant_id' => $tenant->id,
                 'name'      => 'Notifications',
                 'type'      => 'notifications',
+                'is_system' => true,
+            ]);
+
+            ChatRoom::create([
+                'tenant_id' => $tenant->id,
+                'name'      => 'General',
+                'type'      => 'group',
                 'is_system' => true,
             ]);
         });

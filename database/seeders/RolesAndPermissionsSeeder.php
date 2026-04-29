@@ -218,7 +218,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'narration_heads.view',
             'reports.view',
             'reports.export',
-            'chat.room.view', 'chat.message.send',
+            'chat.room.view', 'chat.room.manage', 'chat.message.send',
         ]);
 
         $auditor = Role::firstOrCreate(['name' => 'Auditor']);

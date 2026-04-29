@@ -58,7 +58,7 @@
                         <!-- Avatar -->
                         <div class="w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold shrink-0"
                             :class="room.is_system ? 'bg-violet-100 text-violet-600' : 'bg-violet-600 text-white'">
-                            {{ room.is_system ? '🔔' : room.name[0].toUpperCase() }}
+                            {{ room.type === 'notifications' ? '🔔' : room.name[0].toUpperCase() }}
                         </div>
 
                         <div class="flex-1 min-w-0">

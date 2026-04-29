@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\ChatRoom;
 use App\Models\Tenant;
 use App\Models\TenantUserRole;
 use App\Models\User;
@@ -131,5 +132,7 @@ class DummyDataSeeder extends Seeder
             ['user_id' => $user->id, 'tenant_id' => $tenant->id],
             ['role_id' => $role->id]
         );
+
+        ChatRoom::addToGeneralIfQualified($tenant->id, $user->id, $role->name);
     }
 }

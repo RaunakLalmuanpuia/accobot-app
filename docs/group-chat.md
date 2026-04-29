@@ -28,6 +28,7 @@
 Group chat gives every tenant a WhatsApp-like internal messaging space. Key capabilities:
 
 - **Group rooms** — tenant admins create named rooms and manage membership
+- **General room** — auto-created per tenant (`is_system=true`); all users with `owner`, `TenantAdmin`, `ExternalAccountant`, or `CAManager` roles are auto-added on join
 - **System notifications room** — auto-created per tenant; receives events from invoices, Tally sync, invitations
 - **Real-time messaging** — via Laravel Reverb (WebSocket) + Laravel Echo on the frontend
 - **Reactions** — emoji toggle reactions on any message
@@ -457,9 +458,16 @@ The `postToGroupRooms: true` flag causes `notify()` to also insert the same syst
 
 For user-triggered actions (invoice creation, etc.), use `ChatNotificationService::postAsUser(tenantId, userId, body, metadata)` instead — this posts a `type=text` message as the real user so the bubble appears under their name and avatar. Pass `download_url` in `metadata` to render a "View Invoice →" download button inside the bubble.
 
-### Auto-create Notifications room
+### Auto-create system rooms
 
-Every new `Tenant` gets a system Notifications room via an observer / `Tenant::created` hook in `AppServiceProvider`. All tenant members are auto-added to this room.
+Every new `Tenant` gets two system rooms created via the `Tenant::created` hook in `AppServiceProvider`:
+
+| Room | `type` | `is_system` | Auto-members |
+|---|---|---|---|
+| Notifications | `notifications` | `true` | None (receives broadcast events) |
+| General | `group` | `true` | Users with `owner`, `TenantAdmin`, `ExternalAccountant`, `CAManager` roles |
+
+The General room is protected (cannot be renamed or deleted). Members are added automatically via `ChatRoom::addToGeneralIfQualified()` at every join entry point: `User::createPersonalTenant()`, `TeamMemberController::store()`, `InvitationController::accept()`, `InvitationController::acceptById()`.
 
 ---
 

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToTenant;
+use App\Models\ChatRoomMember;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
@@ -86,5 +87,31 @@ class ChatRoom extends Model
                 ['tenant_id' => $tenantId, 'type' => 'notifications', 'is_system' => true],
                 ['name' => 'Notifications']
             );
+    }
+
+    public static function generalChannelForTenant(string $tenantId): self
+    {
+        return static::withoutGlobalScope('tenant')
+            ->firstOrCreate(
+                ['tenant_id' => $tenantId, 'name' => 'General', 'is_system' => true],
+                ['type' => 'group']
+            );
+    }
+
+    /** Add a user to the General room if their role qualifies. Idempotent. */
+    public static function addToGeneralIfQualified(string $tenantId, int $userId, string $roleName): void
+    {
+        $qualifyingRoles = ['owner', 'TenantAdmin', 'ExternalAccountant', 'CAManager'];
+
+        if (! in_array($roleName, $qualifyingRoles, strict: true)) {
+            return;
+        }
+
+        $room = self::generalChannelForTenant($tenantId);
+
+        ChatRoomMember::firstOrCreate(
+            ['chat_room_id' => $room->id, 'user_id' => $userId],
+            ['tenant_id' => $tenantId, 'role' => 'member', 'joined_at' => now()]
+        );
     }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Mail\InvitationMail;
 use App\Models\AuditEvent;
+use App\Models\ChatRoom;
 use App\Models\Invitation;
 use App\Models\Tenant;
 use App\Models\TenantUserRole;
@@ -131,10 +132,12 @@ class InvitationController extends Controller
         abort_if($user->email !== $invitation->email, 403, 'This invitation was sent to a different email address.');
 
         if (! $user->tenants()->where('tenants.id', $invitation->tenant_id)->exists()) {
+            $roleName = Role::find($invitation->role_id)?->name;
+
             $user->tenants()->attach($invitation->tenant_id, [
                 'status'             => 'active',
                 'member_type'        => 'internal',
-                'role_name'          => Role::find($invitation->role_id)?->name,
+                'role_name'          => $roleName,
                 'invited_by_user_id' => $invitation->invited_by,
                 'joined_at'          => now(),
             ]);
@@ -144,6 +147,8 @@ class InvitationController extends Controller
                 'tenant_id' => $invitation->tenant_id,
                 'role_id'   => $invitation->role_id,
             ]);
+
+            ChatRoom::addToGeneralIfQualified($invitation->tenant_id, $user->id, $roleName ?? '');
         }
 
         $invitation->update(['accepted_at' => now(), 'status' => 'accepted']);
@@ -186,10 +191,12 @@ class InvitationController extends Controller
         abort_if(auth()->user()->email !== $invitation->email, 403);
 
         if (! auth()->user()->tenants()->where('tenants.id', $invitation->tenant_id)->exists()) {
+            $roleName = Role::find($invitation->role_id)?->name;
+
             auth()->user()->tenants()->attach($invitation->tenant_id, [
                 'status'             => 'active',
                 'member_type'        => 'internal',
-                'role_name'          => Role::find($invitation->role_id)?->name,
+                'role_name'          => $roleName,
                 'invited_by_user_id' => $invitation->invited_by,
                 'joined_at'          => now(),
             ]);
@@ -199,6 +206,8 @@ class InvitationController extends Controller
                 'tenant_id' => $invitation->tenant_id,
                 'role_id'   => $invitation->role_id,
             ]);
+
+            ChatRoom::addToGeneralIfQualified($invitation->tenant_id, auth()->id(), $roleName ?? '');
         }
 
         $invitation->update(['accepted_at' => now(), 'status' => 'accepted']);

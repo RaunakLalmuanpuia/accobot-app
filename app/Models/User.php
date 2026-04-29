@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\ChatRoom;
 use App\Models\TenantRolePermission;
 use App\Models\TenantUserRole;
 use Database\Factories\UserFactory;
@@ -85,6 +86,8 @@ class User extends Authenticatable
             'tenant_id' => $tenant->id,
             'role_id'   => $ownerRole->id,
         ]);
+
+        ChatRoom::addToGeneralIfQualified($tenant->id, $this->id, $roleName);
 
         \Illuminate\Support\Facades\DB::table('users')
             ->where('id', $this->id)

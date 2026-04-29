@@ -36,7 +36,7 @@
                         >
                             <span class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
                                 :class="r.id === room.id ? 'bg-violet-600 text-white' : 'bg-gray-100 text-gray-500'">
-                                {{ r.is_system ? '🔔' : r.name[0].toUpperCase() }}
+                                {{ r.type === 'notifications' ? '🔔' : r.name[0].toUpperCase() }}
                             </span>
                             <span class="flex-1 text-sm font-medium truncate">{{ r.name }}</span>
                             <span v-if="r.unread_count > 0"
@@ -68,7 +68,7 @@
                     <!-- Room avatar -->
                     <div class="w-9 h-9 rounded-full shrink-0 flex items-center justify-center text-sm font-bold"
                         :class="room.is_system ? 'bg-violet-100 text-violet-600' : 'bg-violet-600 text-white'">
-                        {{ room.is_system ? '🔔' : room.name[0].toUpperCase() }}
+                        {{ room.type === 'notifications' ? '🔔' : room.name[0].toUpperCase() }}
                     </div>
 
                     <!-- Room name + status -->
@@ -158,7 +158,7 @@
                     :members="currentRoom.members"
                     :online-user-ids="onlineUsers.map(u => u.id)"
                     :tenant-users="tenantUsers"
-                    :can-manage="canManage && !room.is_system"
+                    :can-manage="canManage && (!room.is_system || room.type === 'group')"
                     :current-user-id="authUserId"
                     @add="addMember"
                     @remove="removeMember"

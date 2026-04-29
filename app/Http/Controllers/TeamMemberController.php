@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AuditEvent;
+use App\Models\ChatRoom;
 use App\Models\Invitation;
 use App\Models\Tenant;
 use App\Models\TenantUserRole;
@@ -94,6 +95,8 @@ class TeamMemberController extends Controller
             'tenant_id' => $tenant->id,
             'role_id'   => $role->id,
         ]);
+
+        ChatRoom::addToGeneralIfQualified($tenant->id, $user->id, $role->name);
 
         AuditEvent::log('member.added', [
             'target_user_id' => $user->id,
