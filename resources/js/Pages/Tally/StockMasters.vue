@@ -121,11 +121,14 @@ function aliasText(aliases) {
 const groupModal     = ref(null)
 const isEditingGroup = computed(() => groupModal.value && groupModal.value !== 'create')
 
-const groupForm = useForm({ name: '', parent: '' })
+const groupForm = useForm({ name: '', parent: '', aliases: [] })
 
 const groupParentOptions = computed(() =>
-    props.stockGroups.filter(g => g.is_active).map(g => g.name)
+    props.stockGroups.filter(g => g.is_active && g.id !== groupModal.value?.id).map(g => g.name)
 )
+
+function addGroupAlias()     { groupForm.aliases.push({ Alias: '' }) }
+function removeGroupAlias(i) { groupForm.aliases.splice(i, 1) }
 
 function openCreateGroup() {
     groupForm.reset()
@@ -134,8 +137,9 @@ function openCreateGroup() {
 }
 
 function openEditGroup(group) {
-    groupForm.name   = group.name
-    groupForm.parent = group.parent ?? ''
+    groupForm.name    = group.name
+    groupForm.parent  = group.parent ?? ''
+    groupForm.aliases = group.aliases ? JSON.parse(JSON.stringify(group.aliases)) : []
     groupForm.clearErrors()
     groupModal.value = group
 }
@@ -169,11 +173,14 @@ function destroyGroup(group) {
 const catModal     = ref(null)
 const isEditingCat = computed(() => catModal.value && catModal.value !== 'create')
 
-const catForm = useForm({ name: '', parent: '' })
+const catForm = useForm({ name: '', parent: '', aliases: [] })
 
 const catParentOptions = computed(() =>
-    props.stockCategories.filter(c => c.is_active).map(c => c.name)
+    props.stockCategories.filter(c => c.is_active && c.id !== catModal.value?.id).map(c => c.name)
 )
+
+function addCatAlias()     { catForm.aliases.push({ Alias: '' }) }
+function removeCatAlias(i) { catForm.aliases.splice(i, 1) }
 
 function openCreateCat() {
     catForm.reset()
@@ -182,8 +189,9 @@ function openCreateCat() {
 }
 
 function openEditCat(cat) {
-    catForm.name   = cat.name
-    catForm.parent = cat.parent ?? ''
+    catForm.name    = cat.name
+    catForm.parent  = cat.parent ?? ''
+    catForm.aliases = cat.aliases ? JSON.parse(JSON.stringify(cat.aliases)) : []
     catForm.clearErrors()
     catModal.value = cat
 }
@@ -453,13 +461,25 @@ function destroyCat(cat) {
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Parent Group</label>
-                        <input v-model="groupForm.parent" type="text"
-                               list="sg-parent-options"
-                               placeholder="e.g. All Items"
-                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                        <datalist id="sg-parent-options">
-                            <option v-for="n in groupParentOptions" :key="n" :value="n" />
-                        </datalist>
+                        <select v-model="groupForm.parent"
+                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
+                            <option value="">— None —</option>
+                            <option v-for="n in groupParentOptions" :key="n" :value="n">{{ n }}</option>
+                        </select>
+                    </div>
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="text-sm font-medium text-gray-700">Aliases</label>
+                            <button type="button" @click="addGroupAlias"
+                                    class="text-xs text-violet-600 hover:text-violet-800 font-medium">+ Add</button>
+                        </div>
+                        <div v-for="(al, i) in groupForm.aliases" :key="i" class="flex gap-2 mb-2">
+                            <input v-model="al.Alias" type="text" placeholder="Alias name"
+                                   class="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                            <button type="button" @click="removeGroupAlias(i)"
+                                    class="text-xs text-red-400 hover:text-red-600 px-2">✕</button>
+                        </div>
+                        <p v-if="!groupForm.aliases.length" class="text-xs text-gray-400">No aliases added.</p>
                     </div>
                     <div class="flex gap-3 pt-2 border-t border-gray-100">
                         <button type="submit" :disabled="groupForm.processing"
@@ -539,13 +559,25 @@ function destroyCat(cat) {
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Parent Category</label>
-                        <input v-model="catForm.parent" type="text"
-                               list="sc-parent-options"
-                               placeholder="e.g. All Categories"
-                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                        <datalist id="sc-parent-options">
-                            <option v-for="n in catParentOptions" :key="n" :value="n" />
-                        </datalist>
+                        <select v-model="catForm.parent"
+                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
+                            <option value="">— None —</option>
+                            <option v-for="n in catParentOptions" :key="n" :value="n">{{ n }}</option>
+                        </select>
+                    </div>
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="text-sm font-medium text-gray-700">Aliases</label>
+                            <button type="button" @click="addCatAlias"
+                                    class="text-xs text-violet-600 hover:text-violet-800 font-medium">+ Add</button>
+                        </div>
+                        <div v-for="(al, i) in catForm.aliases" :key="i" class="flex gap-2 mb-2">
+                            <input v-model="al.Alias" type="text" placeholder="Alias name"
+                                   class="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                            <button type="button" @click="removeCatAlias(i)"
+                                    class="text-xs text-red-400 hover:text-red-600 px-2">✕</button>
+                        </div>
+                        <p v-if="!catForm.aliases.length" class="text-xs text-gray-400">No aliases added.</p>
                     </div>
                     <div class="flex gap-3 pt-2 border-t border-gray-100">
                         <button type="submit" :disabled="catForm.processing"

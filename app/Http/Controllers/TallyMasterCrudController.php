@@ -218,8 +218,10 @@ class TallyMasterCrudController extends Controller
     public function stockGroupStore(Request $request, Tenant $tenant)
     {
         $data = $request->validate([
-            'name'   => 'required|string|max:255',
-            'parent' => 'nullable|string|max:255',
+            'name'            => 'required|string|max:255',
+            'parent'          => 'nullable|string|max:255',
+            'aliases'         => 'nullable|array',
+            'aliases.*.Alias' => 'nullable|string|max:255',
         ]);
 
         $record = TallyStockGroup::create(array_merge($data, [
@@ -236,8 +238,10 @@ class TallyMasterCrudController extends Controller
         abort_unless($stockGroup->tenant_id === $tenant->id, 404);
 
         $data = $request->validate([
-            'name'   => 'required|string|max:255',
-            'parent' => 'nullable|string|max:255',
+            'name'            => 'required|string|max:255',
+            'parent'          => 'nullable|string|max:255',
+            'aliases'         => 'nullable|array',
+            'aliases.*.Alias' => 'nullable|string|max:255',
         ]);
 
         $stockGroup->update($data);
@@ -271,8 +275,10 @@ class TallyMasterCrudController extends Controller
     public function stockCategoryStore(Request $request, Tenant $tenant)
     {
         $data = $request->validate([
-            'name'   => 'required|string|max:255',
-            'parent' => 'nullable|string|max:255',
+            'name'            => 'required|string|max:255',
+            'parent'          => 'nullable|string|max:255',
+            'aliases'         => 'nullable|array',
+            'aliases.*.Alias' => 'nullable|string|max:255',
         ]);
 
         $record = TallyStockCategory::create(array_merge($data, [
@@ -289,8 +295,10 @@ class TallyMasterCrudController extends Controller
         abort_unless($stockCategory->tenant_id === $tenant->id, 404);
 
         $data = $request->validate([
-            'name'   => 'required|string|max:255',
-            'parent' => 'nullable|string|max:255',
+            'name'            => 'required|string|max:255',
+            'parent'          => 'nullable|string|max:255',
+            'aliases'         => 'nullable|array',
+            'aliases.*.Alias' => 'nullable|string|max:255',
         ]);
 
         $stockCategory->update($data);
