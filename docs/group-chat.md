@@ -396,7 +396,7 @@ Events to handle: `.chat.message`, `.chat.typing`, `.chat.reaction`, `.chat.read
 
 | Component | Purpose |
 |---|---|
-| `MessageBubble.vue` | Renders a single message — own (right, violet) vs. received (left, gray). Shows sender name, reply quote, attachments, reaction bar, read receipt ticks |
+| `MessageBubble.vue` | Renders a single message — own (right, violet) vs. received (left, gray). Shows sender name, reply quote, attachments, reaction bar, read receipt ticks. Hover reveals reply and delete (trash) buttons; delete shown for own messages or users with `chat.message.delete` permission |
 | `MessageInput.vue` | Textarea (Enter = send, Shift+Enter = newline), attachment picker, pending attachment previews, reply bar, typing events (debounced 1 s, stops after 3 s silence) |
 | `ReactionPicker.vue` | Emoji reaction bubbles below messages; `+` button opens hardcoded emoji grid (no external library) |
 | `AttachmentPreview.vue` | Image thumbnail or file icon + name; click triggers signed download URL |

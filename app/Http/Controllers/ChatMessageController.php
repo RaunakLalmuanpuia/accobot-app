@@ -24,11 +24,11 @@ class ChatMessageController extends Controller
             403
         );
 
-        $query = ChatMessage::where('chat_room_id', $room->id)
+        $query = ChatMessage::withTrashed()->where('chat_room_id', $room->id)
             ->with(['sender:id,name', 'attachments', 'reactions', 'replyTo.sender:id,name']);
 
         if ($beforeId = $request->query('before_id')) {
-            $ref = ChatMessage::find($beforeId);
+            $ref = ChatMessage::withTrashed()->find($beforeId);
             if ($ref) {
                 $query->where('created_at', '<', $ref->created_at);
             }

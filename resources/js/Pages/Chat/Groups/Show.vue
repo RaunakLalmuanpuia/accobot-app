@@ -129,8 +129,10 @@
                             :current-user-id="authUserId"
                             :reads="readMap"
                             :members="room.members"
+                            :can-delete-any="canDeleteAnyMsg"
                             @react="toggleReaction"
                             @reply="replyTo = item"
+                            @delete="deleteMessage"
                         />
 
                     </template>
@@ -189,7 +191,8 @@ const props = defineProps({
 
 const page        = usePage();
 const authUserId  = computed(() => page.props.auth.user.id);
-const canManage   = computed(() => page.props.auth.permissions?.includes('chat.room.manage'));
+const canManage       = computed(() => page.props.auth.permissions?.includes('chat.room.manage'));
+const canDeleteAnyMsg = computed(() => page.props.auth.permissions?.includes('chat.message.delete'));
 
 const messagesEl   = ref(null);
 const messages     = ref([...props.messages]);
@@ -319,6 +322,15 @@ async function removeMember(userId) {
         route('chat.groups.members.destroy', { tenant: props.tenant.id, room: currentRoom.value.id, user: userId })
     );
     currentRoom.value.members = currentRoom.value.members.filter(m => m.user?.id !== userId);
+}
+
+async function deleteMessage(message) {
+    if (!confirm('Delete this message?')) return;
+    await window.axios.delete(
+        route('chat.messages.destroy', { tenant: props.tenant.id, room: props.room.id, message: message.id })
+    );
+    const idx = messages.value.findIndex(m => m.id === message.id);
+    if (idx >= 0) messages.value[idx] = { ...messages.value[idx], body: null, deleted_at: new Date().toISOString() };
 }
 
 async function toggleReaction({ message_id, emoji }) {

@@ -29,18 +29,37 @@
             <!-- Bubble + reply button -->
             <div class="group flex items-end gap-1.5" :class="isOwn ? 'flex-row-reverse' : 'flex-row'">
 
-                <!-- Reply button (hover) — hidden for system messages -->
-                <button
+                <!-- Action buttons (hover) — hidden for system messages -->
+                <div
                     v-if="!message.deleted_at && message.type !== 'system'"
-                    @click="$emit('reply', message)"
-                    class="opacity-0 group-hover:opacity-100 transition-opacity p-1 mb-1 text-gray-400 hover:text-violet-600 shrink-0"
-                    title="Reply"
+                    class="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 mb-1"
+                    :class="isOwn ? 'flex-row-reverse' : 'flex-row'"
                 >
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M3 10h10a4 4 0 010 8H9m-6-8l4-4M3 10l4 4"/>
-                    </svg>
-                </button>
+                    <!-- Reply -->
+                    <button
+                        @click="$emit('reply', message)"
+                        class="p-1 text-gray-400 hover:text-violet-600 shrink-0"
+                        title="Reply"
+                    >
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M3 10h10a4 4 0 010 8H9m-6-8l4-4M3 10l4 4"/>
+                        </svg>
+                    </button>
+
+                    <!-- Delete (own messages or with permission) -->
+                    <button
+                        v-if="canDelete"
+                        @click="$emit('delete', message)"
+                        class="p-1 text-gray-400 hover:text-red-500 shrink-0"
+                        title="Delete"
+                    >
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                    </button>
+                </div>
 
                 <!-- Bubble -->
                 <div
@@ -130,16 +149,19 @@ import ReadReceiptDisplay from './ReadReceiptDisplay.vue';
 import { computed } from 'vue';
 
 const props = defineProps({
-    message:       { type: Object,  required: true },
-    isOwn:         { type: Boolean, default: false },
-    grouped:       { type: Boolean, default: false },
-    showSender:    { type: Boolean, default: true },
-    currentUserId: { type: Number,  required: true },
-    reads:         { type: Object,  default: () => ({}) },
-    members:       { type: Array,   default: () => [] },
+    message:          { type: Object,  required: true },
+    isOwn:            { type: Boolean, default: false },
+    grouped:          { type: Boolean, default: false },
+    showSender:       { type: Boolean, default: true },
+    currentUserId:    { type: Number,  required: true },
+    reads:            { type: Object,  default: () => ({}) },
+    members:          { type: Array,   default: () => [] },
+    canDeleteAny:     { type: Boolean, default: false },
 });
 
-defineEmits(['react', 'reply']);
+defineEmits(['react', 'reply', 'delete']);
+
+const canDelete = computed(() => props.isOwn || props.canDeleteAny);
 
 const senderInitials = computed(() => {
     const name = props.message.sender?.name ?? props.message.sender_name ?? '?';

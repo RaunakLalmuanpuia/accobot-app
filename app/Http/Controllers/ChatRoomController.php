@@ -115,7 +115,7 @@ class ChatRoomController extends Controller
             403
         );
 
-        $messages = ChatMessage::where('chat_room_id', $room->id)
+        $messages = ChatMessage::withTrashed()->where('chat_room_id', $room->id)
             ->with([
                 'sender:id,name',
                 'attachments',
