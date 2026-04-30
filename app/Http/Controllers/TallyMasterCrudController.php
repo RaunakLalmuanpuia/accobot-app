@@ -336,6 +336,11 @@ class TallyMasterCrudController extends Controller
             'opening_balance'  => 'nullable|numeric|min:0',
         ]);
 
+        $data['igst_rate']  = $data['igst_rate']  ?? 0;
+        $data['sgst_rate']  = $data['sgst_rate']  ?? 0;
+        $data['cgst_rate']  = $data['cgst_rate']  ?? 0;
+        $data['cess_rate']  = $data['cess_rate']  ?? 0;
+
         $record = TallyStockItem::create(array_merge($data, [
             'tenant_id' => $tenant->id,
             'is_active' => true,
@@ -361,6 +366,11 @@ class TallyMasterCrudController extends Controller
             'cess_rate'        => 'nullable|numeric|min:0|max:100',
             'opening_balance'  => 'nullable|numeric|min:0',
         ]);
+
+        $data['igst_rate']  = $data['igst_rate']  ?? 0;
+        $data['sgst_rate']  = $data['sgst_rate']  ?? 0;
+        $data['cgst_rate']  = $data['cgst_rate']  ?? 0;
+        $data['cess_rate']  = $data['cess_rate']  ?? 0;
 
         $stockItem->update($data);
 

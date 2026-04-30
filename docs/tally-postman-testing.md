@@ -1439,6 +1439,15 @@ These are optional — if `CompanyGUID` is absent, the upsert is silently skippe
 
 ---
 
+## Bugs Fixed
+
+### `cess_rate` NOT NULL violation on stock item edit (2026-04-30)
+**Symptom:** Editing a Tally stock item via the web UI with a blank cess rate field throws `SQLSTATE[23502]: Not null violation` on `tally_stock_items.cess_rate`.  
+**Root cause:** `TallyMasterCrudController::stockItemStore/Update` validated `cess_rate` as `nullable`, but the DB column is `decimal NOT NULL DEFAULT 0`. When the field was left blank, `null` was written back.  
+**Fix:** Added `?? 0` coercion for `igst_rate`, `sgst_rate`, `cgst_rate`, `cess_rate` before the create/update call in both methods.
+
+---
+
 ## Outbound API Testing Notes
 
 Outbound GET endpoints (rows 24–41) return records that are **pending** in the outbound queue. A record enters the queue only when it has been created or modified in Accobot (or when the Tally inbound sync creates/updates a Tally master record).
