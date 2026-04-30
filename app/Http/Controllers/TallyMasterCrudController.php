@@ -33,7 +33,7 @@ class TallyMasterCrudController extends Controller
     {
         $data = $request->validate([
             'name'            => 'required|string|max:255',
-            'under_name'      => 'nullable|string|max:255',
+            'under_name'      => 'required|string|max:255',
             'nature_of_group' => 'nullable|string|max:255',
         ]);
 
@@ -52,7 +52,7 @@ class TallyMasterCrudController extends Controller
 
         $data = $request->validate([
             'name'            => 'required|string|max:255',
-            'under_name'      => 'nullable|string|max:255',
+            'under_name'      => 'required|string|max:255',
             'nature_of_group' => 'nullable|string|max:255',
         ]);
 
@@ -88,7 +88,7 @@ class TallyMasterCrudController extends Controller
     {
         $data = $request->validate([
             'ledger_name'                       => 'required|string|max:255',
-            'group_name'                        => 'nullable|string|max:255',
+            'group_name'                        => 'required|string|max:255',
             'parent_group'                      => 'nullable|string|max:255',
             'is_bill_wise_on'                   => 'boolean',
             'inventory_affected'                => 'boolean',
@@ -145,7 +145,7 @@ class TallyMasterCrudController extends Controller
 
         $data = $request->validate([
             'ledger_name'                       => 'required|string|max:255',
-            'group_name'                        => 'nullable|string|max:255',
+            'group_name'                        => 'required|string|max:255',
             'parent_group'                      => 'nullable|string|max:255',
             'is_bill_wise_on'                   => 'boolean',
             'inventory_affected'                => 'boolean',
@@ -324,16 +324,32 @@ class TallyMasterCrudController extends Controller
     public function stockItemStore(Request $request, Tenant $tenant)
     {
         $data = $request->validate([
-            'name'             => 'required|string|max:255',
-            'stock_group_name' => 'nullable|string|max:255',
+            'name'              => 'required|string|max:255',
+            'description'       => 'nullable|string|max:1000',
+            'remarks'           => 'nullable|string|max:1000',
+            'aliases'           => 'nullable|array',
+            'aliases.*.Alias'   => 'nullable|string|max:255',
+            'stock_group_name'  => 'nullable|string|max:255',
             'category_name'    => 'nullable|string|max:255',
             'unit_name'        => 'nullable|string|max:50',
+            'alternate_unit'   => 'nullable|string|max:50',
+            'conversion'       => 'nullable|numeric|min:0',
+            'denominator'      => 'nullable|integer|min:1',
+            'is_gst_applicable'=> 'nullable|boolean',
+            'taxability'       => 'nullable|string|max:50',
+            'calculation_type' => 'nullable|string|max:50',
             'hsn_code'         => 'nullable|string|max:20',
             'igst_rate'        => 'nullable|numeric|min:0|max:100',
             'sgst_rate'        => 'nullable|numeric|min:0|max:100',
             'cgst_rate'        => 'nullable|numeric|min:0|max:100',
             'cess_rate'        => 'nullable|numeric|min:0|max:100',
+            'mrp_rate'         => 'nullable|numeric|min:0',
             'opening_balance'  => 'nullable|numeric|min:0',
+            'opening_rate'     => 'nullable|numeric|min:0',
+            'opening_value'    => 'nullable|numeric|min:0',
+            'closing_balance'  => 'nullable|numeric',
+            'closing_rate'     => 'nullable|numeric|min:0',
+            'closing_value'    => 'nullable|numeric',
         ]);
 
         $data['igst_rate']  = $data['igst_rate']  ?? 0;
@@ -355,16 +371,32 @@ class TallyMasterCrudController extends Controller
         abort_unless($stockItem->tenant_id === $tenant->id, 404);
 
         $data = $request->validate([
-            'name'             => 'required|string|max:255',
-            'stock_group_name' => 'nullable|string|max:255',
+            'name'              => 'required|string|max:255',
+            'description'       => 'nullable|string|max:1000',
+            'remarks'           => 'nullable|string|max:1000',
+            'aliases'           => 'nullable|array',
+            'aliases.*.Alias'   => 'nullable|string|max:255',
+            'stock_group_name'  => 'nullable|string|max:255',
             'category_name'    => 'nullable|string|max:255',
             'unit_name'        => 'nullable|string|max:50',
+            'alternate_unit'   => 'nullable|string|max:50',
+            'conversion'       => 'nullable|numeric|min:0',
+            'denominator'      => 'nullable|integer|min:1',
+            'is_gst_applicable'=> 'nullable|boolean',
+            'taxability'       => 'nullable|string|max:50',
+            'calculation_type' => 'nullable|string|max:50',
             'hsn_code'         => 'nullable|string|max:20',
             'igst_rate'        => 'nullable|numeric|min:0|max:100',
             'sgst_rate'        => 'nullable|numeric|min:0|max:100',
             'cgst_rate'        => 'nullable|numeric|min:0|max:100',
             'cess_rate'        => 'nullable|numeric|min:0|max:100',
+            'mrp_rate'         => 'nullable|numeric|min:0',
             'opening_balance'  => 'nullable|numeric|min:0',
+            'opening_rate'     => 'nullable|numeric|min:0',
+            'opening_value'    => 'nullable|numeric|min:0',
+            'closing_balance'  => 'nullable|numeric',
+            'closing_rate'     => 'nullable|numeric|min:0',
+            'closing_value'    => 'nullable|numeric',
         ]);
 
         $data['igst_rate']  = $data['igst_rate']  ?? 0;

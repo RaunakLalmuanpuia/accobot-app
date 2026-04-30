@@ -60,17 +60,35 @@ const modal     = ref(null)
 const isEditing = computed(() => modal.value && modal.value !== 'create')
 
 const form = useForm({
-    name:             '',
-    stock_group_name: '',
-    category_name:    '',
-    unit_name:        '',
-    hsn_code:         '',
-    igst_rate:        '',
-    sgst_rate:        '',
-    cgst_rate:        '',
-    cess_rate:        '',
-    opening_balance:  '',
+    name:              '',
+    description:       '',
+    remarks:           '',
+    aliases:           [],
+    stock_group_name:  '',
+    category_name:     '',
+    unit_name:         '',
+    alternate_unit:    '',
+    conversion:        '',
+    denominator:       '',
+    is_gst_applicable: '',
+    taxability:        '',
+    calculation_type:  '',
+    hsn_code:          '',
+    igst_rate:         '',
+    sgst_rate:         '',
+    cgst_rate:         '',
+    cess_rate:         '',
+    mrp_rate:          '',
+    opening_balance:   '',
+    opening_rate:      '',
+    opening_value:     '',
+    closing_balance:   '',
+    closing_rate:      '',
+    closing_value:     '',
 })
+
+function addAlias()     { form.aliases.push({ Alias: '' }) }
+function removeAlias(i) { form.aliases.splice(i, 1) }
 
 function openCreate() {
     form.reset()
@@ -79,16 +97,31 @@ function openCreate() {
 }
 
 function openEdit(item) {
-    form.name             = item.name
-    form.stock_group_name = item.stock_group_name ?? ''
-    form.category_name    = item.category_name ?? ''
-    form.unit_name        = item.unit_name ?? ''
-    form.hsn_code         = item.hsn_code ?? ''
-    form.igst_rate        = item.igst_rate ?? ''
-    form.sgst_rate        = item.sgst_rate ?? ''
-    form.cgst_rate        = item.cgst_rate ?? ''
-    form.cess_rate        = item.cess_rate ?? ''
-    form.opening_balance  = item.opening_balance ?? ''
+    form.name              = item.name
+    form.description       = item.description ?? ''
+    form.remarks           = item.remarks ?? ''
+    form.aliases           = item.aliases ? JSON.parse(JSON.stringify(item.aliases)) : []
+    form.stock_group_name  = item.stock_group_name ?? ''
+    form.category_name     = item.category_name ?? ''
+    form.unit_name         = item.unit_name ?? ''
+    form.alternate_unit    = item.alternate_unit ?? ''
+    form.conversion        = item.conversion ?? ''
+    form.denominator       = item.denominator ?? ''
+    form.is_gst_applicable = item.is_gst_applicable !== null ? String(item.is_gst_applicable) : ''
+    form.taxability        = item.taxability ?? ''
+    form.calculation_type  = item.calculation_type ?? ''
+    form.hsn_code          = item.hsn_code ?? ''
+    form.igst_rate         = item.igst_rate ?? ''
+    form.sgst_rate         = item.sgst_rate ?? ''
+    form.cgst_rate         = item.cgst_rate ?? ''
+    form.cess_rate         = item.cess_rate ?? ''
+    form.mrp_rate          = item.mrp_rate ?? ''
+    form.opening_balance   = item.opening_balance ?? ''
+    form.opening_rate      = item.opening_rate ?? ''
+    form.opening_value     = item.opening_value ?? ''
+    form.closing_balance   = item.closing_balance ?? ''
+    form.closing_rate      = item.closing_rate ?? ''
+    form.closing_value     = item.closing_value ?? ''
     form.clearErrors()
     modal.value = item
 }
@@ -236,6 +269,8 @@ function destroy(item) {
                 </div>
 
                 <form @submit.prevent="submit" class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+
+                    <!-- Name -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Name <span class="text-red-500">*</span></label>
                         <input v-model="form.name" type="text" placeholder="e.g. Laptop 15 inch"
@@ -243,6 +278,35 @@ function destroy(item) {
                         <p v-if="form.errors.name" class="mt-1 text-xs text-red-500">{{ form.errors.name }}</p>
                     </div>
 
+                    <!-- Description & Remarks -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                        <textarea v-model="form.description" rows="2" placeholder="e.g. High-speed lease line"
+                                  class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Remarks</label>
+                        <textarea v-model="form.remarks" rows="2" placeholder="Internal notes"
+                                  class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                    </div>
+
+                    <!-- Aliases -->
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="text-sm font-medium text-gray-700">Aliases</label>
+                            <button type="button" @click="addAlias"
+                                    class="text-xs text-violet-600 hover:text-violet-800 font-medium">+ Add</button>
+                        </div>
+                        <div v-for="(al, i) in form.aliases" :key="i" class="flex gap-2 mb-2">
+                            <input v-model="al.Alias" type="text" placeholder="Alias name"
+                                   class="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                            <button type="button" @click="removeAlias(i)"
+                                    class="text-xs text-red-400 hover:text-red-600 px-2">✕</button>
+                        </div>
+                        <p v-if="!form.aliases.length" class="text-xs text-gray-400">No aliases added.</p>
+                    </div>
+
+                    <!-- Group & Category -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Stock Group</label>
                         <select v-model="form.stock_group_name"
@@ -251,7 +315,6 @@ function destroy(item) {
                             <option v-for="n in stockGroupNames" :key="n" :value="n">{{ n }}</option>
                         </select>
                     </div>
-
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
                         <select v-model="form.category_name"
@@ -261,11 +324,65 @@ function destroy(item) {
                         </select>
                     </div>
 
+                    <!-- Unit -->
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Unit</label>
-                            <input v-model="form.unit_name" type="text" placeholder="e.g. Nos"
+                            <input v-model="form.unit_name" type="text" placeholder="e.g. PCS"
                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Alternate Unit</label>
+                            <input v-model="form.alternate_unit" type="text" placeholder="e.g. BOX"
+                                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Conversion</label>
+                            <input v-model="form.conversion" type="number" step="0.0001" min="0" placeholder="0"
+                                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Denominator</label>
+                            <input v-model="form.denominator" type="number" min="1" placeholder="1"
+                                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                        </div>
+                    </div>
+
+                    <!-- GST -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">GST Applicable</label>
+                            <select v-model="form.is_gst_applicable"
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
+                                <option value="">— Select —</option>
+                                <option value="true">Applicable</option>
+                                <option value="false">Not Applicable</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Taxability</label>
+                            <select v-model="form.taxability"
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
+                                <option value="">— Select —</option>
+                                <option>Taxable</option>
+                                <option>Non-Taxable</option>
+                                <option>Exempt</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Calculation Type</label>
+                            <select v-model="form.calculation_type"
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
+                                <option value="">— Select —</option>
+                                <option>On Value</option>
+                                <option>On MRP Rate</option>
+                                <option>Based on Qty</option>
+                                <option>Fixed Amount</option>
+                            </select>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">HSN Code</label>
@@ -274,6 +391,7 @@ function destroy(item) {
                         </div>
                     </div>
 
+                    <!-- GST Rates -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">GST Rates (%)</label>
                         <div class="grid grid-cols-4 gap-2">
@@ -300,10 +418,55 @@ function destroy(item) {
                         </div>
                     </div>
 
+                    <!-- MRP -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Opening Balance (Qty)</label>
-                        <input v-model="form.opening_balance" type="number" step="0.0001" min="0" placeholder="0"
+                        <label class="block text-sm font-medium text-gray-700 mb-1">MRP Rate</label>
+                        <input v-model="form.mrp_rate" type="number" step="0.01" min="0" placeholder="0"
                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                    </div>
+
+                    <!-- Opening -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Opening</label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <div>
+                                <p class="text-xs text-gray-400 mb-1">Balance (Qty)</p>
+                                <input v-model="form.opening_balance" type="number" step="0.0001" placeholder="0"
+                                       class="w-full rounded-lg border border-gray-300 px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-400 mb-1">Rate</p>
+                                <input v-model="form.opening_rate" type="number" step="0.01" placeholder="0"
+                                       class="w-full rounded-lg border border-gray-300 px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-400 mb-1">Value</p>
+                                <input v-model="form.opening_value" type="number" step="0.01" placeholder="0"
+                                       class="w-full rounded-lg border border-gray-300 px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Closing -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Closing</label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <div>
+                                <p class="text-xs text-gray-400 mb-1">Balance (Qty)</p>
+                                <input v-model="form.closing_balance" type="number" step="0.0001" placeholder="0"
+                                       class="w-full rounded-lg border border-gray-300 px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-400 mb-1">Rate</p>
+                                <input v-model="form.closing_rate" type="number" step="0.01" placeholder="0"
+                                       class="w-full rounded-lg border border-gray-300 px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-400 mb-1">Value</p>
+                                <input v-model="form.closing_value" type="number" step="0.01" placeholder="0"
+                                       class="w-full rounded-lg border border-gray-300 px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                            </div>
+                        </div>
                     </div>
 
                     <div class="flex gap-3 pt-2 border-t border-gray-100">

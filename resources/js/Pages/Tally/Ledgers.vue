@@ -325,7 +325,9 @@ function destroy(ledger) {
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Group</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Group <span class="text-red-500">*</span>
+                        </label>
                         <select v-model="form.group_name" @change="onGroupChange"
                                 class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
                             <option value="">— Select Group —</option>

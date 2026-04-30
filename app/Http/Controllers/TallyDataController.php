@@ -131,10 +131,15 @@ class TallyDataController extends Controller
                     ->with(['mappedProduct:id,name'])
                     ->orderBy('name')
                     ->get([
-                        'id', 'tally_id', 'name', 'stock_group_name', 'category_name', 'unit_name',
-                        'hsn_code', 'igst_rate', 'cgst_rate', 'sgst_rate',
-                        'mrp_rate', 'opening_balance', 'closing_balance',
-                        'closing_value', 'is_active', 'last_synced_at', 'mapped_product_id',
+                        'id', 'tally_id', 'name', 'description', 'remarks',
+                        'stock_group_name', 'category_name', 'unit_name', 'alternate_unit',
+                        'conversion', 'denominator',
+                        'is_gst_applicable', 'taxability', 'calculation_type',
+                        'hsn_code', 'igst_rate', 'cgst_rate', 'sgst_rate', 'cess_rate',
+                        'mrp_rate',
+                        'opening_balance', 'opening_rate', 'opening_value',
+                        'closing_balance', 'closing_rate', 'closing_value',
+                        'is_active', 'last_synced_at', 'mapped_product_id',
                     ]),
                 $map
             ),
