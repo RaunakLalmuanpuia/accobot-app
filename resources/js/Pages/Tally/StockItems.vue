@@ -245,24 +245,20 @@ function destroy(item) {
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Stock Group</label>
-                        <input v-model="form.stock_group_name" type="text"
-                               list="si-group-options"
-                               placeholder="e.g. Electronics"
-                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                        <datalist id="si-group-options">
-                            <option v-for="n in stockGroupNames" :key="n" :value="n" />
-                        </datalist>
+                        <select v-model="form.stock_group_name"
+                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
+                            <option value="">— None —</option>
+                            <option v-for="n in stockGroupNames" :key="n" :value="n">{{ n }}</option>
+                        </select>
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                        <input v-model="form.category_name" type="text"
-                               list="si-cat-options"
-                               placeholder="e.g. Accessories"
-                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                        <datalist id="si-cat-options">
-                            <option v-for="n in stockCategoryNames" :key="n" :value="n" />
-                        </datalist>
+                        <select v-model="form.category_name"
+                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
+                            <option value="">— None —</option>
+                            <option v-for="n in stockCategoryNames" :key="n" :value="n">{{ n }}</option>
+                        </select>
                     </div>
 
                     <div class="grid grid-cols-2 gap-3">
