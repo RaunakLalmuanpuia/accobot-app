@@ -151,6 +151,10 @@ class TallyDataController extends Controller
                 ->where('is_active', true)
                 ->orderBy('name')
                 ->pluck('name'),
+            'unitNames'          => TallyUnit::where('tenant_id', $tenant->id)
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->pluck('name'),
         ]);
     }
 

@@ -9,6 +9,7 @@ const props = defineProps({
     items:              Array,
     stockGroupNames:    Array,
     stockCategoryNames: Array,
+    unitNames:          Array,
 })
 
 const canManage = hasPermission('integrations.manage')
@@ -328,13 +329,19 @@ function destroy(item) {
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Unit</label>
-                            <input v-model="form.unit_name" type="text" placeholder="e.g. PCS"
-                                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                            <select v-model="form.unit_name"
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
+                                <option value="">— None —</option>
+                                <option v-for="n in unitNames" :key="n" :value="n">{{ n }}</option>
+                            </select>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Alternate Unit</label>
-                            <input v-model="form.alternate_unit" type="text" placeholder="e.g. BOX"
-                                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                            <select v-model="form.alternate_unit"
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
+                                <option value="">— None —</option>
+                                <option v-for="n in unitNames" :key="n" :value="n">{{ n }}</option>
+                            </select>
                         </div>
                     </div>
                     <div class="grid grid-cols-2 gap-3">
