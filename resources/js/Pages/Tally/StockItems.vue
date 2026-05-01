@@ -95,7 +95,7 @@ function addAlias()         { form.aliases.push({ Alias: '' }) }
 function removeAlias(i)     { form.aliases.splice(i, 1) }
 function addPartNo()        { form.part_nos.push({ PartNo: '' }) }
 function removePartNo(i)    { form.part_nos.splice(i, 1) }
-function addBatchAlloc()    { form.batch_allocations.push({ GodownName: '', GodownID: '', OpeningBalnace: '', Rate: '', OpeningValue: '' }) }
+function addBatchAlloc()    { form.batch_allocations.push({ GodownName: '', GodownID: '', BatchName: '', OpeningBalnace: '', Rate: '', OpeningValue: '' }) }
 function removeBatchAlloc(i){ form.batch_allocations.splice(i, 1) }
 
 function selectGodown(ba, godown) {
@@ -534,6 +534,11 @@ function destroy(item) {
                                         <option value="">— Select Godown —</option>
                                         <option v-for="g in godownNames" :key="g.name" :value="g.name">{{ g.name }}</option>
                                     </select>
+                                </div>
+                                <div class="col-span-2">
+                                    <p class="text-xs text-gray-400 mb-1">Batch Name</p>
+                                    <input v-model="ba.BatchName" type="text" placeholder="e.g. Batch-001"
+                                           class="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
                                 </div>
                                 <div>
                                     <p class="text-xs text-gray-400 mb-1">Opening Balance</p>
