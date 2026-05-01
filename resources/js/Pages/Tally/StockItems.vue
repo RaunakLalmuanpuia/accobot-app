@@ -101,7 +101,7 @@ function removeBatchAlloc(i){ form.batch_allocations.splice(i, 1) }
 function selectGodown(ba, godown) {
     if (godown) {
         ba.GodownName = godown.name
-        ba.GodownID   = godown.tally_id ?? ''
+        ba.GodownID   = godown.tally_id ?? 0
     } else {
         ba.GodownName = ''
         ba.GodownID   = ''
@@ -126,7 +126,7 @@ function openEdit(item) {
     form.alternate_unit    = item.alternate_unit ?? ''
     form.conversion        = item.conversion ?? ''
     form.denominator       = item.denominator ?? ''
-    form.is_gst_applicable = item.is_gst_applicable !== null ? String(item.is_gst_applicable) : ''
+    form.is_gst_applicable = item.is_gst_applicable !== null ? (item.is_gst_applicable ? '1' : '0') : ''
     form.taxability        = item.taxability ?? ''
     form.calculation_type  = item.calculation_type ?? ''
     form.hsn_code          = item.hsn_code ?? ''
@@ -399,8 +399,8 @@ function destroy(item) {
                             <select v-model="form.is_gst_applicable"
                                     class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
                                 <option value="">— Select —</option>
-                                <option value="true">Applicable</option>
-                                <option value="false">Not Applicable</option>
+                                <option value="1">Applicable</option>
+                                <option value="0">Not Applicable</option>
                             </select>
                         </div>
                         <div>

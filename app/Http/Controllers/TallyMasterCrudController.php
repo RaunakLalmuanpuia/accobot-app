@@ -369,10 +369,18 @@ class TallyMasterCrudController extends Controller
             'batch_allocations.*.OpeningValue'  => 'nullable|numeric',
         ]);
 
-        $data['igst_rate']  = $data['igst_rate']  ?? 0;
-        $data['sgst_rate']  = $data['sgst_rate']  ?? 0;
-        $data['cgst_rate']  = $data['cgst_rate']  ?? 0;
-        $data['cess_rate']  = $data['cess_rate']  ?? 0;
+        $data['igst_rate']         = $data['igst_rate']         ?? 0;
+        $data['sgst_rate']         = $data['sgst_rate']         ?? 0;
+        $data['cgst_rate']         = $data['cgst_rate']         ?? 0;
+        $data['cess_rate']         = $data['cess_rate']         ?? 0;
+        $data['denominator']       = $data['denominator']       ?? 1;
+        $data['is_gst_applicable'] = $data['is_gst_applicable'] ?? false;
+        $data['opening_balance']   = $data['opening_balance']   ?? 0;
+        $data['opening_rate']      = $data['opening_rate']      ?? 0;
+        $data['opening_value']     = $data['opening_value']     ?? 0;
+        $data['closing_balance']   = $data['closing_balance']   ?? 0;
+        $data['closing_rate']      = $data['closing_rate']      ?? 0;
+        $data['closing_value']     = $data['closing_value']     ?? 0;
 
         $record = TallyStockItem::create(array_merge($data, [
             'tenant_id' => $tenant->id,
@@ -424,10 +432,18 @@ class TallyMasterCrudController extends Controller
             'batch_allocations.*.OpeningValue'  => 'nullable|numeric',
         ]);
 
-        $data['igst_rate']  = $data['igst_rate']  ?? 0;
-        $data['sgst_rate']  = $data['sgst_rate']  ?? 0;
-        $data['cgst_rate']  = $data['cgst_rate']  ?? 0;
-        $data['cess_rate']  = $data['cess_rate']  ?? 0;
+        $data['igst_rate']         = $data['igst_rate']         ?? 0;
+        $data['sgst_rate']         = $data['sgst_rate']         ?? 0;
+        $data['cgst_rate']         = $data['cgst_rate']         ?? 0;
+        $data['cess_rate']         = $data['cess_rate']         ?? 0;
+        $data['denominator']       = $data['denominator']       ?? 1;
+        $data['is_gst_applicable'] = $data['is_gst_applicable'] ?? false;
+        $data['opening_balance']   = $data['opening_balance']   ?? 0;
+        $data['opening_rate']      = $data['opening_rate']      ?? 0;
+        $data['opening_value']     = $data['opening_value']     ?? 0;
+        $data['closing_balance']   = $data['closing_balance']   ?? 0;
+        $data['closing_rate']      = $data['closing_rate']      ?? 0;
+        $data['closing_value']     = $data['closing_value']     ?? 0;
 
         $stockItem->update($data);
 
