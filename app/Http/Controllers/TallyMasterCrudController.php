@@ -365,7 +365,7 @@ class TallyMasterCrudController extends Controller
             'batch_allocations.*.GodownName'    => 'nullable|string|max:255',
             'batch_allocations.*.GodownID'      => 'nullable|integer',
             'batch_allocations.*.BatchName'     => 'nullable|string|max:255',
-            'batch_allocations.*.OpeningBalnace'=> 'nullable|numeric',
+            'batch_allocations.*.OpeningBalance'=> 'nullable|numeric',
             'batch_allocations.*.Rate'          => 'nullable|numeric',
             'batch_allocations.*.OpeningValue'  => 'nullable|numeric',
         ]);
@@ -429,7 +429,7 @@ class TallyMasterCrudController extends Controller
             'batch_allocations.*.GodownName'    => 'nullable|string|max:255',
             'batch_allocations.*.GodownID'      => 'nullable|integer',
             'batch_allocations.*.BatchName'     => 'nullable|string|max:255',
-            'batch_allocations.*.OpeningBalnace'=> 'nullable|numeric',
+            'batch_allocations.*.OpeningBalance'=> 'nullable|numeric',
             'batch_allocations.*.Rate'          => 'nullable|numeric',
             'batch_allocations.*.OpeningValue'  => 'nullable|numeric',
         ]);

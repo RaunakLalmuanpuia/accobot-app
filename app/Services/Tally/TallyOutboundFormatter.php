@@ -100,7 +100,7 @@ class TallyOutboundFormatter
                 'GodownName'     => $ba['GodownName']     ?? '',
                 'GodownID'       => (int) ($ba['GodownID']       ?? 0),
                 'BatchName'      => $ba['BatchName']      ?? '',
-                'OpeningBalnace' => (float) ($ba['OpeningBalnace'] ?? 0),
+                'OpeningBalance' => (float) ($ba['OpeningBalance'] ?? $ba['OpeningBalnace'] ?? 0),
                 'Rate'           => (float) ($ba['Rate']           ?? 0),
                 'OpeningValue'   => (float) ($ba['OpeningValue']   ?? 0),
             ])->all(),

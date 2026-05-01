@@ -95,7 +95,7 @@ function addAlias()         { form.aliases.push({ Alias: '' }) }
 function removeAlias(i)     { form.aliases.splice(i, 1) }
 function addPartNo()        { form.part_nos.push({ PartNo: '' }) }
 function removePartNo(i)    { form.part_nos.splice(i, 1) }
-function addBatchAlloc()    { form.batch_allocations.push({ GodownName: '', GodownID: '', BatchName: '', OpeningBalnace: '', Rate: '', OpeningValue: '' }) }
+function addBatchAlloc()    { form.batch_allocations.push({ GodownName: '', GodownID: '', BatchName: '', OpeningBalance: '', Rate: '', OpeningValue: '' }) }
 function removeBatchAlloc(i){ form.batch_allocations.splice(i, 1) }
 
 function selectGodown(ba, godown) {
@@ -542,7 +542,7 @@ function destroy(item) {
                                 </div>
                                 <div>
                                     <p class="text-xs text-gray-400 mb-1">Opening Balance</p>
-                                    <input v-model="ba.OpeningBalnace" type="number" step="0.0001" placeholder="0"
+                                    <input v-model="ba.OpeningBalance" type="number" step="0.0001" placeholder="0"
                                            class="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
                                 </div>
                                 <div>
