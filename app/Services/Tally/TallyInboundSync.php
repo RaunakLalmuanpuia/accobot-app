@@ -293,6 +293,7 @@ class TallyInboundSync
                     'description'             => $item['Description'] ?? null,
                     'remarks'                 => $item['Remarks'] ?? null,
                     'aliases'                 => $item['Aliases'] ?? null,
+                    'part_nos'                => $item['PartNos'] ?? null,
                     'stock_group_id'          => isset($item['StockGroupID']) ? (int) $item['StockGroupID'] : null,
                     'stock_group_name'        => $item['StockGroupName'] ?? null,
                     'stock_category_id'       => isset($item['StockCategoryID']) ? (int) $item['StockCategoryID'] : null,
@@ -317,6 +318,7 @@ class TallyInboundSync
                     'closing_balance'         => (float) ($item['Closing_Balance'] ?? $item['ClosingBalance'] ?? 0),
                     'closing_rate'            => (float) ($item['Closing_Rate'] ?? $item['ClosingRate'] ?? 0),
                     'closing_value'           => (float) ($item['Closing_Value'] ?? $item['ClosingValue'] ?? 0),
+                    'batch_allocations'       => $item['BatchAllocations'] ?? null,
                     'is_active'       => true,
                     'last_synced_at'          => now(),
                 ];

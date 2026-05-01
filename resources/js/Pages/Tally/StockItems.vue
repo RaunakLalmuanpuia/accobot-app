@@ -10,6 +10,7 @@ const props = defineProps({
     stockGroupNames:    Array,
     stockCategoryNames: Array,
     unitNames:          Array,
+    godownNames:        Array,
 })
 
 const canManage = hasPermission('integrations.manage')
@@ -65,6 +66,7 @@ const form = useForm({
     description:       '',
     remarks:           '',
     aliases:           [],
+    part_nos:          [],
     stock_group_name:  '',
     category_name:     '',
     unit_name:         '',
@@ -86,10 +88,25 @@ const form = useForm({
     closing_balance:   '',
     closing_rate:      '',
     closing_value:     '',
+    batch_allocations: [],
 })
 
-function addAlias()     { form.aliases.push({ Alias: '' }) }
-function removeAlias(i) { form.aliases.splice(i, 1) }
+function addAlias()         { form.aliases.push({ Alias: '' }) }
+function removeAlias(i)     { form.aliases.splice(i, 1) }
+function addPartNo()        { form.part_nos.push({ PartNo: '' }) }
+function removePartNo(i)    { form.part_nos.splice(i, 1) }
+function addBatchAlloc()    { form.batch_allocations.push({ GodownName: '', GodownID: '', OpeningBalnace: '', Rate: '', OpeningValue: '' }) }
+function removeBatchAlloc(i){ form.batch_allocations.splice(i, 1) }
+
+function selectGodown(ba, godown) {
+    if (godown) {
+        ba.GodownName = godown.name
+        ba.GodownID   = godown.tally_id ?? ''
+    } else {
+        ba.GodownName = ''
+        ba.GodownID   = ''
+    }
+}
 
 function openCreate() {
     form.reset()
@@ -102,6 +119,7 @@ function openEdit(item) {
     form.description       = item.description ?? ''
     form.remarks           = item.remarks ?? ''
     form.aliases           = item.aliases ? JSON.parse(JSON.stringify(item.aliases)) : []
+    form.part_nos          = item.part_nos ? JSON.parse(JSON.stringify(item.part_nos)) : []
     form.stock_group_name  = item.stock_group_name ?? ''
     form.category_name     = item.category_name ?? ''
     form.unit_name         = item.unit_name ?? ''
@@ -123,6 +141,7 @@ function openEdit(item) {
     form.closing_balance   = item.closing_balance ?? ''
     form.closing_rate      = item.closing_rate ?? ''
     form.closing_value     = item.closing_value ?? ''
+    form.batch_allocations = item.batch_allocations ? JSON.parse(JSON.stringify(item.batch_allocations)) : []
     form.clearErrors()
     modal.value = item
 }
@@ -307,6 +326,22 @@ function destroy(item) {
                         <p v-if="!form.aliases.length" class="text-xs text-gray-400">No aliases added.</p>
                     </div>
 
+                    <!-- Part Nos -->
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="text-sm font-medium text-gray-700">Part Numbers</label>
+                            <button type="button" @click="addPartNo"
+                                    class="text-xs text-violet-600 hover:text-violet-800 font-medium">+ Add</button>
+                        </div>
+                        <div v-for="(pn, i) in form.part_nos" :key="i" class="flex gap-2 mb-2">
+                            <input v-model="pn.PartNo" type="text" placeholder="Part number"
+                                   class="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                            <button type="button" @click="removePartNo(i)"
+                                    class="text-xs text-red-400 hover:text-red-600 px-2">✕</button>
+                        </div>
+                        <p v-if="!form.part_nos.length" class="text-xs text-gray-400">No part numbers added.</p>
+                    </div>
+
                     <!-- Group & Category -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Stock Group</label>
@@ -474,6 +509,50 @@ function destroy(item) {
                                        class="w-full rounded-lg border border-gray-300 px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Batch Allocations -->
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="text-sm font-medium text-gray-700">Batch Allocations (Godowns)</label>
+                            <button type="button" @click="addBatchAlloc"
+                                    class="text-xs text-violet-600 hover:text-violet-800 font-medium">+ Add</button>
+                        </div>
+                        <div v-for="(ba, i) in form.batch_allocations" :key="i"
+                             class="border border-gray-200 rounded-lg p-3 mb-2 space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-medium text-gray-500">Allocation {{ i + 1 }}</span>
+                                <button type="button" @click="removeBatchAlloc(i)"
+                                        class="text-xs text-red-400 hover:text-red-600">✕ Remove</button>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div class="col-span-2">
+                                    <p class="text-xs text-gray-400 mb-1">Godown</p>
+                                    <select @change="selectGodown(ba, godownNames.find(g => g.name === $event.target.value))"
+                                            :value="ba.GodownName"
+                                            class="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
+                                        <option value="">— Select Godown —</option>
+                                        <option v-for="g in godownNames" :key="g.name" :value="g.name">{{ g.name }}</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-400 mb-1">Opening Balance</p>
+                                    <input v-model="ba.OpeningBalnace" type="number" step="0.0001" placeholder="0"
+                                           class="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-400 mb-1">Rate</p>
+                                    <input v-model="ba.Rate" type="number" step="0.01" placeholder="0"
+                                           class="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                                </div>
+                                <div class="col-span-2">
+                                    <p class="text-xs text-gray-400 mb-1">Opening Value</p>
+                                    <input v-model="ba.OpeningValue" type="number" step="0.01" placeholder="0"
+                                           class="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                                </div>
+                            </div>
+                        </div>
+                        <p v-if="!form.batch_allocations.length" class="text-xs text-gray-400">No batch allocations.</p>
                     </div>
 
                     <div class="flex gap-3 pt-2 border-t border-gray-100">

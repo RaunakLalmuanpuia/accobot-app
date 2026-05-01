@@ -132,6 +132,7 @@ class TallyDataController extends Controller
                     ->orderBy('name')
                     ->get([
                         'id', 'tally_id', 'name', 'description', 'remarks',
+                        'aliases', 'part_nos',
                         'stock_group_name', 'category_name', 'unit_name', 'alternate_unit',
                         'conversion', 'denominator',
                         'is_gst_applicable', 'taxability', 'calculation_type',
@@ -139,6 +140,7 @@ class TallyDataController extends Controller
                         'mrp_rate',
                         'opening_balance', 'opening_rate', 'opening_value',
                         'closing_balance', 'closing_rate', 'closing_value',
+                        'batch_allocations',
                         'is_active', 'last_synced_at', 'mapped_product_id',
                     ]),
                 $map
@@ -155,6 +157,10 @@ class TallyDataController extends Controller
                 ->where('is_active', true)
                 ->orderBy('name')
                 ->pluck('name'),
+            'godownNames'        => TallyGodown::where('tenant_id', $tenant->id)
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get(['name', 'tally_id']),
         ]);
     }
 

@@ -883,7 +883,7 @@ All pages show data to any user with `integrations.view`. Edit / New / Delete ac
 | LedgerGroups.vue | tally.ledger-groups.index | Ledger Groups — Name, Under, Nature of Group |
 | Ledgers.vue | tally.ledgers.index | Full CRUD slide-over. Group is a dropdown from TallyLedgerGroups (auto-fills ParentGroup from under_name). All outbound fields covered: LedgerName, Group/ParentGroup, MailingName, IsBillWiseOn, InventoryAffected, GSTIN, PAN, GSTType, ContactPerson, Mobile, ContactPersonEmail, ContactPersonMobile, Addresses (dynamic), State, Country, PinCode, CreditPeriod, CreditLimit, OpeningBalance/Type, Aliases (dynamic), Description, Notes, BankDetails (dynamic). |
 | StockMasters.vue | tally.stock-masters.index | Stock Groups + Stock Categories (tabs). Godowns tab is read-only (inbound only). |
-| StockItems.vue | tally.stock-items.index | Stock Items — Name, Group, Category, Unit, HSN, GST rates (IGST/SGST/CGST/CESS), Opening Balance |
+| StockItems.vue | tally.stock-items.index | Stock Items — Name, Group, Category, Unit, HSN, GST rates (IGST/SGST/CGST/CESS), Opening Balance, Batch Allocations (Godown dropdown from tally_godowns) |
 | StatutoryMasters.vue | tally.statutory-masters.index | Statutory Masters — Name, Type, Reg. No., State Code, Reg. Type, PAN, TAN, Applicable From |
 | Payroll.vue | tally.payroll.index | 4 tabs: Employees, Employee Groups, Pay Heads, Attendance Types — all with full CRUD |
 | Units.vue | tally.units.index | Units of Measure — Name/Symbol (always the same; unique per tenant), Formal Name (must differ from symbol), Decimal Places, UQC. Symbol auto-set to Name in backend. DB unique constraint on (tenant_id, name). |

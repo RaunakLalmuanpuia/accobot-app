@@ -837,10 +837,10 @@ function destroyAtt(att) {
                         <select v-model="attForm.attendance_type"
                                 class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
                             <option value="">— Select —</option>
-                            <option>Attendance</option>
-                            <option>Leave with Pay</option>
+                            <option>Attendance / Leave with Pay</option>
                             <option>Leave without Pay</option>
-                            <option>Productivity</option>
+                            <option>Production</option>
+                            <option>User Defined Calender Type</option>
                         </select>
                     </div>
                     <div>

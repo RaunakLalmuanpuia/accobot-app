@@ -12,7 +12,7 @@ class TallyStockItem extends Model
 
     protected $fillable = [
         'tenant_id', 'tally_id', 'alter_id', 'action',
-        'name', 'description', 'remarks', 'aliases',
+        'name', 'description', 'remarks', 'aliases', 'part_nos',
         'stock_group_id', 'stock_group_name', 'stock_category_id', 'category_name',
         'unit_id', 'unit_name', 'alternate_unit', 'conversion', 'denominator',
         'is_gst_applicable', 'taxability', 'calculation_type',
@@ -20,12 +20,15 @@ class TallyStockItem extends Model
         'mrp_rate',
         'opening_balance', 'opening_rate', 'opening_value',
         'closing_balance', 'closing_rate', 'closing_value',
+        'batch_allocations',
         'is_active', 'last_synced_at',
         'mapped_product_id',
     ];
 
     protected $casts = [
-        'aliases'           => 'array',
+        'aliases'            => 'array',
+        'part_nos'           => 'array',
+        'batch_allocations'  => 'array',
         'is_gst_applicable' => 'boolean',
         'is_active'         => 'boolean',
         'igst_rate'         => 'decimal:2',
