@@ -20,12 +20,12 @@ class BroadcastSystemNotification implements ShouldBroadcast
     public function broadcastOn(): array
     {
         $channels = [
-            new PrivateChannel("private-tenant.{$this->tenantId}.notifications"),
+            new PrivateChannel("tenant.{$this->tenantId}.notifications"),
         ];
 
         // Also notify the specific user's private channel if targeted
         if (! empty($this->payload['user_id'])) {
-            $channels[] = new PrivateChannel("private-user.{$this->payload['user_id']}");
+            $channels[] = new PrivateChannel("user.{$this->payload['user_id']}");
         }
 
         return $channels;

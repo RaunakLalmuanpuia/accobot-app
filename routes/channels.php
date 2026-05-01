@@ -36,16 +36,16 @@ Broadcast::channel('room.{tenantId}.{roomId}', function ($user, string $tenantId
 
 /**
  * Private channel for per-user system notifications.
- * Channel: private-user.{userId}
+ * Wire channel: private-user.{userId}  (Laravel adds the "private-" prefix automatically)
  */
-Broadcast::channel('private-user.{userId}', function ($user, int $userId) {
+Broadcast::channel('user.{userId}', function ($user, int $userId) {
     return (int) $user->id === $userId;
 });
 
 /**
  * Private channel for tenant-wide notifications room broadcast.
- * Channel: private-tenant.{tenantId}.notifications
+ * Wire channel: private-tenant.{tenantId}.notifications  (Laravel adds the "private-" prefix automatically)
  */
-Broadcast::channel('private-tenant.{tenantId}.notifications', function ($user, string $tenantId) {
+Broadcast::channel('tenant.{tenantId}.notifications', function ($user, string $tenantId) {
     return $user->tenants()->where('tenants.id', $tenantId)->exists();
 });
