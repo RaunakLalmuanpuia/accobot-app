@@ -23,6 +23,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class TallyMasterCrudController extends Controller
 {
@@ -333,7 +334,7 @@ class TallyMasterCrudController extends Controller
     public function stockItemStore(Request $request, Tenant $tenant)
     {
         $data = $request->validate([
-            'name'                              => 'required|string|max:255',
+            'name'                              => ['required', 'string', 'max:255', Rule::unique('tally_stock_items')->where('tenant_id', $tenant->id)],
             'description'                       => 'nullable|string|max:1000',
             'remarks'                           => 'nullable|string|max:1000',
             'aliases'                           => 'nullable|array',
@@ -365,8 +366,8 @@ class TallyMasterCrudController extends Controller
             'batch_allocations.*.GodownName'    => 'nullable|string|max:255',
             'batch_allocations.*.GodownID'      => 'nullable|integer',
             'batch_allocations.*.BatchName'     => 'nullable|string|max:255',
-            'batch_allocations.*.OpeningBalance'=> 'nullable|numeric',
-            'batch_allocations.*.Rate'          => 'nullable|numeric',
+            'batch_allocations.*.OpeningBalance'=> 'nullable|numeric|min:0',
+            'batch_allocations.*.Rate'          => 'nullable|numeric|min:0',
             'batch_allocations.*.OpeningValue'  => 'nullable|numeric',
         ]);
 
@@ -382,6 +383,8 @@ class TallyMasterCrudController extends Controller
         $data['closing_balance']   = $data['closing_balance']   ?? 0;
         $data['closing_rate']      = $data['closing_rate']      ?? 0;
         $data['closing_value']     = $data['closing_value']     ?? 0;
+
+        $this->validateBatchAllocations($data['batch_allocations'] ?? [], $data['opening_balance']);
 
         $record = TallyStockItem::create(array_merge($data, [
             'tenant_id' => $tenant->id,
@@ -397,7 +400,7 @@ class TallyMasterCrudController extends Controller
         abort_unless($stockItem->tenant_id === $tenant->id, 404);
 
         $data = $request->validate([
-            'name'                              => 'required|string|max:255',
+            'name'                              => ['required', 'string', 'max:255', Rule::unique('tally_stock_items')->where('tenant_id', $tenant->id)->ignore($stockItem->id)],
             'description'                       => 'nullable|string|max:1000',
             'remarks'                           => 'nullable|string|max:1000',
             'aliases'                           => 'nullable|array',
@@ -429,8 +432,8 @@ class TallyMasterCrudController extends Controller
             'batch_allocations.*.GodownName'    => 'nullable|string|max:255',
             'batch_allocations.*.GodownID'      => 'nullable|integer',
             'batch_allocations.*.BatchName'     => 'nullable|string|max:255',
-            'batch_allocations.*.OpeningBalance'=> 'nullable|numeric',
-            'batch_allocations.*.Rate'          => 'nullable|numeric',
+            'batch_allocations.*.OpeningBalance'=> 'nullable|numeric|min:0',
+            'batch_allocations.*.Rate'          => 'nullable|numeric|min:0',
             'batch_allocations.*.OpeningValue'  => 'nullable|numeric',
         ]);
 
@@ -446,6 +449,8 @@ class TallyMasterCrudController extends Controller
         $data['closing_balance']   = $data['closing_balance']   ?? 0;
         $data['closing_rate']      = $data['closing_rate']      ?? 0;
         $data['closing_value']     = $data['closing_value']     ?? 0;
+
+        $this->validateBatchAllocations($data['batch_allocations'] ?? [], $data['opening_balance']);
 
         $stockItem->update($data);
 
@@ -1048,5 +1053,19 @@ class TallyMasterCrudController extends Controller
             'tenant_id' => $record->tenant_id,
             'payload'   => $payload,
         ]);
+    }
+
+    private function validateBatchAllocations(array $allocations, float $openingBalance): void
+    {
+        if (empty($allocations)) return;
+
+        // Auto-compute OpeningValue = OpeningBalance × Rate (enforced server-side)
+        // Sum check
+        $total = array_sum(array_map(fn($ba) => (float) ($ba['OpeningBalance'] ?? 0), $allocations));
+        if ($total > $openingBalance) {
+            throw ValidationException::withMessages([
+                'batch_allocations' => "Total batch opening balance ({$total}) exceeds stock item opening balance ({$openingBalance}).",
+            ]);
+        }
     }
 }

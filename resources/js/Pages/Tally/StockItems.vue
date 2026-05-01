@@ -95,8 +95,21 @@ function addAlias()         { form.aliases.push({ Alias: '' }) }
 function removeAlias(i)     { form.aliases.splice(i, 1) }
 function addPartNo()        { form.part_nos.push({ PartNo: '' }) }
 function removePartNo(i)    { form.part_nos.splice(i, 1) }
-function addBatchAlloc()    { form.batch_allocations.push({ GodownName: '', GodownID: '', BatchName: '', OpeningBalance: '', Rate: '', OpeningValue: '' }) }
+function addBatchAlloc()    { form.batch_allocations.push({ GodownName: '', GodownID: '', BatchName: '', OpeningBalance: '', Rate: '', OpeningValue: 0 }) }
 function removeBatchAlloc(i){ form.batch_allocations.splice(i, 1) }
+
+function calcOpeningValue(ba) {
+    const qty  = parseFloat(ba.OpeningBalance) || 0
+    const rate = parseFloat(ba.Rate) || 0
+    ba.OpeningValue = parseFloat((qty * rate).toFixed(2))
+}
+
+const batchOpeningError = computed(() => {
+    const total = form.batch_allocations.reduce((sum, ba) => sum + (parseFloat(ba.OpeningBalance) || 0), 0)
+    const max   = parseFloat(form.opening_balance) || 0
+    if (total > max) return `Total batch opening balance (${total}) exceeds opening balance (${max}).`
+    return null
+})
 
 function selectGodown(ba, godown) {
     if (godown) {
@@ -542,26 +555,30 @@ function destroy(item) {
                                 </div>
                                 <div>
                                     <p class="text-xs text-gray-400 mb-1">Opening Balance</p>
-                                    <input v-model="ba.OpeningBalance" type="number" step="0.0001" placeholder="0"
+                                    <input v-model="ba.OpeningBalance" @input="calcOpeningValue(ba)"
+                                           type="number" step="0.0001" placeholder="0"
                                            class="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
                                 </div>
                                 <div>
                                     <p class="text-xs text-gray-400 mb-1">Rate</p>
-                                    <input v-model="ba.Rate" type="number" step="0.01" placeholder="0"
+                                    <input v-model="ba.Rate" @input="calcOpeningValue(ba)"
+                                           type="number" step="0.01" placeholder="0"
                                            class="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
                                 </div>
                                 <div class="col-span-2">
-                                    <p class="text-xs text-gray-400 mb-1">Opening Value</p>
-                                    <input v-model="ba.OpeningValue" type="number" step="0.01" placeholder="0"
-                                           class="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                                    <p class="text-xs text-gray-400 mb-1">Opening Value <span class="text-gray-300">(auto)</span></p>
+                                    <input :value="ba.OpeningValue" readonly
+                                           class="w-full rounded-lg border border-gray-200 bg-gray-50 px-2 py-1.5 text-sm text-gray-500 cursor-not-allowed" />
                                 </div>
                             </div>
                         </div>
+                        <p v-if="batchOpeningError" class="text-xs text-red-500 mt-1">{{ batchOpeningError }}</p>
+                        <p v-if="form.errors.batch_allocations" class="text-xs text-red-500 mt-1">{{ form.errors.batch_allocations }}</p>
                         <p v-if="!form.batch_allocations.length" class="text-xs text-gray-400">No batch allocations.</p>
                     </div>
 
                     <div class="flex gap-3 pt-2 border-t border-gray-100">
-                        <button type="submit" :disabled="form.processing"
+                        <button type="submit" :disabled="form.processing || !!batchOpeningError"
                                 class="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 transition disabled:opacity-50">
                             {{ isEditing ? 'Update' : 'Create' }}
                         </button>
