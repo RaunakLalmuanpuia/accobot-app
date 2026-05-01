@@ -281,7 +281,7 @@ class TallyOutboundFormatter
             'RegistrationType'   => $s->registration_type,
             'PAN'                => $s->pan,
             'TAN'                => $s->tan,
-            'ApplicableFrom'     => $s->applicable_from?->toDateString(),
+            'ApplicableFrom'     => $s->applicable_from?->format('Ymd'),
             'Details'            => $s->details ?? [],
         ]))->values()->all();
     }
@@ -312,9 +312,9 @@ class TallyOutboundFormatter
             'Designation'    => $e->designation,
             'Function'       => $e->employee_function,
             'Location'       => $e->location,
-            'JoiningDate'    => $e->date_of_joining?->toDateString(),
-            'ResignationDate' => $e->date_of_leaving?->toDateString(),
-            'DOB'            => $e->date_of_birth?->toDateString(),
+            'JoiningDate'    => $e->date_of_joining?->format('Ymd'),
+            'ResignationDate' => $e->date_of_leaving?->format('Ymd'),
+            'DOB'            => $e->date_of_birth?->format('Ymd'),
             'Gender'         => $e->gender,
             'FatherName'     => $e->father_name,
             'SpouseName'     => $e->spouse_name,
@@ -361,7 +361,7 @@ class TallyOutboundFormatter
             'Action'        => $v->action,
             'VoucherType'   => $v->voucher_type,
             'VoucherNumber' => $v->voucher_number,
-            'VoucherDate'   => $v->voucher_date?->format('Y-m-d'),
+            'VoucherDate'   => $v->voucher_date?->format('Ymd'),
             'Narration'     => $v->narration,
             'EmployeeAllocations' => $v->employeeAllocations->map(fn ($a) => $this->dropNulls([
                 'EmployeeName'   => $a->employee_name,
@@ -381,7 +381,7 @@ class TallyOutboundFormatter
             'Action'        => $v->action,
             'VoucherType'   => $v->voucher_type,
             'VoucherNumber' => $v->voucher_number,
-            'VoucherDate'   => $v->voucher_date?->format('Y-m-d'),
+            'VoucherDate'   => $v->voucher_date?->format('Ymd'),
             'Narration'     => $v->narration,
             'EmployeeAllocations' => $v->employeeAllocations->map(fn ($a) => $this->dropNulls([
                 'EmployeeName'      => $a->employee_name,
@@ -403,7 +403,7 @@ class TallyOutboundFormatter
                 'Action'        => $v->action,
                 'VoucherType'   => $v->voucher_type,
                 'VoucherNumber' => $v->voucher_number,
-                'VoucherDate'   => $v->voucher_date?->format('Y-m-d'),
+                'VoucherDate'   => $v->voucher_date?->format('Ymd'),
                 'Reference'     => $v->reference,
                 'ReferenceDate' => $v->reference_date,
                 'PartyName'     => $v->party_name,
