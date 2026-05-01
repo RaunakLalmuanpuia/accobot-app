@@ -18,7 +18,7 @@ class BroadcastReadReceipt implements ShouldBroadcastNow
     public function broadcastOn(): array
     {
         return [
-            new PresenceChannel("presence-room.{$this->read->tenant_id}.{$this->read->chat_room_id}"),
+            new PresenceChannel("room.{$this->read->tenant_id}.{$this->read->chat_room_id}"),
         ];
     }
 

@@ -22,7 +22,7 @@ class BroadcastTyping implements ShouldBroadcastNow
     public function broadcastOn(): array
     {
         return [
-            new PresenceChannel("presence-room.{$this->tenantId}.{$this->roomId}"),
+            new PresenceChannel("room.{$this->tenantId}.{$this->roomId}"),
         ];
     }
 

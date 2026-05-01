@@ -1047,6 +1047,8 @@ Subscribe to these when the user opens a room:
 
 **Presence channel** — `presence-room.{tenantId}.{roomId}`
 
+> **Important**: Subscribe using exactly this channel name (with the `presence-` prefix). Laravel's channel auth normalises this correctly on the server side.
+
 All chat events flow through here. The presence protocol also gives you the online member list automatically.
 
 | SDK event | Meaning |

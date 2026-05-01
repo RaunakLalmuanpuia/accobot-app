@@ -16,9 +16,9 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
 
 /**
  * Presence channel for a specific chat room.
- * Channel: presence-room.{tenantId}.{roomId}
+ * Channel: presence-room.{tenantId}.{roomId}  (Laravel adds the "presence-" prefix automatically)
  */
-Broadcast::channel('presence-room.{tenantId}.{roomId}', function ($user, string $tenantId, string $roomId) {
+Broadcast::channel('room.{tenantId}.{roomId}', function ($user, string $tenantId, string $roomId) {
     if (! $user->tenants()->where('tenants.id', $tenantId)->exists()) {
         return false;
     }

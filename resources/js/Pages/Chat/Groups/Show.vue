@@ -411,7 +411,7 @@ function formatDate(iso) {
 onMounted(() => {
     scrollBottom();
     markRead();
-    channel = window.Echo.join(`presence-room.${props.tenant.id}.${currentRoom.value.id}`)
+    channel = window.Echo.join(`room.${props.tenant.id}.${currentRoom.value.id}`)
         .here((users) => { onlineUsers.value = users; })
         .joining((user) => { onlineUsers.value.push(user); })
         .leaving((user) => { onlineUsers.value = onlineUsers.value.filter(u => u.id !== user.id); })
@@ -422,6 +422,6 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-    window.Echo.leave(`presence-room.${props.tenant.id}.${currentRoom.value.id}`);
+    window.Echo.leave(`room.${props.tenant.id}.${currentRoom.value.id}`);
 });
 </script>

@@ -23,7 +23,7 @@ class BroadcastReaction implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new PresenceChannel("presence-room.{$this->reaction->tenant_id}.{$this->reaction->message->chat_room_id}"),
+            new PresenceChannel("room.{$this->reaction->tenant_id}.{$this->reaction->message->chat_room_id}"),
         ];
     }
 

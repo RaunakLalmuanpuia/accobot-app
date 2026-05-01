@@ -23,7 +23,7 @@ class BroadcastChatMessage implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new PresenceChannel("presence-room.{$this->message->tenant_id}.{$this->message->chat_room_id}"),
+            new PresenceChannel("room.{$this->message->tenant_id}.{$this->message->chat_room_id}"),
         ];
     }
 
