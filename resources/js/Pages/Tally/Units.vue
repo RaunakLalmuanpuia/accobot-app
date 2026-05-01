@@ -42,7 +42,6 @@ const isEditing = computed(() => modal.value && modal.value !== 'create')
 
 const form = useForm({
     name:           '',
-    symbol:         '',
     formal_name:    '',
     decimal_places: 0,
     uqc:            '',
@@ -56,7 +55,6 @@ function openCreate() {
 
 function openEdit(unit) {
     form.name           = unit.name
-    form.symbol         = unit.symbol ?? ''
     form.formal_name    = unit.formal_name ?? ''
     form.decimal_places = unit.decimal_places ?? 0
     form.uqc            = unit.uqc ?? ''
@@ -197,20 +195,17 @@ function destroy(unit) {
                 </div>
                 <form @submit.prevent="submit" class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Name <span class="text-red-500">*</span></label>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Name / Symbol <span class="text-red-500">*</span></label>
                         <input v-model="form.name" type="text" placeholder="e.g. PCS"
                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                        <p class="mt-1 text-xs text-gray-400">Name and symbol are always the same in Tally.</p>
                         <p v-if="form.errors.name" class="mt-1 text-xs text-red-500">{{ form.errors.name }}</p>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Symbol</label>
-                        <input v-model="form.symbol" type="text" placeholder="e.g. PCS"
-                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Formal Name</label>
                         <input v-model="form.formal_name" type="text" placeholder="e.g. Pieces"
                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                        <p v-if="form.errors.formal_name" class="mt-1 text-xs text-red-500">{{ form.errors.formal_name }}</p>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Decimal Places</label>

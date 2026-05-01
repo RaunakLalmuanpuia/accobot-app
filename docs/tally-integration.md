@@ -886,6 +886,7 @@ All pages show data to any user with `integrations.view`. Edit / New / Delete ac
 | StockItems.vue | tally.stock-items.index | Stock Items — Name, Group, Category, Unit, HSN, GST rates (IGST/SGST/CGST/CESS), Opening Balance |
 | StatutoryMasters.vue | tally.statutory-masters.index | Statutory Masters — Name, Type, Reg. No., State Code, Reg. Type, PAN, TAN, Applicable From |
 | Payroll.vue | tally.payroll.index | 4 tabs: Employees, Employee Groups, Pay Heads, Attendance Types — all with full CRUD |
+| Units.vue | tally.units.index | Units of Measure — Name/Symbol (always the same; unique per tenant), Formal Name (must differ from symbol), Decimal Places, UQC. Symbol auto-set to Name in backend. DB unique constraint on (tenant_id, name). |
 | Vouchers.vue | tally.vouchers.index | Full CRUD — all voucher parent fields (core, buyer, consignee, dispatch, order) in collapsible sections; full ledger entry fields (incl. igst_rate, hsn_code, cess_rate) and full inventory entry fields (incl. item_code, group_name, cess_rate, actual_qty, discount_percent, tax_amount, mrp, sales_ledger, godown_name, batch_name, is_deemed_positive). Sync status badge per row. |
 | VoucherShow.vue | tally.vouchers.show | Read-only detail with inventory + ledger entries. |
 

@@ -22,6 +22,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 
 class TallyMasterCrudController extends Controller
 {
@@ -881,12 +882,19 @@ class TallyMasterCrudController extends Controller
     public function unitStore(Request $request, Tenant $tenant)
     {
         $data = $request->validate([
-            'name'           => 'required|string|max:255',
-            'symbol'         => 'nullable|string|max:50',
-            'formal_name'    => 'nullable|string|max:255',
+            'name'           => ['required', 'string', 'max:255',
+                Rule::unique('tally_units', 'name')->where('tenant_id', $tenant->id),
+            ],
+            'formal_name'    => ['nullable', 'string', 'max:255', function ($attr, $value, $fail) use ($request) {
+                if ($value && $value === $request->input('name')) {
+                    $fail('Formal name must be different from the unit name/symbol.');
+                }
+            }],
             'decimal_places' => 'nullable|integer|min:0|max:9',
             'uqc'            => 'nullable|string|max:100',
         ]);
+
+        $data['symbol'] = $data['name'];
 
         $record = TallyUnit::create(array_merge($data, [
             'tenant_id' => $tenant->id,
@@ -902,12 +910,19 @@ class TallyMasterCrudController extends Controller
         abort_unless($unit->tenant_id === $tenant->id, 404);
 
         $data = $request->validate([
-            'name'           => 'required|string|max:255',
-            'symbol'         => 'nullable|string|max:50',
-            'formal_name'    => 'nullable|string|max:255',
+            'name'           => ['required', 'string', 'max:255',
+                Rule::unique('tally_units', 'name')->where('tenant_id', $tenant->id)->ignore($unit->id),
+            ],
+            'formal_name'    => ['nullable', 'string', 'max:255', function ($attr, $value, $fail) use ($request) {
+                if ($value && $value === $request->input('name')) {
+                    $fail('Formal name must be different from the unit name/symbol.');
+                }
+            }],
             'decimal_places' => 'nullable|integer|min:0|max:9',
             'uqc'            => 'nullable|string|max:100',
         ]);
+
+        $data['symbol'] = $data['name'];
 
         $unit->update($data);
 
