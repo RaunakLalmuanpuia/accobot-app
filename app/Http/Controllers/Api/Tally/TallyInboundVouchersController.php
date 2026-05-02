@@ -23,11 +23,11 @@ class TallyInboundVouchersController extends TallyBaseController
 
     public function voucher(Request $request): JsonResponse
     {
-        $type  = $request->input('VoucherType', $request->input('voucher_type', ''));
+        $type  = $request->input('VoucherBaseType', $request->input('VoucherType', $request->input('voucher_type', '')));
         $valid = ['Sales', 'CreditNote', 'Purchase', 'DebitNote', 'Receipt', 'Payment', 'Contra', 'Journal'];
 
         if (!in_array($type, $valid, true)) {
-            return response()->json(['error' => 'Invalid or missing VoucherType. Must be one of: ' . implode(', ', $valid)], 422);
+            return response()->json(['error' => 'Invalid or missing VoucherBaseType. Must be one of: ' . implode(', ', $valid)], 422);
         }
 
         return $this->handle($request, $type);

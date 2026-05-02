@@ -20,7 +20,7 @@ Documents the three unified voucher endpoints covering both directions of sync b
 
 ## 1. Inbound — POST `/api/tally/inbound/vouchers`
 
-The Tally connector calls this endpoint to push vouchers into Accobot. `VoucherType` is a required top-level field that determines how the payload is processed.
+The Tally connector calls this endpoint to push vouchers into Accobot. `VoucherBaseType` is the required top-level field that drives all classification logic (routing, auto-mapping, full-sync scoping). `VoucherType` is stored as the specific voucher name but is not used for routing.
 
 ### Request body
 
@@ -34,13 +34,14 @@ The Tally connector calls this endpoint to push vouchers into Accobot. `VoucherT
 
 | Field | Type | Required | Notes |
 |---|---|---|---|
-| `VoucherType` | string | Yes | One of: `Sales`, `Purchase`, `CreditNote`, `DebitNote`, `Receipt`, `Payment`, `Contra`, `Journal` |
+| `VoucherBaseType` | string | Yes | Classification driver. One of: `Sales`, `Purchase`, `CreditNote`, `DebitNote`, `Receipt`, `Payment`, `Contra`, `Journal` |
+| `VoucherType` | string | No | Specific Tally voucher type name (e.g. `"Sales-Interstate"`). Stored as-is; falls back to `VoucherBaseType` if omitted |
 | `Data` | array | Yes | Array of voucher objects — see [Voucher Item Schema](#voucher-item-schema) |
 | `full_sync` | boolean | No | If `true`, records absent from this push are marked inactive |
 
-Returns `422` if `VoucherType` is missing or not in the valid list:
+Returns `422` if `VoucherBaseType` is missing or not in the valid list:
 ```json
-{ "error": "Invalid or missing VoucherType. Must be one of: Sales, CreditNote, Purchase, ..." }
+{ "error": "Invalid or missing VoucherBaseType. Must be one of: Sales, CreditNote, Purchase, ..." }
 ```
 
 ### Response

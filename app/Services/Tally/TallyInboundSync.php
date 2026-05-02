@@ -391,8 +391,8 @@ class TallyInboundSync
                     'tally_id'                => $tallyId,
                     'alter_id'                => $alterId,
                     'action'                  => $action,
-                    'voucher_type'            => $type,
-                    'voucher_base_type'       => $item['VoucherBaseType'] ?? null,
+                    'voucher_type'            => $item['VoucherType'] ?? $type,
+                    'voucher_base_type'       => $item['VoucherBaseType'] ?? $type,
                     'voucher_number'          => $item['VoucherNumber'] ?? null,
                     'voucher_date'            => $this->parseDate($item['VoucherDate'] ?? null),
                     'reference'               => $item['Reference'] ?? null,
@@ -547,9 +547,10 @@ class TallyInboundSync
                 }
 
                 // Auto-map outside transaction, best-effort
-                if ($voucher && $type === 'Sales') {
+                $baseType = $item['VoucherBaseType'] ?? $type;
+                if ($voucher && $baseType === 'Sales') {
                     $this->autoMapSalesVoucher($voucher, $conn->tenant_id);
-                } elseif ($voucher && $type === 'Purchase') {
+                } elseif ($voucher && $baseType === 'Purchase') {
                     $this->autoMapPurchaseVoucher($voucher, $conn->tenant_id);
                 }
             }
@@ -558,7 +559,7 @@ class TallyInboundSync
             if ($fullSync && count($seenIds)) {
                 TallyVoucher::withoutGlobalScope('tenant')
                     ->where('tenant_id', $conn->tenant_id)
-                    ->where('voucher_type', $type)
+                    ->where('voucher_base_type', $type)
                     ->whereNotIn('tally_id', $seenIds)
                     ->update(['is_active' => false]);
             }

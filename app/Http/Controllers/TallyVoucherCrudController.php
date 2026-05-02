@@ -227,7 +227,7 @@ class TallyVoucherCrudController extends Controller
         $voucher->refresh()->load(['ledgerEntries', 'inventoryEntries', 'employeeAllocations']);
         $collection = collect([$voucher]);
 
-        $payload = match ($voucher->voucher_type) {
+        $payload = match ($voucher->voucher_base_type) {
             'Sales'       => $this->formatter->formatSalesVouchers($collection),
             'Purchase'    => $this->formatter->formatPurchaseVouchers($collection),
             'Receipt'     => $this->formatter->formatReceiptVouchers($collection),

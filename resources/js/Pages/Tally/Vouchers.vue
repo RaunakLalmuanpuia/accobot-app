@@ -18,14 +18,14 @@ const search     = ref('')
 const typeFilter = ref('all')
 
 const voucherTypes = computed(() => {
-    const set = new Set(props.vouchers.map(v => v.voucher_type))
+    const set = new Set(props.vouchers.map(v => v.voucher_base_type).filter(Boolean))
     return ['all', ...Array.from(set).sort()]
 })
 
 const filtered = computed(() => {
     let list = props.vouchers
     if (typeFilter.value !== 'all') {
-        list = list.filter(v => v.voucher_type === typeFilter.value)
+        list = list.filter(v => v.voucher_base_type === typeFilter.value)
     }
     const q = search.value.toLowerCase()
     if (q) {
@@ -114,15 +114,15 @@ const INVOICE_TYPES  = ['Sales', 'Purchase', 'CreditNote', 'DebitNote']
 const BANK_ALLOC_TYPES = ['Receipt', 'Payment', 'Contra']
 const BILL_REF_TYPES   = ['Sales', 'Purchase', 'CreditNote', 'DebitNote', 'Receipt', 'Payment', 'Journal']
 
-const showInventory       = computed(() => INVOICE_TYPES.includes(form.voucher_type))
-const showInvoiceSections = computed(() => INVOICE_TYPES.includes(form.voucher_type))
-const showBillRefs        = computed(() => BILL_REF_TYPES.includes(form.voucher_type))
-const showBankAlloc       = computed(() => BANK_ALLOC_TYPES.includes(form.voucher_type))
-const showPlaceOfSupply   = computed(() => [...INVOICE_TYPES, 'Journal', 'Payment'].includes(form.voucher_type))
-const showReference       = computed(() => [...INVOICE_TYPES, 'Journal'].includes(form.voucher_type))
+const showInventory       = computed(() => INVOICE_TYPES.includes(form.voucher_base_type))
+const showInvoiceSections = computed(() => INVOICE_TYPES.includes(form.voucher_base_type))
+const showBillRefs        = computed(() => BILL_REF_TYPES.includes(form.voucher_base_type))
+const showBankAlloc       = computed(() => BANK_ALLOC_TYPES.includes(form.voucher_base_type))
+const showPlaceOfSupply   = computed(() => [...INVOICE_TYPES, 'Journal', 'Payment'].includes(form.voucher_base_type))
+const showReference       = computed(() => [...INVOICE_TYPES, 'Journal'].includes(form.voucher_base_type))
 
 const isPayroll = computed(() =>
-    ['Payroll', 'Attendance'].includes(form.voucher_type)
+    ['Payroll', 'Attendance'].includes(form.voucher_base_type)
 )
 
 // ── CRUD ───────────────────────────────────────────────────────────────────────

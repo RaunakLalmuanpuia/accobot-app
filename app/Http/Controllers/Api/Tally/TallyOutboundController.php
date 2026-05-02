@@ -144,7 +144,7 @@ class TallyOutboundController extends TallyBaseController
         $vouchers = TallyVoucher::withoutGlobalScope('tenant')
             ->with(['inventoryEntries', 'ledgerEntries'])
             ->where('tenant_id', $conn->tenant_id)
-            ->whereIn('voucher_type', $types)
+            ->whereIn('voucher_base_type', $types)
             ->whereIn('id', $ids)
             ->get();
 
@@ -286,7 +286,7 @@ class TallyOutboundController extends TallyBaseController
         $vouchers = TallyVoucher::withoutGlobalScope('tenant')
             ->with('employeeAllocations')
             ->where('tenant_id', $conn->tenant_id)
-            ->where('voucher_type', $type)
+            ->where('voucher_base_type', $type)
             ->whereIn('id', $ids)
             ->get();
 
@@ -306,7 +306,7 @@ class TallyOutboundController extends TallyBaseController
         $vouchers = TallyVoucher::withoutGlobalScope('tenant')
             ->with(['inventoryEntries', 'ledgerEntries'])
             ->where('tenant_id', $conn->tenant_id)
-            ->where('voucher_type', $type)
+            ->where('voucher_base_type', $type)
             ->whereIn('id', $ids)
             ->get();
 
