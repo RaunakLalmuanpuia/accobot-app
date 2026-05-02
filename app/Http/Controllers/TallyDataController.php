@@ -172,8 +172,8 @@ class TallyDataController extends Controller
             'vouchers'       => $this->addSyncStatus(
                 TallyVoucher::where('tenant_id', $tenant->id)
                     ->with([
-                        'ledgerEntries:id,tally_voucher_id,ledger_name,ledger_group,ledger_amount,is_deemed_positive,is_party_ledger,igst_rate,hsn_code,cess_rate,bills_allocation',
-                        'inventoryEntries:id,tally_voucher_id,stock_item_name,item_code,group_name,hsn_code,unit,igst_rate,cess_rate,is_deemed_positive,actual_qty,billed_qty,rate,discount_percent,amount,tax_amount,mrp,sales_ledger,godown_name,batch_name',
+                        'ledgerEntries:id,tally_voucher_id,ledger_name,ledger_group,ledger_amount,is_deemed_positive,is_party_ledger,igst_rate,hsn_code,cess_rate,bills_allocation,bank_allocation_details',
+                        'inventoryEntries:id,tally_voucher_id,stock_item_name,item_code,group_name,hsn_code,unit,igst_rate,cess_rate,is_deemed_positive,actual_qty,billed_qty,rate,discount_percent,amount,tax_amount,mrp,sales_ledger,godown_name,batch_name,batch_allocations,accounting_allocations',
                     ])
                     ->orderByDesc('voucher_date')
                     ->orderByDesc('id')
@@ -189,17 +189,18 @@ class TallyDataController extends Controller
                         'buyer_country', 'buyer_gst_registration_type', 'buyer_email', 'buyer_mobile', 'buyer_address',
                         'consignee_name', 'consignee_gstin', 'consignee_tally_group', 'consignee_pin_code',
                         'consignee_state', 'consignee_country', 'consignee_gst_registration_type',
+                        'irn', 'acknowledgement_no', 'acknowledgement_date', 'qr_code',
                     ]),
                 $map
             ),
-            'ledgerNames'    => TallyLedger::where('tenant_id', $tenant->id)
+            'ledgers'    => TallyLedger::where('tenant_id', $tenant->id)
                 ->where('is_active', true)
                 ->orderBy('ledger_name')
-                ->pluck('ledger_name'),
-            'stockItemNames' => TallyStockItem::where('tenant_id', $tenant->id)
+                ->get(['id', 'ledger_name', 'group_name']),
+            'stockItems' => TallyStockItem::where('tenant_id', $tenant->id)
                 ->where('is_active', true)
                 ->orderBy('name')
-                ->pluck('name'),
+                ->get(['id', 'name', 'hsn_code', 'unit_name', 'igst_rate', 'cess_rate', 'stock_group_name', 'mrp_rate']),
         ]);
     }
 

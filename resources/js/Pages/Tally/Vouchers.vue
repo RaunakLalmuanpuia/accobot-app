@@ -5,10 +5,10 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import { hasPermission } from '@/utils/permissions'
 
 const props = defineProps({
-    tenant:         Object,
-    vouchers:       Array,
-    ledgerNames:    Array,
-    stockItemNames: Array,
+    tenant:     Object,
+    vouchers:   Array,
+    ledgers:    Array,
+    stockItems: Array,
 })
 
 const canManage = hasPermission('integrations.manage')
@@ -79,9 +79,47 @@ const VOUCHER_TYPES = [
     'Payroll', 'Attendance',
 ]
 
-const showInventory = computed(() =>
-    ['Sales', 'Purchase', 'DebitNote', 'CreditNote'].includes(form.voucher_type)
-)
+// ── Lookup maps for auto-fill ──────────────────────────────────────────────────
+const ledgerMap = computed(() => {
+    const m = {}
+    props.ledgers.forEach(l => { m[l.ledger_name] = l })
+    return m
+})
+
+const stockItemMap = computed(() => {
+    const m = {}
+    props.stockItems.forEach(s => { m[s.name] = s })
+    return m
+})
+
+
+function onLedgerNameChange(le) {
+    const match = ledgerMap.value[le.ledger_name]
+    if (!match) return
+    if (match.group_name) le.ledger_group = match.group_name
+}
+
+function onStockItemChange(ie) {
+    const match = stockItemMap.value[ie.stock_item_name]
+    if (!match) return
+    if (match.hsn_code)          ie.hsn_code   = match.hsn_code
+    if (match.unit_name)         ie.unit        = match.unit_name
+    if (match.igst_rate != null) ie.igst_rate   = match.igst_rate
+    if (match.cess_rate != null) ie.cess_rate   = match.cess_rate
+    if (match.stock_group_name)  ie.group_name  = match.stock_group_name
+    if (match.mrp_rate != null)  ie.mrp         = match.mrp_rate
+}
+
+const INVOICE_TYPES  = ['Sales', 'Purchase', 'CreditNote', 'DebitNote']
+const BANK_ALLOC_TYPES = ['Receipt', 'Payment', 'Contra']
+const BILL_REF_TYPES   = ['Sales', 'Purchase', 'CreditNote', 'DebitNote', 'Receipt', 'Payment', 'Journal']
+
+const showInventory       = computed(() => INVOICE_TYPES.includes(form.voucher_type))
+const showInvoiceSections = computed(() => INVOICE_TYPES.includes(form.voucher_type))
+const showBillRefs        = computed(() => BILL_REF_TYPES.includes(form.voucher_type))
+const showBankAlloc       = computed(() => BANK_ALLOC_TYPES.includes(form.voucher_type))
+const showPlaceOfSupply   = computed(() => [...INVOICE_TYPES, 'Journal', 'Payment'].includes(form.voucher_type))
+const showReference       = computed(() => [...INVOICE_TYPES, 'Journal'].includes(form.voucher_type))
 
 const isPayroll = computed(() =>
     ['Payroll', 'Attendance'].includes(form.voucher_type)
@@ -144,6 +182,12 @@ const form = useForm({
     terms_of_delivery: '',
     other_references:  '',
 
+    // e-Invoice
+    irn:                  '',
+    acknowledgement_no:   '',
+    acknowledgement_date: '',
+    qr_code:              '',
+
     // Child entries
     ledger_entries:    [],
     inventory_entries: [],
@@ -156,6 +200,7 @@ function emptyLedger() {
         is_deemed_positive: true, is_party_ledger: false,
         igst_rate: '', hsn_code: '', cess_rate: '',
         bills_allocation: [],
+        bank_allocation_details: [],
     }
 }
 function addLedger()     { form.ledger_entries.push(emptyLedger()) }
@@ -164,8 +209,19 @@ function removeLedger(i) { form.ledger_entries.splice(i, 1) }
 function emptyBillRef() {
     return { AgstType: 'New Ref', Reference: '', CreditPeriod: '', Amount: '' }
 }
-function addBillRef(i)      { form.ledger_entries[i].bills_allocation.push(emptyBillRef()) }
+function addBillRef(i)       { form.ledger_entries[i].bills_allocation.push(emptyBillRef()) }
 function removeBillRef(i, j) { form.ledger_entries[i].bills_allocation.splice(j, 1) }
+
+function emptyBankAlloc() {
+    return {
+        TRANSACTIONTYPE: '', BANKNAME: '', AMOUNT: '',
+        Date: '', InstrumentDate: '', IFSCODE: '',
+        ACCOUNTNUMBER: '', PAYMENTFAVOURING: '', TRANSFERMODE: '',
+        INSTRUMENTNUMBER: '', BankersDate: '',
+    }
+}
+function addBankAlloc(i)       { form.ledger_entries[i].bank_allocation_details.push(emptyBankAlloc()) }
+function removeBankAlloc(i, j) { form.ledger_entries[i].bank_allocation_details.splice(j, 1) }
 
 function emptyInventory() {
     return {
@@ -174,10 +230,24 @@ function emptyInventory() {
         discount_percent: '', amount: '', tax_amount: '', mrp: '',
         sales_ledger: '', godown_name: '', batch_name: '',
         is_deemed_positive: false,
+        batch_allocations: [],
+        accounting_allocations: [],
     }
 }
 function addInventory()     { form.inventory_entries.push(emptyInventory()) }
 function removeInventory(i) { form.inventory_entries.splice(i, 1) }
+
+function emptyBatchAlloc() {
+    return { BatchName: '', ExpiryDate: '', GodownName: '', ActualQty: '', BilledQty: '', Rate: '', DiscountPercent: '', Amount: '' }
+}
+function addBatchAlloc(i)       { form.inventory_entries[i].batch_allocations.push(emptyBatchAlloc()) }
+function removeBatchAlloc(i, j) { form.inventory_entries[i].batch_allocations.splice(j, 1) }
+
+function emptyAccountingAlloc() {
+    return { LedgerName: '', LedgerGroup: '', GSTClassification: '', IGSTRate: '', Amount: '' }
+}
+function addAccountingAlloc(i)       { form.inventory_entries[i].accounting_allocations.push(emptyAccountingAlloc()) }
+function removeAccountingAlloc(i, j) { form.inventory_entries[i].accounting_allocations.splice(j, 1) }
 
 // ── Open / close ───────────────────────────────────────────────────────────────
 function str(v)            { return v ?? '' }
@@ -242,6 +312,11 @@ function openEdit(v) {
     form.terms_of_payment  = str(v.terms_of_payment)
     form.terms_of_delivery = str(v.terms_of_delivery)
     form.other_references  = str(v.other_references)
+    // e-Invoice
+    form.irn                  = str(v.irn)
+    form.acknowledgement_no   = str(v.acknowledgement_no)
+    form.acknowledgement_date = str(v.acknowledgement_date)
+    form.qr_code              = str(v.qr_code)
     // Child entries
     form.ledger_entries = (v.ledger_entries ?? []).map(le => ({
         ledger_name:        str(le.ledger_name),
@@ -252,7 +327,8 @@ function openEdit(v) {
         igst_rate:          str(le.igst_rate),
         hsn_code:           str(le.hsn_code),
         cess_rate:          str(le.cess_rate),
-        bills_allocation:   le.bills_allocation ? JSON.parse(JSON.stringify(le.bills_allocation)) : [],
+        bills_allocation:        le.bills_allocation        ? JSON.parse(JSON.stringify(le.bills_allocation))        : [],
+        bank_allocation_details: le.bank_allocation_details ? JSON.parse(JSON.stringify(le.bank_allocation_details)) : [],
     }))
     form.inventory_entries = (v.inventory_entries ?? []).map(ie => ({
         stock_item_name:   str(ie.stock_item_name),
@@ -272,7 +348,9 @@ function openEdit(v) {
         sales_ledger:      str(ie.sales_ledger),
         godown_name:       str(ie.godown_name),
         batch_name:        str(ie.batch_name),
-        is_deemed_positive: bool(ie.is_deemed_positive),
+        is_deemed_positive:     bool(ie.is_deemed_positive),
+        batch_allocations:      ie.batch_allocations      ? JSON.parse(JSON.stringify(ie.batch_allocations))      : [],
+        accounting_allocations: ie.accounting_allocations ? JSON.parse(JSON.stringify(ie.accounting_allocations)) : [],
     }))
     form.clearErrors()
     modal.value = v
@@ -475,29 +553,29 @@ function destroy(v) {
                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Reference</label>
-                            <input v-model="form.reference" type="text" placeholder="e.g. PO-2024-001"
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Cost Centre</label>
+                            <input v-model="form.cost_centre" type="text" placeholder="e.g. Head Office"
                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-3">
+                    <div v-if="showReference" class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Reference</label>
+                            <input v-model="form.reference" type="text" placeholder="e.g. PO-2024-001"
+                                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                        </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Reference Date</label>
                             <input v-model="form.reference_date" type="text" placeholder="e.g. 20250401"
                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
                         </div>
+                    </div>
+
+                    <div v-if="showPlaceOfSupply" class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Place of Supply</label>
                             <input v-model="form.place_of_supply" type="text" placeholder="e.g. Maharashtra"
-                                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Cost Centre</label>
-                            <input v-model="form.cost_centre" type="text" placeholder="e.g. Head Office"
                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
                         </div>
                         <div class="flex items-end pb-2">
@@ -583,7 +661,7 @@ function destroy(v) {
                     </details>
 
                     <!-- ── Consignee Details (collapsible) ────────────────── -->
-                    <details class="border border-gray-200 rounded-lg overflow-hidden">
+                    <details v-if="showInvoiceSections" class="border border-gray-200 rounded-lg overflow-hidden">
                         <summary class="cursor-pointer px-4 py-3 text-sm font-semibold text-gray-700 select-none bg-gray-50">
                             Consignee Details
                         </summary>
@@ -633,7 +711,7 @@ function destroy(v) {
                     </details>
 
                     <!-- ── Dispatch & Shipping (collapsible) ──────────────── -->
-                    <details class="border border-gray-200 rounded-lg overflow-hidden">
+                    <details v-if="showInvoiceSections" class="border border-gray-200 rounded-lg overflow-hidden">
                         <summary class="cursor-pointer px-4 py-3 text-sm font-semibold text-gray-700 select-none bg-gray-50">
                             Dispatch &amp; Shipping
                         </summary>
@@ -695,7 +773,7 @@ function destroy(v) {
                     </details>
 
                     <!-- ── Order Details (collapsible) ────────────────────── -->
-                    <details class="border border-gray-200 rounded-lg overflow-hidden">
+                    <details v-if="showInvoiceSections" class="border border-gray-200 rounded-lg overflow-hidden">
                         <summary class="cursor-pointer px-4 py-3 text-sm font-semibold text-gray-700 select-none bg-gray-50">
                             Order Details
                         </summary>
@@ -732,6 +810,37 @@ function destroy(v) {
                         </div>
                     </details>
 
+                    <!-- ── e-Invoice (collapsible) ───────────────────────── -->
+                    <details v-if="showInvoiceSections" class="border border-gray-200 rounded-lg overflow-hidden">
+                        <summary class="cursor-pointer px-4 py-3 text-sm font-semibold text-gray-700 select-none bg-gray-50">
+                            e-Invoice
+                        </summary>
+                        <div class="px-4 pb-4 pt-3 space-y-3">
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">IRN</label>
+                                    <input v-model="form.irn" type="text" placeholder="e-Invoice reference number"
+                                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Acknowledgement No</label>
+                                    <input v-model="form.acknowledgement_no" type="text"
+                                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Acknowledgement Date</label>
+                                <input v-model="form.acknowledgement_date" type="text" placeholder="e.g. 20250401"
+                                       class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">QR Code</label>
+                                <textarea v-model="form.qr_code" rows="2" placeholder="QR code string"
+                                          class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-violet-500 resize-none" />
+                            </div>
+                        </div>
+                    </details>
+
                     <!-- ── Payroll notice ──────────────────────────────────── -->
                     <div v-if="isPayroll"
                          class="rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800">
@@ -755,10 +864,12 @@ function destroy(v) {
                             <div class="grid grid-cols-2 gap-2">
                                 <div>
                                     <label class="block text-xs text-gray-500 mb-0.5">Ledger Name *</label>
-                                    <input v-model="le.ledger_name" type="text"
-                                           list="ledger-name-options"
-                                           placeholder="e.g. Sales Account"
-                                           class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                                    <select v-model="le.ledger_name"
+                                            @change="onLedgerNameChange(le)"
+                                            class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500">
+                                        <option value="">— Select Ledger —</option>
+                                        <option v-for="l in ledgers" :key="l.id" :value="l.ledger_name">{{ l.ledger_name }}</option>
+                                    </select>
                                 </div>
                                 <div>
                                     <label class="block text-xs text-gray-500 mb-0.5">Ledger Group</label>
@@ -807,7 +918,7 @@ function destroy(v) {
                             </div>
 
                             <!-- Bill References -->
-                            <div class="pt-1">
+                            <div v-if="showBillRefs" class="pt-1">
                                 <div class="flex items-center justify-between mb-1">
                                     <span class="text-xs font-medium text-gray-500">Bill References</span>
                                     <button type="button" @click="addBillRef(i)"
@@ -847,6 +958,69 @@ function destroy(v) {
                                 </div>
                                 <p v-if="!le.bills_allocation.length" class="text-xs text-gray-400 italic">No bill references.</p>
                             </div>
+
+                            <!-- Bank Allocation Details -->
+                            <div v-if="showBankAlloc" class="pt-1">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-xs font-medium text-gray-500">Bank Allocations</span>
+                                    <button type="button" @click="addBankAlloc(i)"
+                                            class="text-xs text-violet-600 hover:text-violet-800 font-medium">+ Add</button>
+                                </div>
+                                <div v-for="(ba, j) in le.bank_allocation_details" :key="j"
+                                     class="border border-gray-200 rounded p-2 mb-1.5 space-y-1.5">
+                                    <div class="grid grid-cols-2 gap-1.5">
+                                        <div>
+                                            <label class="block text-xs text-gray-400 mb-0.5">Transaction Type</label>
+                                            <input v-model="ba.TRANSACTIONTYPE" type="text" placeholder="e.g. Same Bank Transfer"
+                                                   class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs text-gray-400 mb-0.5">Payment Favouring</label>
+                                            <input v-model="ba.PAYMENTFAVOURING" type="text" placeholder="Payee name"
+                                                   class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-3 gap-1.5">
+                                        <div>
+                                            <label class="block text-xs text-gray-400 mb-0.5">Bank Name</label>
+                                            <input v-model="ba.BANKNAME" type="text"
+                                                   class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs text-gray-400 mb-0.5">IFSC Code</label>
+                                            <input v-model="ba.IFSCODE" type="text"
+                                                   class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs text-gray-400 mb-0.5">Account Number</label>
+                                            <input v-model="ba.ACCOUNTNUMBER" type="text"
+                                                   class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-3 gap-1.5">
+                                        <div>
+                                            <label class="block text-xs text-gray-400 mb-0.5">Amount</label>
+                                            <input v-model="ba.AMOUNT" type="text" placeholder="e.g. 50,000.00"
+                                                   class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs text-gray-400 mb-0.5">Date</label>
+                                            <input v-model="ba.Date" type="date"
+                                                   class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs text-gray-400 mb-0.5">Instrument No.</label>
+                                            <input v-model="ba.INSTRUMENTNUMBER" type="text"
+                                                   class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-end">
+                                        <button type="button" @click="removeBankAlloc(i, j)"
+                                                class="text-red-400 hover:text-red-600 text-xs">Remove</button>
+                                    </div>
+                                </div>
+                                <p v-if="!le.bank_allocation_details.length" class="text-xs text-gray-400 italic">No bank allocations.</p>
+                            </div>
                         </div>
                         <p v-if="!form.ledger_entries.length" class="text-xs text-gray-400">No ledger entries. Click + Add Entry.</p>
                     </div>
@@ -868,10 +1042,12 @@ function destroy(v) {
                             <div class="grid grid-cols-2 gap-2">
                                 <div>
                                     <label class="block text-xs text-gray-500 mb-0.5">Stock Item *</label>
-                                    <input v-model="ie.stock_item_name" type="text"
-                                           list="stock-item-options"
-                                           placeholder="e.g. Product A"
-                                           class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                                    <select v-model="ie.stock_item_name"
+                                            @change="onStockItemChange(ie)"
+                                            class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500">
+                                        <option value="">— Select Stock Item —</option>
+                                        <option v-for="s in stockItems" :key="s.id" :value="s.name">{{ s.name }}</option>
+                                    </select>
                                 </div>
                                 <div>
                                     <label class="block text-xs text-gray-500 mb-0.5">Item Code</label>
@@ -969,17 +1145,110 @@ function destroy(v) {
                                     <span class="text-xs text-gray-600">Deemed Positive</span>
                                 </label>
                             </div>
+
+                            <!-- Batch Allocations -->
+                            <div class="pt-1">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-xs font-medium text-gray-500">Batch Allocations</span>
+                                    <button type="button" @click="addBatchAlloc(i)"
+                                            class="text-xs text-violet-600 hover:text-violet-800 font-medium">+ Add</button>
+                                </div>
+                                <div v-for="(ba, j) in ie.batch_allocations" :key="j"
+                                     class="grid grid-cols-4 gap-1.5 mb-1.5 items-end">
+                                    <div>
+                                        <label class="block text-xs text-gray-400 mb-0.5">Batch Name</label>
+                                        <input v-model="ba.BatchName" type="text"
+                                               class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs text-gray-400 mb-0.5">Godown</label>
+                                        <input v-model="ba.GodownName" type="text"
+                                               class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs text-gray-400 mb-0.5">Expiry Date</label>
+                                        <input v-model="ba.ExpiryDate" type="text" placeholder="e.g. 20261231"
+                                               class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs text-gray-400 mb-0.5">Billed Qty</label>
+                                        <input v-model="ba.BilledQty" type="number" step="0.0001" placeholder="0"
+                                               class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs text-gray-400 mb-0.5">Actual Qty</label>
+                                        <input v-model="ba.ActualQty" type="number" step="0.0001" placeholder="0"
+                                               class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs text-gray-400 mb-0.5">Rate</label>
+                                        <input v-model="ba.Rate" type="number" step="0.01" placeholder="0.00"
+                                               class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs text-gray-400 mb-0.5">Discount %</label>
+                                        <input v-model="ba.DiscountPercent" type="number" step="0.01" placeholder="0"
+                                               class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                                    </div>
+                                    <div class="flex gap-1">
+                                        <div class="flex-1">
+                                            <label class="block text-xs text-gray-400 mb-0.5">Amount</label>
+                                            <input v-model="ba.Amount" type="number" step="0.01" placeholder="0.00"
+                                                   class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                                        </div>
+                                        <button type="button" @click="removeBatchAlloc(i, j)"
+                                                class="text-red-400 hover:text-red-600 text-xs self-end pb-1">✕</button>
+                                    </div>
+                                </div>
+                                <p v-if="!ie.batch_allocations.length" class="text-xs text-gray-400 italic">No batch allocations.</p>
+                            </div>
+
+                            <!-- Accounting Allocations -->
+                            <div class="pt-1">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-xs font-medium text-gray-500">Accounting Allocations</span>
+                                    <button type="button" @click="addAccountingAlloc(i)"
+                                            class="text-xs text-violet-600 hover:text-violet-800 font-medium">+ Add</button>
+                                </div>
+                                <div v-for="(aa, j) in ie.accounting_allocations" :key="j"
+                                     class="grid grid-cols-5 gap-1.5 mb-1.5 items-end">
+                                    <div>
+                                        <label class="block text-xs text-gray-400 mb-0.5">Ledger Name</label>
+                                        <input v-model="aa.LedgerName" type="text"
+                                               class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs text-gray-400 mb-0.5">Ledger Group</label>
+                                        <input v-model="aa.LedgerGroup" type="text"
+                                               class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs text-gray-400 mb-0.5">GST Classification</label>
+                                        <input v-model="aa.GSTClassification" type="text"
+                                               class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs text-gray-400 mb-0.5">IGST Rate</label>
+                                        <input v-model="aa.IGSTRate" type="number" step="0.01" placeholder="0"
+                                               class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                                    </div>
+                                    <div class="flex gap-1">
+                                        <div class="flex-1">
+                                            <label class="block text-xs text-gray-400 mb-0.5">Amount</label>
+                                            <input v-model="aa.Amount" type="number" step="0.01" placeholder="0.00"
+                                                   class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                                        </div>
+                                        <button type="button" @click="removeAccountingAlloc(i, j)"
+                                                class="text-red-400 hover:text-red-600 text-xs self-end pb-1">✕</button>
+                                    </div>
+                                </div>
+                                <p v-if="!ie.accounting_allocations.length" class="text-xs text-gray-400 italic">No accounting allocations.</p>
+                            </div>
                         </div>
                         <p v-if="!form.inventory_entries.length" class="text-xs text-gray-400">No inventory items. Click + Add Item.</p>
                     </div>
 
                     <!-- ── Datalists ───────────────────────────────────────── -->
-                    <datalist id="ledger-name-options">
-                        <option v-for="n in ledgerNames" :key="n" :value="n" />
-                    </datalist>
-                    <datalist id="stock-item-options">
-                        <option v-for="n in stockItemNames" :key="n" :value="n" />
-                    </datalist>
 
                     <div class="flex gap-3 pt-2 border-t border-gray-100">
                         <button type="submit" :disabled="form.processing"

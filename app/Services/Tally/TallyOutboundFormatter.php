@@ -173,6 +173,11 @@ class TallyOutboundFormatter
         return $this->formatVouchers($vouchers);
     }
 
+    public function formatAllVouchers(Collection $vouchers): array
+    {
+        return $this->formatVouchers($vouchers);
+    }
+
     public function formatGodowns(Collection $godowns): array
     {
         return $godowns->map(fn ($g) => $this->dropNulls([

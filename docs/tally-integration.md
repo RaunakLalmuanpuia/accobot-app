@@ -956,7 +956,7 @@ The "Tally" link appears in the top navigation for any user with `integrations.v
 |-------|---------------|
 | `TallyConnectionController` | show(), save(), regenerateToken(), destroy(), testConnection(). Manages the `tally_connections` row for a tenant. |
 | `TallySyncController` | index() (builds Sync.vue props: latest logs per entity, all logs, report snapshots, stats including statutory_masters + employees counts), trigger() (logs a manual trigger entry). |
-| `TallyDataController` | Data browse: ledgerGroups(), ledgers(), stockItems(), vouchers(), voucherShow(), statutoryMasters(), payroll(). Passes `ledgerGroups` (id/name/under_name objects) for the ledger group dropdown; `stockGroupNames`, `stockCategoryNames`, `ledgerNames`, `stockItemNames` for other form autocomplete. |
+| `TallyDataController` | Data browse: ledgerGroups(), ledgers(), stockItems(), vouchers(), voucherShow(), statutoryMasters(), payroll(). Passes `ledgerGroups` (id/name/under_name objects) for the ledger group dropdown; `stockGroupNames`, `stockCategoryNames` for other master dropdowns; `ledgers` (id/ledger_name/group_name objects) and `stockItems` (id/name/hsn_code/unit_name/igst_rate/cess_rate/stock_group_name/mrp_rate objects) for voucher form auto-fill. |
 | `TallyMasterCrudController` | 30 methods. store/update/destroy for: LedgerGroup, Ledger, StockGroup, StockCategory, StockItem, StatutoryMaster, EmployeeGroup, Employee, PayHead, AttendanceType. |
 | `TallyVoucherCrudController` | 3 methods: voucherStore, voucherUpdate, voucherDestroy. Child entries (ledger + inventory) delete-reinserted in transaction on every update. |
 

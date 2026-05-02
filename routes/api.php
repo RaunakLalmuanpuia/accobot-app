@@ -137,6 +137,7 @@ Route::prefix('tally/inbound')->middleware('throttle:120,1')->group(function () 
     Route::post('payroll/attendance-types', [TallyInboundPayrollController::class, 'attendanceTypes']);
     Route::post('payroll/salary-voucher',   [TallyInboundVouchersController::class, 'salary']);
     Route::post('payroll/attendance-voucher', [TallyInboundVouchersController::class, 'attendance']);
+    Route::post('vouchers',                  [TallyInboundVouchersController::class, 'voucher']);
     Route::post('vouchers/sales',           [TallyInboundVouchersController::class, 'sales']);
     Route::post('vouchers/credit-note',     [TallyInboundVouchersController::class, 'creditNote']);
     Route::post('vouchers/purchase',        [TallyInboundVouchersController::class, 'purchase']);
@@ -189,6 +190,8 @@ Route::prefix('PayrollAPI')->middleware('throttle:120,1')->group(function () {
 });
 
 Route::prefix('VoucherAPI')->middleware('throttle:120,1')->group(function () {
+    Route::get('voucher',            [TallyOutboundController::class, 'allVouchers']);
+    Route::post('update-voucher',    [TallyConfirmController::class, 'voucher']);
     Route::get('sales-voucher',      [TallyOutboundController::class, 'salesVoucher']);
     Route::get('purchase-voucher',   [TallyOutboundController::class, 'purchaseVoucher']);
     Route::get('debitNote-voucher',  [TallyOutboundController::class, 'debitNoteVoucher']);

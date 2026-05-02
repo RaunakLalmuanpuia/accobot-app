@@ -1370,6 +1370,30 @@ The real connector sends this key as lowercase `ledgerentries`. `LedgerEntries` 
 
 ---
 
+### 2.0 POST `/api/tally/inbound/vouchers` *(unified)*
+
+Accepts any of the 8 standard voucher types in a single endpoint. The connector must include a top-level `VoucherType` field.
+
+**Valid `VoucherType` values:** `Sales`, `Purchase`, `CreditNote`, `DebitNote`, `Receipt`, `Payment`, `Contra`, `Journal`
+
+**Request Body**
+
+```json
+{
+  "VoucherType": "Sales",
+  "full_sync": false,
+  "Data": [ { /* same structure as the per-type endpoint */ } ]
+}
+```
+
+**Response** — identical to the per-type endpoint for the given type.
+
+Returns `422` with `{"error": "Invalid or missing VoucherType. Must be one of: ..."}` if `VoucherType` is absent or unrecognised.
+
+> Payroll vouchers (Salary/Attendance) remain on their own endpoints under `/api/tally/inbound/payroll/`.
+
+---
+
 ### 2.1 POST `/api/tally/inbound/vouchers/sales`
 
 **Sales invoice** — auto-creates an Accobot Invoice. If the party ledger hasn't synced yet, a placeholder Client is created from buyer fields (`BuyerName`/`PartyName`, GSTIN, email, mobile, address) and linked later. Missing stock items are similarly auto-created as placeholder Products.
@@ -2515,6 +2539,40 @@ Returns pending attendance vouchers with per-employee attendance breakdowns.
 
 ---
 
+### 5.0 GET `/api/VoucherAPI/voucher` *(unified)*
+
+Returns **all** pending vouchers across all 8 standard types in a single call. Each item includes a `VoucherType` field so the connector can distinguish types.
+
+**Response**
+
+```json
+{
+  "Data": [
+    {
+      "AccobotId": 1,
+      "TallyId": null,
+      "VoucherType": "Sales",
+      "VoucherNumber": "INV-001",
+      "VoucherDate": "20250101",
+      "LedgerEntries": [ ... ],
+      "InventoryEntries": [ ... ]
+    },
+    {
+      "AccobotId": 2,
+      "TallyId": null,
+      "VoucherType": "Receipt",
+      "VoucherNumber": "REC-001",
+      "VoucherDate": "20250102",
+      "LedgerEntries": [ ... ]
+    }
+  ]
+}
+```
+
+> Payroll vouchers (Salary/Attendance) are not included — use `/api/PayrollAPI/salary-voucher` and `/api/PayrollAPI/attendance-voucher`.
+
+---
+
 ### 5.1 GET `/api/VoucherAPI/sales-voucher`
 
 Returns all active Sales vouchers with inventory and ledger entries.
@@ -2991,6 +3049,7 @@ All Tally API routes are throttled at **120 requests per minute**. Exceeding thi
 | POST | `/api/tally/inbound/payroll/attendance-types` | Sync Attendance types |
 | POST | `/api/tally/inbound/payroll/salary-voucher` | Sync Salary (payroll) vouchers |
 | POST | `/api/tally/inbound/payroll/attendance-voucher` | Sync Attendance vouchers |
+| POST | `/api/tally/inbound/vouchers` | **Unified** — sync any voucher type via `VoucherType` body field |
 | POST | `/api/tally/inbound/vouchers/sales` | Sync Sales vouchers → auto-maps Invoices |
 | POST | `/api/tally/inbound/vouchers/purchase` | Sync Purchase vouchers |
 | POST | `/api/tally/inbound/vouchers/credit-note` | Sync Credit Notes |
@@ -3021,6 +3080,7 @@ All Tally API routes are throttled at **120 requests per minute**. Exceeding thi
 | GET | `/api/PayrollAPI/attendance-type` | Fetch pending Attendance types |
 | GET | `/api/PayrollAPI/salary-voucher` | Fetch pending Salary vouchers |
 | GET | `/api/PayrollAPI/attendance-voucher` | Fetch pending Attendance vouchers |
+| GET | `/api/VoucherAPI/voucher` | **Unified** — fetch all pending vouchers of all types in one call |
 | GET | `/api/VoucherAPI/sales-voucher` | Fetch pending Sales vouchers |
 | GET | `/api/VoucherAPI/purchase-voucher` | Fetch pending Purchase vouchers |
 | GET | `/api/VoucherAPI/debitNote-voucher` | Fetch pending Debit Note vouchers |
@@ -3047,6 +3107,7 @@ All Tally API routes are throttled at **120 requests per minute**. Exceeding thi
 | POST | `/api/PayrollAPI/update-attendance-type` | Write back Tally ID to Attendance type |
 | POST | `/api/PayrollAPI/update-salary-voucher` | Write back Tally ID to Salary voucher |
 | POST | `/api/PayrollAPI/update-attendance-voucher` | Write back Tally ID to Attendance voucher |
+| POST | `/api/VoucherAPI/update-voucher` | **Unified** — confirm Tally IDs for any voucher type |
 | POST | `/api/VoucherAPI/update-sales-voucher` | Write back Tally ID to Sales voucher |
 | POST | `/api/VoucherAPI/update-purchase-voucher` | Write back Tally ID to Purchase voucher |
 | POST | `/api/VoucherAPI/update-debitnote-voucher` | Write back Tally ID to Debit Note |

@@ -135,6 +135,24 @@ class TallyOutboundController extends TallyBaseController
         return response()->json(['Data' => $data]);
     }
 
+    public function allVouchers(Request $request): JsonResponse
+    {
+        $conn  = $this->resolveAndVerify($request);
+        $ids   = $this->queue->pendingIds($conn->tenant_id, TallyVoucher::class);
+        $types = ['Sales', 'Purchase', 'DebitNote', 'CreditNote', 'Receipt', 'Payment', 'Contra', 'Journal'];
+
+        $vouchers = TallyVoucher::withoutGlobalScope('tenant')
+            ->with(['inventoryEntries', 'ledgerEntries'])
+            ->where('tenant_id', $conn->tenant_id)
+            ->whereIn('voucher_type', $types)
+            ->whereIn('id', $ids)
+            ->get();
+
+        $data = $this->formatter->formatAllVouchers($vouchers);
+        $this->logOutbound('Voucher', $conn->tenant_id, $data);
+        return response()->json(['Data' => $data]);
+    }
+
     public function salesVoucher(Request $request): JsonResponse
     {
         return $this->voucherResponse($request, 'Sales');

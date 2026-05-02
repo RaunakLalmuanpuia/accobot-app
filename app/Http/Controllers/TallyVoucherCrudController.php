@@ -71,6 +71,12 @@ class TallyVoucherCrudController extends Controller
             'consignee_country'               => 'nullable|string|max:100',
             'consignee_gst_registration_type' => 'nullable|string|max:100',
 
+            // e-Invoice
+            'irn'                  => 'nullable|string|max:100',
+            'acknowledgement_no'   => 'nullable|string|max:100',
+            'acknowledgement_date' => 'nullable|string|max:50',
+            'qr_code'              => 'nullable|string',
+
             // Ledger entries
             'ledger_entries'                      => 'nullable|array',
             'ledger_entries.*.ledger_name'        => 'required|string|max:255',
@@ -86,6 +92,9 @@ class TallyVoucherCrudController extends Controller
             'ledger_entries.*.bills_allocation.*.Reference'       => 'nullable|string|max:255',
             'ledger_entries.*.bills_allocation.*.CreditPeriod'    => 'nullable|string|max:50',
             'ledger_entries.*.bills_allocation.*.Amount'          => 'nullable|numeric',
+            // Pass through as-is; Tally uses vendor-specific keys (ALL-CAPS, extra fields) that
+            // Laravel would strip if sub-fields were declared. Inbound and outbound store raw JSON.
+            'ledger_entries.*.bank_allocation_details' => 'nullable|array',
 
             // Inventory entries
             'inventory_entries'                       => 'nullable|array',
@@ -107,6 +116,9 @@ class TallyVoucherCrudController extends Controller
             'inventory_entries.*.godown_name'         => 'nullable|string|max:255',
             'inventory_entries.*.batch_name'          => 'nullable|string|max:255',
             'inventory_entries.*.is_deemed_positive'  => 'boolean',
+            // Pass through as-is; sub-field validation would strip Tally's raw keys.
+            'inventory_entries.*.batch_allocations'      => 'nullable|array',
+            'inventory_entries.*.accounting_allocations' => 'nullable|array',
         ];
     }
 

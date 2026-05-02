@@ -60,6 +60,11 @@ class TallyConfirmController extends TallyBaseController
         return $this->handle($request, TallyStockCategory::class);
     }
 
+    public function voucher(Request $request): JsonResponse
+    {
+        return $this->handle($request, TallyVoucher::class);
+    }
+
     public function salesVoucher(Request $request): JsonResponse
     {
         return $this->handle($request, TallyVoucher::class);
