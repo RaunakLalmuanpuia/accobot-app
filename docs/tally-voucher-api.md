@@ -70,6 +70,7 @@ Returns `422` if `VoucherType` is missing or not in the valid list:
       "VoucherDate": "20250401",
       "PartyName": "BLUE STAR LIMITED",
       "VoucherType": "Sales",
+      "VoucherBaseType": "Sales",
       "Voucher_Total": 35964.04,
       "IsInvoice": "Yes",
       "IsDeleted": "No",
@@ -169,6 +170,7 @@ Returns `422` if `VoucherType` is missing or not in the valid list:
       "VoucherDate": "20250401",
       "PartyName": "Cash",
       "VoucherType": "Payment",
+      "VoucherBaseType": "Payment",
       "Voucher_Total": 10500.00,
       "IsInvoice": "No",
       "IsDeleted": "No",
@@ -219,6 +221,7 @@ Only records in the `tally_outbound_queue` with status `pending` are included. A
       "AlterID": 31,
       "Action": "Update",
       "VoucherType": "Sales",
+      "VoucherBaseType": "Sales",
       "VoucherNumber": "1",
       "VoucherDate": "20250401",
       "PartyName": "BLUE STAR LIMITED",
@@ -263,6 +266,7 @@ Only records in the `tally_outbound_queue` with status `pending` are included. A
       "TallyId": null,
       "Action": "Create",
       "VoucherType": "Receipt",
+      "VoucherBaseType": "Receipt",
       "VoucherNumber": "3",
       "VoucherDate": "20250502",
       "PartyName": "BLUE STAR LIMITED",
@@ -302,6 +306,7 @@ Only records in the `tally_outbound_queue` with status `pending` are included. A
       "TallyId": null,
       "Action": "Create",
       "VoucherType": "Contra",
+      "VoucherBaseType": "Contra",
       "VoucherNumber": "2",
       "VoucherDate": "20250402",
       "PartyName": "PUNJAB NATIONAL BANK",
@@ -335,6 +340,7 @@ Only records in the `tally_outbound_queue` with status `pending` are included. A
       "TallyId": null,
       "Action": "Create",
       "VoucherType": "Journal",
+      "VoucherBaseType": "Journal",
       "VoucherNumber": "1",
       "VoucherDate": "20250501",
       "PartyName": "BLUE STAR LIMITED",
@@ -409,6 +415,7 @@ Shared structure used in both the inbound `Data` array and outbound `Data` respo
 | Alteration seq | `AlterID` | `AlterID` | integer \| null | |
 | Sync action | `Action` | `Action` | string | `Create` / `Update` / `Delete` |
 | Voucher type | `VoucherType` | `VoucherType` | string | See [Voucher Types](#voucher-types) |
+| Voucher base type | `VoucherBaseType` | `VoucherBaseType` | string \| null | Optional. Connector-supplied base classification (e.g. `"Payment"`, `"Receipt"`, `"Invoice"`). Stored and echoed back as-is. |
 | Voucher number | `VoucherNumber` | `VoucherNumber` | string | |
 | Voucher date | `VoucherDate` | `VoucherDate` | string | `Ymd` — e.g. `"20250401"` |
 | Total amount | `Voucher_Total` | `VoucherTotal` | decimal | Note: inbound uses underscore |

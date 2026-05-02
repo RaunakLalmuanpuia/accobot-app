@@ -13,7 +13,7 @@ class TallyVoucher extends Model
 
     protected $fillable = [
         'tenant_id', 'tally_id', 'alter_id', 'action',
-        'voucher_type', 'voucher_number', 'voucher_date',
+        'voucher_type', 'voucher_base_type', 'voucher_number', 'voucher_date',
         'reference', 'reference_date',
         'party_name', 'party_tally_ledger_id', 'voucher_total',
         'is_invoice', 'is_deleted',

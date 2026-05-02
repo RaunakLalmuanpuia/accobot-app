@@ -392,6 +392,7 @@ class TallyInboundSync
                     'alter_id'                => $alterId,
                     'action'                  => $action,
                     'voucher_type'            => $type,
+                    'voucher_base_type'       => $item['VoucherBaseType'] ?? null,
                     'voucher_number'          => $item['VoucherNumber'] ?? null,
                     'voucher_date'            => $this->parseDate($item['VoucherDate'] ?? null),
                     'reference'               => $item['Reference'] ?? null,

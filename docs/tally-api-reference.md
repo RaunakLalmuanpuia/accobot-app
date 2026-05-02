@@ -1277,6 +1277,7 @@ Every voucher object supports:
 | `AlterID` | integer | Alter/version ID |
 | `Action` | string | `"Create"` or `"Delete"` |
 | `VoucherType` | string | Set automatically by endpoint (`"Sales"`, `"Receipt"`, etc.) |
+| `VoucherBaseType` | string | Optional. Base classification of the voucher (e.g. `"Payment"`, `"Receipt"`, `"Invoice"`). Stored and echoed back as-is. |
 | `VoucherNumber` | string | Voucher number (e.g. `"1"`, `"2024-25/001"`) |
 | `VoucherDate` | string | Date in `"YYYYMMDD"` format (also `"YYYY-MM-DD"`) |
 | `Reference` | string | Reference number |
