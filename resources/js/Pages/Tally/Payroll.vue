@@ -120,14 +120,19 @@ const empModal     = ref(null)
 const isEditingEmp = computed(() => empModal.value && empModal.value !== 'create')
 
 const empForm = useForm({
-    name:            '',
-    employee_number: '',
-    parent:          '',
-    designation:     '',
-    location:        '',
-    gender:          '',
-    date_of_joining: '',
-    date_of_birth:   '',
+    name:               '',
+    employee_number:    '',
+    parent:             '',
+    designation:        '',
+    employee_function:  '',
+    location:           '',
+    gender:             '',
+    date_of_joining:    '',
+    date_of_leaving:    '',
+    date_of_birth:      '',
+    father_name:        '',
+    spouse_name:        '',
+    aliases:            [],
 })
 
 const empGroupOptions = computed(() =>
@@ -141,14 +146,19 @@ function openCreateEmp() {
 }
 
 function openEditEmp(emp) {
-    empForm.name            = emp.name
-    empForm.employee_number = emp.employee_number ?? ''
-    empForm.parent          = emp.parent ?? ''
-    empForm.designation     = emp.designation ?? ''
-    empForm.location        = emp.location ?? ''
-    empForm.gender          = emp.gender ?? ''
-    empForm.date_of_joining = emp.date_of_joining ?? ''
-    empForm.date_of_birth   = emp.date_of_birth ?? ''
+    empForm.name               = emp.name
+    empForm.employee_number    = emp.employee_number ?? ''
+    empForm.parent             = emp.parent ?? ''
+    empForm.designation        = emp.designation ?? ''
+    empForm.employee_function  = emp.employee_function ?? ''
+    empForm.location           = emp.location ?? ''
+    empForm.gender             = emp.gender ?? ''
+    empForm.date_of_joining    = emp.date_of_joining ?? ''
+    empForm.date_of_leaving    = emp.date_of_leaving ?? ''
+    empForm.date_of_birth      = emp.date_of_birth ?? ''
+    empForm.father_name        = emp.father_name ?? ''
+    empForm.spouse_name        = emp.spouse_name ?? ''
+    empForm.aliases            = emp.aliases ? [...emp.aliases] : []
     empForm.clearErrors()
     empModal.value = emp
 }
@@ -288,9 +298,14 @@ const isEditingAtt = computed(() => attModal.value && attModal.value !== 'create
 
 const attForm = useForm({
     name:              '',
+    under:             '',
     attendance_type:   '',
     attendance_period: '',
 })
+
+const attUnderOptions = computed(() =>
+    props.attendanceTypes.filter(t => t.is_active).map(t => t.name)
+)
 
 function openCreateAtt() {
     attForm.reset()
@@ -300,6 +315,7 @@ function openCreateAtt() {
 
 function openEditAtt(att) {
     attForm.name              = att.name
+    attForm.under             = att.under ?? ''
     attForm.attendance_type   = att.attendance_type ?? ''
     attForm.attendance_period = att.attendance_period ?? ''
     attForm.clearErrors()
@@ -658,13 +674,11 @@ function destroyAtt(att) {
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Employee Group</label>
-                        <input v-model="empForm.parent" type="text"
-                               list="emp-group-options"
-                               placeholder="e.g. Primary Cost Centre"
-                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                        <datalist id="emp-group-options">
-                            <option v-for="n in empGroupOptions" :key="n" :value="n" />
-                        </datalist>
+                        <select v-model="empForm.parent"
+                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
+                            <option value="">— Select Group —</option>
+                            <option v-for="n in empGroupOptions" :key="n" :value="n">{{ n }}</option>
+                        </select>
                     </div>
                     <div class="grid grid-cols-2 gap-3">
                         <div>
@@ -673,10 +687,15 @@ function destroyAtt(att) {
                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Location</label>
-                            <input v-model="empForm.location" type="text" placeholder="e.g. Mumbai"
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Function</label>
+                            <input v-model="empForm.employee_function" type="text" placeholder="e.g. Sales"
                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
                         </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                        <input v-model="empForm.location" type="text" placeholder="e.g. Mumbai"
+                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
                     </div>
                     <div class="grid grid-cols-2 gap-3">
                         <div>
@@ -685,9 +704,39 @@ function destroyAtt(att) {
                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
-                            <input v-model="empForm.date_of_birth" type="date"
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Date of Resignation</label>
+                            <input v-model="empForm.date_of_leaving" type="date"
                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
+                        <input v-model="empForm.date_of_birth" type="date"
+                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Father's Name</label>
+                            <input v-model="empForm.father_name" type="text" placeholder="e.g. Ramesh"
+                                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Spouse's Name</label>
+                            <input v-model="empForm.spouse_name" type="text" placeholder="e.g. Priya"
+                                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Aliases</label>
+                        <div class="space-y-2">
+                            <div v-for="(alias, i) in empForm.aliases" :key="i" class="flex gap-2">
+                                <input v-model="empForm.aliases[i].Alias" type="text" placeholder="Alias name"
+                                       class="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                                <button type="button" @click="empForm.aliases.splice(i, 1)"
+                                        class="text-red-400 hover:text-red-600 text-lg leading-none px-1">✕</button>
+                            </div>
+                            <button type="button" @click="empForm.aliases.push({ Alias: '' })"
+                                    class="text-sm text-violet-600 hover:text-violet-800 font-medium">+ Add Alias</button>
                         </div>
                     </div>
                     <div class="flex gap-3 pt-2 border-t border-gray-100">
@@ -831,6 +880,14 @@ function destroyAtt(att) {
                         <input v-model="attForm.name" type="text" placeholder="e.g. Present"
                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
                         <p v-if="attForm.errors.name" class="mt-1 text-xs text-red-500">{{ attForm.errors.name }}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Under</label>
+                        <select v-model="attForm.under"
+                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
+                            <option value="">Primary</option>
+                            <option v-for="n in attUnderOptions" :key="n" :value="n">{{ n }}</option>
+                        </select>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Attendance Type</label>

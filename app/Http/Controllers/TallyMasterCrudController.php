@@ -694,14 +694,20 @@ class TallyMasterCrudController extends Controller
     public function employeeStore(Request $request, Tenant $tenant)
     {
         $data = $request->validate([
-            'name'            => 'required|string|max:255',
-            'employee_number' => 'nullable|string|max:50',
-            'parent'          => 'nullable|string|max:255',
-            'designation'     => 'nullable|string|max:100',
-            'location'        => 'nullable|string|max:100',
-            'gender'          => 'nullable|in:Male,Female,Other',
-            'date_of_joining' => 'nullable|date',
-            'date_of_birth'   => 'nullable|date',
+            'name'              => 'required|string|max:255',
+            'employee_number'   => 'nullable|string|max:50',
+            'parent'            => 'nullable|string|max:255',
+            'designation'       => 'nullable|string|max:100',
+            'employee_function' => 'nullable|string|max:100',
+            'location'          => 'nullable|string|max:100',
+            'gender'            => 'nullable|in:Male,Female,Other',
+            'date_of_joining'   => 'nullable|date',
+            'date_of_leaving'   => 'nullable|date',
+            'date_of_birth'     => 'nullable|date',
+            'father_name'       => 'nullable|string|max:100',
+            'spouse_name'       => 'nullable|string|max:100',
+            'aliases'           => 'nullable|array',
+            'aliases.*.Alias'   => 'nullable|string|max:255',
         ]);
 
         $record = TallyEmployee::create(array_merge($data, [
@@ -718,14 +724,20 @@ class TallyMasterCrudController extends Controller
         abort_unless($employee->tenant_id === $tenant->id, 404);
 
         $data = $request->validate([
-            'name'            => 'required|string|max:255',
-            'employee_number' => 'nullable|string|max:50',
-            'parent'          => 'nullable|string|max:255',
-            'designation'     => 'nullable|string|max:100',
-            'location'        => 'nullable|string|max:100',
-            'gender'          => 'nullable|in:Male,Female,Other',
-            'date_of_joining' => 'nullable|date',
-            'date_of_birth'   => 'nullable|date',
+            'name'              => 'required|string|max:255',
+            'employee_number'   => 'nullable|string|max:50',
+            'parent'            => 'nullable|string|max:255',
+            'designation'       => 'nullable|string|max:100',
+            'employee_function' => 'nullable|string|max:100',
+            'location'          => 'nullable|string|max:100',
+            'gender'            => 'nullable|in:Male,Female,Other',
+            'date_of_joining'   => 'nullable|date',
+            'date_of_leaving'   => 'nullable|date',
+            'date_of_birth'     => 'nullable|date',
+            'father_name'       => 'nullable|string|max:100',
+            'spouse_name'       => 'nullable|string|max:100',
+            'aliases'           => 'nullable|array',
+            'aliases.*.Alias'   => 'nullable|string|max:255',
         ]);
 
         $employee->update($data);
@@ -821,6 +833,7 @@ class TallyMasterCrudController extends Controller
     {
         $data = $request->validate([
             'name'              => 'required|string|max:255',
+            'under'             => 'nullable|string|max:255',
             'attendance_type'   => 'nullable|string|max:100',
             'attendance_period' => 'nullable|string|max:50',
         ]);
@@ -840,6 +853,7 @@ class TallyMasterCrudController extends Controller
 
         $data = $request->validate([
             'name'              => 'required|string|max:255',
+            'under'             => 'nullable|string|max:255',
             'attendance_type'   => 'nullable|string|max:100',
             'attendance_period' => 'nullable|string|max:50',
         ]);
