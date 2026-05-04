@@ -17,8 +17,10 @@ defineProps({
 const user = usePage().props.auth.user;
 
 const form = useForm({
-    name: user.name,
+    name:  user.name,
     email: user.email,
+    phone: user.phone ?? '',
+    pan:   user.pan ?? '',
 });
 </script>
 
@@ -67,6 +69,35 @@ const form = useForm({
                 />
 
                 <InputError class="mt-2" :message="form.errors.email" />
+            </div>
+
+            <div>
+                <InputLabel for="phone" value="Phone" />
+
+                <TextInput
+                    id="phone"
+                    type="tel"
+                    class="mt-1 block w-full"
+                    v-model="form.phone"
+                    autocomplete="tel"
+                />
+
+                <InputError class="mt-2" :message="form.errors.phone" />
+            </div>
+
+            <div>
+                <InputLabel for="pan" value="PAN" />
+
+                <TextInput
+                    id="pan"
+                    type="text"
+                    class="mt-1 block w-full uppercase"
+                    v-model="form.pan"
+                    maxlength="10"
+                    placeholder="ABCDE1234F"
+                />
+
+                <InputError class="mt-2" :message="form.errors.pan" />
             </div>
 
             <div v-if="mustVerifyEmail && user.email_verified_at === null">

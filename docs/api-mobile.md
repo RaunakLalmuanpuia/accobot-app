@@ -170,6 +170,136 @@ Revokes **all** tokens — signs out every device.
 
 ---
 
+### Profile
+
+#### `GET /api/mobile/profile`
+
+Returns the authenticated user's full profile.
+
+**Response `200`**
+```json
+{
+  "user": {
+    "id": "uuid",
+    "name": "CA1",
+    "email": "ca1@example.com",
+    "phone": "+91 98765 43210",
+    "pan": "ABCDE1234F",
+    "type": "human",
+    "status": "active",
+    "email_verified_at": "2026-04-10T08:00:00Z",
+    "created_at": "2026-04-10T08:00:00Z"
+  }
+}
+```
+
+---
+
+#### `PATCH /api/mobile/profile`
+
+Update name, email, and/or phone. If email changes, `email_verified_at` is cleared.
+
+**Request body**
+
+| Field | Type | Required | Notes |
+|---|---|:---:|---|
+| `name` | string | Yes | Max 255 |
+| `email` | string | Yes | Unique, lowercased |
+| `phone` | string | No | Max 20 chars, nullable |
+| `pan` | string | No | 10-char Indian PAN (`ABCDE1234F` format), nullable |
+
+**Example request**
+```json
+{
+  "name": "CA One",
+  "email": "ca1@example.com",
+  "phone": "+91 98765 43210",
+  "pan": "ABCDE1234F"
+}
+```
+
+**Response `200`**
+```json
+{
+  "message": "Profile updated.",
+  "user": {
+    "id": "uuid",
+    "name": "CA One",
+    "email": "ca1@example.com",
+    "phone": "+91 98765 43210",
+    "pan": "ABCDE1234F",
+    "type": "human",
+    "status": "active",
+    "email_verified_at": "2026-04-10T08:00:00Z"
+  }
+}
+```
+
+**Errors**
+
+| Status | Reason |
+|---|---|
+| `422` | Validation failed (e.g. email already taken) |
+
+---
+
+#### `POST /api/mobile/profile/change-password`
+
+Change the authenticated user's password.
+
+**Request body**
+
+| Field | Type | Required | Notes |
+|---|---|:---:|---|
+| `current_password` | string | Yes | Must match existing password |
+| `password` | string | Yes | New password (Laravel default strength rules) |
+| `password_confirmation` | string | Yes | Must match `password` |
+
+**Example request**
+```json
+{
+  "current_password": "old-secret",
+  "password": "new-secret-123",
+  "password_confirmation": "new-secret-123"
+}
+```
+
+**Response `200`**
+```json
+{ "message": "Password changed." }
+```
+
+**Errors**
+
+| Status | Reason |
+|---|---|
+| `422` | Wrong current password or new password too weak |
+
+---
+
+#### `DELETE /api/mobile/profile`
+
+Permanently delete the authenticated user's account. Revokes all tokens first.
+
+**Request body**
+
+| Field | Type | Required | Notes |
+|---|---|:---:|---|
+| `password` | string | Yes | Must match current password |
+
+**Response `200`**
+```json
+{ "message": "Account deleted." }
+```
+
+**Errors**
+
+| Status | Reason |
+|---|---|
+| `422` | Wrong password |
+
+---
+
 ### Tenant — Banking
 
 All tenant routes require:

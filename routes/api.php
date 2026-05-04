@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\MobileAuthController;
 use App\Http\Controllers\Api\MobileGroupChatController;
+use App\Http\Controllers\Api\MobileProfileController;
 use App\Http\Controllers\Api\Tally\TallyConfirmController;
 use Illuminate\Support\Facades\Broadcast;
 use App\Http\Controllers\Api\Tally\TallyInboundMastersController;
@@ -41,6 +42,12 @@ Route::prefix('mobile')->name('api.mobile.')->middleware(['auth:sanctum'])->grou
     Route::get('tokens',                     [MobileAuthController::class, 'tokens'])->name('tokens');
     Route::delete('tokens/{tokenId}',        [MobileAuthController::class, 'revokeToken'])->name('tokens.revoke');
     Route::delete('tokens',                  [MobileAuthController::class, 'revokeAll'])->name('tokens.revoke_all');
+
+    // ── Profile ───────────────────────────────────────────────────────
+    Route::get('profile',                    [MobileProfileController::class, 'show'])->name('profile.show');
+    Route::patch('profile',                  [MobileProfileController::class, 'update'])->name('profile.update');
+    Route::post('profile/change-password',   [MobileProfileController::class, 'changePassword'])->name('profile.change-password');
+    Route::delete('profile',                 [MobileProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
 // ── Tenant-scoped routes ───────────────────────────────────────────────
