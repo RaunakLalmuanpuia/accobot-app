@@ -3,6 +3,8 @@
 use App\Http\Controllers\Api\MobileAuthController;
 use App\Http\Controllers\Api\MobileGroupChatController;
 use App\Http\Controllers\Api\MobileProfileController;
+use App\Http\Controllers\Api\MobileTenantBankAccountController;
+use App\Http\Controllers\Api\MobileTenantProfileController;
 use App\Http\Controllers\Api\Tally\TallyConfirmController;
 use Illuminate\Support\Facades\Broadcast;
 use App\Http\Controllers\Api\Tally\TallyInboundMastersController;
@@ -56,6 +58,31 @@ Route::prefix('mobile/tenants/{tenant}')
     ->name('api.mobile.tenant.')
     ->middleware(['auth:sanctum', 'member'])
     ->group(function () {
+
+        // ── Tenant profile ────────────────────────────────────────────
+        // GET   /api/mobile/tenants/{tenant}/profile
+        // PATCH /api/mobile/tenants/{tenant}/profile
+        Route::get('profile',   [MobileTenantProfileController::class, 'show'])->name('profile.show')
+            ->middleware('tenant.permission:tenant.view_settings');
+        Route::patch('profile', [MobileTenantProfileController::class, 'update'])->name('profile.update')
+            ->middleware('tenant.permission:tenant.update_settings');
+
+        // ── Bank accounts ─────────────────────────────────────────────
+        // GET    /api/mobile/tenants/{tenant}/bank-accounts
+        // POST   /api/mobile/tenants/{tenant}/bank-accounts
+        // PUT    /api/mobile/tenants/{tenant}/bank-accounts/{bankAccount}
+        // POST   /api/mobile/tenants/{tenant}/bank-accounts/{bankAccount}/set-primary
+        // DELETE /api/mobile/tenants/{tenant}/bank-accounts/{bankAccount}
+        Route::prefix('bank-accounts')->name('bank-accounts.')->group(function () {
+            Route::get('',   [MobileTenantBankAccountController::class, 'index'])->name('index')
+                ->middleware('tenant.permission:tenant.view_settings');
+            Route::middleware('tenant.permission:tenant.update_settings')->group(function () {
+                Route::post('',                          [MobileTenantBankAccountController::class, 'store'])->name('store');
+                Route::put('{bankAccount}',              [MobileTenantBankAccountController::class, 'update'])->name('update');
+                Route::post('{bankAccount}/set-primary', [MobileTenantBankAccountController::class, 'setPrimary'])->name('set-primary');
+                Route::delete('{bankAccount}',           [MobileTenantBankAccountController::class, 'destroy'])->name('destroy');
+            });
+        });
 
         // ── Chat ──────────────────────────────────────────────────────
         // POST  /api/mobile/tenants/{tenant}/chat

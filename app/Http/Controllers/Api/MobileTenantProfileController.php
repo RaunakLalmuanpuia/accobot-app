@@ -1,0 +1,74 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Models\AuditEvent;
+use App\Models\Tenant;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+
+class MobileTenantProfileController extends Controller
+{
+    /**
+     * GET /api/mobile/tenants/{tenant}/profile
+     */
+    public function show(Request $request, Tenant $tenant): JsonResponse
+    {
+        return response()->json([
+            'tenant' => $this->tenantData($tenant),
+        ]);
+    }
+
+    /**
+     * PATCH /api/mobile/tenants/{tenant}/profile
+     */
+    public function update(Request $request, Tenant $tenant): JsonResponse
+    {
+        $validated = $request->validate([
+            'name'          => ['required', 'string', 'max:255'],
+            'phone'         => ['nullable', 'string', 'max:20'],
+            'email'         => ['nullable', 'string', 'email', 'max:255'],
+            'website'       => ['nullable', 'url', 'max:500'],
+            'gstin'         => ['nullable', 'string', 'size:15', 'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/'],
+            'pan'           => ['nullable', 'string', 'size:10', 'regex:/^[A-Z]{5}[0-9]{4}[A-Z]$/'],
+            'logo_url'      => ['nullable', 'url', 'max:500'],
+            'address_line1' => ['nullable', 'string', 'max:255'],
+            'address_line2' => ['nullable', 'string', 'max:255'],
+            'city'          => ['nullable', 'string', 'max:100'],
+            'state'         => ['nullable', 'string', 'max:100'],
+            'pincode'       => ['nullable', 'string', 'max:10'],
+        ]);
+
+        $tenant->fill($validated)->save();
+
+        AuditEvent::log('tenant.profile_updated');
+
+        return response()->json([
+            'message' => 'Tenant profile updated.',
+            'tenant'  => $this->tenantData($tenant),
+        ]);
+    }
+
+    private function tenantData(Tenant $tenant): array
+    {
+        return [
+            'id'            => $tenant->id,
+            'name'          => $tenant->name,
+            'type'          => $tenant->type,
+            'status'        => $tenant->status,
+            'phone'         => $tenant->phone,
+            'email'         => $tenant->email,
+            'website'       => $tenant->website,
+            'gstin'         => $tenant->gstin,
+            'pan'           => $tenant->pan,
+            'logo_url'      => $tenant->logo_url,
+            'address_line1' => $tenant->address_line1,
+            'address_line2' => $tenant->address_line2,
+            'city'          => $tenant->city,
+            'state'         => $tenant->state,
+            'pincode'       => $tenant->pincode,
+            'created_at'    => $tenant->created_at,
+        ];
+    }
+}

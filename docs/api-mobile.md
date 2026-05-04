@@ -1044,6 +1044,130 @@ The mobile app connects to Laravel Reverb using the **Pusher protocol**. Use the
 
 ---
 
+## Tenant Profile
+
+### `GET /api/mobile/tenants/{tenant}/profile`
+
+Returns the tenant's profile. Requires `tenant.view_settings` permission.
+
+**Response 200**
+```json
+{
+  "tenant": {
+    "id": "uuid",
+    "name": "Acme Ltd",
+    "type": "business",
+    "status": "active",
+    "phone": "+91 98765 43210",
+    "email": "hello@acme.com",
+    "website": "https://acme.com",
+    "gstin": "22AAAAA0000A1Z5",
+    "pan": "AAAAA0000A",
+    "logo_url": "https://cdn.acme.com/logo.png",
+    "address_line1": "123 Main Street",
+    "address_line2": "Floor 4",
+    "city": "Mumbai",
+    "state": "Maharashtra",
+    "pincode": "400001",
+    "created_at": "2026-05-04T10:00:00.000000Z"
+  }
+}
+```
+
+---
+
+### `PATCH /api/mobile/tenants/{tenant}/profile`
+
+Updates the tenant's profile. Requires `tenant.update_settings` permission.
+
+**Request body** (all fields except `name` are optional / nullable):
+
+| Field | Type | Validation |
+|---|---|---|
+| `name` | string | required, max 255 |
+| `phone` | string\|null | max 20 |
+| `email` | string\|null | valid email, max 255 |
+| `website` | string\|null | valid URL, max 500 |
+| `gstin` | string\|null | exactly 15 chars, format `22AAAAA0000A1Z5` |
+| `pan` | string\|null | exactly 10 chars, format `ABCDE1234F` |
+| `logo_url` | string\|null | valid URL, max 500 |
+| `address_line1` | string\|null | max 255 |
+| `address_line2` | string\|null | max 255 |
+| `city` | string\|null | max 100 |
+| `state` | string\|null | max 100 |
+| `pincode` | string\|null | max 10 |
+
+**Response 200**
+```json
+{
+  "message": "Tenant profile updated.",
+  "tenant": { /* same shape as GET */ }
+}
+```
+
+---
+
+## Tenant Bank Accounts
+
+All bank account endpoints require the user to be a tenant member. Read endpoints require `tenant.view_settings`; write endpoints require `tenant.update_settings`.
+
+### `GET /api/mobile/tenants/{tenant}/bank-accounts`
+
+**Response 200**
+```json
+{
+  "bank_accounts": [
+    {
+      "id": 1,
+      "bank_name": "State Bank of India",
+      "account_holder_name": "Acme Ltd",
+      "account_number": "12345678901",
+      "ifsc_code": "SBIN0001234",
+      "account_type": "current",
+      "branch": "MG Road",
+      "is_primary": true
+    }
+  ]
+}
+```
+
+---
+
+### `POST /api/mobile/tenants/{tenant}/bank-accounts`
+
+**Request body:**
+
+| Field | Type | Validation |
+|---|---|---|
+| `bank_name` | string | required, max 255 |
+| `account_holder_name` | string | required, max 255 |
+| `account_number` | string | required, max 50 |
+| `ifsc_code` | string | required, exactly 11 chars, format `SBIN0001234` |
+| `account_type` | string | required, one of `savings` / `current` / `overdraft` |
+| `branch` | string\|null | max 255 |
+
+First account added is automatically set as primary. **Response 201** returns `{ "message": "...", "bank_account": { ... } }`.
+
+---
+
+### `PUT /api/mobile/tenants/{tenant}/bank-accounts/{bankAccount}`
+
+Same body as POST. **Response 200** returns `{ "message": "...", "bank_account": { ... } }`.
+
+---
+
+### `POST /api/mobile/tenants/{tenant}/bank-accounts/{bankAccount}/set-primary`
+
+No body. Marks the given account as primary and clears `is_primary` on all others. **Response 200** `{ "message": "Primary account updated." }`.
+
+---
+
+### `DELETE /api/mobile/tenants/{tenant}/bank-accounts/{bankAccount}`
+
+No body. If the deleted account was primary, the next account (by insertion order) is automatically promoted. **Response 200** `{ "message": "Bank account removed." }`.
+
+---
+
 ## Error Response Format
 
 All validation errors return standard Laravel format:

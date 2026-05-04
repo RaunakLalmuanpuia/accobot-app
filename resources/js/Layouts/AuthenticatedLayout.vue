@@ -320,6 +320,10 @@ function stopImpersonation() {
 
                                     <template #content>
                                         <DropdownLink :href="route('profile.edit')">Profile</DropdownLink>
+                                        <DropdownLink
+                                            v-if="currentTenantId() && hasPermission('tenant.view_settings')"
+                                            :href="route('settings.profile', { tenant: currentTenantId() })"
+                                        >Tenant Settings</DropdownLink>
                                         <DropdownLink :href="route('logout')" method="post" as="button">Log Out</DropdownLink>
                                     </template>
                                 </Dropdown>
@@ -354,6 +358,10 @@ function stopImpersonation() {
 
                         <div class="mt-3 space-y-1">
                             <ResponsiveNavLink :href="route('profile.edit')">Profile</ResponsiveNavLink>
+                            <ResponsiveNavLink
+                                v-if="currentTenantId() && hasPermission('tenant.view_settings')"
+                                :href="route('settings.profile', { tenant: currentTenantId() })"
+                            >Tenant Settings</ResponsiveNavLink>
                             <ResponsiveNavLink :href="route('logout')" method="post" as="button">Log Out</ResponsiveNavLink>
                         </div>
                     </div>

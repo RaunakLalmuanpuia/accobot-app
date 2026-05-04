@@ -22,6 +22,8 @@ use App\Http\Controllers\TallyMasterCrudController;
 use App\Http\Controllers\TallySyncController;
 use App\Http\Controllers\TallyVoucherCrudController;
 use App\Http\Controllers\AuditLogController;
+use App\Http\Controllers\TenantBankAccountController;
+use App\Http\Controllers\TenantProfileController;
 use App\Http\Controllers\TeamMemberController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\VendorController;
@@ -77,6 +79,16 @@ Route::middleware(['auth', 'verified', 'member'])
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
         Route::get('/settings/audit', [AuditLogController::class, 'index'])->name('settings.audit')->middleware('tenant.permission:audit.view');
+
+        Route::get('/settings/profile',   [TenantProfileController::class, 'edit'])->name('settings.profile')->middleware('tenant.permission:tenant.view_settings');
+        Route::patch('/settings/profile', [TenantProfileController::class, 'update'])->name('settings.profile.update')->middleware('tenant.permission:tenant.update_settings');
+
+        Route::middleware('tenant.permission:tenant.update_settings')->group(function () {
+            Route::post('/settings/bank-accounts',                           [TenantBankAccountController::class, 'store'])->name('settings.bank-accounts.store');
+            Route::put('/settings/bank-accounts/{bankAccount}',              [TenantBankAccountController::class, 'update'])->name('settings.bank-accounts.update');
+            Route::post('/settings/bank-accounts/{bankAccount}/set-primary', [TenantBankAccountController::class, 'setPrimary'])->name('settings.bank-accounts.set-primary');
+            Route::delete('/settings/bank-accounts/{bankAccount}',           [TenantBankAccountController::class, 'destroy'])->name('settings.bank-accounts.destroy');
+        });
 
         Route::get('/settings/team', [TeamMemberController::class, 'index'])->name('team.index')->middleware('tenant.permission:members.view');
         Route::get('/settings/team/check-email', [TeamMemberController::class, 'checkEmail'])->name('team.check-email')->middleware('tenant.permission:members.invite');

@@ -12,7 +12,11 @@ class Tenant extends Model
 {
     use HasUuids;
 
-    protected $fillable = ['name', 'type', 'status', 'is_personal', 'created_by_user_id'];
+    protected $fillable = [
+        'name', 'type', 'status', 'is_personal', 'created_by_user_id',
+        'phone', 'email', 'website', 'gstin', 'pan', 'logo_url',
+        'address_line1', 'address_line2', 'city', 'state', 'pincode',
+    ];
 
     protected $casts = [
         'is_personal' => 'boolean',
@@ -64,5 +68,10 @@ class Tenant extends Model
     public function chatRooms(): HasMany
     {
         return $this->hasMany(ChatRoom::class);
+    }
+
+    public function bankAccounts(): HasMany
+    {
+        return $this->hasMany(TenantBankAccount::class)->orderByDesc('is_primary')->orderBy('id');
     }
 }
