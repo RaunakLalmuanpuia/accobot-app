@@ -180,15 +180,15 @@ Returns the authenticated user's full profile.
 ```json
 {
   "user": {
-    "id": "uuid",
+    "id": 1,
     "name": "CA1",
     "email": "ca1@example.com",
     "phone": "+91 98765 43210",
     "pan": "ABCDE1234F",
     "type": "human",
     "status": "active",
-    "email_verified_at": "2026-04-10T08:00:00Z",
-    "created_at": "2026-04-10T08:00:00Z"
+    "email_verified_at": "2026-04-10T08:00:00.000000Z",
+    "created_at": "2026-04-10T08:00:00.000000Z"
   }
 }
 ```
@@ -197,7 +197,7 @@ Returns the authenticated user's full profile.
 
 #### `PATCH /api/mobile/profile`
 
-Update name, email, and/or phone. If email changes, `email_verified_at` is cleared.
+Update name, email, phone, or PAN. If email changes, `email_verified_at` is cleared.
 
 **Request body**
 
@@ -223,19 +223,17 @@ Update name, email, and/or phone. If email changes, `email_verified_at` is clear
 {
   "message": "Profile updated.",
   "user": {
-    "id": "uuid",
+    "id": 1,
     "name": "CA One",
     "email": "ca1@example.com",
     "phone": "+91 98765 43210",
     "pan": "ABCDE1234F",
     "type": "human",
     "status": "active",
-    "email_verified_at": "2026-04-10T08:00:00Z"
+    "email_verified_at": null
   }
 }
 ```
-
-**Errors**
 
 | Status | Reason |
 |---|---|
@@ -244,8 +242,6 @@ Update name, email, and/or phone. If email changes, `email_verified_at` is clear
 ---
 
 #### `POST /api/mobile/profile/change-password`
-
-Change the authenticated user's password.
 
 **Request body**
 
@@ -269,8 +265,6 @@ Change the authenticated user's password.
 { "message": "Password changed." }
 ```
 
-**Errors**
-
 | Status | Reason |
 |---|---|
 | `422` | Wrong current password or new password too weak |
@@ -291,8 +285,6 @@ Permanently delete the authenticated user's account. Revokes all tokens first.
 ```json
 { "message": "Account deleted." }
 ```
-
-**Errors**
 
 | Status | Reason |
 |---|---|
@@ -1046,13 +1038,7 @@ The mobile app connects to Laravel Reverb using the **Pusher protocol**. Use the
 
 ## Tenant Profile
 
-> **Postman setup for all tenant-scoped requests**
-> - `Authorization: Bearer <token>`
-> - `Accept: application/json`
-> - `Content-Type: application/json`
-> - Replace `{tenant}` with the tenant UUID (get it from `GET /api/mobile/me` → `current_tenant.id`)
-
----
+> Also documented in **[api-profile-tenant.md](./api-profile-tenant.md)**.
 
 ### `GET /api/mobile/tenants/{tenant}/profile`
 
@@ -1069,7 +1055,7 @@ Requires `tenant.view_settings` permission. No request body.
     "phone": "+91 98765 43210",
     "email": "hello@acme.com",
     "website": "https://acme.com",
-    "gstin": "22AAAAA0000A1Z5",
+    "gstin": "22AAAPL1234F1Z5",
     "pan": "AAAPL1234F",
     "logo_url": "https://cdn.acme.com/logo.png",
     "address_line1": "123 Main Street",
@@ -1106,20 +1092,20 @@ Requires `tenant.update_settings` permission. All fields except `name` are optio
 }
 ```
 
-| Field | Validation |
-|---|---|
-| `name` | required, max 255 |
-| `phone` | nullable, max 20 |
-| `email` | nullable, valid email |
-| `website` | nullable, valid URL |
-| `gstin` | nullable, exactly 15 chars, e.g. `22AAAPL1234F1Z5` |
-| `pan` | nullable, exactly 10 chars, e.g. `AAAPL1234F` |
-| `logo_url` | nullable, valid URL |
-| `address_line1` | nullable, max 255 |
-| `address_line2` | nullable, max 255 |
-| `city` | nullable, max 100 |
-| `state` | nullable, max 100 |
-| `pincode` | nullable, max 10 |
+| Field | Required | Validation |
+|---|:---:|---|
+| `name` | Yes | string, max 255 |
+| `phone` | No | nullable, max 20 |
+| `email` | No | nullable, valid email |
+| `website` | No | nullable, valid URL |
+| `gstin` | No | nullable, exactly 15 chars, e.g. `22AAAPL1234F1Z5` |
+| `pan` | No | nullable, exactly 10 chars, e.g. `AAAPL1234F` |
+| `logo_url` | No | nullable, valid URL |
+| `address_line1` | No | nullable, max 255 |
+| `address_line2` | No | nullable, max 255 |
+| `city` | No | nullable, max 100 |
+| `state` | No | nullable, max 100 |
+| `pincode` | No | nullable, max 10 |
 
 **Response 200**
 ```json
@@ -1185,14 +1171,14 @@ First account added is automatically set as primary.
 }
 ```
 
-| Field | Validation |
-|---|---|
-| `bank_name` | required, max 255 |
-| `account_holder_name` | required, max 255 |
-| `account_number` | required, max 50 |
-| `ifsc_code` | required, exactly 11 chars, format `XXXX0XXXXXX` |
-| `account_type` | required, one of `savings` / `current` / `overdraft` |
-| `branch` | nullable, max 255 |
+| Field | Required | Validation |
+|---|:---:|---|
+| `bank_name` | Yes | max 255 |
+| `account_holder_name` | Yes | max 255 |
+| `account_number` | Yes | max 50 |
+| `ifsc_code` | Yes | exactly 11 chars, format `XXXX0XXXXXX` |
+| `account_type` | Yes | one of `savings` / `current` / `overdraft` |
+| `branch` | No | nullable, max 255 |
 
 **Response 201**
 ```json
@@ -1215,17 +1201,13 @@ First account added is automatically set as primary.
 
 ### `PUT /api/mobile/tenants/{tenant}/bank-accounts/{bankAccount}`
 
-Same body as POST.
+All fields are optional — send only what you want to change.
 
-**Request body:**
+**Request body (partial update example):**
 ```json
 {
-  "bank_name": "State Bank of India",
-  "account_holder_name": "Acme Ltd",
-  "account_number": "12345678901",
-  "ifsc_code": "SBIN0001234",
-  "account_type": "current",
-  "branch": "Nariman Point"
+  "branch": "Nariman Point",
+  "account_type": "overdraft"
 }
 ```
 
@@ -1245,9 +1227,7 @@ No request body. Clears `is_primary` on all other accounts.
 
 **Response 200**
 ```json
-{
-  "message": "Primary account updated."
-}
+{ "message": "Primary account updated." }
 ```
 
 ---
@@ -1258,9 +1238,7 @@ No request body. If the deleted account was primary, the next account is automat
 
 **Response 200**
 ```json
-{
-  "message": "Bank account removed."
-}
+{ "message": "Bank account removed." }
 ```
 
 ---
