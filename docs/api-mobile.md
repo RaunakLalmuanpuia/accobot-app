@@ -1046,9 +1046,17 @@ The mobile app connects to Laravel Reverb using the **Pusher protocol**. Use the
 
 ## Tenant Profile
 
+> **Postman setup for all tenant-scoped requests**
+> - `Authorization: Bearer <token>`
+> - `Accept: application/json`
+> - `Content-Type: application/json`
+> - Replace `{tenant}` with the tenant UUID (get it from `GET /api/mobile/me` → `current_tenant.id`)
+
+---
+
 ### `GET /api/mobile/tenants/{tenant}/profile`
 
-Returns the tenant's profile. Requires `tenant.view_settings` permission.
+Requires `tenant.view_settings` permission. No request body.
 
 **Response 200**
 ```json
@@ -1062,7 +1070,7 @@ Returns the tenant's profile. Requires `tenant.view_settings` permission.
     "email": "hello@acme.com",
     "website": "https://acme.com",
     "gstin": "22AAAAA0000A1Z5",
-    "pan": "AAAAA0000A",
+    "pan": "AAAPL1234F",
     "logo_url": "https://cdn.acme.com/logo.png",
     "address_line1": "123 Main Street",
     "address_line2": "Floor 4",
@@ -1078,30 +1086,46 @@ Returns the tenant's profile. Requires `tenant.view_settings` permission.
 
 ### `PATCH /api/mobile/tenants/{tenant}/profile`
 
-Updates the tenant's profile. Requires `tenant.update_settings` permission.
+Requires `tenant.update_settings` permission. All fields except `name` are optional.
 
-**Request body** (all fields except `name` are optional / nullable):
+**Request body:**
+```json
+{
+  "name": "Acme Ltd",
+  "phone": "+91 98765 43210",
+  "email": "hello@acme.com",
+  "website": "https://acme.com",
+  "gstin": "22AAAPL1234F1Z5",
+  "pan": "AAAPL1234F",
+  "logo_url": "https://cdn.acme.com/logo.png",
+  "address_line1": "123 Main Street",
+  "address_line2": "Floor 4",
+  "city": "Mumbai",
+  "state": "Maharashtra",
+  "pincode": "400001"
+}
+```
 
-| Field | Type | Validation |
-|---|---|---|
-| `name` | string | required, max 255 |
-| `phone` | string\|null | max 20 |
-| `email` | string\|null | valid email, max 255 |
-| `website` | string\|null | valid URL, max 500 |
-| `gstin` | string\|null | exactly 15 chars, format `22AAAAA0000A1Z5` |
-| `pan` | string\|null | exactly 10 chars, format `ABCDE1234F` |
-| `logo_url` | string\|null | valid URL, max 500 |
-| `address_line1` | string\|null | max 255 |
-| `address_line2` | string\|null | max 255 |
-| `city` | string\|null | max 100 |
-| `state` | string\|null | max 100 |
-| `pincode` | string\|null | max 10 |
+| Field | Validation |
+|---|---|
+| `name` | required, max 255 |
+| `phone` | nullable, max 20 |
+| `email` | nullable, valid email |
+| `website` | nullable, valid URL |
+| `gstin` | nullable, exactly 15 chars, e.g. `22AAAPL1234F1Z5` |
+| `pan` | nullable, exactly 10 chars, e.g. `AAAPL1234F` |
+| `logo_url` | nullable, valid URL |
+| `address_line1` | nullable, max 255 |
+| `address_line2` | nullable, max 255 |
+| `city` | nullable, max 100 |
+| `state` | nullable, max 100 |
+| `pincode` | nullable, max 10 |
 
 **Response 200**
 ```json
 {
   "message": "Tenant profile updated.",
-  "tenant": { /* same shape as GET */ }
+  "tenant": { }
 }
 ```
 
@@ -1109,9 +1133,11 @@ Updates the tenant's profile. Requires `tenant.update_settings` permission.
 
 ## Tenant Bank Accounts
 
-All bank account endpoints require the user to be a tenant member. Read endpoints require `tenant.view_settings`; write endpoints require `tenant.update_settings`.
+Read endpoints require `tenant.view_settings`; write endpoints require `tenant.update_settings`.
 
 ### `GET /api/mobile/tenants/{tenant}/bank-accounts`
+
+No request body.
 
 **Response 200**
 ```json
@@ -1126,6 +1152,16 @@ All bank account endpoints require the user to be a tenant member. Read endpoint
       "account_type": "current",
       "branch": "MG Road",
       "is_primary": true
+    },
+    {
+      "id": 2,
+      "bank_name": "HDFC Bank",
+      "account_holder_name": "Acme Ltd",
+      "account_number": "98765432101",
+      "ifsc_code": "HDFC0001234",
+      "account_type": "savings",
+      "branch": null,
+      "is_primary": false
     }
   ]
 }
@@ -1135,36 +1171,97 @@ All bank account endpoints require the user to be a tenant member. Read endpoint
 
 ### `POST /api/mobile/tenants/{tenant}/bank-accounts`
 
+First account added is automatically set as primary.
+
 **Request body:**
+```json
+{
+  "bank_name": "State Bank of India",
+  "account_holder_name": "Acme Ltd",
+  "account_number": "12345678901",
+  "ifsc_code": "SBIN0001234",
+  "account_type": "current",
+  "branch": "MG Road"
+}
+```
 
-| Field | Type | Validation |
-|---|---|---|
-| `bank_name` | string | required, max 255 |
-| `account_holder_name` | string | required, max 255 |
-| `account_number` | string | required, max 50 |
-| `ifsc_code` | string | required, exactly 11 chars, format `SBIN0001234` |
-| `account_type` | string | required, one of `savings` / `current` / `overdraft` |
-| `branch` | string\|null | max 255 |
+| Field | Validation |
+|---|---|
+| `bank_name` | required, max 255 |
+| `account_holder_name` | required, max 255 |
+| `account_number` | required, max 50 |
+| `ifsc_code` | required, exactly 11 chars, format `XXXX0XXXXXX` |
+| `account_type` | required, one of `savings` / `current` / `overdraft` |
+| `branch` | nullable, max 255 |
 
-First account added is automatically set as primary. **Response 201** returns `{ "message": "...", "bank_account": { ... } }`.
+**Response 201**
+```json
+{
+  "message": "Bank account added.",
+  "bank_account": {
+    "id": 1,
+    "bank_name": "State Bank of India",
+    "account_holder_name": "Acme Ltd",
+    "account_number": "12345678901",
+    "ifsc_code": "SBIN0001234",
+    "account_type": "current",
+    "branch": "MG Road",
+    "is_primary": true
+  }
+}
+```
 
 ---
 
 ### `PUT /api/mobile/tenants/{tenant}/bank-accounts/{bankAccount}`
 
-Same body as POST. **Response 200** returns `{ "message": "...", "bank_account": { ... } }`.
+Same body as POST.
+
+**Request body:**
+```json
+{
+  "bank_name": "State Bank of India",
+  "account_holder_name": "Acme Ltd",
+  "account_number": "12345678901",
+  "ifsc_code": "SBIN0001234",
+  "account_type": "current",
+  "branch": "Nariman Point"
+}
+```
+
+**Response 200**
+```json
+{
+  "message": "Bank account updated.",
+  "bank_account": { }
+}
+```
 
 ---
 
 ### `POST /api/mobile/tenants/{tenant}/bank-accounts/{bankAccount}/set-primary`
 
-No body. Marks the given account as primary and clears `is_primary` on all others. **Response 200** `{ "message": "Primary account updated." }`.
+No request body. Clears `is_primary` on all other accounts.
+
+**Response 200**
+```json
+{
+  "message": "Primary account updated."
+}
+```
 
 ---
 
 ### `DELETE /api/mobile/tenants/{tenant}/bank-accounts/{bankAccount}`
 
-No body. If the deleted account was primary, the next account (by insertion order) is automatically promoted. **Response 200** `{ "message": "Bank account removed." }`.
+No request body. If the deleted account was primary, the next account is automatically promoted.
+
+**Response 200**
+```json
+{
+  "message": "Bank account removed."
+}
+```
 
 ---
 

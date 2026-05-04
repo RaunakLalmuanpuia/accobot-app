@@ -58,11 +58,11 @@ class MobileTenantBankAccountController extends Controller
         abort_if($bankAccount->tenant_id !== $tenant->id, 403);
 
         $validated = $request->validate([
-            'bank_name'           => ['required', 'string', 'max:255'],
-            'account_holder_name' => ['required', 'string', 'max:255'],
-            'account_number'      => ['required', 'string', 'max:50'],
-            'ifsc_code'           => ['required', 'string', 'size:11', 'regex:/^[A-Z]{4}0[A-Z0-9]{6}$/'],
-            'account_type'        => ['required', Rule::in(['savings', 'current', 'overdraft'])],
+            'bank_name'           => ['sometimes', 'required', 'string', 'max:255'],
+            'account_holder_name' => ['sometimes', 'required', 'string', 'max:255'],
+            'account_number'      => ['sometimes', 'required', 'string', 'max:50'],
+            'ifsc_code'           => ['sometimes', 'required', 'string', 'size:11', 'regex:/^[A-Z]{4}0[A-Z0-9]{6}$/'],
+            'account_type'        => ['sometimes', 'required', Rule::in(['savings', 'current', 'overdraft'])],
             'branch'              => ['nullable', 'string', 'max:255'],
         ]);
 
