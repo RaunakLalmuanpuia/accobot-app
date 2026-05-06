@@ -18,11 +18,14 @@ class Invitation extends Model
         'expires_at',
         'accepted_at',
         'status',
+        'invitation_type',
+        'meta',
     ];
 
     protected $casts = [
         'expires_at'  => 'datetime',
         'accepted_at' => 'datetime',
+        'meta'        => 'array',
     ];
 
     // ── Token helpers ─────────────────────────────────────────────────
@@ -62,5 +65,10 @@ class Invitation extends Model
     public function isPending(): bool
     {
         return $this->status === 'pending' && $this->expires_at->isFuture();
+    }
+
+    public function isCaClientInvite(): bool
+    {
+        return $this->invitation_type === 'ca_client';
     }
 }

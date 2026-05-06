@@ -93,7 +93,8 @@ function toggleLog(id) {
                     </p>
                 </div>
                 <div class="flex items-center gap-3">
-                    <a :href="route('tally.connection.show', { tenant: tenant.id })"
+                    <a v-if="!tenant.tally_managed_by_ca"
+                       :href="route('tally.connection.show', { tenant: tenant.id })"
                        class="text-sm text-violet-600 hover:text-violet-800 font-medium">
                         Settings
                     </a>

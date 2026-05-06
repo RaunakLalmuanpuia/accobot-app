@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\OnboardingController;
 use App\Models\BankTransaction;
 use App\Models\Client;
 use App\Models\Invoice;
@@ -134,6 +135,20 @@ class DashboardController extends Controller
                 ->values();
         }
 
+        // Onboarding checklist — only shown to internal owner-level members
+        $onboarding = null;
+        $isOwnerLevel = in_array($roleName, ['owner', 'OwnerPartner', 'TenantAdmin']);
+        if ($isOwnerLevel && $memberType === 'internal' && ! $tenant->onboarding_dismissed_at) {
+            $checklist = (new OnboardingController())->buildChecklist($tenant);
+            $allDone   = collect($checklist)->every(fn($item) => $item['done']);
+            if (! $allDone) {
+                $onboarding = [
+                    'checklist'  => $checklist,
+                    'dismiss_url' => route('onboarding.dismiss', $tenant),
+                ];
+            }
+        }
+
         return inertia('Dashboard/Tenant', [
             'tenant'        => $tenant,
             'roleName'      => $roleName,
@@ -142,6 +157,7 @@ class DashboardController extends Controller
             'stats'         => $stats,
             'recentMembers' => $recentMembers,
             'roleBreakdown' => $roleBreakdown,
+            'onboarding'    => $onboarding,
         ]);
     }
 

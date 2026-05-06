@@ -5,8 +5,9 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import { hasPermission } from '@/utils/permissions'
 
 const props = defineProps({
-    tenant:  Object,
-    clients: Array,
+    tenant:   Object,
+    clients:  Array,
+    isCaFirm: { type: Boolean, default: false },
 })
 
 const showModal = ref(false)
@@ -52,6 +53,13 @@ function destroy(client) {
     if (!confirm(`Remove ${client.name}?`)) return
     router.delete(route('clients.destroy', { tenant: props.tenant.id, client: client.id }))
 }
+
+function inviteToAccobot(client) {
+    if (!confirm(`Send an Accobot invitation to ${client.email}?`)) return
+    router.post(route('clients.invite', { tenant: props.tenant.id, client: client.id }), {}, {
+        preserveScroll: true,
+    })
+}
 </script>
 
 <template>
@@ -79,12 +87,14 @@ function destroy(client) {
             <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
                 <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
 
+                    <!-- Header: 12 cols always; CA firms trade 1 email col + 1 phone col for Accobot col -->
                     <div class="grid grid-cols-12 px-6 py-3 bg-gray-50 border-b border-gray-100 text-xs font-semibold uppercase tracking-wide text-gray-400">
                         <div class="col-span-3">Name</div>
-                        <div class="col-span-3">Email</div>
-                        <div class="col-span-2">Phone</div>
+                        <div :class="isCaFirm ? 'col-span-2' : 'col-span-3'">Email</div>
+                        <div :class="isCaFirm ? 'col-span-1' : 'col-span-2'">Phone</div>
                         <div class="col-span-2">Tax ID</div>
                         <div class="col-span-1">Address</div>
+                        <div v-if="isCaFirm" class="col-span-2">Accobot</div>
                         <div class="col-span-1"></div>
                     </div>
 
@@ -97,10 +107,28 @@ function destroy(client) {
                             <div class="text-sm font-medium text-gray-900">{{ client.name }}</div>
                             <div v-if="client.company" class="text-xs text-gray-400">{{ client.company }}</div>
                         </div>
-                        <div class="col-span-3 text-sm text-gray-500">{{ client.email ?? '—' }}</div>
-                        <div class="col-span-2 text-sm text-gray-500">{{ client.phone ?? '—' }}</div>
+                        <div :class="['text-sm text-gray-500 truncate', isCaFirm ? 'col-span-2' : 'col-span-3']">{{ client.email ?? '—' }}</div>
+                        <div :class="['text-sm text-gray-500', isCaFirm ? 'col-span-1' : 'col-span-2']">{{ client.phone ?? '—' }}</div>
                         <div class="col-span-2 text-sm text-gray-500 font-mono">{{ client.tax_id ?? '—' }}</div>
                         <div class="col-span-1 text-sm text-gray-500 truncate" :title="client.address">{{ client.address ?? '—' }}</div>
+
+                        <!-- Accobot connection status (CA firms only) — uses 2 col-spans -->
+                        <div v-if="isCaFirm" class="col-span-2">
+                            <span v-if="client.linked_tenant_id" class="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-violet-50 text-violet-700">
+                                <svg class="h-3 w-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                Connected
+                            </span>
+                            <span v-else-if="client.invite_pending" class="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">
+                                Invited
+                            </span>
+                            <span v-else-if="!client.email" class="text-xs text-gray-300">—</span>
+                            <button
+                                v-else
+                                @click="inviteToAccobot(client)"
+                                class="text-xs text-violet-600 hover:text-violet-800 font-medium underline underline-offset-2"
+                            >Invite</button>
+                        </div>
+
                         <div class="col-span-1 flex justify-end gap-2">
                             <button v-if="canEdit" @click="openEdit(client)" class="text-xs text-violet-600 hover:text-violet-800 font-medium">Edit</button>
                             <button v-if="canDelete" @click="destroy(client)" class="text-xs text-red-500 hover:text-red-700 font-medium">Delete</button>

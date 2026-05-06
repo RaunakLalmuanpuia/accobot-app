@@ -15,8 +15,7 @@ const showToken   = ref(false)
 const copySuccess = ref(null)
 
 const form = useForm({
-    company_id: props.connection?.company_id ?? '',
-    is_active:  props.connection?.is_active ?? true,
+    is_active: props.connection?.is_active ?? true,
 })
 
 function save() {
@@ -125,9 +124,8 @@ async function copyToClipboard(text, key) {
                     <h2 class="text-base font-semibold text-gray-900 mb-4">Enter These in Tally Connector</h2>
                     <div class="divide-y divide-gray-100 border border-gray-200 rounded-xl overflow-hidden">
                         <div v-for="row in [
-                            { label: 'Base URL',    value: base_url,                      key: 'tbl_url' },
-                            { label: 'Token',       value: connection.inbound_token,       key: 'tbl_tok' },
-                            { label: 'Company ID',  value: connection.company_id || '—',   key: 'tbl_cid' },
+                            { label: 'Base URL', value: base_url,                key: 'tbl_url' },
+                            { label: 'Token',    value: connection.inbound_token, key: 'tbl_tok' },
                         ]" :key="row.key"
                              class="flex items-center justify-between px-4 py-3">
                             <div class="min-w-0">
@@ -146,19 +144,6 @@ async function copyToClipboard(text, key) {
                 <!-- Settings form -->
                 <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 space-y-5">
                     <h2 class="text-base font-semibold text-gray-900">Settings</h2>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                            Company ID <span class="text-red-500">*</span>
-                        </label>
-                        <input v-model="form.company_id"
-                               type="text"
-                               placeholder="Tally company UUID"
-                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
-                               :disabled="!canManage" />
-                        <p class="mt-1 text-xs text-gray-400">Found in Tally's company settings (GUID format).</p>
-                        <p v-if="form.errors.company_id" class="mt-1 text-xs text-red-500">{{ form.errors.company_id }}</p>
-                    </div>
 
                     <div class="flex items-center gap-3">
                         <input v-model="form.is_active"

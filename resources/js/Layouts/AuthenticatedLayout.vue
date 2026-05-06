@@ -174,6 +174,14 @@ function stopImpersonation() {
                                         >Roles</NavLink>
                                     </template>
 
+                                    <template v-if="currentTenant()?.type === 'ca_firm'">
+                                        <span class="self-center h-5 w-px bg-gray-200"></span>
+                                        <NavLink
+                                            :href="route('ca.businesses.index', { tenant: currentTenantId() })"
+                                            :active="route().current('ca.businesses.index')"
+                                        >Businesses</NavLink>
+                                    </template>
+
                                     <template v-if="hasPermission('clients.view') || hasPermission('vendors.view') || hasPermission('products.view') || hasPermission('narration_heads.view') || hasPermission('invoices.view')">
                                         <span class="self-center h-5 w-px bg-gray-200"></span>
 
@@ -348,6 +356,11 @@ function stopImpersonation() {
                         <ResponsiveNavLink :href="homeUrl()" :active="isAdmin() ? route().current('admin.dashboard') : route().current('dashboard')">
                             Dashboard
                         </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            v-if="currentTenant()?.type === 'ca_firm'"
+                            :href="route('ca.businesses.index', { tenant: currentTenantId() })"
+                            :active="route().current('ca.businesses.index')"
+                        >My Businesses</ResponsiveNavLink>
                     </div>
 
                     <div class="border-t border-gray-200 pb-1 pt-4">

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Auth\LoginRequest;
 use App\Models\AuditEvent;
+use App\Models\TallyConnection;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
@@ -71,6 +72,9 @@ class AuthController extends Controller
         $tenantType = $request->role === 'ca' ? 'ca_firm' : 'business';
         $roleName   = $request->role === 'ca' ? 'OwnerPartner' : 'owner';
         $tenant     = $user->createPersonalTenant($roleName, $request->tenant_name, $tenantType);
+
+        // Auto-provision a Tally token for all tenants so they can connect immediately
+        TallyConnection::create(['tenant_id' => $tenant->id]);
 
         return redirect(route('dashboard', ['tenant' => $tenant->id]));
     }

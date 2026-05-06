@@ -16,10 +16,13 @@ class Tenant extends Model
         'name', 'type', 'status', 'is_personal', 'created_by_user_id',
         'phone', 'email', 'website', 'gstin', 'pan', 'logo_url',
         'address_line1', 'address_line2', 'city', 'state', 'pincode',
+        'onboarding_dismissed_at', 'tally_managed_by_ca',
     ];
 
     protected $casts = [
-        'is_personal' => 'boolean',
+        'is_personal'              => 'boolean',
+        'onboarding_dismissed_at'  => 'datetime',
+        'tally_managed_by_ca'      => 'boolean',
     ];
 
     // type: business | ca_firm
@@ -73,5 +76,26 @@ class Tenant extends Model
     public function bankAccounts(): HasMany
     {
         return $this->hasMany(TenantBankAccount::class)->orderByDesc('is_primary')->orderBy('id');
+    }
+
+    // For CA firms: businesses they manage externally
+    public function linkedBusinessClients(): \Illuminate\Database\Eloquent\Builder
+    {
+        return static::whereHas('users', function ($q) {
+            $q->where('tenant_user.member_type', 'external')
+              ->where('tenant_user.source_tenant_id', $this->id);
+        });
+    }
+
+    // For business tenants: CA firms that have access
+    public function linkedCaFirms(): \Illuminate\Database\Eloquent\Builder
+    {
+        return static::whereIn('id',
+            \Illuminate\Support\Facades\DB::table('tenant_user')
+                ->where('tenant_id', $this->id)
+                ->where('member_type', 'external')
+                ->whereNotNull('source_tenant_id')
+                ->pluck('source_tenant_id')
+        );
     }
 }

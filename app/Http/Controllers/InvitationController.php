@@ -2,13 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\CaClientInvitationMail;
 use App\Mail\InvitationMail;
+use App\Mail\InvitationRevokedMail;
 use App\Models\AuditEvent;
 use App\Models\ChatRoom;
 use App\Models\Invitation;
 use App\Models\Tenant;
 use App\Models\TenantUserRole;
 use App\Models\User;
+use App\Services\CaClientLinkService;
 use App\Services\ChatNotificationService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
@@ -72,7 +75,7 @@ class InvitationController extends Controller
             return inertia('Invitations/Accept', ['invitation' => null, 'error' => 'Invalid invitation link.']);
         }
 
-        $invitation->load(['tenant', 'role', 'invitedBy']);
+        $invitation->load(['tenant', 'invitedBy']);
 
         if ($invitation->status === 'accepted') {
             return inertia('Invitations/Accept', ['invitation' => null, 'error' => 'This invitation has already been accepted.']);
@@ -88,17 +91,24 @@ class InvitationController extends Controller
             return redirect()->guest(route('invitation.show', $rawToken));
         }
 
-        return inertia('Invitations/Accept', [
-            'invitation' => [
-                'token'           => $rawToken,
-                'email'           => $invitation->email,
-                'tenant_name'     => $invitation->tenant->name,
-                'role_name'       => $invitation->role->name,
-                'invited_by'      => $invitation->invitedBy->name,
-                'expires_at'      => $invitation->expires_at->toDateString(),
-                'requires_signup' => ! $accountExists,
-            ],
-        ]);
+        $data = [
+            'token'           => $rawToken,
+            'email'           => $invitation->email,
+            'tenant_name'     => $invitation->tenant->name,
+            'invited_by'      => $invitation->invitedBy->name,
+            'expires_at'      => $invitation->expires_at->toDateString(),
+            'requires_signup' => ! $accountExists,
+            'invitation_type' => $invitation->invitation_type,
+        ];
+
+        if ($invitation->isCaClientInvite()) {
+            $data['suggested_business_name'] = $invitation->meta['business_name'] ?? null;
+        } else {
+            $invitation->load('role');
+            $data['role_name'] = $invitation->role?->name;
+        }
+
+        return inertia('Invitations/Accept', ['invitation' => $data]);
     }
 
     public function accept(Request $request, string $rawToken)
@@ -106,6 +116,10 @@ class InvitationController extends Controller
         $invitation = Invitation::findByRawToken($rawToken);
 
         abort_if(! $invitation || ! $invitation->isPending(), 404);
+
+        if ($invitation->isCaClientInvite()) {
+            return $this->acceptCaClientInvitation($request, $invitation);
+        }
 
         $accountExists = User::where('email', $invitation->email)->exists();
 
@@ -167,6 +181,71 @@ class InvitationController extends Controller
 
         return redirect(route('dashboard', ['tenant' => $invitation->tenant_id]))
             ->with('success', 'Welcome to ' . $invitation->tenant->name . '!');
+    }
+
+    private function acceptCaClientInvitation(Request $request, Invitation $invitation)
+    {
+        $accountExists = User::where('email', $invitation->email)->exists();
+        $businessTenant = null;
+
+        if (! $accountExists) {
+            $request->validate([
+                'name'          => 'required|string|max:255',
+                'password'      => ['required', 'confirmed', Password::defaults()],
+                'business_name' => 'nullable|string|max:255',
+            ]);
+
+            $user = User::create([
+                'name'     => $request->name,
+                'email'    => $invitation->email,
+                'password' => Hash::make($request->password),
+                'type'     => 'human',
+                'status'   => 'active',
+            ]);
+
+            event(new Registered($user));
+            Auth::login($user);
+
+            $businessName = $request->business_name
+                ?? $invitation->meta['business_name']
+                ?? $request->name . "'s Business";
+
+            $businessTenant = $user->createPersonalTenant('owner', $businessName, 'business');
+            // Business registered via CA invitation shares CA's Tally — cannot manage their own
+            $businessTenant->update(['tally_managed_by_ca' => true]);
+        }
+
+        $user = auth()->user();
+        abort_if($user->email !== $invitation->email, 403, 'This invitation was sent to a different email address.');
+
+        $businessTenant ??= $user->tenants()
+            ->where('tenants.type', 'business')
+            ->where('tenant_user.member_type', 'internal')
+            ->first();
+
+        abort_if(! $businessTenant, 422, 'No business found. Please create your business first.');
+
+        $caFirmTenant = Tenant::find($invitation->tenant_id);
+        $caUser       = User::find($invitation->invited_by);
+
+        (new CaClientLinkService())->link($caFirmTenant, $caUser, $businessTenant);
+
+        // Back-fill linked_tenant_id on any existing Client record in the CA firm matched by email
+        \App\Models\Client::where('tenant_id', $caFirmTenant->id)
+            ->where('email', $user->email)
+            ->whereNull('linked_tenant_id')
+            ->update(['linked_tenant_id' => $businessTenant->id]);
+
+        $invitation->update(['accepted_at' => now(), 'status' => 'accepted']);
+
+        AuditEvent::log('ca.client.invite.accepted', [
+            'invitation_id'      => $invitation->id,
+            'ca_firm_id'         => $caFirmTenant->id,
+            'business_tenant_id' => $businessTenant->id,
+        ], tenantId: $businessTenant->id);
+
+        return redirect(route('dashboard', ['tenant' => $businessTenant->id]))
+            ->with('success', $caFirmTenant->name . ' is now connected to your business.');
     }
 
     public function decline(string $rawToken)
@@ -241,7 +320,16 @@ class InvitationController extends Controller
     {
         abort_if($invitation->tenant_id !== $tenant->id, 403);
 
+        $invitation->load(['tenant', 'role']);
+        $email = $invitation->email;
+
         $invitation->update(['status' => 'revoked']);
+
+        Mail::to($email)->send(new InvitationRevokedMail($invitation));
+
+        AuditEvent::log('member.invite_revoked', [
+            'email' => $email,
+        ], tenantId: $tenant->id);
 
         return back();
     }

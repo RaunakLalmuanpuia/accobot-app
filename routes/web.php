@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AiUsageController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BankTransactionController;
+use App\Http\Controllers\CaClientController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\DashboardController;
@@ -12,6 +13,7 @@ use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\NarrationHeadController;
 use App\Http\Controllers\NarrationReviewController;
+use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SmsIngestController;
@@ -80,6 +82,15 @@ Route::middleware(['auth', 'verified', 'member'])
 
         Route::get('/settings/audit', [AuditLogController::class, 'index'])->name('settings.audit')->middleware('tenant.permission:audit.view');
 
+        // ── Onboarding ────────────────────────────────────────────────
+        Route::post('/onboarding/dismiss', [OnboardingController::class, 'dismiss'])->name('onboarding.dismiss');
+
+        // ── CA Businesses (CA firm only) ───────────────────────────────
+        Route::get('/ca/businesses', [CaClientController::class, 'index'])->name('ca.businesses.index');
+        Route::post('/ca/businesses', [CaClientController::class, 'store'])->name('ca.businesses.store');
+        Route::delete('/ca/businesses/invites/{invitation}', [CaClientController::class, 'revokeInvite'])->name('ca.businesses.invites.revoke');
+        Route::delete('/ca/businesses/{businessTenant}', [CaClientController::class, 'destroy'])->name('ca.businesses.destroy');
+
         Route::get('/settings/profile',   [TenantProfileController::class, 'edit'])->name('settings.profile')->middleware('tenant.permission:tenant.view_settings');
         Route::patch('/settings/profile', [TenantProfileController::class, 'update'])->name('settings.profile.update')->middleware('tenant.permission:tenant.update_settings');
 
@@ -108,6 +119,7 @@ Route::middleware(['auth', 'verified', 'member'])
         Route::post('/clients', [ClientController::class, 'store'])->name('clients.store')->middleware('tenant.permission:clients.create');
         Route::put('/clients/{client}', [ClientController::class, 'update'])->name('clients.update')->middleware('tenant.permission:clients.edit');
         Route::delete('/clients/{client}', [ClientController::class, 'destroy'])->name('clients.destroy')->middleware(['tenant.permission:clients.delete', 'no.impersonate']);
+        Route::post('/clients/{client}/invite', [ClientController::class, 'invite'])->name('clients.invite')->middleware('tenant.permission:clients.view');
 
         Route::get('/vendors', [VendorController::class, 'index'])->name('vendors.index')->middleware('tenant.permission:vendors.view');
         Route::post('/vendors', [VendorController::class, 'store'])->name('vendors.store')->middleware('tenant.permission:vendors.create');

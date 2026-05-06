@@ -1590,7 +1590,138 @@ DELETE /api/mobile/tenants/{tenant}/groups/{room}/members/{user}
 
 ---
 
-### 14. Push Notifications — Known Gap
+### 14. Onboarding
+
+Returns the onboarding checklist for a tenant and allows dismissal. Only meaningful for internal owner-level members.
+
+#### `GET /api/mobile/tenants/{tenant}/onboarding`
+
+**Response `200`**
+```json
+{
+  "dismissed": false,
+  "checklist": [
+    { "key": "account_created",  "label": "Create your account",       "done": true  },
+    { "key": "business_profile", "label": "Complete business profile",  "done": false, "href": "https://..." },
+    { "key": "bank_account",     "label": "Add a bank account",         "done": false, "href": "https://..." },
+    { "key": "connect_ca",       "label": "Connect your CA",            "done": false, "href": "https://..." }
+  ]
+}
+```
+
+For `ca_firm` tenants the checklist items are: `account_created`, `firm_profile`, `add_team`, `first_client`.
+
+When `dismissed` is `true`, hide the checklist widget.
+
+---
+
+#### `POST /api/mobile/tenants/{tenant}/onboarding/dismiss`
+
+Dismisses the checklist permanently for this tenant. No request body required.
+
+**Response `200`**
+```json
+{ "ok": true }
+```
+
+---
+
+### 15. CA Businesses (CA firm tenants only)
+
+These endpoints are only valid for tenants with `type: ca_firm`. Returns `403` for business tenants.
+
+#### `GET /api/mobile/tenants/{tenant}/ca-businesses`
+
+List businesses linked to this CA firm and any pending invitations.
+
+**Response `200`**
+```json
+{
+  "linked_businesses": [
+    {
+      "id": "uuid",
+      "name": "Priya Textiles Pvt Ltd",
+      "status": "active",
+      "gstin": "27AAPFU0939F1ZV",
+      "city": "Mumbai",
+      "state": "Maharashtra",
+      "created_at": "2026-05-05T10:00:00Z"
+    }
+  ],
+  "pending_invites": [
+    {
+      "id": 12,
+      "email": "owner@newbiz.com",
+      "expires_at": "2026-05-19T10:00:00Z",
+      "created_at": "2026-05-05T10:00:00Z"
+    }
+  ]
+}
+```
+
+---
+
+#### `POST /api/mobile/tenants/{tenant}/ca-businesses`
+
+Invite a business by email, or link directly if they already have an account with a business tenant.
+
+**Request body**
+
+| Field | Type | Required | Notes |
+|---|---|:---:|---|
+| `email` | string | Yes | Business owner's email |
+| `business_name` | string | No | Pre-fills business name if they register via the invitation |
+
+**Response `200`** (existing user linked directly)
+```json
+{ "message": "Priya has been connected as a client." }
+```
+
+**Response `201`** (invitation sent)
+```json
+{ "message": "Invitation sent to owner@newbiz.com" }
+```
+
+**Errors**
+
+| Status | Reason |
+|---|---|
+| `403` | Tenant is not a CA firm |
+| `422` | Client already connected |
+
+---
+
+#### `DELETE /api/mobile/tenants/{tenant}/ca-businesses/{businessTenant}`
+
+Remove CA firm's access to a business tenant.
+
+**Response `200`**
+```json
+{ "message": "Priya Textiles Pvt Ltd has been disconnected." }
+```
+
+**Errors**
+
+| Status | Reason |
+|---|---|
+| `404` | Business tenant not found or not linked to this CA firm |
+
+---
+
+#### `DELETE /api/mobile/tenants/{tenant}/ca-businesses/invites/{invitation}`
+
+Revoke a pending CA business invitation.
+
+**Response `200`**
+```json
+{ "message": "Invitation to owner@newbiz.com has been revoked." }
+```
+
+> **Mobile parity gap:** `POST /t/{tenant}/clients/{client}/invite` (invite an existing accounting Client record to Accobot) has no mobile equivalent. Use `POST /api/mobile/tenants/{tenant}/ca-businesses` with the client's email instead.
+
+---
+
+### 16. Push Notifications — Known Gap
 
 **The backend currently only supports browser Web Push (VAPID).** Native mobile push (FCM for Android, APNs for iOS) is not yet implemented.
 
@@ -1621,6 +1752,8 @@ When FCM/APNs is added, the mobile developer will need to:
 | Delete messages | Full parity |
 | System notifications (foreground) | Full parity |
 | System notifications (background push) | **Not yet — FCM/APNs pending** |
+| Onboarding checklist | Full parity |
+| CA client management | Full parity |
 
 ---
 

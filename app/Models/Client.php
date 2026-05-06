@@ -13,7 +13,7 @@ class Client extends Model
     use BelongsToTenant;
 
     protected $fillable = [
-        'tenant_id', 'name', 'email', 'phone',
+        'tenant_id', 'linked_tenant_id', 'name', 'email', 'phone',
         'address', 'company', 'tax_id', 'notes', 'embedding',
         'tally_ledger_id', 'tally_synced_at',
     ];
@@ -31,6 +31,16 @@ class Client extends Model
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);
+    }
+
+    public function linkedTenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class, 'linked_tenant_id');
+    }
+
+    public function isLinkedToAccobot(): bool
+    {
+        return $this->linked_tenant_id !== null;
     }
 
     public function invoices(): HasMany

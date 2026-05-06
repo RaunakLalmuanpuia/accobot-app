@@ -1,5 +1,6 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+import OnboardingChecklist from '@/Components/OnboardingChecklist.vue'
 import { computed } from 'vue'
 import { Link, usePage } from '@inertiajs/vue3'
 
@@ -11,6 +12,7 @@ const props = defineProps({
     stats:         Object,
     recentMembers: Array,
     roleBreakdown: Array,
+    onboarding:    { type: Object, default: null },
 })
 
 const page = usePage()
@@ -66,6 +68,14 @@ const permLabel = (p) => p.split('.').slice(1).join('.')
 
         <div class="py-8">
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6">
+
+                <!-- Onboarding checklist -->
+                <OnboardingChecklist
+                    v-if="onboarding"
+                    :checklist="onboarding.checklist"
+                    :dismiss-url="onboarding.dismiss_url"
+                    :tenant-type="tenant.type"
+                />
 
                 <!-- Stat cards -->
                 <div v-if="stats && Object.keys(stats).length" class="grid gap-5 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
@@ -189,6 +199,18 @@ const permLabel = (p) => p.split('.').slice(1).join('.')
                             <div>
                                 <p class="text-sm font-semibold text-gray-800">Team</p>
                                 <p class="text-xs text-gray-400">View team members</p>
+                            </div>
+                        </Link>
+
+                        <!-- CA firm: link to CA clients management -->
+                        <Link v-if="tenant.type === 'ca_firm'" :href="route('ca.businesses.index', { tenant: tenant.id })"
+                            class="flex items-center gap-3 bg-white rounded-xl border border-gray-200 px-4 py-3.5 hover:border-violet-300 hover:shadow-sm transition group">
+                            <div class="h-8 w-8 rounded-lg bg-violet-50 flex items-center justify-center group-hover:bg-violet-100 transition shrink-0">
+                                <svg class="h-4 w-4 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                            </div>
+                            <div>
+                                <p class="text-sm font-semibold text-gray-800">My Clients</p>
+                                <p class="text-xs text-gray-400">Manage client businesses</p>
                             </div>
                         </Link>
 

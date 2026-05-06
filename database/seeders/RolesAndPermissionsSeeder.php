@@ -199,7 +199,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'members.remove',
             'members.suspend',
             'members.assign_role',
-            'clients.view',
+            'clients.view',    'clients.create',   'clients.edit',   'clients.delete',
             'vendors.view',
             'products.view',
             'narration_heads.view',
@@ -212,7 +212,7 @@ class RolesAndPermissionsSeeder extends Seeder
         $caManager = Role::firstOrCreate(['name' => 'CAManager']);
         $caManager->syncPermissions([
             'members.view',
-            'clients.view',
+            'clients.view',    'clients.create',   'clients.edit',   'clients.delete',
             'vendors.view',
             'products.view',
             'narration_heads.view',

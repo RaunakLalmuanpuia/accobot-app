@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\Api\MobileAuthController;
+use App\Http\Controllers\Api\MobileCaClientController;
 use App\Http\Controllers\Api\MobileGroupChatController;
+use App\Http\Controllers\Api\MobileOnboardingController;
 use App\Http\Controllers\Api\MobileProfileController;
 use App\Http\Controllers\Api\MobileTenantBankAccountController;
 use App\Http\Controllers\Api\MobileTenantProfileController;
@@ -117,6 +119,24 @@ Route::prefix('mobile/tenants/{tenant}')
         Route::prefix('banking/transactions/{transaction}')->name('banking.transactions.')->group(function () {
             Route::post('approve', [TenantBankingController::class, 'approve'])->name('approve');
             Route::post('correct', [TenantBankingController::class, 'correct'])->name('correct');
+        });
+
+        // ── Onboarding ────────────────────────────────────────────────
+        // GET  /api/mobile/tenants/{tenant}/onboarding
+        // POST /api/mobile/tenants/{tenant}/onboarding/dismiss
+        Route::get('onboarding',         [MobileOnboardingController::class, 'status'])->name('onboarding.status');
+        Route::post('onboarding/dismiss', [MobileOnboardingController::class, 'dismiss'])->name('onboarding.dismiss');
+
+        // ── CA Businesses (CA firm tenants only) ──────────────────────
+        // GET    /api/mobile/tenants/{tenant}/ca-businesses
+        // POST   /api/mobile/tenants/{tenant}/ca-businesses
+        // DELETE /api/mobile/tenants/{tenant}/ca-businesses/{businessTenant}
+        // DELETE /api/mobile/tenants/{tenant}/ca-businesses/invites/{invitation}
+        Route::prefix('ca-businesses')->name('ca-businesses.')->group(function () {
+            Route::get('',                             [MobileCaClientController::class, 'index'])->name('index');
+            Route::post('',                            [MobileCaClientController::class, 'store'])->name('store');
+            Route::delete('invites/{invitation}',      [MobileCaClientController::class, 'revokeInvite'])->name('invites.revoke');
+            Route::delete('{businessTenant}',          [MobileCaClientController::class, 'destroy'])->name('destroy');
         });
 
         // ── Group Chat ────────────────────────────────────────────────
