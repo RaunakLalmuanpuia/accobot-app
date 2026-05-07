@@ -61,7 +61,9 @@ const isEditingGodown = computed(() => godownModal.value && godownModal.value !=
 const godownForm      = useForm({ name: '', under: '' })
 
 const godownUnderOptions = computed(() =>
-    props.godowns.filter(g => g.is_active).map(g => g.name)
+    props.godowns
+        .filter(g => g.is_active && g.id !== godownModal.value?.id)
+        .map(g => g.name)
 )
 
 function openCreateGodown() {
@@ -516,13 +518,12 @@ function destroyCat(cat) {
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Under</label>
-                        <input v-model="godownForm.under" type="text"
-                               list="gd-under-options"
-                               placeholder="e.g. All Godowns"
-                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                        <datalist id="gd-under-options">
-                            <option v-for="n in godownUnderOptions" :key="n" :value="n" />
-                        </datalist>
+                        <select v-model="godownForm.under"
+                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
+                            <option value="">— Select —</option>
+                            <option value="Primary">Primary</option>
+                            <option v-for="n in godownUnderOptions" :key="n" :value="n">{{ n }}</option>
+                        </select>
                     </div>
                     <div class="flex gap-3 pt-2 border-t border-gray-100">
                         <button type="submit" :disabled="godownForm.processing"
