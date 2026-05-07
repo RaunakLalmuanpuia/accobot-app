@@ -34,9 +34,15 @@ class TallyMasterCrudController extends Controller
     public function ledgerGroupStore(Request $request, Tenant $tenant)
     {
         $data = $request->validate([
-            'name'            => 'required|string|max:255',
-            'under_name'      => 'required|string|max:255',
-            'nature_of_group' => 'nullable|string|max:255',
+            'name'                 => 'required|string|max:255',
+            'under_name'           => 'required|string|max:255',
+            'nature_of_group'      => 'nullable|string|max:255',
+            'erp_id'               => 'nullable|string|max:255',
+            'is_sub_ledger'        => 'nullable|boolean',
+            'is_deemed_positive'   => 'nullable|boolean',
+            'used_for_calculation' => 'nullable|boolean',
+            'method_to_allocate'   => 'nullable|string|max:255',
+            'is_addable'           => 'nullable|boolean',
         ]);
 
         $record = TallyLedgerGroup::create(array_merge($data, [
@@ -53,9 +59,15 @@ class TallyMasterCrudController extends Controller
         abort_unless($ledgerGroup->tenant_id === $tenant->id, 404);
 
         $data = $request->validate([
-            'name'            => 'required|string|max:255',
-            'under_name'      => 'required|string|max:255',
-            'nature_of_group' => 'nullable|string|max:255',
+            'name'                 => 'required|string|max:255',
+            'under_name'           => 'required|string|max:255',
+            'nature_of_group'      => 'nullable|string|max:255',
+            'erp_id'               => 'nullable|string|max:255',
+            'is_sub_ledger'        => 'nullable|boolean',
+            'is_deemed_positive'   => 'nullable|boolean',
+            'used_for_calculation' => 'nullable|boolean',
+            'method_to_allocate'   => 'nullable|string|max:255',
+            'is_addable'           => 'nullable|boolean',
         ]);
 
         $ledgerGroup->update($data);

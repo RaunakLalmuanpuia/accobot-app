@@ -1441,6 +1441,13 @@ These are optional — if `CompanyGUID` is absent, the upsert is silently skippe
 
 ## Bugs Fixed
 
+### Ledger group new payload fields not persisted (2026-05-07)
+**Symptom:** Fields `ERPID`, `IsSubLedger`, `IsDeemedPositive`, `UsedForCalculation`, `MethodToAllocate`, `TDSCategoryDetails` sent in ledger-group inbound payloads were silently dropped — the DB columns did not exist even though the inbound sync, model `$fillable`, and outbound formatter all referenced them.  
+**Root cause:** Migration `2026_04_19_000002_create_tally_ledger_groups_table.php` only defined the original 8 columns; the extra fields were added to code but the migration was never written.  
+**Fix:** Migration `2026_05_07_000001_add_new_payload_fields_to_tally_tables.php` adds the 6 missing columns (`erp_id`, `is_sub_ledger`, `is_deemed_positive`, `used_for_calculation`, `method_to_allocate`, `tds_category_details`). CRUD controller and Vue form also updated to expose all fields.
+
+---
+
 ### `cess_rate` NOT NULL violation on stock item edit (2026-04-30)
 **Symptom:** Editing a Tally stock item via the web UI with a blank cess rate field throws `SQLSTATE[23502]: Not null violation` on `tally_stock_items.cess_rate`.  
 **Root cause:** `TallyMasterCrudController::stockItemStore/Update` validated `cess_rate` as `nullable`, but the DB column is `decimal NOT NULL DEFAULT 0`. When the field was left blank, `null` was written back.  

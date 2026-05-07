@@ -896,7 +896,7 @@ All pages show data to any user with `integrations.view`. Edit / New / Delete ac
 
 | Page | Route | CRUD entities |
 |------|-------|---------------|
-| LedgerGroups.vue | tally.ledger-groups.index | Ledger Groups — Name, Under, Nature of Group |
+| LedgerGroups.vue | tally.ledger-groups.index | Ledger Groups — Name, Under, Nature of Group. CRUD slide-over covers all fields: name, under_name, nature_of_group, method_to_allocate, erp_id, is_addable, is_sub_ledger, is_deemed_positive, used_for_calculation. |
 | Ledgers.vue | tally.ledgers.index | Full CRUD slide-over. Group is a dropdown from TallyLedgerGroups (auto-fills ParentGroup from under_name). All outbound fields covered: LedgerName, Group/ParentGroup, MailingName, IsBillWiseOn, InventoryAffected, GSTIN, PAN, GSTType, ContactPerson, Mobile, ContactPersonEmail, ContactPersonMobile, Addresses (dynamic), State, Country, PinCode, CreditPeriod, CreditLimit, OpeningBalance/Type, Aliases (dynamic), Description, Notes, BankDetails (dynamic). |
 | StockMasters.vue | tally.stock-masters.index | Stock Groups + Stock Categories (tabs). Godowns tab is read-only (inbound only). |
 | StockItems.vue | tally.stock-items.index | Stock Items — Name, Group, Category, Unit, HSN, GST rates (IGST/SGST/CGST/CESS), Opening Balance, Batch Allocations (Godown dropdown from tally_godowns) |

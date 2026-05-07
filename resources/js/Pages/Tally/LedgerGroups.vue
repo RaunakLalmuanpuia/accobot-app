@@ -41,9 +41,14 @@ const modal   = ref(null) // null | 'create' | {record}
 const isEditing = computed(() => modal.value && modal.value !== 'create')
 
 const form = useForm({
-    name:            '',
-    under_name:      '',
-    nature_of_group: '',
+    name:                 '',
+    under_name:           '',
+    nature_of_group:      '',
+    is_sub_ledger:        false,
+    is_deemed_positive:   false,
+    used_for_calculation: false,
+    method_to_allocate:   '',
+    is_addable:           false,
 })
 
 const groupNameOptions = computed(() =>
@@ -59,9 +64,14 @@ function openCreate() {
 }
 
 function openEdit(group) {
-    form.name            = group.name
-    form.under_name      = group.under_name ?? ''
-    form.nature_of_group = group.nature_of_group ?? ''
+    form.name                 = group.name
+    form.under_name           = group.under_name ?? ''
+    form.nature_of_group      = group.nature_of_group ?? ''
+    form.is_sub_ledger        = group.is_sub_ledger ?? false
+    form.is_deemed_positive   = group.is_deemed_positive ?? false
+    form.used_for_calculation = group.used_for_calculation ?? false
+    form.method_to_allocate   = group.method_to_allocate ?? ''
+    form.is_addable           = group.is_addable ?? false
     form.clearErrors()
     modal.value = group
 }
@@ -227,6 +237,42 @@ function destroy(group) {
                             <option>Income</option>
                             <option>Expenses</option>
                         </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Method to Allocate</label>
+                        <select v-model="form.method_to_allocate"
+                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
+                            <option value="">— Select —</option>
+                            <option>Not Applicable</option>
+                            <option>Appropriate by Qty</option>
+                            <option>Appropriate by Value</option>
+                        </select>
+                    </div>
+
+                    <!-- Boolean flags -->
+                    <div class="space-y-2 pt-1">
+                        <label class="block text-sm font-medium text-gray-700">Flags</label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" v-model="form.is_addable"
+                                   class="rounded border-gray-300 text-violet-600 focus:ring-violet-500" />
+                            <span class="text-sm text-gray-700">Is Addable</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" v-model="form.is_sub_ledger"
+                                   class="rounded border-gray-300 text-violet-600 focus:ring-violet-500" />
+                            <span class="text-sm text-gray-700">Is Sub Ledger</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" v-model="form.is_deemed_positive"
+                                   class="rounded border-gray-300 text-violet-600 focus:ring-violet-500" />
+                            <span class="text-sm text-gray-700">Is Deemed Positive</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" v-model="form.used_for_calculation"
+                                   class="rounded border-gray-300 text-violet-600 focus:ring-violet-500" />
+                            <span class="text-sm text-gray-700">Used for Calculation</span>
+                        </label>
                     </div>
 
                     <div class="flex gap-3 pt-2 border-t border-gray-100">
