@@ -724,6 +724,8 @@ class TallyMasterCrudController extends Controller
             'spouse_name'       => 'nullable|string|max:100',
             'contact_number'    => 'nullable|string|max:20',
             'email_address'     => 'nullable|email|max:255',
+            'address'           => 'nullable|array',
+            'address.*.Address' => 'nullable|string|max:500',
             'aliases'           => 'nullable|array',
             'aliases.*.Alias'   => 'nullable|string|max:255',
         ]);
@@ -756,6 +758,8 @@ class TallyMasterCrudController extends Controller
             'spouse_name'       => 'nullable|string|max:100',
             'contact_number'    => 'nullable|string|max:20',
             'email_address'     => 'nullable|email|max:255',
+            'address'           => 'nullable|array',
+            'address.*.Address' => 'nullable|string|max:500',
             'aliases'           => 'nullable|array',
             'aliases.*.Alias'   => 'nullable|string|max:255',
         ]);

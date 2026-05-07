@@ -134,6 +134,7 @@ const empForm = useForm({
     spouse_name:        '',
     contact_number:     '',
     email_address:      '',
+    address:            [],
     aliases:            [],
 })
 
@@ -162,6 +163,7 @@ function openEditEmp(emp) {
     empForm.spouse_name        = emp.spouse_name ?? ''
     empForm.contact_number     = emp.contact_number ?? ''
     empForm.email_address      = emp.email_address ?? ''
+    empForm.address            = emp.address ? [...emp.address] : []
     empForm.aliases            = emp.aliases ? [...emp.aliases] : []
     empForm.clearErrors()
     empModal.value = emp
@@ -754,6 +756,19 @@ function destroyAtt(att) {
                             <input v-model="empForm.email_address" type="email" placeholder="e.g. emp@company.com"
                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
                             <p v-if="empForm.errors.email_address" class="mt-1 text-xs text-red-500">{{ empForm.errors.email_address }}</p>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Address Lines</label>
+                        <div class="space-y-2">
+                            <div v-for="(addr, i) in empForm.address" :key="i" class="flex gap-2">
+                                <input v-model="empForm.address[i].Address" type="text" placeholder="Address line"
+                                       class="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                                <button type="button" @click="empForm.address.splice(i, 1)"
+                                        class="text-red-400 hover:text-red-600 text-lg leading-none px-1">✕</button>
+                            </div>
+                            <button type="button" @click="empForm.address.push({ Address: '' })"
+                                    class="text-sm text-violet-600 hover:text-violet-800 font-medium">+ Add Line</button>
                         </div>
                     </div>
                     <div>
