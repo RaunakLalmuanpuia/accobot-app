@@ -42,6 +42,7 @@ const isEditing = computed(() => modal.value && modal.value !== 'create')
 
 const form = useForm({
     name:                 '',
+    under_id:             null,
     under_name:           '',
     nature_of_group:      '',
     is_sub_ledger:        false,
@@ -63,8 +64,14 @@ function openCreate() {
     modal.value = 'create'
 }
 
+function onUnderChange(name) {
+    form.under_name = name
+    form.under_id   = props.groups.find(g => g.name === name)?.tally_id ?? null
+}
+
 function openEdit(group) {
     form.name                 = group.name
+    form.under_id             = group.under_id ?? null
     form.under_name           = group.under_name ?? ''
     form.nature_of_group      = group.nature_of_group ?? ''
     form.is_sub_ledger        = group.is_sub_ledger ?? false
@@ -219,7 +226,7 @@ function destroy(group) {
                         <label class="block text-sm font-medium text-gray-700 mb-1">
                             Under (Parent Group) <span class="text-red-500">*</span>
                         </label>
-                        <select v-model="form.under_name"
+                        <select :value="form.under_name" @change="onUnderChange($event.target.value)"
                                 class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
                             <option value="">— Select Parent Group —</option>
                             <option v-for="n in groupNameOptions" :key="n" :value="n">{{ n }}</option>

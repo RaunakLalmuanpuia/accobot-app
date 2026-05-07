@@ -35,6 +35,7 @@ class TallyMasterCrudController extends Controller
     {
         $data = $request->validate([
             'name'                 => 'required|string|max:255',
+            'under_id'             => 'nullable|integer',
             'under_name'           => 'required|string|max:255',
             'nature_of_group'      => 'nullable|string|max:255',
             'erp_id'               => 'nullable|string|max:255',
@@ -60,6 +61,7 @@ class TallyMasterCrudController extends Controller
 
         $data = $request->validate([
             'name'                 => 'required|string|max:255',
+            'under_id'             => 'nullable|integer',
             'under_name'           => 'required|string|max:255',
             'nature_of_group'      => 'nullable|string|max:255',
             'erp_id'               => 'nullable|string|max:255',
