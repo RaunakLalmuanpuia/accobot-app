@@ -656,6 +656,7 @@ class TallyMasterCrudController extends Controller
             'name'                 => 'required|string|max:255',
             'under'                => 'nullable|string|max:255',
             'cost_centre_category' => 'nullable|string|max:255',
+            'aliases'              => 'nullable|array',
         ]);
 
         $record = TallyEmployeeGroup::create(array_merge($data, [
@@ -675,6 +676,7 @@ class TallyMasterCrudController extends Controller
             'name'                 => 'required|string|max:255',
             'under'                => 'nullable|string|max:255',
             'cost_centre_category' => 'nullable|string|max:255',
+            'aliases'              => 'nullable|array',
         ]);
 
         $employeeGroup->update($data);
@@ -794,6 +796,7 @@ class TallyMasterCrudController extends Controller
             'income_type'        => 'nullable|string|max:100',
             'parent_group'       => 'nullable|string|max:255',
             'calculation_type'   => 'nullable|string|max:100',
+            'leave_type'         => 'nullable|string|max:100',
             'calculation_period' => 'nullable|string|max:50',
         ]);
 
@@ -816,6 +819,7 @@ class TallyMasterCrudController extends Controller
             'income_type'        => 'nullable|string|max:100',
             'parent_group'       => 'nullable|string|max:255',
             'calculation_type'   => 'nullable|string|max:100',
+            'leave_type'         => 'nullable|string|max:100',
             'calculation_period' => 'nullable|string|max:50',
         ]);
 

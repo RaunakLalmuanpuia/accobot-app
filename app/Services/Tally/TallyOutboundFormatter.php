@@ -322,9 +322,11 @@ class TallyOutboundFormatter
             'TallyId'            => $g->tally_id,
             'AlterID'            => $g->alter_id,
             'Action'             => $g->action,
+            'Guid'               => $g->guid,
             'Name'               => $g->name,
             'Under'              => $g->under,
             'CostCentreCategory' => $g->cost_centre_category,
+            'Aliases'            => $g->aliases ?? [],
             'SalaryDetails'      => $g->salary_details ?? [],
         ]))->values()->all();
     }

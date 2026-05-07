@@ -200,6 +200,7 @@ const grpForm = useForm({
     name:                 '',
     under:                '',
     cost_centre_category: '',
+    aliases:              [],
 })
 
 function openCreateGrp() {
@@ -212,6 +213,7 @@ function openEditGrp(grp) {
     grpForm.name                 = grp.name
     grpForm.under                = grp.under ?? ''
     grpForm.cost_centre_category = grp.cost_centre_category ?? ''
+    grpForm.aliases              = grp.aliases ? [...grp.aliases] : []
     grpForm.clearErrors()
     grpModal.value = grp
 }
@@ -251,6 +253,7 @@ const phForm = useForm({
     income_type:        '',
     parent_group:       '',
     calculation_type:   '',
+    leave_type:         '',
     calculation_period: '',
 })
 
@@ -266,6 +269,7 @@ function openEditPh(ph) {
     phForm.income_type        = ph.income_type ?? ''
     phForm.parent_group       = ph.parent_group ?? ''
     phForm.calculation_type   = ph.calculation_type ?? ''
+    phForm.leave_type         = ph.leave_type ?? ''
     phForm.calculation_period = ph.calculation_period ?? ''
     phForm.clearErrors()
     phModal.value = ph
@@ -800,6 +804,17 @@ function destroyAtt(att) {
                         <input v-model="grpForm.cost_centre_category" type="text" placeholder="e.g. Primary Cost Category"
                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
                     </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Aliases</label>
+                        <div v-for="(alias, i) in grpForm.aliases" :key="i" class="flex gap-2 mb-2">
+                            <input v-model="grpForm.aliases[i].Alias" type="text" placeholder="Alias name"
+                                   class="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                            <button type="button" @click="grpForm.aliases.splice(i, 1)"
+                                    class="text-red-400 hover:text-red-600 text-sm px-2">✕</button>
+                        </div>
+                        <button type="button" @click="grpForm.aliases.push({ Alias: '' })"
+                                class="text-xs text-violet-600 hover:text-violet-800 font-medium">+ Add Alias</button>
+                    </div>
                     <div class="flex gap-3 pt-2 border-t border-gray-100">
                         <button type="submit" :disabled="grpForm.processing"
                                 class="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 transition disabled:opacity-50">
@@ -869,6 +884,11 @@ function destroyAtt(att) {
                                 <option>Yearly</option>
                             </select>
                         </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Leave Type</label>
+                        <input v-model="phForm.leave_type" type="text" placeholder="e.g. Casual Leave"
+                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
                     </div>
                     <div class="flex gap-3 pt-2 border-t border-gray-100">
                         <button type="submit" :disabled="phForm.processing"

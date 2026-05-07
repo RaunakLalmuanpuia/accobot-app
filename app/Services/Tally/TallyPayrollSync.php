@@ -42,6 +42,7 @@ class TallyPayrollSync
                     'guid'                 => $item['Guid'] ?? null,
                     'under'                => $item['Under'] ?? $item['ParentName'] ?? null,
                     'cost_centre_category' => $item['CostCentreCatgeory'] ?? $item['CostCentreCategory'] ?? null,
+                    'aliases'              => $item['Aliases'] ?? null,
                     'salary_details'       => $item['SalaryDetails'] ?? null,
                     'is_active'            => true,
                     'last_synced_at'       => now(),

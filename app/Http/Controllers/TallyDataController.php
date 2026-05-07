@@ -267,7 +267,7 @@ class TallyDataController extends Controller
             'employeeGroups'  => $this->addSyncStatus(
                 TallyEmployeeGroup::where('tenant_id', $tenant->id)
                     ->orderBy('name')
-                    ->get(['id', 'tally_id', 'name', 'under', 'cost_centre_category', 'is_active', 'last_synced_at']),
+                    ->get(['id', 'tally_id', 'name', 'under', 'cost_centre_category', 'aliases', 'is_active', 'last_synced_at']),
                 $egMap
             ),
             'payHeads'        => $this->addSyncStatus(
