@@ -205,7 +205,7 @@ class TallyPayrollSync
                     'attendance_type'  => $item['AttendanceType'] ?? null,
                     'under'            => $item['Under'] ?? null,
                     'attendance_period'=> $item['AttendancePeriod'] ?? $item['UnitOfMeasure'] ?? null,
-                    'aliases'          => isset($item['Aliases']) ? array_column($item['Aliases'], 'Alias') : null,
+                    'aliases'          => $item['Aliases'] ?? null,
                     'is_active'       => true,
                     'last_synced_at'  => now(),
                 ];

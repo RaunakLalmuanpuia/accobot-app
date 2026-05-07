@@ -382,11 +382,12 @@ class TallyOutboundFormatter
             'TallyId'         => $t->tally_id,
             'AlterID'         => $t->alter_id,
             'Action'          => $t->action,
+            'Guid'            => $t->guid,
             'Name'            => $t->name,
             'Under'           => $t->under,
             'AttendanceType'  => $t->attendance_type,
             'AttendancePeriod'=> $t->attendance_period,
-            'Aliases'         => $t->aliases ? array_map(fn($a) => ['Alias' => $a], $t->aliases) : [],
+            'Aliases'         => $t->aliases ?? [],
         ]))->values()->all();
     }
 
