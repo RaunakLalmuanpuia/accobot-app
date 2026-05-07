@@ -683,6 +683,7 @@ function destroyAtt(att) {
                                 <option value="">— Select —</option>
                                 <option>Male</option>
                                 <option>Female</option>
+                                <option>Transgender</option>
                                 <option>Other</option>
                             </select>
                         </div>

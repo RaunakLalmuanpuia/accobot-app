@@ -353,7 +353,7 @@ class TallyOutboundFormatter
             'ContactNumber'  => $e->contact_number,
             'Email'          => $e->email_address,
             'Address'        => $e->address ?? [],
-            'Aliases'        => $e->aliases ? array_map(fn($a) => ['Alias' => $a], $e->aliases) : [],
+            'Aliases'        => $e->aliases ?? [],
             'SalaryDetails'  => $e->salary_details ?? [],
         ]))->values()->all();
     }

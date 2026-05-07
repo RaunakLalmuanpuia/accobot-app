@@ -260,7 +260,10 @@ class TallyDataController extends Controller
                 TallyEmployee::where('tenant_id', $tenant->id)
                     ->orderBy('name')
                     ->get(['id', 'tally_id', 'name', 'employee_number', 'parent', 'designation',
-                           'location', 'date_of_joining', 'gender', 'father_name', 'spouse_name',
+                           'employee_function', 'location',
+                           'date_of_joining', 'date_of_leaving', 'date_of_birth', 'gender',
+                           'father_name', 'spouse_name',
+                           'contact_number', 'email_address', 'address', 'aliases',
                            'is_active', 'last_synced_at']),
                 $empMap
             ),
