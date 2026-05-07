@@ -527,8 +527,11 @@ function destroy(v) {
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Voucher Base Type</label>
-                            <input v-model="form.voucher_base_type" type="text" placeholder="e.g. Payment, Receipt, Invoice"
-                                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                            <select v-model="form.voucher_base_type"
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
+                                <option value="">— Select —</option>
+                                <option v-for="t in VOUCHER_TYPES" :key="t" :value="t">{{ t }}</option>
+                            </select>
                         </div>
                     </div>
 

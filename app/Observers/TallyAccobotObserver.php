@@ -114,6 +114,7 @@ class TallyAccobotObserver
         $voucher = TallyVoucher::create([
             'tenant_id'         => $invoice->tenant_id,
             'voucher_type'      => 'Sales',
+            'voucher_base_type' => 'Sales',
             'voucher_number'    => $invoice->invoice_number,
             'voucher_date'      => $invoice->issue_date,
             'party_name'        => $invoice->client?->name,

@@ -143,7 +143,7 @@ class TallyVoucherCrudController extends Controller
             }
 
             foreach ($data['inventory_entries'] ?? [] as $ie) {
-                TallyVoucherInventoryEntry::create(array_merge($ie, [
+                TallyVoucherInventoryEntry::create(array_merge($ie, $this->inventoryEntryDefaults($ie), [
                     'tenant_id'        => $tenant->id,
                     'tally_voucher_id' => $voucher->id,
                 ]));
@@ -182,7 +182,7 @@ class TallyVoucherCrudController extends Controller
 
             $voucher->inventoryEntries()->delete();
             foreach ($data['inventory_entries'] ?? [] as $ie) {
-                TallyVoucherInventoryEntry::create(array_merge($ie, [
+                TallyVoucherInventoryEntry::create(array_merge($ie, $this->inventoryEntryDefaults($ie), [
                     'tenant_id'        => $tenant->id,
                     'tally_voucher_id' => $voucher->id,
                 ]));
@@ -220,6 +220,19 @@ class TallyVoucherCrudController extends Controller
         AuditEvent::log('tally.voucher.deleted', ['id' => $voucher->id, 'voucher_type' => $voucher->voucher_type, 'deactivated' => true]);
         $this->logPayload($voucher);
         return back()->with('success', 'Voucher marked inactive and queued for deletion in Tally.');
+    }
+
+    private function inventoryEntryDefaults(array $ie): array
+    {
+        return [
+            'discount_percent'   => $ie['discount_percent'] ?? 0,
+            'amount'             => $ie['amount'] ?? 0,
+            'tax_amount'         => $ie['tax_amount'] ?? 0,
+            'actual_qty'         => $ie['actual_qty'] ?? 0,
+            'billed_qty'         => $ie['billed_qty'] ?? 0,
+            'rate'               => $ie['rate'] ?? 0,
+            'is_deemed_positive' => $ie['is_deemed_positive'] ?? false,
+        ];
     }
 
     private function logPayload(TallyVoucher $voucher): void

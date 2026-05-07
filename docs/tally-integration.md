@@ -579,7 +579,7 @@ The Tally connector polls these endpoints to pick up changes made in Accobot. On
 
 **Change detection (outbound queue):**
 - When any Tally model record is created or updated in Accobot, a `TallyModelObserver` upserts a `pending` row in `tally_outbound_queue (tenant_id, entity_type, entity_id)`.
-- When an Accobot-native record (Client, Vendor, Product, Invoice) is created or updated, `TallyAccobotObserver` auto-creates a stub Tally record (TallyLedger / TallyStockItem / TallyVoucher) if none exists, then queues it.
+- When an Accobot-native record (Client, Vendor, Product, Invoice) is created or updated, `TallyAccobotObserver` auto-creates a stub Tally record (TallyLedger / TallyStockItem / TallyVoucher) if none exists, then queues it. Invoice stubs always set `voucher_base_type = 'Sales'` so the outbound `GET /voucher` query can match them.
 - Observer queuing is **suppressed during inbound sync** via `TallyInboundSync::$syncing` to prevent loop-back.
 - A record edited multiple times before the connector polls still produces a single `pending` entry (upsert).
 - Status transitions: `pending` → `confirmed`. Records stay `pending` and are re-served on every poll until the confirmation endpoint marks them `confirmed`.
