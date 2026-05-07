@@ -331,7 +331,7 @@ class TallyInboundSync
                     'sgst_rate'               => (float) ($item['SGST_Rate'] ?? $item['SGSTRate'] ?? 0),
                     'cgst_rate'               => (float) ($item['CGST_Rate'] ?? $item['CGSTRate'] ?? 0),
                     'cess_rate'               => (float) ($item['CESS_Rate'] ?? $item['CessRate'] ?? 0),
-                    'hsn_code'                => $item['HSNCode'] ?? null,
+                    'hsn_code'                => ($item['HSNCode'] ?? null) ?: null,
                     'mrp_rate'        => isset($item['MRPRate']) ? (float) $item['MRPRate'] : null,
                     'opening_balance' => (float) ($item['Opening_Balance'] ?? $item['OpeningBalance'] ?? 0),
                     'opening_rate'            => (float) ($item['Opening_Rate'] ?? $item['OpeningRate'] ?? 0),
