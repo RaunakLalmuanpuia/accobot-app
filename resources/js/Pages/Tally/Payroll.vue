@@ -864,8 +864,13 @@ function destroyAtt(att) {
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Parent Group</label>
-                        <input v-model="phForm.parent_group" type="text" placeholder="e.g. Indirect Expenses"
-                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                        <select v-model="phForm.parent_group"
+                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
+                            <option value="">— Select —</option>
+                            <option>Direct Expenses</option>
+                            <option>Indirect Expenses</option>
+                            <option>Misc. Expenses (ASSET)</option>
+                        </select>
                     </div>
                     <div class="grid grid-cols-2 gap-3">
                         <div>
