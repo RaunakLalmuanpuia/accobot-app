@@ -883,10 +883,10 @@ function destroyAtt(att) {
                             <select v-model="phForm.calculation_period"
                                     class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
                                 <option value="">— Select —</option>
-                                <option>Monthly</option>
-                                <option>Daily</option>
-                                <option>Weekly</option>
-                                <option>Yearly</option>
+                                <option>Days</option>
+                                <option>Fortnights</option>
+                                <option>Months</option>
+                                <option>Weeks</option>
                             </select>
                         </div>
                     </div>
