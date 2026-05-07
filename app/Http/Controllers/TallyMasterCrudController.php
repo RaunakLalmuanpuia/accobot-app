@@ -706,6 +706,8 @@ class TallyMasterCrudController extends Controller
             'date_of_birth'     => 'nullable|date',
             'father_name'       => 'nullable|string|max:100',
             'spouse_name'       => 'nullable|string|max:100',
+            'contact_number'    => 'nullable|string|max:20',
+            'email_address'     => 'nullable|email|max:255',
             'aliases'           => 'nullable|array',
             'aliases.*.Alias'   => 'nullable|string|max:255',
         ]);
@@ -736,6 +738,8 @@ class TallyMasterCrudController extends Controller
             'date_of_birth'     => 'nullable|date',
             'father_name'       => 'nullable|string|max:100',
             'spouse_name'       => 'nullable|string|max:100',
+            'contact_number'    => 'nullable|string|max:20',
+            'email_address'     => 'nullable|email|max:255',
             'aliases'           => 'nullable|array',
             'aliases.*.Alias'   => 'nullable|string|max:255',
         ]);
@@ -836,6 +840,8 @@ class TallyMasterCrudController extends Controller
             'under'             => 'nullable|string|max:255',
             'attendance_type'   => 'nullable|string|max:100',
             'attendance_period' => 'nullable|string|max:50',
+            'aliases'           => 'nullable|array',
+            'aliases.*.Alias'   => 'nullable|string|max:255',
         ]);
 
         $record = TallyAttendanceType::create(array_merge($data, [
@@ -856,6 +862,8 @@ class TallyMasterCrudController extends Controller
             'under'             => 'nullable|string|max:255',
             'attendance_type'   => 'nullable|string|max:100',
             'attendance_period' => 'nullable|string|max:50',
+            'aliases'           => 'nullable|array',
+            'aliases.*.Alias'   => 'nullable|string|max:255',
         ]);
 
         $attendanceType->update($data);

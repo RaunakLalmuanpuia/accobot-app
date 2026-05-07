@@ -132,6 +132,8 @@ const empForm = useForm({
     date_of_birth:      '',
     father_name:        '',
     spouse_name:        '',
+    contact_number:     '',
+    email_address:      '',
     aliases:            [],
 })
 
@@ -158,6 +160,8 @@ function openEditEmp(emp) {
     empForm.date_of_birth      = emp.date_of_birth ?? ''
     empForm.father_name        = emp.father_name ?? ''
     empForm.spouse_name        = emp.spouse_name ?? ''
+    empForm.contact_number     = emp.contact_number ?? ''
+    empForm.email_address      = emp.email_address ?? ''
     empForm.aliases            = emp.aliases ? [...emp.aliases] : []
     empForm.clearErrors()
     empModal.value = emp
@@ -301,6 +305,7 @@ const attForm = useForm({
     under:             '',
     attendance_type:   '',
     attendance_period: '',
+    aliases:           [],
 })
 
 const attUnderOptions = computed(() =>
@@ -318,6 +323,7 @@ function openEditAtt(att) {
     attForm.under             = att.under ?? ''
     attForm.attendance_type   = att.attendance_type ?? ''
     attForm.attendance_period = att.attendance_period ?? ''
+    attForm.aliases           = att.aliases ? [...att.aliases] : []
     attForm.clearErrors()
     attModal.value = att
 }
@@ -726,6 +732,20 @@ function destroyAtt(att) {
                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
                         </div>
                     </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Contact Number</label>
+                            <input v-model="empForm.contact_number" type="text" placeholder="e.g. +91 9876543210"
+                                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                            <p v-if="empForm.errors.contact_number" class="mt-1 text-xs text-red-500">{{ empForm.errors.contact_number }}</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                            <input v-model="empForm.email_address" type="email" placeholder="e.g. emp@company.com"
+                                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                            <p v-if="empForm.errors.email_address" class="mt-1 text-xs text-red-500">{{ empForm.errors.email_address }}</p>
+                        </div>
+                    </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Aliases</label>
                         <div class="space-y-2">
@@ -901,7 +921,7 @@ function destroyAtt(att) {
                         </select>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Unit of Measure</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Attendance Period</label>
                         <select v-model="attForm.attendance_period"
                                 class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
                             <option value="">— Select —</option>
@@ -909,6 +929,19 @@ function destroyAtt(att) {
                             <option>Hours</option>
                             <option>Minutes</option>
                         </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Aliases</label>
+                        <div class="space-y-2">
+                            <div v-for="(alias, i) in attForm.aliases" :key="i" class="flex gap-2">
+                                <input v-model="attForm.aliases[i].Alias" type="text" placeholder="Alias name"
+                                       class="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                                <button type="button" @click="attForm.aliases.splice(i, 1)"
+                                        class="text-red-400 hover:text-red-600 text-lg leading-none px-1">✕</button>
+                            </div>
+                            <button type="button" @click="attForm.aliases.push({ Alias: '' })"
+                                    class="text-sm text-violet-600 hover:text-violet-800 font-medium">+ Add Alias</button>
+                        </div>
                     </div>
                     <div class="flex gap-3 pt-2 border-t border-gray-100">
                         <button type="submit" :disabled="attForm.processing"

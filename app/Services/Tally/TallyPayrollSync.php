@@ -34,16 +34,17 @@ class TallyPayrollSync
                 }
 
                 $data = [
-                    'tenant_id'           => $conn->tenant_id,
-                    'tally_id'            => $tallyId,
-                    'alter_id'            => $alterId,
-                    'action'              => $action,
+                    'tenant_id'            => $conn->tenant_id,
+                    'tally_id'             => $tallyId,
+                    'alter_id'             => $alterId,
+                    'action'               => $action,
                     'name'                 => $item['Name'] ?? '',
                     'guid'                 => $item['Guid'] ?? null,
                     'under'                => $item['Under'] ?? $item['ParentName'] ?? null,
                     'cost_centre_category' => $item['CostCentreCatgeory'] ?? $item['CostCentreCategory'] ?? null,
-                    'is_active'           => true,
-                    'last_synced_at'      => now(),
+                    'salary_details'       => $item['SalaryDetails'] ?? null,
+                    'is_active'            => true,
+                    'last_synced_at'       => now(),
                 ];
 
                 if ($existing) { $existing->update($data); $log->records_updated++; }
@@ -99,6 +100,10 @@ class TallyPayrollSync
                     'father_name'       => $item['FatherName'] ?? null,
                     'spouse_name'       => $item['SpouseName'] ?? null,
                     'aliases'           => isset($item['Aliases']) ? array_column($item['Aliases'], 'Alias') : null,
+                    'contact_number'    => $item['ContactNumber'] ?? null,
+                    'email_address'     => $item['Email'] ?? null,
+                    'address'           => $item['Address'] ?? null,
+                    'salary_details'    => $item['SalaryDetails'] ?? null,
                     'is_active'           => true,
                     'last_synced_at'      => now(),
                 ];
@@ -199,6 +204,7 @@ class TallyPayrollSync
                     'attendance_type'  => $item['AttendanceType'] ?? null,
                     'under'            => $item['Under'] ?? null,
                     'attendance_period'=> $item['AttendancePeriod'] ?? $item['UnitOfMeasure'] ?? null,
+                    'aliases'          => isset($item['Aliases']) ? array_column($item['Aliases'], 'Alias') : null,
                     'is_active'       => true,
                     'last_synced_at'  => now(),
                 ];

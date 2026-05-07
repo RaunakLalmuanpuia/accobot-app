@@ -207,8 +207,15 @@ invoices.tally_voucher_id  → tally_vouchers.id
 | alter_id | integer | Skip-check key |
 | action | string | Create / Alter / Delete (stored as-is; only Delete changes behaviour) |
 | name | string | Group name |
-| under_id / under_name | integer / string | Parent group |
+| under_id / under_name | integer / string | Parent group; `\x04`-prefixed root values (e.g. `\x04 Primary`) are stripped on ingest |
 | nature_of_group | string | Assets / Liabilities / Income / Expenses |
+| erp_id | string | Maps to `ERPID` in payload |
+| is_sub_ledger | bool | Maps to `IsSubLedger` |
+| is_deemed_positive | bool | Maps to `IsDeemedPositive` |
+| used_for_calculation | bool | Maps to `UsedForCalculation` |
+| method_to_allocate | string | Maps to `MethodToAllocate` |
+| is_addable | bool | Maps to `IsAddable` |
+| tds_category_details | jsonb | Maps to `TDSCategoryDetails[]` array |
 | is_active | bool | |
 
 #### tally_ledgers
@@ -225,6 +232,8 @@ All account masters — customers, vendors, bank accounts, tax ledgers, expense 
 | Credit | credit_period, credit_limit |
 | Opening Balance | opening_balance, opening_balance_type (Dr/Cr) |
 | Other | aliases (jsonb), description, notes |
+| Interest | type_of_interest_on, is_interest_on (bool), is_interest_on_bill_wise (bool), override_interest (bool), interest_incl_day_of_addition (bool), interest_incl_day_of_deduction (bool) |
+| TDS | is_tds_applicable (bool), tds_deductee_type |
 | Bank | bank_details (jsonb) — array of {BankName, IFSCode, AccountNumber, PaymentFavouring, TransactionName, TransactionType} |
 | Bills | bill_allocations (jsonb) — array of {Date, BillName, Amount, AmountType (Dr/Cr)} |
 | Mapping | mapped_client_id FK → clients, mapped_vendor_id FK → vendors |
@@ -330,12 +339,15 @@ Statutory registrations — GST, TDS, TCS, PF, ESI, PT, etc.
 | details | jsonb — any additional statutory fields from Tally |
 
 #### tally_employee_groups
+Tally internally stores employee groups as cost centres — the `CostCentre` payload is actually employee group data.
+
 | Column | Notes |
 |--------|-------|
 | name | Group name |
 | guid | Tally GUID |
 | under | Parent group (maps to `Under` in payload) |
 | cost_centre_category | Maps to `CostCentreCategory` in payload |
+| salary_details | jsonb — `SalaryDetails[]` array (effective dates + pay head amounts) |
 
 #### tally_pay_heads
 Payroll earning, deduction, and statutory heads.
@@ -354,6 +366,7 @@ Payroll earning, deduction, and statutory heads.
 |--------|-------|
 | attendance_type | Attendance / Leave with Pay / Leave without Pay / Productivity |
 | attendance_period | Days / Hours / Pieces (maps to connector field `AttendancePeriod`) |
+| aliases | jsonb — array of `{Alias}` objects |
 
 #### tally_employees
 Full employee master with payroll and statutory details.
@@ -363,6 +376,9 @@ Full employee master with payroll and statutory details.
 | Identity | name, employee_number, parent, designation, employee_function, location |
 | Dates | date_of_joining, date_of_leaving, date_of_birth |
 | Personal | gender, father_name, spouse_name |
+| Contact | contact_number, email_address |
+| Address | address (jsonb) — raw address array from Tally |
+| Payroll | salary_details (jsonb) — `SalaryDetails[]` array (effective dates + pay head amounts) |
 | Other | aliases (jsonb) |
 
 > **Note:** The column is named `employee_function` (not `function`) to avoid PostgreSQL and PHP reserved-word conflicts.
@@ -984,6 +1000,7 @@ database/migrations/
   2026_04_19_000016_create_tally_attendance_types_table.php
   2026_04_19_000017_create_tally_employees_table.php
   2026_04_21_121802_create_tally_inbound_logs_table.php
+  2026_05_07_000001_add_new_payload_fields_to_tally_tables.php  ← adds erp_id/TDS/interest cols to ledger_groups + ledgers; salary_details to employee_groups; contact/email/address/salary_details to employees; aliases to attendance_types
 
 app/Models/
   TallyConnection.php           — per-tenant auth token, auto-generates on creating()

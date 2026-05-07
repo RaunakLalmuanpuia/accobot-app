@@ -9,14 +9,21 @@ class TallyOutboundFormatter
     public function formatLedgerGroups(Collection $groups): array
     {
         return $groups->map(fn ($g) => $this->dropNulls([
-            'AccobotId'      => $g->id,
-            'TallyId'        => $g->tally_id,
-            'AlterID'        => $g->alter_id,
-            'Action'         => $g->action,
-            'Name'           => $g->name,
-            'UnderID'        => $g->under_id,
-            'UnderName'      => $g->under_name,
-            'NatureOfGroup'  => $g->nature_of_group,
+            'AccobotId'           => $g->id,
+            'TallyId'             => $g->tally_id,
+            'ERPID'               => $g->erp_id ?? '',
+            'AlterID'             => $g->alter_id,
+            'Action'              => $g->action,
+            'Name'                => $g->name,
+            'UnderID'             => $g->under_id,
+            'UnderName'           => $g->under_name,
+            'NatureOfGroup'       => $g->nature_of_group,
+            'IsSubLedger'         => $this->boolStr($g->is_sub_ledger),
+            'IsDeemedPositive'    => $this->boolStr($g->is_deemed_positive),
+            'UsedForCalculation'  => $this->boolStr($g->used_for_calculation),
+            'MethodToAllocate'    => $g->method_to_allocate,
+            'IsAddable'           => $this->boolStr($g->is_addable),
+            'TDSCategoryDetails'  => $g->tds_category_details ?? [],
         ]))->values()->all();
     }
 
@@ -57,6 +64,14 @@ class TallyOutboundFormatter
             'BillAllocations'       => $l->bill_allocations ?? [],
             'Aliases'               => $l->aliases ?? [],
             'BankDetails'           => $l->bank_details ?? [],
+            'TypeOfInterestOn'              => $l->type_of_interest_on,
+            'IsInterestOn'                  => $this->boolStr($l->is_interest_on),
+            'InterestOnBillWise'            => $this->boolStr($l->is_interest_on_bill_wise),
+            'OverrideInterest'              => $this->boolStr($l->override_interest),
+            'InterestInclDayOfAddition'     => $this->boolStr($l->interest_incl_day_of_addition),
+            'InterestInclDayOfDeduction'    => $this->boolStr($l->interest_incl_day_of_deduction),
+            'IsTDSApplicable'               => $this->boolStr($l->is_tds_applicable),
+            'TDSDeducteeType'               => $l->tds_deductee_type,
         ]))->values()->all();
     }
 
@@ -310,6 +325,7 @@ class TallyOutboundFormatter
             'Name'               => $g->name,
             'Under'              => $g->under,
             'CostCentreCategory' => $g->cost_centre_category,
+            'SalaryDetails'      => $g->salary_details ?? [],
         ]))->values()->all();
     }
 
@@ -332,7 +348,11 @@ class TallyOutboundFormatter
             'Gender'         => $e->gender,
             'FatherName'     => $e->father_name,
             'SpouseName'     => $e->spouse_name,
+            'ContactNumber'  => $e->contact_number,
+            'Email'          => $e->email_address,
+            'Address'        => $e->address ?? [],
             'Aliases'        => $e->aliases ? array_map(fn($a) => ['Alias' => $a], $e->aliases) : [],
+            'SalaryDetails'  => $e->salary_details ?? [],
         ]))->values()->all();
     }
 
@@ -356,13 +376,15 @@ class TallyOutboundFormatter
     public function formatAttendanceTypes(Collection $types): array
     {
         return $types->map(fn ($t) => $this->dropNulls([
-            'AccobotId'      => $t->id,
-            'TallyId'        => $t->tally_id,
-            'AlterID'        => $t->alter_id,
-            'Action'         => $t->action,
-            'Name'           => $t->name,
-            'AttendanceType' => $t->attendance_type,
-            'UnitOfMeasure'  => $t->attendance_period,
+            'AccobotId'       => $t->id,
+            'TallyId'         => $t->tally_id,
+            'AlterID'         => $t->alter_id,
+            'Action'          => $t->action,
+            'Name'            => $t->name,
+            'Under'           => $t->under,
+            'AttendanceType'  => $t->attendance_type,
+            'AttendancePeriod'=> $t->attendance_period,
+            'Aliases'         => $t->aliases ? array_map(fn($a) => ['Alias' => $a], $t->aliases) : [],
         ]))->values()->all();
     }
 

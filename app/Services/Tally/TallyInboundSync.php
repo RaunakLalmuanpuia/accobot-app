@@ -53,17 +53,30 @@ class TallyInboundSync
                     continue;
                 }
 
+                // Strip Tally's internal \x04 prefix that appears on root group names
+                $underName = $item['UnderName'] ?? null;
+                if ($underName !== null) {
+                    $underName = ltrim($underName, "\x04 ");
+                }
+
                 $data = [
-                    'tenant_id'        => $conn->tenant_id,
-                    'tally_id'         => $tallyId,
-                    'alter_id'         => $alterId,
-                    'action'           => $action,
-                    'name'            => $item['Name'] ?? '',
-                    'under_id'        => isset($item['UnderID']) ? (int) $item['UnderID'] : (isset($item['UnderId']) ? (int) $item['UnderId'] : null),
-                    'under_name'      => $item['UnderName'] ?? null,
-                    'nature_of_group' => $item['NatureOfGroup'] ?? null,
-                    'is_active'       => true,
-                    'last_synced_at'   => now(),
+                    'tenant_id'             => $conn->tenant_id,
+                    'tally_id'              => $tallyId,
+                    'alter_id'              => $alterId,
+                    'action'                => $action,
+                    'erp_id'               => $item['ERPID'] ?? $item['ErpId'] ?? null,
+                    'name'                 => $item['Name'] ?? '',
+                    'under_id'             => isset($item['UnderID']) ? (int) $item['UnderID'] : (isset($item['UnderId']) ? (int) $item['UnderId'] : null),
+                    'under_name'           => $underName,
+                    'nature_of_group'      => $item['NatureOfGroup'] ?? null,
+                    'is_sub_ledger'        => $this->parseBool($item['IsSubLedger'] ?? null),
+                    'is_deemed_positive'   => $this->parseBool($item['IsDeemedPositive'] ?? null),
+                    'used_for_calculation' => $this->parseBool($item['UsedForCalculation'] ?? null),
+                    'method_to_allocate'   => $item['MethodToAllocate'] ?? null,
+                    'is_addable'           => $this->parseBool($item['IsAddable'] ?? null),
+                    'tds_category_details' => $item['TDSCategoryDetails'] ?? null,
+                    'is_active'            => true,
+                    'last_synced_at'       => now(),
                 ];
 
                 if ($existing) { $existing->update($data); $log->records_updated++; }
@@ -142,6 +155,14 @@ class TallyInboundSync
                     'notes'                      => $item['Notes'] ?? null,
                     'bank_details'               => $item['BankDetails'] ?? null,
                     'bill_allocations'           => $item['BillAllocations'] ?? null,
+                    'type_of_interest_on'            => $item['TypeOfInterestOn'] ?? null,
+                    'is_interest_on'                 => $this->parseBool($item['IsInterestOn'] ?? null),
+                    'is_interest_on_bill_wise'       => $this->parseBool($item['InterestOnBillWise'] ?? null),
+                    'override_interest'              => $this->parseBool($item['OverrideInterest'] ?? null),
+                    'interest_incl_day_of_addition'  => $this->parseBool($item['InterestInclDayOfAddition'] ?? null),
+                    'interest_incl_day_of_deduction' => $this->parseBool($item['InterestInclDayOfDeduction'] ?? null),
+                    'is_tds_applicable'              => $this->parseBool($item['IsTDSApplicable'] ?? null),
+                    'tds_deductee_type'              => $item['TDSDeducteeType'] ?? null,
                     'is_active'                  => true,
                     'last_synced_at'             => now(),
                 ];

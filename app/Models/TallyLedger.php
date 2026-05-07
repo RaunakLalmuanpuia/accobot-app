@@ -22,6 +22,9 @@ class TallyLedger extends Model
         'credit_period', 'credit_limit',
         'opening_balance', 'opening_balance_type',
         'aliases', 'description', 'notes', 'bank_details', 'bill_allocations',
+        'type_of_interest_on', 'is_interest_on', 'is_interest_on_bill_wise',
+        'override_interest', 'interest_incl_day_of_addition', 'interest_incl_day_of_deduction',
+        'is_tds_applicable', 'tds_deductee_type',
         'is_active', 'last_synced_at',
         'mapped_client_id', 'mapped_vendor_id',
     ];
@@ -34,9 +37,15 @@ class TallyLedger extends Model
         'aliases'          => 'array',
         'bank_details'       => 'array',
         'bill_allocations'   => 'array',
-        'credit_limit'                => 'decimal:2',
-        'opening_balance'             => 'decimal:2',
-        'last_synced_at'              => 'datetime',
+        'credit_limit'                    => 'decimal:2',
+        'opening_balance'               => 'decimal:2',
+        'is_interest_on'                => 'boolean',
+        'is_interest_on_bill_wise'      => 'boolean',
+        'override_interest'             => 'boolean',
+        'interest_incl_day_of_addition' => 'boolean',
+        'interest_incl_day_of_deduction'=> 'boolean',
+        'is_tds_applicable'             => 'boolean',
+        'last_synced_at'                => 'datetime',
     ];
 
     public function tenant(): BelongsTo
