@@ -281,7 +281,7 @@ class TallyDataController extends Controller
             'attendanceTypes' => $this->addSyncStatus(
                 TallyAttendanceType::where('tenant_id', $tenant->id)
                     ->orderBy('name')
-                    ->get(['id', 'tally_id', 'name', 'attendance_type', 'attendance_period', 'is_active', 'last_synced_at']),
+                    ->get(['id', 'tally_id', 'name', 'under', 'attendance_type', 'attendance_period', 'aliases', 'is_active', 'last_synced_at']),
                 $atMap
             ),
         ]);
