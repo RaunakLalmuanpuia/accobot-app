@@ -198,7 +198,7 @@ const isEditingGrp = computed(() => grpModal.value && grpModal.value !== 'create
 
 const grpForm = useForm({
     name:                 '',
-    under:                '',
+    under:                'Primary',
     cost_centre_category: '',
     aliases:              [],
 })
@@ -242,6 +242,11 @@ function destroyGrp(grp) {
     if (!confirm(msg)) return
     router.delete(route('tally.employee-groups.destroy', { tenant: props.tenant.id, employeeGroup: grp.id }))
 }
+
+const grpUnderOptions = computed(() => {
+    const editing = isEditingGrp.value ? grpModal.value : null
+    return props.employeeGroups.filter(g => g.is_active && (!editing || g.id !== editing.id)).map(g => g.name)
+})
 
 // ── Pay Head CRUD ──────────────────────────────────────────────────────────────
 const phModal     = ref(null)
@@ -796,8 +801,11 @@ function destroyAtt(att) {
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Under (Parent)</label>
-                        <input v-model="grpForm.under" type="text" placeholder="e.g. Primary Cost Category"
-                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                        <select v-model="grpForm.under"
+                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
+                            <option value="Primary">Primary</option>
+                            <option v-for="g in grpUnderOptions" :key="g" :value="g">{{ g }}</option>
+                        </select>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Cost Centre Category</label>
