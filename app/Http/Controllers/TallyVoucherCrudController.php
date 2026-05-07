@@ -132,7 +132,11 @@ class TallyVoucherCrudController extends Controller
         DB::transaction(function () use ($data, $tenant, &$voucher) {
             $voucher = TallyVoucher::create(array_merge(
                 collect($data)->except(['ledger_entries', 'inventory_entries'])->toArray(),
-                ['tenant_id' => $tenant->id, 'is_active' => true]
+                [
+                    'tenant_id'         => $tenant->id,
+                    'is_active'         => true,
+                    'voucher_base_type' => $data['voucher_base_type'] ?: ($data['voucher_type'] ?? null),
+                ]
             ));
 
             foreach ($data['ledger_entries'] ?? [] as $le) {
@@ -168,9 +172,10 @@ class TallyVoucherCrudController extends Controller
         $data = $request->validate($this->validationRules());
 
         DB::transaction(function () use ($data, $tenant, $voucher) {
-            $voucher->update(
-                collect($data)->except(['ledger_entries', 'inventory_entries'])->toArray()
-            );
+            $voucher->update(array_merge(
+                collect($data)->except(['ledger_entries', 'inventory_entries'])->toArray(),
+                ['voucher_base_type' => $data['voucher_base_type'] ?: ($data['voucher_type'] ?? $voucher->voucher_type)],
+            ));
 
             $voucher->ledgerEntries()->delete();
             foreach ($data['ledger_entries'] ?? [] as $le) {
