@@ -20,8 +20,8 @@ class TallyVoucherCrudController extends Controller
     {
         return [
             // Core
-            'voucher_type'      => 'required|string|max:50',
-            'voucher_base_type' => 'nullable|string|max:100',
+            'voucher_base_type' => 'required|string|max:100',
+            'voucher_type'      => 'nullable|string|max:50',
             'voucher_number'    => 'nullable|string|max:100',
             'voucher_date'    => 'required|date',
             'party_name'      => 'nullable|string|max:255',
@@ -133,9 +133,9 @@ class TallyVoucherCrudController extends Controller
             $voucher = TallyVoucher::create(array_merge(
                 collect($data)->except(['ledger_entries', 'inventory_entries'])->toArray(),
                 [
-                    'tenant_id'         => $tenant->id,
-                    'is_active'         => true,
-                    'voucher_base_type' => $data['voucher_base_type'] ?: ($data['voucher_type'] ?? null),
+                    'tenant_id'    => $tenant->id,
+                    'is_active'    => true,
+                    'voucher_type' => $data['voucher_type'] ?: $data['voucher_base_type'],
                 ]
             ));
 
@@ -174,7 +174,7 @@ class TallyVoucherCrudController extends Controller
         DB::transaction(function () use ($data, $tenant, $voucher) {
             $voucher->update(array_merge(
                 collect($data)->except(['ledger_entries', 'inventory_entries'])->toArray(),
-                ['voucher_base_type' => $data['voucher_base_type'] ?: ($data['voucher_type'] ?? $voucher->voucher_type)],
+                ['voucher_type' => $data['voucher_type'] ?: $data['voucher_base_type']],
             ));
 
             $voucher->ledgerEntries()->delete();

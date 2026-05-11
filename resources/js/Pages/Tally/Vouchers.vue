@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { Link, useForm, router } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import { hasPermission } from '@/utils/permissions'
@@ -126,6 +126,7 @@ const isPayroll = computed(() =>
 )
 
 // ── CRUD ───────────────────────────────────────────────────────────────────────
+
 const modal     = ref(null)
 const isEditing = computed(() => modal.value && modal.value !== 'create')
 
@@ -192,6 +193,10 @@ const form = useForm({
     // Child entries
     ledger_entries:    [],
     inventory_entries: [],
+})
+
+watch(() => form.voucher_base_type, (val) => {
+    if (val) form.voucher_type = val
 })
 
 // ── Child entry helpers ────────────────────────────────────────────────────────
@@ -516,7 +521,19 @@ function destroy(v) {
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">
-                                Voucher Type <span class="text-red-500">*</span>
+                                Voucher Base Type <span class="text-red-500">*</span>
+                            </label>
+                            <select v-model="form.voucher_base_type"
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
+                                <option value="">— Select —</option>
+                                <option v-for="t in VOUCHER_TYPES" :key="t" :value="t">{{ t }}</option>
+                            </select>
+                            <p v-if="form.errors.voucher_base_type" class="mt-1 text-xs text-red-500">{{ form.errors.voucher_base_type }}</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                Voucher Type
+                                <span class="text-xs text-gray-400 font-normal">(auto-filled)</span>
                             </label>
                             <select v-model="form.voucher_type"
                                     class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
@@ -524,14 +541,6 @@ function destroy(v) {
                                 <option v-for="t in VOUCHER_TYPES" :key="t" :value="t">{{ t }}</option>
                             </select>
                             <p v-if="form.errors.voucher_type" class="mt-1 text-xs text-red-500">{{ form.errors.voucher_type }}</p>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Voucher Base Type</label>
-                            <select v-model="form.voucher_base_type"
-                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
-                                <option value="">— Select —</option>
-                                <option v-for="t in VOUCHER_TYPES" :key="t" :value="t">{{ t }}</option>
-                            </select>
                         </div>
                     </div>
 
