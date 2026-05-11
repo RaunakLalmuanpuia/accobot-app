@@ -178,7 +178,7 @@ class TallyDataController extends Controller
                     ->orderByDesc('voucher_date')
                     ->orderByDesc('id')
                     ->get([
-                        'id', 'tally_id', 'voucher_type', 'voucher_number', 'voucher_date',
+                        'id', 'tally_id', 'voucher_type', 'voucher_base_type', 'voucher_number', 'voucher_date',
                         'party_name', 'voucher_total', 'is_invoice', 'is_deleted',
                         'narration', 'is_active', 'last_synced_at', 'mapped_invoice_id',
                         'reference', 'reference_date', 'place_of_supply', 'cost_centre',
@@ -201,6 +201,10 @@ class TallyDataController extends Controller
                 ->where('is_active', true)
                 ->orderBy('name')
                 ->get(['id', 'name', 'hsn_code', 'unit_name', 'igst_rate', 'cess_rate', 'stock_group_name', 'mrp_rate']),
+            'godowns'    => TallyGodown::where('tenant_id', $tenant->id)
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get(['id', 'name']),
         ]);
     }
 

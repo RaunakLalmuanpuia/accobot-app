@@ -9,6 +9,7 @@ const props = defineProps({
     vouchers:   Array,
     ledgers:    Array,
     stockItems: Array,
+    godowns:    Array,
 })
 
 const canManage = hasPermission('integrations.manage')
@@ -77,6 +78,50 @@ const VOUCHER_TYPES = [
     'Sales', 'Purchase', 'Receipt', 'Payment',
     'Contra', 'Journal', 'CreditNote', 'DebitNote',
     'Payroll', 'Attendance',
+]
+
+const INDIAN_STATES = [
+    'Andaman and Nicobar Islands', 'Andhra Pradesh', 'Arunachal Pradesh', 'Assam',
+    'Bihar', 'Chandigarh', 'Chhattisgarh',
+    'Dadra and Nagar Haveli and Daman and Diu', 'Delhi', 'Goa', 'Gujarat',
+    'Haryana', 'Himachal Pradesh', 'Jammu and Kashmir', 'Jharkhand',
+    'Karnataka', 'Kerala', 'Ladakh', 'Lakshadweep', 'Madhya Pradesh',
+    'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland',
+    'Odisha', 'Puducherry', 'Punjab', 'Rajasthan', 'Sikkim',
+    'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand',
+    'West Bengal',
+]
+
+const GST_REG_TYPES = [
+    'Regular',
+    'Composition',
+    'Unregistered/Consumer',
+    'Unknown',
+    'Input Service Distributor',
+    'SEZ',
+    'Overseas',
+    'Deemed Export',
+]
+
+const BANK_TRANSACTION_TYPES = [
+    'Same Bank Transfer',
+    'Inter Bank Transfer',
+    'Cash',
+    'Cheque',
+    'DD',
+    'Electronic Cheque',
+    'Electronic DD/PO',
+    'E-Payments',
+]
+
+const TRANSFER_MODES = ['NEFT', 'RTGS', 'IMPS', 'UPI', 'Cheque', 'DD', 'Cash']
+
+const GST_CLASSIFICATIONS = [
+    'Not Applicable',
+    'Taxable',
+    'Nil Rated',
+    'Exempt',
+    'Non-GST Supply',
 ]
 
 // ── Lookup maps for auto-fill ──────────────────────────────────────────────────
@@ -563,7 +608,7 @@ function destroy(v) {
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Party Name</label>
-                            <input v-model="form.party_name" type="text" placeholder="e.g. ABC Traders"
+                            <input v-model="form.party_name" type="text" list="ledger-list" placeholder="Type or select ledger…"
                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
                         </div>
                     </div>
@@ -597,8 +642,11 @@ function destroy(v) {
                     <div v-if="showPlaceOfSupply" class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Place of Supply</label>
-                            <input v-model="form.place_of_supply" type="text" placeholder="e.g. Maharashtra"
-                                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                            <select v-model="form.place_of_supply"
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
+                                <option value="">— Select State —</option>
+                                <option v-for="s in INDIAN_STATES" :key="s" :value="s">{{ s }}</option>
+                            </select>
                         </div>
                         <div class="flex items-end pb-2">
                             <label class="flex items-center gap-2 cursor-pointer">
@@ -648,8 +696,11 @@ function destroy(v) {
                             <div class="grid grid-cols-2 gap-3">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">State</label>
-                                    <input v-model="form.buyer_state" type="text"
-                                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                                    <select v-model="form.buyer_state"
+                                            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
+                                        <option value="">— Select State —</option>
+                                        <option v-for="s in INDIAN_STATES" :key="s" :value="s">{{ s }}</option>
+                                    </select>
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Country</label>
@@ -660,8 +711,11 @@ function destroy(v) {
                             <div class="grid grid-cols-2 gap-3">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">GST Reg Type</label>
-                                    <input v-model="form.buyer_gst_registration_type" type="text" placeholder="e.g. Regular"
-                                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                                    <select v-model="form.buyer_gst_registration_type"
+                                            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
+                                        <option value="">— Select —</option>
+                                        <option v-for="t in GST_REG_TYPES" :key="t" :value="t">{{ t }}</option>
+                                    </select>
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
@@ -715,8 +769,11 @@ function destroy(v) {
                             <div class="grid grid-cols-2 gap-3">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">State</label>
-                                    <input v-model="form.consignee_state" type="text"
-                                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                                    <select v-model="form.consignee_state"
+                                            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
+                                        <option value="">— Select State —</option>
+                                        <option v-for="s in INDIAN_STATES" :key="s" :value="s">{{ s }}</option>
+                                    </select>
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Country</label>
@@ -726,8 +783,11 @@ function destroy(v) {
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">GST Reg Type</label>
-                                <input v-model="form.consignee_gst_registration_type" type="text"
-                                       class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                                <select v-model="form.consignee_gst_registration_type"
+                                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
+                                    <option value="">— Select —</option>
+                                    <option v-for="t in GST_REG_TYPES" :key="t" :value="t">{{ t }}</option>
+                                </select>
                             </div>
                         </div>
                     </details>
@@ -993,8 +1053,11 @@ function destroy(v) {
                                     <div class="grid grid-cols-2 gap-1.5">
                                         <div>
                                             <label class="block text-xs text-gray-400 mb-0.5">Transaction Type</label>
-                                            <input v-model="ba.TRANSACTIONTYPE" type="text" placeholder="e.g. Same Bank Transfer"
-                                                   class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                                            <select v-model="ba.TRANSACTIONTYPE"
+                                                    class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500">
+                                                <option value="">— Select —</option>
+                                                <option v-for="t in BANK_TRANSACTION_TYPES" :key="t" :value="t">{{ t }}</option>
+                                            </select>
                                         </div>
                                         <div>
                                             <label class="block text-xs text-gray-400 mb-0.5">Payment Favouring</label>
@@ -1019,7 +1082,7 @@ function destroy(v) {
                                                    class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
                                         </div>
                                     </div>
-                                    <div class="grid grid-cols-3 gap-1.5">
+                                    <div class="grid grid-cols-4 gap-1.5">
                                         <div>
                                             <label class="block text-xs text-gray-400 mb-0.5">Amount</label>
                                             <input v-model="ba.AMOUNT" type="text" placeholder="e.g. 50,000.00"
@@ -1034,6 +1097,14 @@ function destroy(v) {
                                             <label class="block text-xs text-gray-400 mb-0.5">Instrument No.</label>
                                             <input v-model="ba.INSTRUMENTNUMBER" type="text"
                                                    class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs text-gray-400 mb-0.5">Transfer Mode</label>
+                                            <select v-model="ba.TRANSFERMODE"
+                                                    class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500">
+                                                <option value="">— Select —</option>
+                                                <option v-for="m in TRANSFER_MODES" :key="m" :value="m">{{ m }}</option>
+                                            </select>
                                         </div>
                                     </div>
                                     <div class="flex justify-end">
@@ -1146,13 +1217,16 @@ function destroy(v) {
                                 </div>
                                 <div>
                                     <label class="block text-xs text-gray-500 mb-0.5">Sales Ledger</label>
-                                    <input v-model="ie.sales_ledger" type="text"
+                                    <input v-model="ie.sales_ledger" type="text" list="ledger-list" placeholder="Type or select…"
                                            class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
                                 </div>
                                 <div>
                                     <label class="block text-xs text-gray-500 mb-0.5">Godown</label>
-                                    <input v-model="ie.godown_name" type="text"
-                                           class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                                    <select v-model="ie.godown_name"
+                                            class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500">
+                                        <option value="">— Select Godown —</option>
+                                        <option v-for="g in godowns" :key="g.id" :value="g.name">{{ g.name }}</option>
+                                    </select>
                                 </div>
                                 <div>
                                     <label class="block text-xs text-gray-500 mb-0.5">Batch</label>
@@ -1184,8 +1258,11 @@ function destroy(v) {
                                     </div>
                                     <div>
                                         <label class="block text-xs text-gray-400 mb-0.5">Godown</label>
-                                        <input v-model="ba.GodownName" type="text"
-                                               class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                                        <select v-model="ba.GodownName"
+                                                class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500">
+                                            <option value="">— Select —</option>
+                                            <option v-for="g in godowns" :key="g.id" :value="g.name">{{ g.name }}</option>
+                                        </select>
                                     </div>
                                     <div>
                                         <label class="block text-xs text-gray-400 mb-0.5">Expiry Date</label>
@@ -1246,8 +1323,11 @@ function destroy(v) {
                                     </div>
                                     <div>
                                         <label class="block text-xs text-gray-400 mb-0.5">GST Classification</label>
-                                        <input v-model="aa.GSTClassification" type="text"
-                                               class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                                        <select v-model="aa.GSTClassification"
+                                                class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500">
+                                            <option value="">— Select —</option>
+                                            <option v-for="c in GST_CLASSIFICATIONS" :key="c" :value="c">{{ c }}</option>
+                                        </select>
                                     </div>
                                     <div>
                                         <label class="block text-xs text-gray-400 mb-0.5">IGST Rate</label>
@@ -1271,6 +1351,9 @@ function destroy(v) {
                     </div>
 
                     <!-- ── Datalists ───────────────────────────────────────── -->
+                    <datalist id="ledger-list">
+                        <option v-for="l in ledgers" :key="l.id" :value="l.ledger_name" />
+                    </datalist>
 
                     <div class="flex gap-3 pt-2 border-t border-gray-100">
                         <button type="submit" :disabled="form.processing"
