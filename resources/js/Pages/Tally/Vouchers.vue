@@ -3,6 +3,7 @@ import { ref, computed, watch } from 'vue'
 import { Link, useForm, router } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import { hasPermission } from '@/utils/permissions'
+import SalesVoucherForm from './SalesVoucher.vue'
 
 const props = defineProps({
     tenant:     Object,
@@ -552,15 +553,34 @@ function destroy(v) {
     <Teleport to="body">
         <div v-if="modal !== null" class="fixed inset-0 z-40 flex justify-end">
             <div class="absolute inset-0 bg-black/30" @click="closeModal" />
-            <div class="relative z-50 w-full max-w-2xl bg-white shadow-xl flex flex-col">
+            <div :class="['relative z-50 w-full bg-white shadow-xl flex flex-col',
+                          form.voucher_base_type === 'Sales' ? 'max-w-4xl' : 'max-w-2xl']">
                 <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
                     <h2 class="text-base font-semibold text-gray-900">
                         {{ isEditing ? 'Edit Voucher' : 'New Voucher' }}
+                        <span v-if="form.voucher_base_type"
+                              class="ml-2 text-xs font-normal px-2 py-0.5 rounded-full bg-violet-100 text-violet-700">
+                            {{ form.voucher_base_type }}
+                        </span>
                     </h2>
                     <button @click="closeModal" class="text-gray-400 hover:text-gray-600 text-lg leading-none">✕</button>
                 </div>
 
                 <form @submit.prevent="submit" class="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+
+                    <!-- ── Sales voucher dedicated layout ─────────────────── -->
+                    <template v-if="form.voucher_base_type === 'Sales'">
+                        <SalesVoucherForm
+                            :form="form"
+                            :ledgers="ledgers"
+                            :stock-items="stockItems"
+                            :godowns="godowns"
+                            :is-editing="isEditing"
+                        />
+                    </template>
+
+                    <!-- ── Generic form (all non-Sales types) ─────────────── -->
+                    <template v-else>
 
                     <!-- ── Core fields ─────────────────────────────────────── -->
                     <div class="grid grid-cols-2 gap-3">
@@ -1354,6 +1374,9 @@ function destroy(v) {
                     <datalist id="ledger-list">
                         <option v-for="l in ledgers" :key="l.id" :value="l.ledger_name" />
                     </datalist>
+
+                    </template>
+                    <!-- ── end generic form ───────────────────────────────── -->
 
                     <div class="flex gap-3 pt-2 border-t border-gray-100">
                         <button type="submit" :disabled="form.processing"
