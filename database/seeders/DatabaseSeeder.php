@@ -31,6 +31,7 @@ class DatabaseSeeder extends Seeder
             AccountingSeeder::class,
             BankTransactionSeeder::class,
             InvoiceMatchingDemoSeeder::class,   // invoices + matching transactions
+            TallyStandardGroupsSeeder::class,   // 28 standard Tally Prime groups for all tenants
 //            TallySeeder::class,
         ]);
     }

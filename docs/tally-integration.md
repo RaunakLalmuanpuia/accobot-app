@@ -912,11 +912,16 @@ All pages show data to any user with `integrations.view`. Edit / New / Delete ac
 
 `TallyVoucherCrudController` — store/update/destroy for `TallyVoucher`. Validation covers all parent fields (core, buyer, consignee, dispatch, order) and all child entry fields matching the inbound JSON payload structure. Update delete-reinserts ledger entries and inventory entries in a `DB::transaction()`. Delete: soft-deletes if `tally_id` set, hard-deletes + purges queue if never synced. `validationRules()` extracted as private method to avoid duplication between store and update.
 
-### Seeder
+### Seeders
 
-`database/seeders/TallySeeder.php` seeds the **Tili** tenant with:
+**`database/seeders/TallyStandardGroupsSeeder.php`** — runs automatically as part of `db:seed` (registered in DatabaseSeeder). Seeds all 28 standard Tally Prime ledger groups for **every tenant** in the system. Skips groups that already exist (keyed on `[tenant_id, name]`). Uses `tally_id = null` so these pre-seeded records do not conflict with real inbound sync records (which are keyed on `[tenant_id, tally_id]`). When a real Tally sync arrives for the same group name, `syncLedgerGroups()` falls back to a name lookup (only for `tally_id = null` rows) and merges the real `tally_id` into the existing record instead of creating a duplicate. Run standalone with:
+```
+php artisan db:seed --class=TallyStandardGroupsSeeder
+```
+
+**`database/seeders/TallySeeder.php`** — seeds the **Tili** tenant with:
 - 1 TallyConnection
-- 8 LedgerGroups, 14 Ledgers (3 Debtors mapped to Clients, 2 Creditors mapped to Vendors, sales/purchase/bank/cash/GST accounts)
+- 28 LedgerGroups matching the Tally Prime standard chart of accounts: 15 primary groups (Branch/Divisions, Capital Account, Current Assets, Current Liabilities, Direct Expenses, Direct Incomes, Fixed Assets, Indirect Expenses, Indirect Incomes, Investments, Loans (Liability), Misc. Expenses (ASSET), Purchase Accounts, Sales Accounts, Suspense A/c) + 13 sub-groups with correct under_id/under_name hierarchy; 14 Ledgers (3 Debtors mapped to Clients, 2 Creditors mapped to Vendors, sales/purchase/bank/cash/GST accounts)
 - 5 StockGroups, 3 StockCategories, 10 StockItems (mapped to first 5 Products)
 - 10 Vouchers (Sales ×2, Purchase ×2, Receipt, Payment, Credit Note, Debit Note, Contra, Journal) with inventory and ledger entries
 - **ISP / Lease Line dataset** (mirrors Postman test session): BlueStar Technologies ledger + Client, Sales - Lease Line ledger, Network Equipment stock group, Lease Line Services stock category, 30Mbps Lease Line stock item + Product, 2 Sales vouchers (INV/001 + INV/002) with inventory entries, ledger entries, auto-mapped Invoices, and InvoiceItem rows linked to the Product

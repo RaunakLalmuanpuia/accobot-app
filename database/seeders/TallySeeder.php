@@ -58,30 +58,58 @@ class TallySeeder extends Seeder
         );
 
         // ── Ledger Groups ─────────────────────────────────────────────────
+        // Full Tally Prime standard chart of accounts (28 groups)
+        TallyLedgerGroup::where('tenant_id', $tid)->delete();
+
         $groups = [];
         $groupData = [
-            [1, 1, 'Sundry Debtors',        null, null],
-            [2, 2, 'Sundry Creditors',       null, null],
-            [3, 3, 'Sales Accounts',         null, null],
-            [4, 4, 'Purchase Accounts',      null, null],
-            [5, 5, 'Bank Accounts',          null, null],
-            [6, 6, 'Cash-in-Hand',           null, null],
-            [7, 7, 'Duties & Taxes',         null, null],
-            [8, 8, 'Indirect Expenses',      null, null],
+            // [tally_id, alter_id, name, under_id, under_name]
+            // Primary groups
+            [ 1,  1, 'Branch / Divisions',       null, null],
+            [ 2,  2, 'Capital Account',           null, null],
+            [ 3,  3, 'Current Assets',            null, null],
+            [ 4,  4, 'Current Liabilities',       null, null],
+            [ 5,  5, 'Direct Expenses',           null, null],
+            [ 6,  6, 'Direct Incomes',            null, null],
+            [ 7,  7, 'Fixed Assets',              null, null],
+            [ 8,  8, 'Indirect Expenses',         null, null],
+            [ 9,  9, 'Indirect Incomes',          null, null],
+            [10, 10, 'Investments',               null, null],
+            [11, 11, 'Loans (Liability)',          null, null],
+            [12, 12, 'Misc. Expenses (ASSET)',    null, null],
+            [13, 13, 'Purchase Accounts',         null, null],
+            [14, 14, 'Sales Accounts',            null, null],
+            [15, 15, 'Suspense A/c',              null, null],
+            // Sub-groups under Capital Account
+            [16, 16, 'Reserves & Surplus',        2,  'Capital Account'],
+            // Sub-groups under Current Assets
+            [17, 17, 'Bank Accounts',             3,  'Current Assets'],
+            [18, 18, 'Cash-in-Hand',              3,  'Current Assets'],
+            [19, 19, 'Deposits (Asset)',           3,  'Current Assets'],
+            [20, 20, 'Loans & Advances (Asset)',  3,  'Current Assets'],
+            [21, 21, 'Stock-in-Hand',             3,  'Current Assets'],
+            [22, 22, 'Sundry Debtors',            3,  'Current Assets'],
+            // Sub-groups under Current Liabilities
+            [23, 23, 'Duties & Taxes',            4,  'Current Liabilities'],
+            [24, 24, 'Provisions',                4,  'Current Liabilities'],
+            [25, 25, 'Sundry Creditors',          4,  'Current Liabilities'],
+            // Sub-groups under Loans (Liability)
+            [26, 26, 'Bank OD A/c',               11, 'Loans (Liability)'],
+            [27, 27, 'Secured Loans',             11, 'Loans (Liability)'],
+            [28, 28, 'Unsecured Loans',           11, 'Loans (Liability)'],
         ];
 
-        foreach ($groupData as [$tid_i, $alterId, $name, $underId, $underName]) {
-            $groups[$name] = TallyLedgerGroup::firstOrCreate(
-                ['tenant_id' => $tid, 'tally_id' => $tid_i],
-                [
-                    'alter_id'        => $alterId,
-                    'name'            => $name,
-                    'under_id'        => $underId,
-                    'under_name'      => $underName,
-                    'is_active'       => true,
-                    'last_synced_at'  => now()->subHours(1),
-                ]
-            );
+        foreach ($groupData as [$tallyId, $alterId, $name, $underId, $underName]) {
+            $groups[$name] = TallyLedgerGroup::create([
+                'tenant_id'      => $tid,
+                'tally_id'       => $tallyId,
+                'alter_id'       => $alterId,
+                'name'           => $name,
+                'under_id'       => $underId,
+                'under_name'     => $underName,
+                'is_active'      => true,
+                'last_synced_at' => now()->subHours(1),
+            ]);
         }
 
         // ── Clients & Vendors for mapping ─────────────────────────────────
@@ -434,7 +462,7 @@ class TallySeeder extends Seeder
 
         // ── Sync Logs ─────────────────────────────────────────────────────
         $logData = [
-            ['ledger_groups',       'inbound', 'success', false, 8,  0, 0, 0, 0, null],
+            ['ledger_groups',       'inbound', 'success', false, 28, 0, 0, 0, 0, null],
             ['ledgers',             'inbound', 'success', false, 14, 0, 0, 0, 0, null],
             ['stock_groups',        'inbound', 'success', false, 5,  0, 0, 0, 0, null],
             ['stock_categories',    'inbound', 'success', false, 3,  0, 0, 0, 0, null],
@@ -447,7 +475,7 @@ class TallySeeder extends Seeder
             ['vouchers_journal',    'inbound', 'success', false, 1,  0, 0, 0, 0, null],
             ['vouchers_contra',     'inbound', 'success', false, 1,  0, 0, 0, 0, null],
             ['vouchers_debitnote',  'inbound', 'success', false, 1,  0, 0, 0, 0, null],
-            ['ledger_groups',       'inbound', 'success', false, 0,  2, 6, 0, 0, null],
+            ['ledger_groups',       'inbound', 'success', false, 0,  5, 23, 0, 0, null],
             ['ledgers',             'inbound', 'success', false, 0,  3, 11,0, 0, null],
             ['stock_items',         'inbound', 'success', false, 0,  4, 6, 0, 0, null],
             ['vouchers_sales',      'inbound', 'success', false, 1,  1, 0, 0, 0, null],
@@ -983,6 +1011,6 @@ class TallySeeder extends Seeder
             );
         }
 
-        $this->command->info('TallySeeder: seeded connection, company, 8 ledger groups, 14 ledgers, 5 stock groups, 3 categories, 2 godowns, 10 stock items, 10 vouchers, 1 payroll voucher (5 employee allocations), 1 attendance voucher (5 employee allocations), 8 statutory masters, 5 employee groups, 10 pay heads, 7 attendance types, 5 employees, reports, sync logs for Tili.');
+        $this->command->info('TallySeeder: seeded connection, company, 28 ledger groups (15 primary + 13 sub-groups matching Tally Prime standard chart of accounts), 14 ledgers, 5 stock groups, 3 categories, 2 godowns, 10 stock items, 10 vouchers, 1 payroll voucher (5 employee allocations), 1 attendance voucher (5 employee allocations), 8 statutory masters, 5 employee groups, 10 pay heads, 7 attendance types, 5 employees, reports, sync logs for Tili.');
     }
 }

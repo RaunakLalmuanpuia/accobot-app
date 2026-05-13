@@ -42,10 +42,19 @@ class TallyInboundSync
 
                 $alterId = (int) ($item['AlterID'] ?? $item['AlterId'] ?? 0);
 
+                $name = $item['Name'] ?? '';
+
+                // Primary lookup by tally_id; fall back to name to merge pre-seeded
+                // standard groups (tally_id = null) rather than creating duplicates.
                 $existing = TallyLedgerGroup::withoutGlobalScope('tenant')
                     ->where('tenant_id', $conn->tenant_id)
                     ->where('tally_id', $tallyId)
-                    ->first();
+                    ->first()
+                    ?? TallyLedgerGroup::withoutGlobalScope('tenant')
+                        ->where('tenant_id', $conn->tenant_id)
+                        ->whereNull('tally_id')
+                        ->where('name', $name)
+                        ->first();
 
                 $action = $item['Action'] ?? 'Create';
                 if ($action === 'Delete') {
@@ -65,7 +74,7 @@ class TallyInboundSync
                     'alter_id'              => $alterId,
                     'action'                => $action,
                     'erp_id'               => $item['ERPID'] ?? $item['ErpId'] ?? null,
-                    'name'                 => $item['Name'] ?? '',
+                    'name'                 => $name,
                     'under_id'             => isset($item['UnderID']) ? (int) $item['UnderID'] : (isset($item['UnderId']) ? (int) $item['UnderId'] : null),
                     'under_name'           => $underName,
                     'nature_of_group'      => $item['NatureOfGroup'] ?? null,
