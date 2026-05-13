@@ -9,6 +9,7 @@ use App\Models\SubscriptionAddon;
 use App\Models\Tenant;
 use App\Services\RazorpayService;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class BillingController extends Controller
 {
@@ -90,7 +91,7 @@ class BillingController extends Controller
             ['razorpay_subscription_id' => $result['subscription_id'], 'status' => 'pending'],
         );
 
-        return redirect()->away($result['short_url']);
+        return Inertia::location($result['short_url']);
     }
 
     public function selectPlan(Tenant $tenant)
@@ -142,7 +143,7 @@ class BillingController extends Controller
             ]
         );
 
-        return redirect()->away($result['short_url']);
+        return Inertia::location($result['short_url']);
     }
 
     public function success(Tenant $tenant)
