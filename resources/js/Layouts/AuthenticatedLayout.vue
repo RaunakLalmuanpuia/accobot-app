@@ -6,7 +6,7 @@ import DropdownLink from '@/Components/DropdownLink.vue';
 import NavLink from '@/Components/NavLink.vue';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue';
 import { Link, router, usePage } from '@inertiajs/vue3'
-import { hasPermission } from '@/utils/permissions';
+import { hasPermission, hasFeature } from '@/utils/permissions';
 import { usePushNotifications } from '@/composables/usePushNotifications';
 
 const showingNavigationDropdown = ref(false)
@@ -234,17 +234,17 @@ function stopImpersonation() {
                                         </div>
                                     </template>
 
-                                    <template v-if="hasPermission('chat.view') || hasPermission('chat.room.view') || hasPermission('transactions.view')">
+                                    <template v-if="(hasPermission('chat.view') && hasFeature('ai_assistant')) || (hasPermission('chat.room.view') && hasFeature('group_chat')) || hasPermission('transactions.view')">
                                         <span class="self-center h-5 w-px bg-gray-200"></span>
 
                                         <NavLink
-                                            v-if="hasPermission('chat.view')"
+                                            v-if="hasPermission('chat.view') && hasFeature('ai_assistant')"
                                             :href="route('chat.index', { tenant: currentTenantId() })"
                                             :active="route().current('chat.index')"
                                         >Assistant</NavLink>
 
                                         <NavLink
-                                            v-if="hasPermission('chat.room.view')"
+                                            v-if="hasPermission('chat.room.view') && hasFeature('group_chat')"
                                             :href="route('chat.groups.index', { tenant: currentTenantId() })"
                                             :active="route().current('chat.groups.*')"
                                         >Groups</NavLink>
@@ -256,7 +256,7 @@ function stopImpersonation() {
                                         >Narration</NavLink>
                                     </template>
 
-                                    <template v-if="hasPermission('integrations.view')">
+                                    <template v-if="hasPermission('integrations.view') && hasFeature('tally_sync')">
                                         <span class="self-center h-5 w-px bg-gray-200"></span>
                                         <NavLink
                                             :href="route('tally.sync.index', { tenant: currentTenantId() })"
@@ -332,6 +332,10 @@ function stopImpersonation() {
                                             v-if="currentTenantId() && hasPermission('tenant.view_settings')"
                                             :href="route('settings.profile', { tenant: currentTenantId() })"
                                         >Tenant Settings</DropdownLink>
+                                        <DropdownLink
+                                            v-if="currentTenantId()"
+                                            :href="route('billing.index', { tenant: currentTenantId() })"
+                                        >Billing</DropdownLink>
                                         <DropdownLink :href="route('logout')" method="post" as="button">Log Out</DropdownLink>
                                     </template>
                                 </Dropdown>
@@ -375,6 +379,10 @@ function stopImpersonation() {
                                 v-if="currentTenantId() && hasPermission('tenant.view_settings')"
                                 :href="route('settings.profile', { tenant: currentTenantId() })"
                             >Tenant Settings</ResponsiveNavLink>
+                            <ResponsiveNavLink
+                                v-if="currentTenantId()"
+                                :href="route('billing.index', { tenant: currentTenantId() })"
+                            >Billing</ResponsiveNavLink>
                             <ResponsiveNavLink :href="route('logout')" method="post" as="button">Log Out</ResponsiveNavLink>
                         </div>
                     </div>

@@ -33,6 +33,7 @@ use App\Http\Controllers\ChatRoomController;
 use App\Http\Controllers\ChatMessageController;
 use App\Http\Controllers\ChatReactionController;
 use App\Http\Controllers\ChatAttachmentController;
+use App\Http\Controllers\BillingController;
 use App\Http\Controllers\PushSubscriptionController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -74,7 +75,7 @@ Route::post('/impersonate/stop', [ImpersonationController::class, 'stop'])
     ->name('impersonate.stop');
 
 // ── Tenant-scoped ─────────────────────────────────────────────────────
-Route::middleware(['auth', 'verified', 'member'])
+Route::middleware(['auth', 'verified', 'member', 'subscription'])
     ->prefix('t/{tenant}')
     ->group(function () {
 
@@ -84,6 +85,14 @@ Route::middleware(['auth', 'verified', 'member'])
 
         // ── Onboarding ────────────────────────────────────────────────
         Route::post('/onboarding/dismiss', [OnboardingController::class, 'dismiss'])->name('onboarding.dismiss');
+
+        // ── Billing ───────────────────────────────────────────────────
+        Route::get('/billing',             [BillingController::class, 'index'])->name('billing.index');
+        Route::post('/billing/cancel',     [BillingController::class, 'cancel'])->name('billing.cancel');
+        Route::post('/billing/addon',      [BillingController::class, 'subscribeAddon'])->name('billing.addon');
+        Route::get('/billing/select-plan', [BillingController::class, 'selectPlan'])->name('billing.select-plan');
+        Route::post('/billing/subscribe',  [BillingController::class, 'subscribe'])->name('billing.subscribe');
+        Route::get('/billing/success',     [BillingController::class, 'success'])->name('billing.success');
 
         // ── CA Businesses (CA firm only) ───────────────────────────────
         Route::get('/ca/businesses', [CaClientController::class, 'index'])->name('ca.businesses.index');
@@ -141,8 +150,10 @@ Route::middleware(['auth', 'verified', 'member'])
         Route::delete('/narration-heads/{narration_head}/sub-heads/{narration_sub_head}', [NarrationHeadController::class, 'destroySubHead'])->name('narration-heads.sub-heads.destroy')->middleware(['tenant.permission:narration_heads.delete', 'no.impersonate']);
 
         // ── Accounting Assistant (Chat) ────────────────────────────────
-        Route::get('/chat', [ChatController::class, 'index'])->name('chat.index')->middleware('tenant.permission:chat.view');
-        Route::post('/chat', [ChatController::class, 'chat'])->name('chat.store')->middleware('tenant.permission:chat.view');
+        Route::middleware('subscription.feature:ai_assistant')->group(function () {
+            Route::get('/chat', [ChatController::class, 'index'])->name('chat.index')->middleware('tenant.permission:chat.view');
+            Route::post('/chat', [ChatController::class, 'chat'])->name('chat.store')->middleware('tenant.permission:chat.view');
+        });
 
         // ── Invoices ───────────────────────────────────────────────────
         Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index')->middleware('tenant.permission:invoices.view');
@@ -154,6 +165,7 @@ Route::middleware(['auth', 'verified', 'member'])
         Route::get('/invoices/{invoice}/download', [InvoiceController::class, 'download'])->name('invoices.download');
 
         // ── Tally Integration ─────────────────────────────────────────
+        Route::middleware('subscription.feature:tally_sync')->group(function () {
         Route::get('/settings/tally', [TallyConnectionController::class, 'show'])->name('tally.connection.show')->middleware('tenant.permission:integrations.view');
         Route::post('/settings/tally', [TallyConnectionController::class, 'save'])->name('tally.connection.save')->middleware('tenant.permission:integrations.manage');
         Route::get('/settings/tally/test', [TallyConnectionController::class, 'testConnection'])->name('tally.connection.test')->middleware('tenant.permission:integrations.manage');
@@ -241,7 +253,8 @@ Route::middleware(['auth', 'verified', 'member'])
             Route::post('/tally/vouchers', [TallyVoucherCrudController::class, 'voucherStore'])->name('tally.vouchers.store');
             Route::put('/tally/vouchers/{voucher}', [TallyVoucherCrudController::class, 'voucherUpdate'])->name('tally.vouchers.update');
             Route::delete('/tally/vouchers/{voucher}', [TallyVoucherCrudController::class, 'voucherDestroy'])->name('tally.vouchers.destroy');
-        });
+        }); // end integrations.manage group
+        }); // end subscription.feature:tally_sync group
 
         // ── Banking / Narration ────────────────────────────────────────
         Route::get('/banking', [BankTransactionController::class, 'pending'])
@@ -267,6 +280,7 @@ Route::middleware(['auth', 'verified', 'member'])
             ->middleware('tenant.permission:transactions.import');
 
         // ── Group Chat ─────────────────────────────────────────────────
+        Route::middleware('subscription.feature:group_chat')->group(function () {
         Route::get('/groups', [ChatRoomController::class, 'index'])->name('chat.groups.index')->middleware('tenant.permission:chat.room.view');
         Route::post('/groups', [ChatRoomController::class, 'store'])->name('chat.groups.store')->middleware('tenant.permission:chat.room.create');
         Route::get('/groups/{room}', [ChatRoomController::class, 'show'])->name('chat.groups.show')->middleware('tenant.permission:chat.room.view');
@@ -286,6 +300,7 @@ Route::middleware(['auth', 'verified', 'member'])
 
         Route::post('/groups/{room}/attachments', [ChatAttachmentController::class, 'store'])->name('chat.attachments.store')->middleware('tenant.permission:chat.message.send');
         Route::get('/groups/{room}/attachments/{attachment}/download', [ChatAttachmentController::class, 'download'])->name('chat.attachments.download')->middleware('tenant.permission:chat.message.send');
+        }); // end subscription.feature:group_chat group
 
     });
 

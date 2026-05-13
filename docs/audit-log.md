@@ -116,6 +116,28 @@ The UI shows an **AI** badge next to the actor name for `system` events and a pl
 | `tally.outbound.confirmed` | Tally confirmed sync (integration) |
 | `tally.{entity}.created/updated/deleted` | Master record managed via CRUD UI |
 
+### Billing / Subscriptions
+
+| Event | Fired when | `actor_type` |
+|---|---|---|
+| `subscription.trial_started` | CA firm completes registration — 14-day trial created | `human` |
+| `subscription.started` | Razorpay `subscription.activated` webhook fires, **or** user returns from Razorpay checkout (optimistic) | `system` |
+| `subscription.renewed` | Razorpay `subscription.charged` webhook fires (monthly renewal) | `system` |
+| `subscription.halted` | Razorpay `subscription.halted` webhook fires (payment failed) | `system` |
+| `subscription.cancelled` | User cancels via web or mobile app | `human` / `system` |
+| `subscription.expired` | Razorpay `subscription.completed` webhook fires | `system` |
+
+Metadata fields:
+
+| Event | Metadata |
+|---|---|
+| `subscription.trial_started` | `{ "plan": "ca_firm", "trial_ends_at": "2026-05-27" }` |
+| `subscription.started` | `{ "plan": "business_solo", "source": "webhook" or "callback" }` |
+| `subscription.renewed` | `{ "plan": "business_solo" }` |
+| `subscription.halted` | `{ "plan": "business_solo" }` |
+| `subscription.cancelled` | `{ "plan": "business_solo", "source": "user" or "user_mobile" or "webhook" }` |
+| `subscription.expired` | `{ "plan": "business_solo" }` |
+
 ---
 
 ## Metadata

@@ -24,6 +24,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
             'tenant.permission'  => \App\Http\Middleware\TenantPermission::class,
             'no.impersonate'     => \App\Http\Middleware\BlockImpersonationDestructive::class,
+            'subscription'       => \App\Http\Middleware\EnsureActiveSubscription::class,
+            'subscription.feature' => \App\Http\Middleware\CheckSubscriptionFeature::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

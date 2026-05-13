@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Models\Invitation;
 use App\Models\TenantRolePermission;
+use App\Services\SubscriptionService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 use Spatie\Permission\Models\Permission;
@@ -30,6 +31,10 @@ class HandleInertiaRequests extends Middleware
                 'error'   => session('error'),
                 'info'    => session('info'),
             ],
+
+            'subscription' => $tenant
+                ? app(SubscriptionService::class)->summary($tenant)
+                : ['status' => null, 'plan' => null, 'features' => []],
 
             'auth' => [
                 'user'     => $user,

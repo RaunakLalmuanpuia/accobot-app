@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Tenant extends Model
 {
@@ -76,6 +77,20 @@ class Tenant extends Model
     public function bankAccounts(): HasMany
     {
         return $this->hasMany(TenantBankAccount::class)->orderByDesc('is_primary')->orderBy('id');
+    }
+
+    public function subscription(): HasOne
+    {
+        return $this->hasOne(Subscription::class);
+    }
+
+    public function hasFeature(string $feature): bool
+    {
+        $subscription = $this->relationLoaded('subscription')
+            ? $this->subscription
+            : $this->subscription()->with('plan', 'addons.plan')->first();
+
+        return $subscription !== null && $subscription->isAccessible() && $subscription->hasFeature($feature);
     }
 
     // For CA firms: businesses they manage externally

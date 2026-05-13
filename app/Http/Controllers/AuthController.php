@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Auth\LoginRequest;
 use App\Models\AuditEvent;
+use App\Models\Plan;
+use App\Models\Subscription;
 use App\Models\TallyConnection;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
@@ -76,7 +78,29 @@ class AuthController extends Controller
         // Auto-provision a Tally token for all tenants so they can connect immediately
         TallyConnection::create(['tenant_id' => $tenant->id]);
 
-        return redirect(route('dashboard', ['tenant' => $tenant->id]));
+        // CA firms get a free trial; business tenants must pick a plan first
+        if ($tenantType === 'ca_firm') {
+            $plan        = Plan::where('slug', 'ca_firm')->firstOrFail();
+            $trialEndsAt = now()->addDays(config('plans.ca_trial_days', 14));
+
+            Subscription::create([
+                'tenant_id'     => $tenant->id,
+                'plan_id'       => $plan->id,
+                'status'        => 'trialing',
+                'trial_ends_at' => $trialEndsAt,
+            ]);
+
+            AuditEvent::log(
+                'subscription.trial_started',
+                ['plan' => 'ca_firm', 'trial_ends_at' => $trialEndsAt->toDateString()],
+                $user->id,
+                $tenant->id,
+            );
+
+            return redirect(route('dashboard', ['tenant' => $tenant->id]));
+        }
+
+        return redirect(route('billing.select-plan', ['tenant' => $tenant->id]));
     }
 
     public function logout(Request $request)

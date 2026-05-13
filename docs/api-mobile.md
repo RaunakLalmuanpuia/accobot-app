@@ -1754,6 +1754,134 @@ When FCM/APNs is added, the mobile developer will need to:
 | System notifications (background push) | **Not yet — FCM/APNs pending** |
 | Onboarding checklist | Full parity |
 | CA client management | Full parity |
+| Billing & subscriptions | Full parity |
+
+---
+
+## Billing & Subscriptions
+
+All endpoints are tenant-scoped and require a valid Sanctum Bearer token.
+
+---
+
+### GET `/api/mobile/tenants/{tenant}/billing`
+
+Returns the current subscription status and feature list.
+
+**Response `200`**
+```json
+{
+    "subscription": {
+        "status": "active",
+        "plan_slug": "business_solo",
+        "plan_name": "Business – Solo Plan",
+        "plan_price": 299900,
+        "trial_ends_at": null,
+        "current_period_end": "2026-06-13",
+        "cancelled_at": null,
+        "has_ai_addon": false
+    },
+    "features": ["invoicing", "tally_sync", "group_chat", "ai_assistant"]
+}
+```
+
+When no subscription exists:
+```json
+{ "subscription": null, "features": [] }
+```
+
+---
+
+### GET `/api/mobile/tenants/{tenant}/billing/plans`
+
+Returns available plans for this tenant to subscribe to.
+
+**Response `200`**
+```json
+{
+    "plans": [
+        {
+            "id": 2,
+            "slug": "business_solo",
+            "name": "Business – Solo Plan",
+            "price": 299900,
+            "features": ["invoicing", "tally_sync", "group_chat", "ai_assistant"]
+        },
+        {
+            "id": 3,
+            "slug": "personal",
+            "name": "Personal Plan",
+            "price": 99900,
+            "features": ["invoicing"]
+        }
+    ],
+    "addon_plan": {
+        "id": 5,
+        "slug": "ai_addon",
+        "name": "AI Assistance",
+        "price": 49900
+    }
+}
+```
+
+Notes:
+- `tally_managed_by_ca = true` tenants only see `business_ca`.
+- `ca_firm` tenants only see `ca_firm`.
+- `addon_plan` is `null` for non-personal tenants (addon only applies to Personal plan).
+
+---
+
+### POST `/api/mobile/tenants/{tenant}/billing/subscribe`
+
+Creates a Razorpay Subscription and returns the hosted checkout URL. Open the `short_url` in an in-app browser or WebView to complete payment.
+
+**Body**
+```json
+{ "plan_id": 2 }
+```
+
+**Response `200`**
+```json
+{ "short_url": "https://rzp.io/i/abc123" }
+```
+
+**Errors**
+- `422` — plan_id not valid for this tenant type.
+
+---
+
+### POST `/api/mobile/tenants/{tenant}/billing/cancel`
+
+Cancels the active subscription at the end of the current billing period.
+
+**Body** — none
+
+**Response `200`**
+```json
+{
+    "ok": true,
+    "message": "Subscription will remain active until the end of the current billing period."
+}
+```
+
+**Errors**
+- `422` — no active subscription to cancel.
+
+---
+
+### POST `/api/mobile/tenants/{tenant}/billing/addon`
+
+Adds the AI Assistance addon to a Personal plan subscription. Returns a Razorpay checkout URL.
+
+**Body** — none
+
+**Response `200`**
+```json
+{ "short_url": "https://rzp.io/i/xyz789" }
+```
+
+**Errors**
+- `422` — not on Personal plan, or no active subscription.
 
 ---
 

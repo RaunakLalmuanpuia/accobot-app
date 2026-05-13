@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\MobileAuthController;
+use App\Http\Controllers\Api\MobileBillingController;
 use App\Http\Controllers\Api\MobileCaClientController;
 use App\Http\Controllers\Api\MobileGroupChatController;
 use App\Http\Controllers\Api\MobileOnboardingController;
@@ -16,6 +17,7 @@ use App\Http\Controllers\Api\Tally\TallyInboundVouchersController;
 use App\Http\Controllers\Api\Tally\TallyOutboundController;
 use App\Http\Controllers\Api\TenantBankingController;
 use App\Http\Controllers\Api\TenantChatController;
+use App\Http\Controllers\RazorpayWebhookController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -126,6 +128,20 @@ Route::prefix('mobile/tenants/{tenant}')
         // POST /api/mobile/tenants/{tenant}/onboarding/dismiss
         Route::get('onboarding',         [MobileOnboardingController::class, 'status'])->name('onboarding.status');
         Route::post('onboarding/dismiss', [MobileOnboardingController::class, 'dismiss'])->name('onboarding.dismiss');
+
+        // ── Billing ───────────────────────────────────────────────────
+        // GET  /api/mobile/tenants/{tenant}/billing
+        // GET  /api/mobile/tenants/{tenant}/billing/plans
+        // POST /api/mobile/tenants/{tenant}/billing/subscribe
+        // POST /api/mobile/tenants/{tenant}/billing/cancel
+        // POST /api/mobile/tenants/{tenant}/billing/addon
+        Route::prefix('billing')->name('billing.')->group(function () {
+            Route::get('',         [MobileBillingController::class, 'show'])->name('show');
+            Route::get('plans',    [MobileBillingController::class, 'plans'])->name('plans');
+            Route::post('subscribe', [MobileBillingController::class, 'subscribe'])->name('subscribe');
+            Route::post('cancel',    [MobileBillingController::class, 'cancel'])->name('cancel');
+            Route::post('addon',     [MobileBillingController::class, 'subscribeAddon'])->name('addon');
+        });
 
         // ── CA Businesses (CA firm tenants only) ──────────────────────
         // GET    /api/mobile/tenants/{tenant}/ca-businesses
@@ -263,3 +279,7 @@ Route::prefix('VoucherAPI')->middleware('throttle:120,1')->group(function () {
     Route::post('update-contra-voucher',     [TallyConfirmController::class, 'contraVoucher']);
     Route::post('update-journal-voucher',    [TallyConfirmController::class, 'journalVoucher']);
 });
+
+// ── Razorpay Webhooks (no auth — signature verified in controller) ────
+Route::post('/webhooks/razorpay', [RazorpayWebhookController::class, 'handle'])
+    ->name('webhooks.razorpay');
