@@ -32,7 +32,9 @@ class EnsureActiveSubscription
 
         $subscription = $tenant->subscription()->with('plan', 'addons.plan')->first();
 
-        if ($subscription && $subscription->isAccessible()) {
+        // isAccessible() covers active + on-trial.
+        // isPending() covers the window between Razorpay checkout and webhook confirmation.
+        if ($subscription && ($subscription->isAccessible() || $subscription->isPending())) {
             return $next($request);
         }
 

@@ -24,7 +24,7 @@ class RazorpayService
      * Returns ['subscription_id' => '...', 'short_url' => '...']
      * The short_url is Razorpay's hosted payment page — redirect the user there.
      */
-    public function createSubscription(Plan $plan, string $email, string $name, ?string $phone = null, ?string $callbackUrl = null): array
+    public function createSubscription(Plan $plan, string $email, string $name, ?string $phone = null): array
     {
         $payload = [
             'plan_id'         => $plan->razorpay_plan_id,
@@ -40,10 +40,6 @@ class RazorpayService
                 'customer'  => $name,
             ],
         ];
-
-        if ($callbackUrl) {
-            $payload['callback_url'] = $callbackUrl;
-        }
 
         $subscription = $this->client->subscription->create($payload);
 

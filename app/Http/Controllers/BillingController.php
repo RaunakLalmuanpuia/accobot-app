@@ -9,7 +9,6 @@ use App\Models\SubscriptionAddon;
 use App\Models\Tenant;
 use App\Services\RazorpayService;
 use Illuminate\Http\Request;
-use Razorpay\Api\Errors\SignatureVerificationError;
 
 class BillingController extends Controller
 {
@@ -80,14 +79,10 @@ class BillingController extends Controller
 
         $addonPlan = Plan::where('slug', 'ai_addon')->where('is_active', true)->firstOrFail();
 
-        $callbackUrl = route('billing.index', $tenant);
-
         $result = $razorpay->createSubscription(
             $addonPlan,
             $request->user()->email,
             $request->user()->name,
-            null,
-            $callbackUrl,
         );
 
         SubscriptionAddon::updateOrCreate(
@@ -126,14 +121,11 @@ class BillingController extends Controller
 
         abort_if(blank($plan->razorpay_plan_id), 422, 'This plan is not yet configured for payment. Please contact support.');
 
-        $callbackUrl = route('billing.success', $tenant);
-
         $result = $razorpay->createSubscription(
             $plan,
             $request->user()->email,
             $request->user()->name,
             $request->user()->phone ?? null,
-            $callbackUrl,
         );
 
         // Upsert the local subscription record so the webhook can match it later
@@ -153,38 +145,14 @@ class BillingController extends Controller
         return redirect()->away($result['short_url']);
     }
 
-    public function success(Request $request, Tenant $tenant, RazorpayService $razorpay)
+    public function success(Tenant $tenant)
     {
-        // Razorpay redirects here after mandate authorization.
-        // Verify the callback signature before optimistically activating, so an
-        // attacker cannot trigger activation by hitting this URL directly.
-        $paymentId      = $request->query('razorpay_payment_id');
-        $subscriptionId = $request->query('razorpay_subscription_id');
-        $signature      = $request->query('razorpay_signature');
-
-        $subscription = $tenant->subscription;
-
-        if ($subscription && $subscription->isPending() && $paymentId && $subscriptionId && $signature) {
-            try {
-                $razorpay->verifyPaymentSignature($paymentId, $subscriptionId, $signature);
-
-                $subscription->update(['status' => 'active']);
-
-                AuditEvent::log(
-                    'subscription.started',
-                    ['plan' => $subscription->plan->slug ?? null, 'source' => 'callback'],
-                    null,
-                    $tenant->id,
-                    'system',
-                );
-            } catch (SignatureVerificationError $e) {
-                // Signature mismatch — leave as pending; the webhook will activate
-            }
-        }
-
+        // Razorpay's hosted page does not redirect back after mandate setup.
+        // Users land here by navigating back themselves. Subscription activation
+        // is handled entirely by the subscription.activated webhook.
         return redirect()
             ->route('dashboard', $tenant)
-            ->with('success', 'Your subscription is now active. Welcome to Accobot!');
+            ->with('info', 'Your payment is being processed. You\'ll get access as soon as it\'s confirmed — usually within a minute.');
     }
 
     private function availablePlans(Tenant $tenant)
