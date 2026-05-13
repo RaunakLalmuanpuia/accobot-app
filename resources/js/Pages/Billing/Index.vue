@@ -1,6 +1,7 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { router, usePage } from '@inertiajs/vue3'
+import axios from 'axios'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import { Head } from '@inertiajs/vue3'
 
@@ -11,7 +12,7 @@ const props = defineProps({
     addonPlan:      { type: Object, default: null },
 })
 
-const page      = usePage()
+const page       = usePage()
 const cancelling = ref(false)
 const addingAddon = ref(false)
 const showCancelConfirm = ref(false)
@@ -64,11 +65,44 @@ function changePlan(planId) {
     router.visit(route('billing.select-plan', props.tenant))
 }
 
-function addAddon() {
+onMounted(() => {
+    if (!document.querySelector('script[src*="checkout.razorpay.com"]')) {
+        const script = document.createElement('script')
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+        document.head.appendChild(script)
+    }
+})
+
+async function addAddon() {
     addingAddon.value = true
-    router.post(route('billing.addon', props.tenant), {}, {
-        onFinish: () => { addingAddon.value = false },
-    })
+
+    try {
+        const { data } = await axios.post(route('billing.addon', props.tenant), {})
+
+        const options = {
+            key:             data.key_id,
+            subscription_id: data.subscription_id,
+            name:            'Accobot',
+            description:     'AI Assistance Addon',
+            handler: function () {
+                router.reload({ preserveScroll: true })
+            },
+            modal: {
+                ondismiss: () => { addingAddon.value = false },
+            },
+            prefill: {
+                name:  page.props.auth.user.name,
+                email: page.props.auth.user.email,
+            },
+            theme: { color: '#7c3aed' },
+        }
+
+        const rzp = new window.Razorpay(options)
+        rzp.on('payment.failed', () => { addingAddon.value = false })
+        rzp.open()
+    } catch (err) {
+        addingAddon.value = false
+    }
 }
 </script>
 

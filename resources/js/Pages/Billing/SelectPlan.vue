@@ -1,6 +1,7 @@
 <script setup>
-import { computed, ref } from 'vue'
-import { router, useForm, usePage } from '@inertiajs/vue3'
+import { computed, ref, onMounted } from 'vue'
+import { usePage } from '@inertiajs/vue3'
+import axios from 'axios'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import { Head } from '@inertiajs/vue3'
 
@@ -13,6 +14,7 @@ const props = defineProps({
 const page = usePage()
 const selectedPlanId = ref(null)
 const submitting = ref(false)
+const errorMsg = ref(null)
 
 const trialExpired = computed(() =>
     props.subscription?.status === 'trialing' &&
@@ -34,12 +36,52 @@ const featureLabels = {
     ca_clients:    'CA Client Management',
 }
 
-function subscribe() {
-    if (!selectedPlanId.value) return
+onMounted(() => {
+    if (!document.querySelector('script[src*="checkout.razorpay.com"]')) {
+        const script = document.createElement('script')
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+        document.head.appendChild(script)
+    }
+})
+
+async function subscribe() {
+    if (!selectedPlanId.value || submitting.value) return
     submitting.value = true
-    router.post(route('billing.subscribe', props.tenant), { plan_id: selectedPlanId.value }, {
-        onFinish: () => { submitting.value = false },
-    })
+    errorMsg.value = null
+
+    try {
+        const { data } = await axios.post(route('billing.subscribe', props.tenant), {
+            plan_id: selectedPlanId.value,
+        })
+
+        const options = {
+            key:             data.key_id,
+            subscription_id: data.subscription_id,
+            name:            'Accobot',
+            description:     'Monthly Subscription',
+            handler: function () {
+                window.location.href = route('dashboard', props.tenant)
+            },
+            modal: {
+                ondismiss: () => { submitting.value = false },
+            },
+            prefill: {
+                name:  page.props.auth.user.name,
+                email: page.props.auth.user.email,
+            },
+            theme: { color: '#7c3aed' },
+        }
+
+        const rzp = new window.Razorpay(options)
+        rzp.on('payment.failed', () => {
+            submitting.value = false
+            errorMsg.value = 'Payment failed. Please try again.'
+        })
+        rzp.open()
+    } catch (err) {
+        submitting.value = false
+        errorMsg.value = err.response?.data?.message ?? 'Something went wrong. Please try again.'
+    }
 }
 </script>
 
@@ -67,6 +109,11 @@ function subscribe() {
                     <p v-else class="mt-2 text-sm text-gray-500">
                         Select a plan to get started with <span class="font-medium text-gray-700">{{ tenant.name }}</span>.
                     </p>
+                </div>
+
+                <!-- Error -->
+                <div v-if="errorMsg" class="mb-6 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 text-center">
+                    {{ errorMsg }}
                 </div>
 
                 <!-- Plan cards -->
@@ -130,7 +177,7 @@ function subscribe() {
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
                         </svg>
-                        {{ submitting ? 'Redirecting to payment…' : 'Continue to Payment' }}
+                        {{ submitting ? 'Opening payment…' : 'Continue to Payment' }}
                     </button>
                     <p class="mt-3 text-xs text-gray-400">
                         Secure payment via Razorpay. Cancel anytime.
