@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { Link, useForm, router } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import { hasPermission } from '@/utils/permissions'
@@ -104,12 +104,58 @@ function calcOpeningValue(ba) {
     ba.OpeningValue = parseFloat((qty * rate).toFixed(2))
 }
 
+function recalcOpeningValue() {
+    const qty  = parseFloat(form.opening_balance) || 0
+    const rate = parseFloat(form.opening_rate)    || 0
+    if (qty && rate) form.opening_value = parseFloat((qty * rate).toFixed(2))
+}
+
+function recalcClosingValue() {
+    const qty  = parseFloat(form.closing_balance) || 0
+    const rate = parseFloat(form.closing_rate)    || 0
+    if (qty && rate) form.closing_value = parseFloat((qty * rate).toFixed(2))
+}
+
+// SGST/CGST auto-fill from IGST ÷ 2
+watch(() => form.igst_rate, (val) => {
+    const half = parseFloat((parseFloat(val) / 2).toFixed(2)) || ''
+    form.sgst_rate = half
+    form.cgst_rate = half
+})
+
+// Conditional visibility
+const showGST       = computed(() => form.is_gst_applicable === '1' || form.is_gst_applicable === 'Applicable')
+const showAltUnit   = computed(() => !!form.alternate_unit)
+
+const totalBatchOpening = computed(() =>
+    form.batch_allocations.reduce((sum, ba) => sum + (parseFloat(ba.OpeningBalance) || 0), 0)
+)
+
+const remainingOpening = computed(() =>
+    (parseFloat(form.opening_balance) || 0) - totalBatchOpening.value
+)
+
 const batchOpeningError = computed(() => {
-    const total = form.batch_allocations.reduce((sum, ba) => sum + (parseFloat(ba.OpeningBalance) || 0), 0)
-    const max   = parseFloat(form.opening_balance) || 0
-    if (total > max) return `Total batch opening balance (${total}) exceeds opening balance (${max}).`
+    if (totalBatchOpening.value > (parseFloat(form.opening_balance) || 0)) {
+        return `Total batch opening balance (${totalBatchOpening.value}) exceeds opening balance (${form.opening_balance}).`
+    }
     return null
 })
+
+function maxForBatch(i) {
+    const others = form.batch_allocations
+        .reduce((sum, ba, j) => j === i ? sum : sum + (parseFloat(ba.OpeningBalance) || 0), 0)
+    return (parseFloat(form.opening_balance) || 0) - others
+}
+
+function clampBatchOpening(ba, i) {
+    calcOpeningValue(ba)
+    const limit = maxForBatch(i)
+    if ((parseFloat(ba.OpeningBalance) || 0) > limit) {
+        ba.OpeningBalance = limit
+        calcOpeningValue(ba)
+    }
+}
 
 function selectGodown(ba, godown) {
     if (godown) {
@@ -293,7 +339,7 @@ function destroy(item) {
     <Teleport to="body">
         <div v-if="modal !== null" class="fixed inset-0 z-40 flex justify-end">
             <div class="absolute inset-0 bg-black/30" @click="closeModal" />
-            <div class="relative z-50 w-full max-w-md bg-white shadow-xl flex flex-col">
+            <div class="relative z-50 w-full max-w-2xl bg-white shadow-xl flex flex-col">
                 <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
                     <h2 class="text-base font-semibold text-gray-900">
                         {{ isEditing ? 'Edit Stock Item' : 'New Stock Item' }}
@@ -392,7 +438,7 @@ function destroy(item) {
                             </select>
                         </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-3">
+                    <div v-if="showAltUnit" class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Conversion</label>
                             <input v-model="form.conversion" type="number" step="0.0001" min="0" placeholder="0"
@@ -405,7 +451,7 @@ function destroy(item) {
                         </div>
                     </div>
 
-                    <!-- GST -->
+                    <!-- GST Applicable + HSN always visible -->
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">GST Applicable</label>
@@ -417,61 +463,66 @@ function destroy(item) {
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Taxability</label>
-                            <select v-model="form.taxability"
-                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
-                                <option value="">— Select —</option>
-                                <option>Taxable</option>
-                                <option>Non-Taxable</option>
-                                <option>Exempt</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Calculation Type</label>
-                            <select v-model="form.calculation_type"
-                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
-                                <option value="">— Select —</option>
-                                <option>On Value</option>
-                                <option>On MRP Rate</option>
-                                <option>Based on Qty</option>
-                                <option>Fixed Amount</option>
-                            </select>
-                        </div>
-                        <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">HSN Code</label>
                             <input v-model="form.hsn_code" type="text" placeholder="e.g. 8471"
                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
                         </div>
                     </div>
 
-                    <!-- GST Rates -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">GST Rates (%)</label>
-                        <div class="grid grid-cols-4 gap-2">
+                    <!-- GST detail fields — only when Applicable -->
+                    <template v-if="showGST">
+                        <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <p class="text-xs text-gray-400 mb-1">IGST</p>
-                                <input v-model="form.igst_rate" type="number" step="0.01" min="0" max="100" placeholder="0"
-                                       class="w-full rounded-lg border border-gray-300 px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Taxability</label>
+                                <select v-model="form.taxability"
+                                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
+                                    <option value="">— Select —</option>
+                                    <option>Taxable</option>
+                                    <option>Nil Rated</option>
+                                    <option>Exempt</option>
+                                    <option>Non-GST Supply</option>
+                                </select>
                             </div>
                             <div>
-                                <p class="text-xs text-gray-400 mb-1">SGST</p>
-                                <input v-model="form.sgst_rate" type="number" step="0.01" min="0" max="100" placeholder="0"
-                                       class="w-full rounded-lg border border-gray-300 px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                            </div>
-                            <div>
-                                <p class="text-xs text-gray-400 mb-1">CGST</p>
-                                <input v-model="form.cgst_rate" type="number" step="0.01" min="0" max="100" placeholder="0"
-                                       class="w-full rounded-lg border border-gray-300 px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                            </div>
-                            <div>
-                                <p class="text-xs text-gray-400 mb-1">CESS</p>
-                                <input v-model="form.cess_rate" type="number" step="0.01" min="0" max="100" placeholder="0"
-                                       class="w-full rounded-lg border border-gray-300 px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Calculation Type</label>
+                                <select v-model="form.calculation_type"
+                                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
+                                    <option value="">— Select —</option>
+                                    <option>On Value</option>
+                                    <option>On MRP Rate</option>
+                                    <option>Based on Qty</option>
+                                    <option>Fixed Amount</option>
+                                </select>
                             </div>
                         </div>
-                    </div>
+
+                        <!-- GST Rates — SGST/CGST auto-fill from IGST ÷ 2 -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">GST Rates (%)</label>
+                            <div class="grid grid-cols-4 gap-2">
+                                <div>
+                                    <p class="text-xs text-gray-400 mb-1">IGST</p>
+                                    <input v-model="form.igst_rate" type="number" step="0.01" min="0" max="100" placeholder="0"
+                                           class="w-full rounded-lg border border-gray-300 px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-400 mb-1">SGST <span class="text-gray-300">(auto)</span></p>
+                                    <input v-model="form.sgst_rate" type="number" step="0.01" min="0" max="100" placeholder="0"
+                                           class="w-full rounded-lg border border-gray-300 px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-400 mb-1">CGST <span class="text-gray-300">(auto)</span></p>
+                                    <input v-model="form.cgst_rate" type="number" step="0.01" min="0" max="100" placeholder="0"
+                                           class="w-full rounded-lg border border-gray-300 px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-400 mb-1">CESS</p>
+                                    <input v-model="form.cess_rate" type="number" step="0.01" min="0" max="100" placeholder="0"
+                                           class="w-full rounded-lg border border-gray-300 px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                                </div>
+                            </div>
+                        </div>
+                    </template>
 
                     <!-- MRP -->
                     <div>
@@ -487,15 +538,17 @@ function destroy(item) {
                             <div>
                                 <p class="text-xs text-gray-400 mb-1">Balance (Qty)</p>
                                 <input v-model="form.opening_balance" type="number" step="0.0001" placeholder="0"
+                                       @input="recalcOpeningValue"
                                        class="w-full rounded-lg border border-gray-300 px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
                             </div>
                             <div>
                                 <p class="text-xs text-gray-400 mb-1">Rate</p>
                                 <input v-model="form.opening_rate" type="number" step="0.01" placeholder="0"
+                                       @input="recalcOpeningValue"
                                        class="w-full rounded-lg border border-gray-300 px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
                             </div>
                             <div>
-                                <p class="text-xs text-gray-400 mb-1">Value</p>
+                                <p class="text-xs text-gray-400 mb-1">Value <span class="text-gray-300">(auto)</span></p>
                                 <input v-model="form.opening_value" type="number" step="0.01" placeholder="0"
                                        class="w-full rounded-lg border border-gray-300 px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
                             </div>
@@ -509,15 +562,17 @@ function destroy(item) {
                             <div>
                                 <p class="text-xs text-gray-400 mb-1">Balance (Qty)</p>
                                 <input v-model="form.closing_balance" type="number" step="0.0001" placeholder="0"
+                                       @input="recalcClosingValue"
                                        class="w-full rounded-lg border border-gray-300 px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
                             </div>
                             <div>
                                 <p class="text-xs text-gray-400 mb-1">Rate</p>
                                 <input v-model="form.closing_rate" type="number" step="0.01" placeholder="0"
+                                       @input="recalcClosingValue"
                                        class="w-full rounded-lg border border-gray-300 px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
                             </div>
                             <div>
-                                <p class="text-xs text-gray-400 mb-1">Value</p>
+                                <p class="text-xs text-gray-400 mb-1">Value <span class="text-gray-300">(auto)</span></p>
                                 <input v-model="form.closing_value" type="number" step="0.01" placeholder="0"
                                        class="w-full rounded-lg border border-gray-300 px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
                             </div>
@@ -528,8 +583,14 @@ function destroy(item) {
                     <div>
                         <div class="flex items-center justify-between mb-2">
                             <label class="text-sm font-medium text-gray-700">Batch Allocations (Godowns)</label>
-                            <button type="button" @click="addBatchAlloc"
-                                    class="text-xs text-violet-600 hover:text-violet-800 font-medium">+ Add</button>
+                            <div class="flex items-center gap-3">
+                                <span v-if="form.opening_balance" class="text-xs"
+                                      :class="remainingOpening < 0 ? 'text-red-500 font-medium' : 'text-gray-400'">
+                                    Remaining: {{ remainingOpening }}
+                                </span>
+                                <button type="button" @click="addBatchAlloc"
+                                        class="text-xs text-violet-600 hover:text-violet-800 font-medium">+ Add</button>
+                            </div>
                         </div>
                         <div v-for="(ba, i) in form.batch_allocations" :key="i"
                              class="border border-gray-200 rounded-lg p-3 mb-2 space-y-2">
@@ -554,9 +615,12 @@ function destroy(item) {
                                            class="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
                                 </div>
                                 <div>
-                                    <p class="text-xs text-gray-400 mb-1">Opening Balance</p>
-                                    <input v-model="ba.OpeningBalance" @input="calcOpeningValue(ba)"
-                                           type="number" step="0.0001" placeholder="0"
+                                    <p class="text-xs text-gray-400 mb-1">
+                                        Opening Balance
+                                        <span class="text-gray-300">(max {{ maxForBatch(i) }})</span>
+                                    </p>
+                                    <input v-model="ba.OpeningBalance" @input="clampBatchOpening(ba, i)"
+                                           type="number" step="0.0001" min="0" :max="maxForBatch(i)" placeholder="0"
                                            class="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
                                 </div>
                                 <div>
