@@ -447,43 +447,47 @@ function destroyCat(cat) {
     <Teleport to="body">
         <div v-if="groupModal !== null" class="fixed inset-0 z-40 flex justify-end">
             <div class="absolute inset-0 bg-black/30" @click="closeGroupModal" />
-            <div class="relative z-50 w-full max-w-md bg-white shadow-xl flex flex-col">
+            <div class="relative z-50 w-full max-w-lg bg-white shadow-xl flex flex-col">
                 <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
                     <h2 class="text-base font-semibold text-gray-900">
                         {{ isEditingGroup ? 'Edit Stock Group' : 'New Stock Group' }}
                     </h2>
                     <button @click="closeGroupModal" class="text-gray-400 hover:text-gray-600 text-lg leading-none">✕</button>
                 </div>
-                <form @submit.prevent="submitGroup" class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Name <span class="text-red-500">*</span></label>
-                        <input v-model="groupForm.name" type="text" placeholder="e.g. Electronics"
-                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                        <p v-if="groupForm.errors.name" class="mt-1 text-xs text-red-500">{{ groupForm.errors.name }}</p>
+                <form @submit.prevent="submitGroup" class="flex-1 overflow-y-auto divide-y divide-gray-100">
+                    <div class="tally-section-header">Basic Information</div>
+
+                    <div class="tally-row">
+                        <span class="tally-label">Name <span class="text-red-500">*</span></span>
+                        <div class="tally-input">
+                            <input v-model="groupForm.name" type="text" placeholder="e.g. Electronics" class="tally-field" />
+                            <p v-if="groupForm.errors.name" class="mt-0.5 text-xs text-red-500">{{ groupForm.errors.name }}</p>
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Parent Group</label>
-                        <select v-model="groupForm.parent"
-                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
-                            <option value="">— None —</option>
-                            <option v-for="n in groupParentOptions" :key="n" :value="n">{{ n }}</option>
-                        </select>
+
+                    <div class="tally-row">
+                        <span class="tally-label">Parent Group</span>
+                        <div class="tally-input">
+                            <select v-model="groupForm.parent" class="tally-field">
+                                <option value="">— None —</option>
+                                <option v-for="n in groupParentOptions" :key="n" :value="n">{{ n }}</option>
+                            </select>
+                        </div>
                     </div>
-                    <div>
-                        <div class="flex items-center justify-between mb-2">
-                            <label class="text-sm font-medium text-gray-700">Aliases</label>
+
+                    <div class="tally-row items-start">
+                        <span class="tally-label pt-2.5">Aliases</span>
+                        <div class="tally-input">
+                            <div v-for="(al, i) in groupForm.aliases" :key="i" class="flex gap-2 mb-1.5">
+                                <input v-model="al.Alias" type="text" placeholder="Alias name" class="tally-field flex-1 border border-gray-200 rounded px-2 py-1" />
+                                <button type="button" @click="removeGroupAlias(i)" class="text-xs text-red-400 hover:text-red-600 px-1">✕</button>
+                            </div>
                             <button type="button" @click="addGroupAlias"
-                                    class="text-xs text-violet-600 hover:text-violet-800 font-medium">+ Add</button>
+                                    class="mt-1 text-xs text-violet-600 hover:text-violet-800 font-medium">+ Add Alias</button>
                         </div>
-                        <div v-for="(al, i) in groupForm.aliases" :key="i" class="flex gap-2 mb-2">
-                            <input v-model="al.Alias" type="text" placeholder="Alias name"
-                                   class="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                            <button type="button" @click="removeGroupAlias(i)"
-                                    class="text-xs text-red-400 hover:text-red-600 px-2">✕</button>
-                        </div>
-                        <p v-if="!groupForm.aliases.length" class="text-xs text-gray-400">No aliases added.</p>
                     </div>
-                    <div class="flex gap-3 pt-2 border-t border-gray-100">
+
+                    <div class="flex gap-3 px-4 py-4">
                         <button type="submit" :disabled="groupForm.processing"
                                 class="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 transition disabled:opacity-50">
                             {{ isEditingGroup ? 'Update' : 'Create' }}
@@ -502,30 +506,36 @@ function destroyCat(cat) {
     <Teleport to="body">
         <div v-if="godownModal !== null" class="fixed inset-0 z-40 flex justify-end">
             <div class="absolute inset-0 bg-black/30" @click="closeGodownModal" />
-            <div class="relative z-50 w-full max-w-md bg-white shadow-xl flex flex-col">
+            <div class="relative z-50 w-full max-w-lg bg-white shadow-xl flex flex-col">
                 <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
                     <h2 class="text-base font-semibold text-gray-900">
                         {{ isEditingGodown ? 'Edit Godown' : 'New Godown' }}
                     </h2>
                     <button @click="closeGodownModal" class="text-gray-400 hover:text-gray-600 text-lg leading-none">✕</button>
                 </div>
-                <form @submit.prevent="submitGodown" class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Name <span class="text-red-500">*</span></label>
-                        <input v-model="godownForm.name" type="text" placeholder="e.g. Main Warehouse"
-                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                        <p v-if="godownForm.errors.name" class="mt-1 text-xs text-red-500">{{ godownForm.errors.name }}</p>
+                <form @submit.prevent="submitGodown" class="flex-1 overflow-y-auto divide-y divide-gray-100">
+                    <div class="tally-section-header">Basic Information</div>
+
+                    <div class="tally-row">
+                        <span class="tally-label">Name <span class="text-red-500">*</span></span>
+                        <div class="tally-input">
+                            <input v-model="godownForm.name" type="text" placeholder="e.g. Main Warehouse" class="tally-field" />
+                            <p v-if="godownForm.errors.name" class="mt-0.5 text-xs text-red-500">{{ godownForm.errors.name }}</p>
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Under</label>
-                        <select v-model="godownForm.under"
-                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
-                            <option value="">— Select —</option>
-                            <option value="Primary">Primary</option>
-                            <option v-for="n in godownUnderOptions" :key="n" :value="n">{{ n }}</option>
-                        </select>
+
+                    <div class="tally-row">
+                        <span class="tally-label">Under</span>
+                        <div class="tally-input">
+                            <select v-model="godownForm.under" class="tally-field">
+                                <option value="">— Select —</option>
+                                <option value="Primary">Primary</option>
+                                <option v-for="n in godownUnderOptions" :key="n" :value="n">{{ n }}</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="flex gap-3 pt-2 border-t border-gray-100">
+
+                    <div class="flex gap-3 px-4 py-4">
                         <button type="submit" :disabled="godownForm.processing"
                                 class="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 transition disabled:opacity-50">
                             {{ isEditingGodown ? 'Update' : 'Create' }}
@@ -544,43 +554,47 @@ function destroyCat(cat) {
     <Teleport to="body">
         <div v-if="catModal !== null" class="fixed inset-0 z-40 flex justify-end">
             <div class="absolute inset-0 bg-black/30" @click="closeCatModal" />
-            <div class="relative z-50 w-full max-w-md bg-white shadow-xl flex flex-col">
+            <div class="relative z-50 w-full max-w-lg bg-white shadow-xl flex flex-col">
                 <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
                     <h2 class="text-base font-semibold text-gray-900">
                         {{ isEditingCat ? 'Edit Stock Category' : 'New Stock Category' }}
                     </h2>
                     <button @click="closeCatModal" class="text-gray-400 hover:text-gray-600 text-lg leading-none">✕</button>
                 </div>
-                <form @submit.prevent="submitCat" class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Name <span class="text-red-500">*</span></label>
-                        <input v-model="catForm.name" type="text" placeholder="e.g. Accessories"
-                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                        <p v-if="catForm.errors.name" class="mt-1 text-xs text-red-500">{{ catForm.errors.name }}</p>
+                <form @submit.prevent="submitCat" class="flex-1 overflow-y-auto divide-y divide-gray-100">
+                    <div class="tally-section-header">Basic Information</div>
+
+                    <div class="tally-row">
+                        <span class="tally-label">Name <span class="text-red-500">*</span></span>
+                        <div class="tally-input">
+                            <input v-model="catForm.name" type="text" placeholder="e.g. Accessories" class="tally-field" />
+                            <p v-if="catForm.errors.name" class="mt-0.5 text-xs text-red-500">{{ catForm.errors.name }}</p>
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Parent Category</label>
-                        <select v-model="catForm.parent"
-                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
-                            <option value="">— None —</option>
-                            <option v-for="n in catParentOptions" :key="n" :value="n">{{ n }}</option>
-                        </select>
+
+                    <div class="tally-row">
+                        <span class="tally-label">Parent Category</span>
+                        <div class="tally-input">
+                            <select v-model="catForm.parent" class="tally-field">
+                                <option value="">— None —</option>
+                                <option v-for="n in catParentOptions" :key="n" :value="n">{{ n }}</option>
+                            </select>
+                        </div>
                     </div>
-                    <div>
-                        <div class="flex items-center justify-between mb-2">
-                            <label class="text-sm font-medium text-gray-700">Aliases</label>
+
+                    <div class="tally-row items-start">
+                        <span class="tally-label pt-2.5">Aliases</span>
+                        <div class="tally-input">
+                            <div v-for="(al, i) in catForm.aliases" :key="i" class="flex gap-2 mb-1.5">
+                                <input v-model="al.Alias" type="text" placeholder="Alias name" class="tally-field flex-1 border border-gray-200 rounded px-2 py-1" />
+                                <button type="button" @click="removeCatAlias(i)" class="text-xs text-red-400 hover:text-red-600 px-1">✕</button>
+                            </div>
                             <button type="button" @click="addCatAlias"
-                                    class="text-xs text-violet-600 hover:text-violet-800 font-medium">+ Add</button>
+                                    class="mt-1 text-xs text-violet-600 hover:text-violet-800 font-medium">+ Add Alias</button>
                         </div>
-                        <div v-for="(al, i) in catForm.aliases" :key="i" class="flex gap-2 mb-2">
-                            <input v-model="al.Alias" type="text" placeholder="Alias name"
-                                   class="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                            <button type="button" @click="removeCatAlias(i)"
-                                    class="text-xs text-red-400 hover:text-red-600 px-2">✕</button>
-                        </div>
-                        <p v-if="!catForm.aliases.length" class="text-xs text-gray-400">No aliases added.</p>
                     </div>
-                    <div class="flex gap-3 pt-2 border-t border-gray-100">
+
+                    <div class="flex gap-3 px-4 py-4">
                         <button type="submit" :disabled="catForm.processing"
                                 class="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 transition disabled:opacity-50">
                             {{ isEditingCat ? 'Update' : 'Create' }}
@@ -595,3 +609,11 @@ function destroyCat(cat) {
         </div>
     </Teleport>
 </template>
+
+<style scoped>
+.tally-row   { @apply flex items-stretch border-b border-gray-100; }
+.tally-label { @apply w-44 shrink-0 text-sm text-gray-600 bg-gray-50 px-4 py-2.5 border-r border-gray-100 flex items-center; }
+.tally-input { @apply flex-1 px-3 py-2; }
+.tally-field { @apply w-full text-sm border-0 outline-none focus:ring-1 focus:ring-violet-400 rounded bg-transparent; }
+.tally-section-header { @apply bg-violet-50 text-violet-700 text-xs font-semibold uppercase tracking-wider px-4 py-1.5 border-b border-violet-100; }
+</style>

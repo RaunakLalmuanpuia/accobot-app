@@ -204,7 +204,7 @@ function destroy(group) {
     <Teleport to="body">
         <div v-if="modal !== null" class="fixed inset-0 z-40 flex justify-end">
             <div class="absolute inset-0 bg-black/30" @click="closeModal" />
-            <div class="relative z-50 w-full max-w-md bg-white shadow-xl flex flex-col">
+            <div class="relative z-50 w-full max-w-lg bg-white shadow-xl flex flex-col">
                 <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
                     <h2 class="text-base font-semibold text-gray-900">
                         {{ isEditing ? 'Edit Ledger Group' : 'New Ledger Group' }}
@@ -212,77 +212,96 @@ function destroy(group) {
                     <button @click="closeModal" class="text-gray-400 hover:text-gray-600 text-lg leading-none">✕</button>
                 </div>
 
-                <form @submit.prevent="submit" class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                            Name <span class="text-red-500">*</span>
-                        </label>
-                        <input v-model="form.name" type="text" placeholder="e.g. Sundry Debtors"
-                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                        <p v-if="form.errors.name" class="mt-1 text-xs text-red-500">{{ form.errors.name }}</p>
+                <form @submit.prevent="submit" class="flex-1 overflow-y-auto divide-y divide-gray-100">
+                    <div class="tally-section-header">Basic Information</div>
+
+                    <div class="tally-row">
+                        <span class="tally-label">Name <span class="text-red-500">*</span></span>
+                        <div class="tally-input">
+                            <input v-model="form.name" type="text" placeholder="e.g. Sundry Debtors" class="tally-field" />
+                            <p v-if="form.errors.name" class="mt-0.5 text-xs text-red-500">{{ form.errors.name }}</p>
+                        </div>
                     </div>
 
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                            Under (Parent Group) <span class="text-red-500">*</span>
-                        </label>
-                        <select :value="form.under_name" @change="onUnderChange($event.target.value)"
-                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
-                            <option value="">— Select Parent Group —</option>
-                            <option v-for="n in groupNameOptions" :key="n" :value="n">{{ n }}</option>
-                        </select>
-                        <p v-if="form.errors.under_name" class="mt-1 text-xs text-red-500">{{ form.errors.under_name }}</p>
+                    <div class="tally-row">
+                        <span class="tally-label">Under (Parent) <span class="text-red-500">*</span></span>
+                        <div class="tally-input">
+                            <select :value="form.under_name" @change="onUnderChange($event.target.value)" class="tally-field">
+                                <option value="">— Select Parent Group —</option>
+                                <option v-for="n in groupNameOptions" :key="n" :value="n">{{ n }}</option>
+                            </select>
+                            <p v-if="form.errors.under_name" class="mt-0.5 text-xs text-red-500">{{ form.errors.under_name }}</p>
+                        </div>
                     </div>
 
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Nature of Group</label>
-                        <select v-model="form.nature_of_group"
-                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
-                            <option value="">— Select —</option>
-                            <option>Assets</option>
-                            <option>Liabilities</option>
-                            <option>Income</option>
-                            <option>Expenses</option>
-                        </select>
+                    <div class="tally-row">
+                        <span class="tally-label">Nature of Group</span>
+                        <div class="tally-input">
+                            <select v-model="form.nature_of_group" class="tally-field">
+                                <option value="">— Select —</option>
+                                <option>Assets</option>
+                                <option>Liabilities</option>
+                                <option>Income</option>
+                                <option>Expenses</option>
+                            </select>
+                        </div>
                     </div>
 
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Method to Allocate</label>
-                        <select v-model="form.method_to_allocate"
-                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
-                            <option value="">— Select —</option>
-                            <option>Not Applicable</option>
-                            <option>Appropriate by Qty</option>
-                            <option>Appropriate by Value</option>
-                        </select>
+                    <div class="tally-row">
+                        <span class="tally-label">Method to Allocate</span>
+                        <div class="tally-input">
+                            <select v-model="form.method_to_allocate" class="tally-field">
+                                <option value="">— Select —</option>
+                                <option>Not Applicable</option>
+                                <option>Appropriate by Qty</option>
+                                <option>Appropriate by Value</option>
+                            </select>
+                        </div>
                     </div>
 
-                    <!-- Boolean flags -->
-                    <div class="space-y-2 pt-1">
-                        <label class="block text-sm font-medium text-gray-700">Flags</label>
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" v-model="form.is_addable"
-                                   class="rounded border-gray-300 text-violet-600 focus:ring-violet-500" />
-                            <span class="text-sm text-gray-700">Is Addable</span>
-                        </label>
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" v-model="form.is_sub_ledger"
-                                   class="rounded border-gray-300 text-violet-600 focus:ring-violet-500" />
-                            <span class="text-sm text-gray-700">Is Sub Ledger</span>
-                        </label>
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" v-model="form.is_deemed_positive"
-                                   class="rounded border-gray-300 text-violet-600 focus:ring-violet-500" />
-                            <span class="text-sm text-gray-700">Is Deemed Positive</span>
-                        </label>
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" v-model="form.used_for_calculation"
-                                   class="rounded border-gray-300 text-violet-600 focus:ring-violet-500" />
-                            <span class="text-sm text-gray-700">Used for Calculation</span>
-                        </label>
+                    <div class="tally-section-header">Flags</div>
+
+                    <div class="tally-row">
+                        <span class="tally-label">Is Addable</span>
+                        <div class="tally-input">
+                            <select v-model="form.is_addable" class="tally-field">
+                                <option :value="false">No</option>
+                                <option :value="true">Yes</option>
+                            </select>
+                        </div>
                     </div>
 
-                    <div class="flex gap-3 pt-2 border-t border-gray-100">
+                    <div class="tally-row">
+                        <span class="tally-label">Is Sub Ledger</span>
+                        <div class="tally-input">
+                            <select v-model="form.is_sub_ledger" class="tally-field">
+                                <option :value="false">No</option>
+                                <option :value="true">Yes</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="tally-row">
+                        <span class="tally-label">Is Deemed Positive</span>
+                        <div class="tally-input">
+                            <select v-model="form.is_deemed_positive" class="tally-field">
+                                <option :value="false">No</option>
+                                <option :value="true">Yes</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="tally-row">
+                        <span class="tally-label">Used for Calculation</span>
+                        <div class="tally-input">
+                            <select v-model="form.used_for_calculation" class="tally-field">
+                                <option :value="false">No</option>
+                                <option :value="true">Yes</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-3 px-4 py-4">
                         <button type="submit" :disabled="form.processing"
                                 class="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 transition disabled:opacity-50">
                             {{ isEditing ? 'Update' : 'Create' }}
@@ -297,3 +316,11 @@ function destroy(group) {
         </div>
     </Teleport>
 </template>
+
+<style scoped>
+.tally-row   { @apply flex items-stretch border-b border-gray-100; }
+.tally-label { @apply w-44 shrink-0 text-sm text-gray-600 bg-gray-50 px-4 py-2.5 border-r border-gray-100 flex items-center; }
+.tally-input { @apply flex-1 px-3 py-2; }
+.tally-field { @apply w-full text-sm border-0 outline-none focus:ring-1 focus:ring-violet-400 rounded bg-transparent; }
+.tally-section-header { @apply bg-violet-50 text-violet-700 text-xs font-semibold uppercase tracking-wider px-4 py-1.5 border-b border-violet-100; }
+</style>

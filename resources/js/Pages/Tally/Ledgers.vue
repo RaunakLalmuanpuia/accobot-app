@@ -381,7 +381,7 @@ function destroy(ledger) {
     <Teleport to="body">
         <div v-if="modal !== null" class="fixed inset-0 z-40 flex justify-end">
             <div class="absolute inset-0 bg-black/30" @click="closeModal" />
-            <div class="relative z-50 w-full max-w-xl bg-white shadow-xl flex flex-col">
+            <div class="relative z-50 w-full max-w-2xl bg-white shadow-xl flex flex-col">
                 <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
                     <h2 class="text-base font-semibold text-gray-900">
                         {{ isEditing ? 'Edit Ledger' : 'New Ledger' }}
@@ -389,139 +389,123 @@ function destroy(ledger) {
                     <button @click="closeModal" class="text-gray-400 hover:text-gray-600 text-lg leading-none">✕</button>
                 </div>
 
-                <form @submit.prevent="submit" class="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+                <form @submit.prevent="submit" class="flex-1 overflow-y-auto divide-y divide-gray-100">
 
-                    <!-- ── Section: Name & Group ──────────────────────────── -->
-                    <div class="space-y-3">
-                        <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">Name & Classification</p>
+                    <!-- ── Name & Classification ─────────────────────────── -->
+                    <div class="tally-section-header">Name & Classification</div>
 
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">
-                                Name <span class="text-red-500">*</span>
-                            </label>
-                            <input v-model="form.ledger_name" type="text" placeholder="e.g. ABC Traders"
-                                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                            <p v-if="form.errors.ledger_name" class="mt-1 text-xs text-red-500">{{ form.errors.ledger_name }}</p>
+                    <div class="tally-row">
+                        <span class="tally-label">Name <span class="text-red-500">*</span></span>
+                        <div class="tally-input">
+                            <input v-model="form.ledger_name" type="text" placeholder="e.g. ABC Traders" class="tally-field" />
+                            <p v-if="form.errors.ledger_name" class="mt-0.5 text-xs text-red-500">{{ form.errors.ledger_name }}</p>
                         </div>
+                    </div>
 
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">
-                                Under (Group) <span class="text-red-500">*</span>
-                            </label>
-                            <select v-model="form.group_name" @change="onGroupChange"
-                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
+                    <div class="tally-row">
+                        <span class="tally-label">Under (Group) <span class="text-red-500">*</span></span>
+                        <div class="tally-input">
+                            <select v-model="form.group_name" @change="onGroupChange" class="tally-field">
                                 <option value="">— Select Group —</option>
                                 <option v-for="g in ledgerGroups" :key="g.id" :value="g.name">{{ g.name }}</option>
                             </select>
-                            <p v-if="form.parent_group" class="mt-1 text-xs text-gray-400">
-                                Parent: {{ form.parent_group }}
-                            </p>
-                            <p v-if="form.errors.group_name" class="mt-1 text-xs text-red-500">{{ form.errors.group_name }}</p>
+                            <p v-if="form.parent_group" class="mt-0.5 text-xs text-gray-400">Parent: {{ form.parent_group }}</p>
+                            <p v-if="form.errors.group_name" class="mt-0.5 text-xs text-red-500">{{ form.errors.group_name }}</p>
                         </div>
+                    </div>
 
-                        <!-- Mailing Name — shown for party / bank ledgers -->
-                        <div v-if="showAddressSection || form.group_name">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Mailing Name</label>
-                            <input v-model="form.mailing_name" type="text" placeholder="e.g. ABC Traders Pvt Ltd"
-                                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                    <div v-if="showAddressSection || form.group_name" class="tally-row">
+                        <span class="tally-label">Mailing Name</span>
+                        <div class="tally-input">
+                            <input v-model="form.mailing_name" type="text" placeholder="e.g. ABC Traders Pvt Ltd" class="tally-field" />
                         </div>
+                    </div>
 
-                        <!-- Aliases -->
-                        <div>
-                            <div class="flex items-center justify-between mb-1">
-                                <label class="text-sm font-medium text-gray-700">Alias(es)</label>
-                                <button type="button" @click="addAlias"
-                                        class="text-xs text-violet-600 hover:text-violet-800 font-medium">+ Add</button>
-                            </div>
+                    <div class="tally-row items-start">
+                        <span class="tally-label pt-2.5">Alias(es)</span>
+                        <div class="tally-input">
                             <div v-for="(al, i) in form.aliases" :key="i" class="flex gap-2 mb-1.5">
                                 <input v-model="al.Alias" type="text" placeholder="Alias"
-                                       class="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                                <button type="button" @click="removeAlias(i)"
-                                        class="text-xs text-red-400 hover:text-red-600 px-1">✕</button>
+                                       class="tally-field flex-1 border border-gray-200 rounded px-2 py-1" />
+                                <button type="button" @click="removeAlias(i)" class="text-xs text-red-400 hover:text-red-600 px-1">✕</button>
                             </div>
+                            <button type="button" @click="addAlias"
+                                    class="mt-1 text-xs text-violet-600 hover:text-violet-800 font-medium">+ Add</button>
                         </div>
                     </div>
 
-                    <!-- ── Section: Behaviour ─────────────────────────────── -->
-                    <div class="space-y-3 border-t border-gray-100 pt-4">
-                        <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">Behaviour</p>
+                    <!-- ── Behaviour ─────────────────────────────────────── -->
+                    <div class="tally-section-header">Behaviour</div>
 
-                        <!-- Opening Balance — always shown -->
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Opening Balance</label>
-                                <input v-model="form.opening_balance" type="number" step="0.01" placeholder="0.00"
-                                       class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Dr / Cr <span class="text-red-500">*</span></label>
-                                <select v-model="form.opening_balance_type"
-                                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
-                                    <option value="Dr">Dr (Debit)</option>
-                                    <option value="Cr">Cr (Credit)</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <!-- Bill-wise — party + bank + loan groups -->
-                        <div v-if="showBillWise" class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Maintain Bill-wise Details <span class="text-red-500">*</span></label>
-                                <select v-model="form.is_bill_wise_on"
-                                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
-                                    <option :value="true">Yes</option>
-                                    <option :value="false">No</option>
-                                </select>
-                            </div>
-                            <!-- Credit Period / Limit — only for party ledgers -->
-                            <div v-if="showCreditTerms">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Credit Period (days)</label>
-                                <input v-model="form.credit_period" type="number" min="0" placeholder="e.g. 30"
-                                       class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                            </div>
-                        </div>
-
-                        <div v-if="showCreditTerms">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Credit Limit</label>
-                            <input v-model="form.credit_limit" type="number" step="0.01" placeholder="0.00"
-                                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                        </div>
-
-                        <!-- Inventory Affected — income/expense/party groups -->
-                        <div v-if="showInventoryAffected" class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Inventory Affected</label>
-                                <select v-model="form.inventory_affected"
-                                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
-                                    <option :value="false">No</option>
-                                    <option :value="true">Yes</option>
-                                </select>
-                            </div>
+                    <div class="tally-row">
+                        <span class="tally-label">Opening Balance</span>
+                        <div class="tally-input flex gap-2">
+                            <input v-model="form.opening_balance" type="number" step="0.01" placeholder="0.00"
+                                   class="tally-field flex-1" />
+                            <select v-model="form.opening_balance_type"
+                                    class="w-24 text-sm border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-violet-400">
+                                <option value="Dr">Dr</option>
+                                <option value="Cr">Cr</option>
+                            </select>
                         </div>
                     </div>
 
-                    <!-- ── Section: GST / Tax Registration ───────────────── -->
-                    <div v-if="showGstSection" class="space-y-3 border-t border-gray-100 pt-4">
-                        <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">GST / Tax Registration</p>
+                    <div v-if="showBillWise" class="tally-row">
+                        <span class="tally-label">Bill-wise Details <span class="text-red-500">*</span></span>
+                        <div class="tally-input">
+                            <select v-model="form.is_bill_wise_on" class="tally-field">
+                                <option :value="true">Yes</option>
+                                <option :value="false">No</option>
+                            </select>
+                        </div>
+                    </div>
 
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">GSTIN</label>
-                                <input v-model="form.gstin_number" type="text" placeholder="22AAAAA0000A1Z5"
-                                       class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">PAN</label>
-                                <input v-model="form.pan_number" type="text" placeholder="AAAAA0000A"
-                                       class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                    <div v-if="showCreditTerms" class="tally-row">
+                        <span class="tally-label">Credit Period (days)</span>
+                        <div class="tally-input">
+                            <input v-model="form.credit_period" type="number" min="0" placeholder="e.g. 30" class="tally-field" />
+                        </div>
+                    </div>
+
+                    <div v-if="showCreditTerms" class="tally-row">
+                        <span class="tally-label">Credit Limit</span>
+                        <div class="tally-input">
+                            <input v-model="form.credit_limit" type="number" step="0.01" placeholder="0.00" class="tally-field" />
+                        </div>
+                    </div>
+
+                    <div v-if="showInventoryAffected" class="tally-row">
+                        <span class="tally-label">Inventory Affected</span>
+                        <div class="tally-input">
+                            <select v-model="form.inventory_affected" class="tally-field">
+                                <option :value="false">No</option>
+                                <option :value="true">Yes</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- ── GST / Tax Registration ─────────────────────────── -->
+                    <template v-if="showGstSection">
+                        <div class="tally-section-header">GST / Tax Registration</div>
+
+                        <div class="tally-row">
+                            <span class="tally-label">GSTIN</span>
+                            <div class="tally-input">
+                                <input v-model="form.gstin_number" type="text" placeholder="22AAAAA0000A1Z5" class="tally-field" />
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">GST Registration Type <span class="text-red-500">*</span></label>
-                                <select v-model="form.gst_type"
-                                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
+                        <div class="tally-row">
+                            <span class="tally-label">PAN</span>
+                            <div class="tally-input">
+                                <input v-model="form.pan_number" type="text" placeholder="AAAAA0000A" class="tally-field" />
+                            </div>
+                        </div>
+
+                        <div class="tally-row">
+                            <span class="tally-label">GST Reg. Type <span class="text-red-500">*</span></span>
+                            <div class="tally-input">
+                                <select v-model="form.gst_type" class="tally-field">
                                     <option value="">— Select —</option>
                                     <option>Regular</option>
                                     <option>Composition</option>
@@ -530,238 +514,243 @@ function destroy(ledger) {
                                     <option>Overseas</option>
                                     <option>Unknown</option>
                                 </select>
-                                <p v-if="form.errors.gst_type" class="mt-1 text-xs text-red-500">{{ form.errors.gst_type }}</p>
+                                <p v-if="form.errors.gst_type" class="mt-0.5 text-xs text-red-500">{{ form.errors.gst_type }}</p>
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Is RCM Applicable</label>
-                                <select v-model="form.is_rcm_applicable"
-                                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
+                        </div>
+
+                        <div class="tally-row">
+                            <span class="tally-label">Is RCM Applicable</span>
+                            <div class="tally-input">
+                                <select v-model="form.is_rcm_applicable" class="tally-field">
                                     <option :value="false">No</option>
                                     <option :value="true">Yes</option>
                                 </select>
                             </div>
                         </div>
-                    </div>
+                    </template>
 
-                    <!-- ── Section: TDS ───────────────────────────────────── -->
-                    <div v-if="showTdsSection" class="space-y-3 border-t border-gray-100 pt-4">
-                        <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">TDS</p>
+                    <!-- ── TDS ───────────────────────────────────────────── -->
+                    <template v-if="showTdsSection">
+                        <div class="tally-section-header">TDS</div>
 
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Is TDS Applicable</label>
-                                <select v-model="form.is_tds_applicable"
-                                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
+                        <div class="tally-row">
+                            <span class="tally-label">Is TDS Applicable</span>
+                            <div class="tally-input">
+                                <select v-model="form.is_tds_applicable" class="tally-field">
                                     <option :value="false">No</option>
                                     <option :value="true">Yes</option>
                                 </select>
                             </div>
-                            <div v-if="form.is_tds_applicable">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Deductee Type <span class="text-red-500">*</span></label>
-                                <select v-model="form.tds_deductee_type"
-                                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
+                        </div>
+
+                        <div v-if="form.is_tds_applicable" class="tally-row">
+                            <span class="tally-label">Deductee Type <span class="text-red-500">*</span></span>
+                            <div class="tally-input">
+                                <select v-model="form.tds_deductee_type" class="tally-field">
                                     <option value="">— Select —</option>
                                     <option>Company Deductee</option>
                                     <option>Non Company Deductee</option>
                                 </select>
-                                <p v-if="form.errors.tds_deductee_type" class="mt-1 text-xs text-red-500">{{ form.errors.tds_deductee_type }}</p>
+                                <p v-if="form.errors.tds_deductee_type" class="mt-0.5 text-xs text-red-500">{{ form.errors.tds_deductee_type }}</p>
                             </div>
                         </div>
-                    </div>
+                    </template>
 
-                    <!-- ── Section: Interest ─────────────────────────────── -->
-                    <div v-if="showInterestSection" class="space-y-3 border-t border-gray-100 pt-4">
-                        <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">Interest</p>
+                    <!-- ── Interest ──────────────────────────────────────── -->
+                    <template v-if="showInterestSection">
+                        <div class="tally-section-header">Interest</div>
 
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Activate Interest Calculation</label>
-                                <select v-model="form.is_interest_on"
-                                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
-                                    <option :value="false">No</option>
-                                    <option :value="true">Yes</option>
-                                </select>
-                            </div>
-                            <div v-if="form.is_interest_on">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Calculate Interest On</label>
-                                <select v-model="form.type_of_interest_on"
-                                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
-                                    <option>Voucher Date</option>
-                                    <option>Transaction Date</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div v-if="form.is_interest_on" class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Interest on Bill-wise</label>
-                                <select v-model="form.is_interest_on_bill_wise"
-                                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
-                                    <option :value="false">No</option>
-                                    <option :value="true">Yes</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Override Parameters</label>
-                                <select v-model="form.override_interest"
-                                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
+                        <div class="tally-row">
+                            <span class="tally-label">Activate Interest</span>
+                            <div class="tally-input">
+                                <select v-model="form.is_interest_on" class="tally-field">
                                     <option :value="false">No</option>
                                     <option :value="true">Yes</option>
                                 </select>
                             </div>
                         </div>
 
-                        <div v-if="form.is_interest_on" class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Include Day of Addition</label>
-                                <select v-model="form.interest_incl_day_of_addition"
-                                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
-                                    <option :value="true">Yes</option>
-                                    <option :value="false">No</option>
-                                </select>
+                        <template v-if="form.is_interest_on">
+                            <div class="tally-row">
+                                <span class="tally-label">Calculate On</span>
+                                <div class="tally-input">
+                                    <select v-model="form.type_of_interest_on" class="tally-field">
+                                        <option>Voucher Date</option>
+                                        <option>Transaction Date</option>
+                                    </select>
+                                </div>
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Include Day of Deduction</label>
-                                <select v-model="form.interest_incl_day_of_deduction"
-                                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
-                                    <option :value="true">Yes</option>
-                                    <option :value="false">No</option>
-                                </select>
+
+                            <div class="tally-row">
+                                <span class="tally-label">Interest on Bill-wise</span>
+                                <div class="tally-input">
+                                    <select v-model="form.is_interest_on_bill_wise" class="tally-field">
+                                        <option :value="false">No</option>
+                                        <option :value="true">Yes</option>
+                                    </select>
+                                </div>
                             </div>
-                        </div>
-                    </div>
 
-                    <!-- ── Section: Address & Contact ────────────────────── -->
-                    <div v-if="showAddressSection" class="space-y-3 border-t border-gray-100 pt-4">
-                        <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">Address & Contact</p>
+                            <div class="tally-row">
+                                <span class="tally-label">Override Parameters</span>
+                                <div class="tally-input">
+                                    <select v-model="form.override_interest" class="tally-field">
+                                        <option :value="false">No</option>
+                                        <option :value="true">Yes</option>
+                                    </select>
+                                </div>
+                            </div>
 
-                        <div>
-                            <div class="flex items-center justify-between mb-1">
-                                <label class="text-sm font-medium text-gray-700">Address</label>
+                            <div class="tally-row">
+                                <span class="tally-label">Incl. Day of Addition</span>
+                                <div class="tally-input">
+                                    <select v-model="form.interest_incl_day_of_addition" class="tally-field">
+                                        <option :value="true">Yes</option>
+                                        <option :value="false">No</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="tally-row">
+                                <span class="tally-label">Incl. Day of Deduction</span>
+                                <div class="tally-input">
+                                    <select v-model="form.interest_incl_day_of_deduction" class="tally-field">
+                                        <option :value="true">Yes</option>
+                                        <option :value="false">No</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </template>
+                    </template>
+
+                    <!-- ── Address & Contact ─────────────────────────────── -->
+                    <template v-if="showAddressSection">
+                        <div class="tally-section-header">Address & Contact</div>
+
+                        <div class="tally-row items-start">
+                            <span class="tally-label pt-2.5">Address</span>
+                            <div class="tally-input">
+                                <div v-for="(a, i) in form.addresses" :key="i" class="flex gap-2 mb-1.5">
+                                    <input v-model="a.Address" type="text" placeholder="Address line"
+                                           class="tally-field flex-1 border border-gray-200 rounded px-2 py-1" />
+                                    <button type="button" @click="removeAddress(i)" class="text-xs text-red-400 hover:text-red-600 px-1">✕</button>
+                                </div>
                                 <button type="button" @click="addAddress"
-                                        class="text-xs text-violet-600 hover:text-violet-800 font-medium">+ Add Line</button>
-                            </div>
-                            <div v-for="(a, i) in form.addresses" :key="i" class="flex gap-2 mb-1.5">
-                                <input v-model="a.Address" type="text" placeholder="Address line"
-                                       class="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                                <button type="button" @click="removeAddress(i)"
-                                        class="text-xs text-red-400 hover:text-red-600 px-1">✕</button>
-                            </div>
-                            <p v-if="!form.addresses.length" class="text-xs text-gray-400">No address lines.</p>
-                        </div>
-
-                        <div class="grid grid-cols-3 gap-3">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">State</label>
-                                <input v-model="form.state_name" type="text" placeholder="e.g. Maharashtra"
-                                       class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Country</label>
-                                <input v-model="form.country_name" type="text" placeholder="India"
-                                       class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">PIN Code</label>
-                                <input v-model="form.pin_code" type="text" placeholder="400001"
-                                       class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                                        class="mt-1 text-xs text-violet-600 hover:text-violet-800 font-medium">+ Add Line</button>
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Mobile</label>
-                                <input v-model="form.mobile_number" type="text" placeholder="9876543210"
-                                       class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Contact Person</label>
-                                <input v-model="form.contact_person" type="text" placeholder="e.g. Rajesh Kumar"
-                                       class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                        <div class="tally-row">
+                            <span class="tally-label">State</span>
+                            <div class="tally-input">
+                                <input v-model="form.state_name" type="text" placeholder="e.g. Maharashtra" class="tally-field" />
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Contact Mobile</label>
-                                <input v-model="form.contact_person_mobile" type="text" placeholder="9876543210"
-                                       class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Contact Email</label>
-                                <input v-model="form.contact_person_email" type="email" placeholder="contact@example.in"
-                                       class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                                <p v-if="form.errors.contact_person_email" class="mt-1 text-xs text-red-500">{{ form.errors.contact_person_email }}</p>
+                        <div class="tally-row">
+                            <span class="tally-label">Country</span>
+                            <div class="tally-input">
+                                <input v-model="form.country_name" type="text" placeholder="India" class="tally-field" />
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Email CC</label>
-                                <input v-model="form.contact_person_email_cc" type="email" placeholder="cc@example.in"
-                                       class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Fax</label>
-                                <input v-model="form.contact_person_fax" type="text" placeholder="0111234567"
-                                       class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                        <div class="tally-row">
+                            <span class="tally-label">PIN Code</span>
+                            <div class="tally-input">
+                                <input v-model="form.pin_code" type="text" placeholder="400001" class="tally-field" />
                             </div>
                         </div>
 
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Website</label>
-                            <input v-model="form.contact_person_website" type="url" placeholder="https://example.in"
-                                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                        <div class="tally-row">
+                            <span class="tally-label">Mobile</span>
+                            <div class="tally-input">
+                                <input v-model="form.mobile_number" type="text" placeholder="9876543210" class="tally-field" />
+                            </div>
                         </div>
-                    </div>
 
-                    <!-- ── Section: Bank Details ──────────────────────────── -->
-                    <div v-if="showBankSection" class="space-y-3 border-t border-gray-100 pt-4">
-                        <div class="flex items-center justify-between">
-                            <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">Bank Details</p>
+                        <div class="tally-row">
+                            <span class="tally-label">Contact Person</span>
+                            <div class="tally-input">
+                                <input v-model="form.contact_person" type="text" placeholder="e.g. Rajesh Kumar" class="tally-field" />
+                            </div>
+                        </div>
+
+                        <div class="tally-row">
+                            <span class="tally-label">Contact Mobile</span>
+                            <div class="tally-input">
+                                <input v-model="form.contact_person_mobile" type="text" placeholder="9876543210" class="tally-field" />
+                            </div>
+                        </div>
+
+                        <div class="tally-row">
+                            <span class="tally-label">Contact Email</span>
+                            <div class="tally-input">
+                                <input v-model="form.contact_person_email" type="email" placeholder="contact@example.in" class="tally-field" />
+                                <p v-if="form.errors.contact_person_email" class="mt-0.5 text-xs text-red-500">{{ form.errors.contact_person_email }}</p>
+                            </div>
+                        </div>
+
+                        <div class="tally-row">
+                            <span class="tally-label">Email CC</span>
+                            <div class="tally-input">
+                                <input v-model="form.contact_person_email_cc" type="email" placeholder="cc@example.in" class="tally-field" />
+                            </div>
+                        </div>
+
+                        <div class="tally-row">
+                            <span class="tally-label">Fax</span>
+                            <div class="tally-input">
+                                <input v-model="form.contact_person_fax" type="text" placeholder="0111234567" class="tally-field" />
+                            </div>
+                        </div>
+
+                        <div class="tally-row">
+                            <span class="tally-label">Website</span>
+                            <div class="tally-input">
+                                <input v-model="form.contact_person_website" type="url" placeholder="https://example.in" class="tally-field" />
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- ── Bank Details ──────────────────────────────────── -->
+                    <template v-if="showBankSection">
+                        <div class="tally-section-header flex items-center justify-between pr-4">
+                            <span>Bank Details</span>
                             <button type="button" @click="addBank"
-                                    class="text-xs text-violet-600 hover:text-violet-800 font-medium">+ Add Account</button>
+                                    class="text-xs text-violet-600 hover:text-violet-800 font-medium normal-case tracking-normal">+ Add Account</button>
                         </div>
 
-                        <div v-for="(b, i) in form.bank_details" :key="i"
-                             class="border border-gray-200 rounded-lg p-3 space-y-2">
-                            <div class="flex items-center justify-between">
+                        <div v-if="!form.bank_details.length" class="px-4 py-3 text-xs text-gray-400">No bank accounts added.</div>
+
+                        <div v-for="(b, i) in form.bank_details" :key="i" class="border-b border-gray-100">
+                            <div class="flex items-center justify-between px-4 py-2 bg-gray-50">
                                 <span class="text-xs font-medium text-gray-500">Account {{ i + 1 }}</span>
-                                <button type="button" @click="removeBank(i)"
-                                        class="text-xs text-red-400 hover:text-red-600">Remove</button>
+                                <button type="button" @click="removeBank(i)" class="text-xs text-red-400 hover:text-red-600">Remove</button>
                             </div>
-                            <div class="grid grid-cols-2 gap-2">
-                                <div>
-                                    <label class="block text-xs text-gray-500 mb-0.5">Bank Name</label>
-                                    <input v-model="b.BankName" type="text" placeholder="e.g. ICICI Bank"
-                                           class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
-                                </div>
-                                <div>
-                                    <label class="block text-xs text-gray-500 mb-0.5">IFSC Code</label>
-                                    <input v-model="b.IFSCode" type="text" placeholder="ICIC0001234"
-                                           class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
-                                </div>
+                            <div class="tally-row">
+                                <span class="tally-label">Bank Name</span>
+                                <div class="tally-input"><input v-model="b.BankName" type="text" placeholder="e.g. ICICI Bank" class="tally-field" /></div>
                             </div>
-                            <div>
-                                <label class="block text-xs text-gray-500 mb-0.5">Account Number</label>
-                                <input v-model="b.AccountNumber" type="text" placeholder="1234567890"
-                                       class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                            <div class="tally-row">
+                                <span class="tally-label">IFSC Code</span>
+                                <div class="tally-input"><input v-model="b.IFSCode" type="text" placeholder="ICIC0001234" class="tally-field" /></div>
                             </div>
-                            <div>
-                                <label class="block text-xs text-gray-500 mb-0.5">Payment Favouring</label>
-                                <input v-model="b.PaymentFavouring" type="text" placeholder="e.g. ABC Traders"
-                                       class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                            <div class="tally-row">
+                                <span class="tally-label">Account Number</span>
+                                <div class="tally-input"><input v-model="b.AccountNumber" type="text" placeholder="1234567890" class="tally-field" /></div>
                             </div>
-                            <div class="grid grid-cols-2 gap-2">
-                                <div>
-                                    <label class="block text-xs text-gray-500 mb-0.5">Transaction Name</label>
-                                    <input v-model="b.TransactionName" type="text" placeholder="e.g. Primary"
-                                           class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
-                                </div>
-                                <div>
-                                    <label class="block text-xs text-gray-500 mb-0.5">Transaction Type</label>
-                                    <select v-model="b.TransactionType"
-                                            class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500">
+                            <div class="tally-row">
+                                <span class="tally-label">Payment Favouring</span>
+                                <div class="tally-input"><input v-model="b.PaymentFavouring" type="text" placeholder="e.g. ABC Traders" class="tally-field" /></div>
+                            </div>
+                            <div class="tally-row">
+                                <span class="tally-label">Transaction Name</span>
+                                <div class="tally-input"><input v-model="b.TransactionName" type="text" placeholder="e.g. Primary" class="tally-field" /></div>
+                            </div>
+                            <div class="tally-row">
+                                <span class="tally-label">Transaction Type</span>
+                                <div class="tally-input">
+                                    <select v-model="b.TransactionType" class="tally-field">
                                         <option value="">— Select —</option>
                                         <option>Inter Bank Transfer</option>
                                         <option>Same Bank Transfer</option>
@@ -774,74 +763,66 @@ function destroy(ledger) {
                                 </div>
                             </div>
                         </div>
+                    </template>
 
-                        <p v-if="!form.bank_details.length" class="text-xs text-gray-400">No bank accounts added.</p>
-                    </div>
-
-                    <!-- ── Section: Bill Allocations (when bill-wise = Yes) ─ -->
-                    <div v-if="showBillAllocations" class="space-y-3 border-t border-gray-100 pt-4">
-                        <div class="flex items-center justify-between">
-                            <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">Opening Bill Allocations</p>
+                    <!-- ── Opening Bill Allocations ──────────────────────── -->
+                    <template v-if="showBillAllocations">
+                        <div class="tally-section-header flex items-center justify-between pr-4">
+                            <span>Opening Bill Allocations</span>
                             <button type="button" @click="addBill"
-                                    class="text-xs text-violet-600 hover:text-violet-800 font-medium">+ Add Bill</button>
+                                    class="text-xs text-violet-600 hover:text-violet-800 font-medium normal-case tracking-normal">+ Add Bill</button>
                         </div>
 
-                        <div v-for="(bill, i) in form.bill_allocations" :key="i"
-                             class="border border-gray-200 rounded-lg p-3 space-y-2">
-                            <div class="flex items-center justify-between">
+                        <div v-if="!form.bill_allocations.length" class="px-4 py-3 text-xs text-gray-400">No bill allocations added.</div>
+
+                        <div v-for="(bill, i) in form.bill_allocations" :key="i" class="border-b border-gray-100">
+                            <div class="flex items-center justify-between px-4 py-2 bg-gray-50">
                                 <span class="text-xs font-medium text-gray-500">Bill {{ i + 1 }}</span>
-                                <button type="button" @click="removeBill(i)"
-                                        class="text-xs text-red-400 hover:text-red-600">Remove</button>
+                                <button type="button" @click="removeBill(i)" class="text-xs text-red-400 hover:text-red-600">Remove</button>
                             </div>
-                            <div class="grid grid-cols-2 gap-2">
-                                <div>
-                                    <label class="block text-xs text-gray-500 mb-0.5">Bill Name / Ref</label>
-                                    <input v-model="bill.BillName" type="text" placeholder="e.g. INV-001"
-                                           class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
-                                </div>
-                                <div>
-                                    <label class="block text-xs text-gray-500 mb-0.5">Date</label>
-                                    <input v-model="bill.Date" type="date"
-                                           class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
-                                </div>
+                            <div class="tally-row">
+                                <span class="tally-label">Bill Name / Ref</span>
+                                <div class="tally-input"><input v-model="bill.BillName" type="text" placeholder="e.g. INV-001" class="tally-field" /></div>
                             </div>
-                            <div class="grid grid-cols-2 gap-2">
-                                <div>
-                                    <label class="block text-xs text-gray-500 mb-0.5">Amount</label>
-                                    <input v-model="bill.Amount" type="number" step="0.01" placeholder="0.00"
-                                           class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
-                                </div>
-                                <div>
-                                    <label class="block text-xs text-gray-500 mb-0.5">Dr / Cr</label>
+                            <div class="tally-row">
+                                <span class="tally-label">Date</span>
+                                <div class="tally-input"><input v-model="bill.Date" type="date" class="tally-field" /></div>
+                            </div>
+                            <div class="tally-row">
+                                <span class="tally-label">Amount</span>
+                                <div class="tally-input flex gap-2">
+                                    <input v-model="bill.Amount" type="number" step="0.01" placeholder="0.00" class="tally-field flex-1" />
                                     <select v-model="bill.AmountType"
-                                            class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500">
-                                        <option value="Dr">Dr (Debit)</option>
-                                        <option value="Cr">Cr (Credit)</option>
+                                            class="w-20 text-sm border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-violet-400">
+                                        <option value="Dr">Dr</option>
+                                        <option value="Cr">Cr</option>
                                     </select>
                                 </div>
                             </div>
                         </div>
+                    </template>
 
-                        <p v-if="!form.bill_allocations.length" class="text-xs text-gray-400">No bill allocations added.</p>
-                    </div>
+                    <!-- ── Other ─────────────────────────────────────────── -->
+                    <div class="tally-section-header">Other</div>
 
-                    <!-- ── Section: Other ─────────────────────────────────── -->
-                    <div class="space-y-3 border-t border-gray-100 pt-4">
-                        <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">Other</p>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <div class="tally-row items-start">
+                        <span class="tally-label pt-2.5">Description</span>
+                        <div class="tally-input">
                             <textarea v-model="form.description" rows="2" placeholder="Optional description"
-                                      class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 resize-none" />
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-                            <textarea v-model="form.notes" rows="2" placeholder="Optional notes"
-                                      class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 resize-none" />
+                                      class="tally-field resize-none" />
                         </div>
                     </div>
 
-                    <!-- ── Submit ──────────────────────────────────────────── -->
-                    <div class="flex gap-3 pt-2 border-t border-gray-100">
+                    <div class="tally-row items-start">
+                        <span class="tally-label pt-2.5">Notes</span>
+                        <div class="tally-input">
+                            <textarea v-model="form.notes" rows="2" placeholder="Optional notes"
+                                      class="tally-field resize-none" />
+                        </div>
+                    </div>
+
+                    <!-- ── Submit ─────────────────────────────────────────── -->
+                    <div class="flex gap-3 px-4 py-4">
                         <button type="submit" :disabled="form.processing"
                                 class="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 transition disabled:opacity-50">
                             {{ isEditing ? 'Update' : 'Create' }}
@@ -856,3 +837,11 @@ function destroy(ledger) {
         </div>
     </Teleport>
 </template>
+
+<style scoped>
+.tally-row   { @apply flex items-stretch border-b border-gray-100; }
+.tally-label { @apply w-48 shrink-0 text-sm text-gray-600 bg-gray-50 px-4 py-2.5 border-r border-gray-100 flex items-center; }
+.tally-input { @apply flex-1 px-3 py-2; }
+.tally-field { @apply w-full text-sm border-0 outline-none focus:ring-1 focus:ring-violet-400 rounded bg-transparent; }
+.tally-section-header { @apply bg-violet-50 text-violet-700 text-xs font-semibold uppercase tracking-wider px-4 py-1.5 border-b border-violet-100; }
+</style>
