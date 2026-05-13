@@ -2,17 +2,17 @@
 import { ref, computed, watch } from 'vue'
 
 const props = defineProps({
-    form:      Object,
-    ledgers:   Array,
+    form:       Object,
+    ledgers:    Array,
     stockItems: Array,
-    godowns:   Array,
-    isEditing: Boolean,
+    godowns:    Array,
+    isEditing:  Boolean,
 })
 
 const emit = defineEmits(['submit', 'close'])
 
 // ── UI-only state ──────────────────────────────────────────────────────────────
-const salesMode    = ref('item')       // 'item' | 'accounting'
+const salesMode     = ref('item')
 const expandedItems = ref(new Set())
 
 watch(salesMode, (mode) => {
@@ -20,12 +20,36 @@ watch(salesMode, (mode) => {
         props.form.inventory_entries = []
         expandedItems.value = new Set()
     }
+    grandTotalLocked.value = false
 })
 
 function toggleExpand(i) {
     const s = new Set(expandedItems.value)
     s.has(i) ? s.delete(i) : s.add(i)
     expandedItems.value = s
+}
+
+// ── Buyer address lines (local, syncs to form.buyer_address string) ────────────
+const buyerAddressLines = ref(
+    props.form.buyer_address
+        ? String(props.form.buyer_address).split('\n')
+        : ['']
+)
+
+watch(buyerAddressLines, (lines) => {
+    props.form.buyer_address = lines.join('\n')
+}, { deep: true })
+
+watch(() => props.form.buyer_address, (val) => {
+    const incoming = val ? String(val).split('\n') : ['']
+    if (JSON.stringify(incoming) !== JSON.stringify(buyerAddressLines.value)) {
+        buyerAddressLines.value = incoming
+    }
+})
+
+function addAddressLine()     { buyerAddressLines.value.push('') }
+function removeAddressLine(i) {
+    if (buyerAddressLines.value.length > 1) buyerAddressLines.value.splice(i, 1)
 }
 
 // ── Lookup maps ────────────────────────────────────────────────────────────────
@@ -48,20 +72,43 @@ const sundryDebtorLedgers = computed(() => {
     return filtered.length ? filtered : props.ledgers
 })
 
+// ── Item amount auto-calculation ───────────────────────────────────────────────
+function recalcItemAmount(ie) {
+    const qty  = parseFloat(ie.billed_qty)      || 0
+    const rate = parseFloat(ie.rate)            || 0
+    const disc = parseFloat(ie.discount_percent)|| 0
+    if (qty && rate) {
+        ie.amount = parseFloat((qty * rate * (1 - disc / 100)).toFixed(2))
+    }
+}
+
 // ── Computed totals ────────────────────────────────────────────────────────────
 const taxableValue = computed(() =>
     props.form.inventory_entries.reduce((s, ie) => s + (parseFloat(ie.amount) || 0), 0)
 )
 
+const ledgerTotal = computed(() =>
+    props.form.ledger_entries.reduce((s, le) => s + (parseFloat(le.ledger_amount) || 0), 0)
+)
+
 const grandTotalLocked = ref(false)
 
 watch(taxableValue, (v) => {
-    if (!grandTotalLocked.value) props.form.voucher_total = v || ''
+    if (!grandTotalLocked.value && salesMode.value === 'item') {
+        props.form.voucher_total = v || ''
+    }
+})
+
+watch(ledgerTotal, (v) => {
+    if (!grandTotalLocked.value && salesMode.value === 'accounting') {
+        props.form.voucher_total = v || ''
+    }
 })
 
 function resetGrandTotal() {
     grandTotalLocked.value = false
-    props.form.voucher_total = taxableValue.value || ''
+    const v = salesMode.value === 'item' ? taxableValue.value : ledgerTotal.value
+    props.form.voucher_total = v || ''
 }
 
 // ── Auto-fill helpers ──────────────────────────────────────────────────────────
@@ -94,9 +141,7 @@ function emptyInventory() {
     }
 }
 
-function addInventory() {
-    props.form.inventory_entries.push(emptyInventory())
-}
+function addInventory() { props.form.inventory_entries.push(emptyInventory()) }
 function removeInventory(i) {
     props.form.inventory_entries.splice(i, 1)
     const newSet = new Set()
@@ -170,9 +215,7 @@ function fmt(v) {
     <!-- ── 1. Invoice header ──────────────────────────────────────────────── -->
     <div class="grid grid-cols-2 gap-3">
         <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-                Invoice Number
-            </label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Invoice Number</label>
             <input v-model="form.voucher_number" type="text" placeholder="e.g. INV-001"
                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
         </div>
@@ -184,9 +227,19 @@ function fmt(v) {
                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
             <p v-if="form.errors.voucher_date" class="mt-1 text-xs text-red-500">{{ form.errors.voucher_date }}</p>
         </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Reference No</label>
+            <input v-model="form.reference" type="text" placeholder="e.g. PO-2025-001"
+                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Reference Date</label>
+            <input v-model="form.reference_date" type="date"
+                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+        </div>
     </div>
 
-    <!-- ── 2. Party Name + Billing Address ───────────────────────────────── -->
+    <!-- ── 2. Party Name + Cost Centre ───────────────────────────────────── -->
     <div class="grid grid-cols-2 gap-3">
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">
@@ -200,9 +253,9 @@ function fmt(v) {
             </datalist>
         </div>
         <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Billing Address</label>
-            <textarea v-model="form.buyer_address" rows="2" placeholder="Billing address…"
-                      class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 resize-none" />
+            <label class="block text-sm font-medium text-gray-700 mb-1">Cost Centre</label>
+            <input v-model="form.cost_centre" type="text" list="cost-centre-list" placeholder="e.g. Head Office"
+                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
         </div>
     </div>
 
@@ -250,29 +303,21 @@ function fmt(v) {
                         <option v-for="s in stockItems" :key="s.id" :value="s.name">{{ s.name }}</option>
                     </select>
                 </div>
-                <div>
-                    <input v-model="ie.unit" type="text" placeholder="Nos"
-                           class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
-                </div>
-                <div>
-                    <input v-model="ie.billed_qty" type="number" step="0.0001" placeholder="0"
-                           class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
-                </div>
-                <div>
-                    <input v-model="ie.rate" type="number" step="0.01" placeholder="0.00"
-                           class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
-                </div>
-                <div>
-                    <input v-model="ie.discount_percent" type="number" step="0.01" placeholder="0"
-                           class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
-                </div>
-                <div>
-                    <input v-model="ie.amount" type="number" step="0.01" placeholder="0.00"
-                           class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
-                </div>
+                <input v-model="ie.unit" type="text" placeholder="Nos"
+                       class="rounded border border-gray-300 px-2 py-1.5 text-xs w-full focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                <input v-model="ie.billed_qty" type="number" step="0.0001" placeholder="0"
+                       @input="recalcItemAmount(ie)"
+                       class="rounded border border-gray-300 px-2 py-1.5 text-xs w-full focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                <input v-model="ie.rate" type="number" step="0.01" placeholder="0.00"
+                       @input="recalcItemAmount(ie)"
+                       class="rounded border border-gray-300 px-2 py-1.5 text-xs w-full focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                <input v-model="ie.discount_percent" type="number" step="0.01" placeholder="0"
+                       @input="recalcItemAmount(ie)"
+                       class="rounded border border-gray-300 px-2 py-1.5 text-xs w-full focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                <input v-model="ie.amount" type="number" step="0.01" placeholder="0.00"
+                       class="rounded border border-gray-300 px-2 py-1.5 text-xs w-full focus:outline-none focus:ring-1 focus:ring-violet-500" />
                 <div class="flex items-center gap-1 pr-1">
                     <button type="button" @click="toggleExpand(i)"
-                            :title="expandedItems.has(i) ? 'Collapse' : 'Expand details'"
                             :class="['text-gray-400 hover:text-violet-600 transition-transform text-sm leading-none',
                                      expandedItems.has(i) ? 'rotate-180' : '']">
                         ▼
@@ -286,7 +331,6 @@ function fmt(v) {
             <div v-if="expandedItems.has(i)"
                  class="border-t border-gray-100 bg-gray-50 px-3 pt-3 pb-2 space-y-3">
 
-                <!-- Row 1: Actual Qty, Sales Ledger, HSN, IGST, CESS, Tax Amount -->
                 <div class="grid grid-cols-3 gap-2">
                     <div>
                         <label class="block text-xs text-gray-500 mb-0.5">Actual Qty</label>
@@ -323,7 +367,6 @@ function fmt(v) {
                     </div>
                 </div>
 
-                <!-- Row 2: Godown, Batch, MRP, Item Code, Group Name -->
                 <div class="grid grid-cols-3 gap-2">
                     <div>
                         <label class="block text-xs text-gray-500 mb-0.5">Godown</label>
@@ -365,7 +408,7 @@ function fmt(v) {
                     </div>
                 </div>
 
-                <!-- Batch Allocations (collapsible) -->
+                <!-- Batch Allocations -->
                 <details class="border border-gray-200 rounded-lg overflow-hidden">
                     <summary class="cursor-pointer px-3 py-2 text-xs font-semibold text-gray-600 select-none bg-white flex items-center justify-between">
                         <span>Batch Allocations</span>
@@ -427,7 +470,7 @@ function fmt(v) {
                     </div>
                 </details>
 
-                <!-- Accounting Allocations (collapsible) -->
+                <!-- Accounting Allocations -->
                 <details class="border border-gray-200 rounded-lg overflow-hidden">
                     <summary class="cursor-pointer px-3 py-2 text-xs font-semibold text-gray-600 select-none bg-white flex items-center justify-between">
                         <span>Accounting Allocations</span>
@@ -483,17 +526,12 @@ function fmt(v) {
         <p v-if="!form.inventory_entries.length" class="text-xs text-gray-400 mt-1">No items. Click + Add Item.</p>
     </div>
 
-    <!-- ── 4b. Accounting Invoice ledger-only rows ─────────────────────── -->
+    <!-- ── 4b. Accounting Invoice header ─────────────────────────────────── -->
     <div v-if="salesMode === 'accounting'">
-        <div class="flex items-center justify-between mb-2">
-            <h3 class="text-sm font-semibold text-gray-700">Sales Lines</h3>
-            <button type="button" @click="addLedger"
-                    class="text-xs text-violet-600 hover:text-violet-800 font-medium">+ Add Line</button>
-        </div>
         <p class="text-xs text-gray-400 mb-2">Add ledger entries directly (no inventory tracking).</p>
     </div>
 
-    <!-- ── 5. Ledger Entries section ──────────────────────────────────────── -->
+    <!-- ── 5. Ledger Entries ──────────────────────────────────────────────── -->
     <div>
         <div class="flex items-center justify-between mb-2">
             <h3 class="text-sm font-semibold text-gray-700">
@@ -553,7 +591,6 @@ function fmt(v) {
                 </div>
             </div>
 
-            <!-- IGST / HSN / CESS on ledger row (needed for tax ledger entries) -->
             <div class="grid grid-cols-3 gap-2">
                 <div>
                     <label class="block text-xs text-gray-500 mb-0.5">IGST Rate</label>
@@ -603,10 +640,7 @@ function fmt(v) {
                     </div>
                     <div class="flex gap-1">
                         <div class="flex-1">
-                            <label class="block text-xs text-gray-400 mb-0.5">
-                                Amount
-                                <span v-if="le.is_party_ledger" class="text-gray-300">(−ve)</span>
-                            </label>
+                            <label class="block text-xs text-gray-400 mb-0.5">Amount</label>
                             <input v-model="br.Amount" type="number" step="0.01"
                                    class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
                         </div>
@@ -641,7 +675,7 @@ function fmt(v) {
         </div>
     </div>
 
-    <!-- ── 7. Narration, Place of Supply, Is Invoice ──────────────────────── -->
+    <!-- ── 7. Place of Supply · Is Invoice · Narration ────────────────────── -->
     <div class="grid grid-cols-2 gap-3">
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Place of Supply</label>
@@ -668,6 +702,106 @@ function fmt(v) {
 
     <!-- ── 8. Collapsible sections ────────────────────────────────────────── -->
 
+    <!-- Dispatch / Shipping Details -->
+    <details class="border border-gray-200 rounded-lg overflow-hidden">
+        <summary class="cursor-pointer px-4 py-3 text-sm font-semibold text-gray-700 select-none bg-gray-50">
+            Dispatch / Shipping Details
+        </summary>
+        <div class="px-4 pb-4 pt-3 space-y-3">
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Delivery Note No</label>
+                    <input v-model="form.delivery_note_no" type="text"
+                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Delivery Note Date</label>
+                    <input v-model="form.delivery_note_date" type="date"
+                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Dispatch Doc No</label>
+                    <input v-model="form.dispatch_doc_no" type="text"
+                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Dispatch Through</label>
+                    <input v-model="form.dispatch_through" type="text" placeholder="e.g. Road / Rail / Air"
+                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Destination</label>
+                    <input v-model="form.destination" type="text"
+                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Carrier Name</label>
+                    <input v-model="form.carrier_name" type="text"
+                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                </div>
+            </div>
+            <div class="grid grid-cols-3 gap-3">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">LR / RR No</label>
+                    <input v-model="form.lr_no" type="text"
+                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">LR Date</label>
+                    <input v-model="form.lr_date" type="date"
+                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Motor Vehicle No</label>
+                    <input v-model="form.motor_vehicle_no" type="text"
+                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                </div>
+            </div>
+        </div>
+    </details>
+
+    <!-- Order Details -->
+    <details class="border border-gray-200 rounded-lg overflow-hidden">
+        <summary class="cursor-pointer px-4 py-3 text-sm font-semibold text-gray-700 select-none bg-gray-50">
+            Order Details
+        </summary>
+        <div class="px-4 pb-4 pt-3 space-y-3">
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Order No</label>
+                    <input v-model="form.order_no" type="text"
+                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Order Date</label>
+                    <input v-model="form.order_date" type="date"
+                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Terms of Payment</label>
+                    <input v-model="form.terms_of_payment" type="text" placeholder="e.g. Net 30"
+                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Terms of Delivery</label>
+                    <input v-model="form.terms_of_delivery" type="text" placeholder="e.g. CIF, FOB"
+                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Other References</label>
+                <input v-model="form.other_references" type="text"
+                       class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+            </div>
+        </div>
+    </details>
+
     <!-- Buyer Details -->
     <details class="border border-gray-200 rounded-lg overflow-hidden">
         <summary class="cursor-pointer px-4 py-3 text-sm font-semibold text-gray-700 select-none bg-gray-50">
@@ -686,6 +820,22 @@ function fmt(v) {
                            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
                 </div>
             </div>
+
+            <!-- Billing Address (dynamic lines) -->
+            <div>
+                <div class="flex items-center justify-between mb-1">
+                    <label class="block text-sm font-medium text-gray-700">Billing Address</label>
+                    <button type="button" @click="addAddressLine"
+                            class="text-xs text-violet-600 hover:text-violet-800 font-medium">+ Add Line</button>
+                </div>
+                <div v-for="(line, idx) in buyerAddressLines" :key="idx" class="flex gap-2 mb-1.5">
+                    <input v-model="buyerAddressLines[idx]" type="text" :placeholder="`Address line ${idx + 1}`"
+                           class="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                    <button v-if="buyerAddressLines.length > 1" type="button" @click="removeAddressLine(idx)"
+                            class="text-red-400 hover:text-red-600 text-sm px-2">✕</button>
+                </div>
+            </div>
+
             <div class="grid grid-cols-2 gap-3">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Buyer GSTIN</label>

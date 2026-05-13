@@ -205,7 +205,19 @@ class TallyDataController extends Controller
                 ->where('is_active', true)
                 ->orderBy('name')
                 ->get(['id', 'name']),
+            'nextSalesVoucherNumber' => $this->nextSalesVoucherNumber($tenant->id),
         ]);
+    }
+
+    private function nextSalesVoucherNumber(string $tenantId): int
+    {
+        $max = TallyVoucher::where('tenant_id', $tenantId)
+            ->where('voucher_base_type', 'Sales')
+            ->pluck('voucher_number')
+            ->map(fn ($n) => ctype_digit((string) $n) ? (int) $n : 0)
+            ->max() ?? 0;
+
+        return $max + 1;
     }
 
     public function companies(Tenant $tenant)

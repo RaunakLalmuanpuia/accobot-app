@@ -144,6 +144,18 @@ class TallyMasterCrudController extends Controller
             'bill_allocations.*.BillName'       => 'nullable|string|max:255',
             'bill_allocations.*.Amount'         => 'nullable|numeric',
             'bill_allocations.*.AmountType'     => 'nullable|in:Dr,Cr',
+            // GST / Tax
+            'is_rcm_applicable'                 => 'boolean',
+            // TDS
+            'is_tds_applicable'                 => 'boolean',
+            'tds_deductee_type'                 => 'nullable|string|max:100',
+            // Interest
+            'is_interest_on'                    => 'boolean',
+            'type_of_interest_on'               => 'nullable|string|max:100',
+            'is_interest_on_bill_wise'          => 'boolean',
+            'override_interest'                 => 'boolean',
+            'interest_incl_day_of_addition'     => 'boolean',
+            'interest_incl_day_of_deduction'    => 'boolean',
         ]);
 
         $record = TallyLedger::create(array_merge($data, [
@@ -201,6 +213,18 @@ class TallyMasterCrudController extends Controller
             'bill_allocations.*.BillName'       => 'nullable|string|max:255',
             'bill_allocations.*.Amount'         => 'nullable|numeric',
             'bill_allocations.*.AmountType'     => 'nullable|in:Dr,Cr',
+            // GST / Tax
+            'is_rcm_applicable'                 => 'boolean',
+            // TDS
+            'is_tds_applicable'                 => 'boolean',
+            'tds_deductee_type'                 => 'nullable|string|max:100',
+            // Interest
+            'is_interest_on'                    => 'boolean',
+            'type_of_interest_on'               => 'nullable|string|max:100',
+            'is_interest_on_bill_wise'          => 'boolean',
+            'override_interest'                 => 'boolean',
+            'interest_incl_day_of_addition'     => 'boolean',
+            'interest_incl_day_of_deduction'    => 'boolean',
         ]);
 
         $ledger->update($data);

@@ -6,11 +6,12 @@ import { hasPermission } from '@/utils/permissions'
 import SalesVoucherForm from './SalesVoucher.vue'
 
 const props = defineProps({
-    tenant:     Object,
-    vouchers:   Array,
-    ledgers:    Array,
-    stockItems: Array,
-    godowns:    Array,
+    tenant:                   Object,
+    vouchers:                 Array,
+    ledgers:                  Array,
+    stockItems:               Array,
+    godowns:                  Array,
+    nextSalesVoucherNumber:   Number,
 })
 
 const canManage = hasPermission('integrations.manage')
@@ -243,6 +244,9 @@ const form = useForm({
 
 watch(() => form.voucher_base_type, (val) => {
     if (val) form.voucher_type = val
+    if (val === 'Sales' && !isEditing.value && !form.voucher_number) {
+        form.voucher_number = String(props.nextSalesVoucherNumber)
+    }
 })
 
 // ── Child entry helpers ────────────────────────────────────────────────────────
