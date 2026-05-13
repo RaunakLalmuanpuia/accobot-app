@@ -148,12 +148,13 @@ class MobileBillingController extends Controller
      */
     public function subscribeAddon(Request $request, Tenant $tenant, RazorpayService $razorpay): JsonResponse
     {
-        $subscription = $tenant->subscription;
+        $subscription = $tenant->subscription()->with('plan')->first();
 
-        abort_unless($subscription && $subscription->isAccessible(), 422, 'No active subscription.');
+        abort_unless($subscription && ($subscription->isAccessible() || $subscription->isPending()), 422, 'No active subscription.');
         abort_unless($subscription->plan->slug === 'personal', 422, 'AI addon is only available on the Personal plan.');
 
         $addonPlan = Plan::where('slug', 'ai_addon')->where('is_active', true)->firstOrFail();
+        abort_if(blank($addonPlan->razorpay_plan_id), 422, 'The AI addon is not yet configured for payment. Please contact support.');
 
         $result = $razorpay->createSubscription(
             $addonPlan,
