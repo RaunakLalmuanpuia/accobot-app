@@ -347,313 +347,281 @@ function destroy(item) {
                     <button @click="closeModal" class="text-gray-400 hover:text-gray-600 text-lg leading-none">✕</button>
                 </div>
 
-                <form @submit.prevent="submit" class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+                <form @submit.prevent="submit" class="flex-1 overflow-y-auto divide-y divide-gray-100">
 
-                    <!-- Name -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Name <span class="text-red-500">*</span></label>
-                        <input v-model="form.name" type="text" placeholder="e.g. Laptop 15 inch"
-                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                        <p v-if="form.errors.name" class="mt-1 text-xs text-red-500">{{ form.errors.name }}</p>
-                    </div>
-
-                    <!-- Description & Remarks -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                        <textarea v-model="form.description" rows="2" placeholder="e.g. High-speed lease line"
-                                  class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Remarks</label>
-                        <textarea v-model="form.remarks" rows="2" placeholder="Internal notes"
-                                  class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                    </div>
-
-                    <!-- Aliases -->
-                    <div>
-                        <div class="flex items-center justify-between mb-2">
-                            <label class="text-sm font-medium text-gray-700">Aliases</label>
-                            <button type="button" @click="addAlias"
-                                    class="text-xs text-violet-600 hover:text-violet-800 font-medium">+ Add</button>
+                    <!-- ── Basic Info ──────────────────────────────────────── -->
+                    <div class="tally-row">
+                        <span class="tally-label">Name <span class="text-red-500">*</span></span>
+                        <div class="tally-input">
+                            <input v-model="form.name" type="text" placeholder="e.g. Laptop 15 inch" class="tally-field" />
+                            <p v-if="form.errors.name" class="mt-0.5 text-xs text-red-500">{{ form.errors.name }}</p>
                         </div>
-                        <div v-for="(al, i) in form.aliases" :key="i" class="flex gap-2 mb-2">
-                            <input v-model="al.Alias" type="text" placeholder="Alias name"
-                                   class="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                            <button type="button" @click="removeAlias(i)"
-                                    class="text-xs text-red-400 hover:text-red-600 px-2">✕</button>
-                        </div>
-                        <p v-if="!form.aliases.length" class="text-xs text-gray-400">No aliases added.</p>
                     </div>
-
-                    <!-- Part Nos -->
-                    <div>
-                        <div class="flex items-center justify-between mb-2">
-                            <label class="text-sm font-medium text-gray-700">Part Numbers</label>
-                            <button type="button" @click="addPartNo"
-                                    class="text-xs text-violet-600 hover:text-violet-800 font-medium">+ Add</button>
+                    <div class="tally-row">
+                        <span class="tally-label">Under <span class="text-red-500">*</span></span>
+                        <div class="tally-input">
+                            <select v-model="form.stock_group_name" class="tally-field">
+                                <option value="">— Select Group —</option>
+                                <option v-for="n in stockGroupNames" :key="n" :value="n">{{ n }}</option>
+                            </select>
+                            <p v-if="form.errors.stock_group_name" class="mt-0.5 text-xs text-red-500">{{ form.errors.stock_group_name }}</p>
                         </div>
-                        <div v-for="(pn, i) in form.part_nos" :key="i" class="flex gap-2 mb-2">
-                            <input v-model="pn.PartNo" type="text" placeholder="Part number"
-                                   class="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                            <button type="button" @click="removePartNo(i)"
-                                    class="text-xs text-red-400 hover:text-red-600 px-2">✕</button>
-                        </div>
-                        <p v-if="!form.part_nos.length" class="text-xs text-gray-400">No part numbers added.</p>
                     </div>
-
-                    <!-- Group & Category -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                            Stock Group <span class="text-red-500">*</span>
-                        </label>
-                        <select v-model="form.stock_group_name"
-                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
-                            <option value="">— Select Group —</option>
-                            <option v-for="n in stockGroupNames" :key="n" :value="n">{{ n }}</option>
-                        </select>
-                        <p v-if="form.errors.stock_group_name" class="mt-1 text-xs text-red-500">{{ form.errors.stock_group_name }}</p>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                        <select v-model="form.category_name"
-                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
-                            <option value="">— None —</option>
+                    <div class="tally-row">
+                        <span class="tally-label">Category</span>
+                        <select v-model="form.category_name" class="tally-input tally-field">
+                            <option value="">Not Applicable</option>
                             <option v-for="n in stockCategoryNames" :key="n" :value="n">{{ n }}</option>
                         </select>
                     </div>
-
-                    <!-- Unit -->
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">
-                                Unit <span class="text-red-500">*</span>
-                            </label>
-                            <select v-model="form.unit_name"
-                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
+                    <div class="tally-row">
+                        <span class="tally-label">Units <span class="text-red-500">*</span></span>
+                        <div class="tally-input">
+                            <select v-model="form.unit_name" class="tally-field">
                                 <option value="">— Select Unit —</option>
                                 <option v-for="n in unitNames" :key="n" :value="n">{{ n }}</option>
                             </select>
-                            <p v-if="form.errors.unit_name" class="mt-1 text-xs text-red-500">{{ form.errors.unit_name }}</p>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Alternate Unit</label>
-                            <select v-model="form.alternate_unit"
-                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
-                                <option value="">— None —</option>
-                                <option v-for="n in unitNames" :key="n" :value="n">{{ n }}</option>
-                            </select>
+                            <p v-if="form.errors.unit_name" class="mt-0.5 text-xs text-red-500">{{ form.errors.unit_name }}</p>
                         </div>
                     </div>
-                    <div v-if="showAltUnit" class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Conversion</label>
-                            <input v-model="form.conversion" type="number" step="0.0001" min="0" placeholder="0"
-                                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Denominator</label>
-                            <input v-model="form.denominator" type="number" min="1" placeholder="1"
-                                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                        </div>
+                    <div class="tally-row">
+                        <span class="tally-label">Alternate Units</span>
+                        <select v-model="form.alternate_unit" class="tally-input tally-field">
+                            <option value="">Not Applicable</option>
+                            <option v-for="n in unitNames" :key="n" :value="n">{{ n }}</option>
+                        </select>
                     </div>
-
-                    <!-- GST Applicable + HSN always visible -->
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">GST Applicable</label>
-                            <select v-model="form.is_gst_applicable"
-                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
-                                <option value="">— Select —</option>
-                                <option value="1">Applicable</option>
-                                <option value="0">Not Applicable</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">HSN Code</label>
-                            <input v-model="form.hsn_code" type="text" placeholder="e.g. 8471"
-                                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                        </div>
-                    </div>
-
-                    <!-- GST detail fields — only when Applicable -->
-                    <template v-if="showGST">
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Taxability</label>
-                                <select v-model="form.taxability"
-                                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
-                                    <option value="">— Select —</option>
-                                    <option>Taxable</option>
-                                    <option>Nil Rated</option>
-                                    <option>Exempt</option>
-                                    <option>Non-GST Supply</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Calculation Type</label>
-                                <select v-model="form.calculation_type"
-                                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
-                                    <option value="">— Select —</option>
-                                    <option>On Value</option>
-                                    <option>On MRP Rate</option>
-                                    <option>Based on Qty</option>
-                                    <option>Fixed Amount</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <!-- GST Rates — SGST/CGST auto-fill from IGST ÷ 2 -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">GST Rates (%)</label>
-                            <div class="grid grid-cols-4 gap-2">
-                                <div>
-                                    <p class="text-xs text-gray-400 mb-1">IGST</p>
-                                    <input v-model="form.igst_rate" type="number" step="0.01" min="0" max="100" placeholder="0"
-                                           class="w-full rounded-lg border border-gray-300 px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                                </div>
-                                <div>
-                                    <p class="text-xs text-gray-400 mb-1">SGST <span class="text-gray-300">(auto)</span></p>
-                                    <input v-model="form.sgst_rate" type="number" step="0.01" min="0" max="100" placeholder="0"
-                                           class="w-full rounded-lg border border-gray-300 px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                                </div>
-                                <div>
-                                    <p class="text-xs text-gray-400 mb-1">CGST <span class="text-gray-300">(auto)</span></p>
-                                    <input v-model="form.cgst_rate" type="number" step="0.01" min="0" max="100" placeholder="0"
-                                           class="w-full rounded-lg border border-gray-300 px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                                </div>
-                                <div>
-                                    <p class="text-xs text-gray-400 mb-1">CESS</p>
-                                    <input v-model="form.cess_rate" type="number" step="0.01" min="0" max="100" placeholder="0"
-                                           class="w-full rounded-lg border border-gray-300 px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                                </div>
+                    <template v-if="showAltUnit">
+                        <div class="tally-row">
+                            <span class="tally-label">Conversion</span>
+                            <div class="tally-input flex items-center gap-2 text-sm">
+                                <input v-model="form.denominator" type="number" min="1" placeholder="1"
+                                       class="tally-field w-16 text-center" />
+                                <span class="text-gray-500 font-medium">{{ form.unit_name || 'unit' }}</span>
+                                <span class="text-gray-400">=</span>
+                                <input v-model="form.conversion" type="number" step="0.0001" min="0" placeholder="1"
+                                       class="tally-field w-16 text-center" />
+                                <span class="text-gray-500 font-medium">{{ form.alternate_unit || 'alt unit' }}</span>
                             </div>
                         </div>
                     </template>
-
-                    <!-- MRP -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">MRP Rate</label>
+                    <div class="tally-row">
+                        <span class="tally-label">MRP Rate</span>
                         <input v-model="form.mrp_rate" type="number" step="0.01" min="0" placeholder="0"
-                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                               class="tally-input tally-field w-40" />
                     </div>
 
-                    <!-- Opening -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Opening</label>
-                        <div class="grid grid-cols-3 gap-2">
-                            <div>
-                                <p class="text-xs text-gray-400 mb-1">Balance (Qty)</p>
-                                <input v-model="form.opening_balance" type="number" step="0.0001" placeholder="0"
-                                       @input="recalcOpeningValue"
-                                       class="w-full rounded-lg border border-gray-300 px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                            </div>
-                            <div>
-                                <p class="text-xs text-gray-400 mb-1">Rate</p>
-                                <input v-model="form.opening_rate" type="number" step="0.01" placeholder="0"
-                                       @input="recalcOpeningValue"
-                                       class="w-full rounded-lg border border-gray-300 px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                            </div>
-                            <div>
-                                <p class="text-xs text-gray-400 mb-1">Value <span class="text-gray-300">(auto)</span></p>
-                                <input v-model="form.opening_value" type="number" step="0.01" placeholder="0"
-                                       class="w-full rounded-lg border border-gray-300 px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                            </div>
+                    <!-- ── GST Details ─────────────────────────────────────── -->
+                    <div class="tally-section-header">GST Details</div>
+                    <div class="tally-row">
+                        <span class="tally-label">GST Applicable</span>
+                        <select v-model="form.is_gst_applicable" class="tally-input tally-field w-48">
+                            <option value="">— Select —</option>
+                            <option value="1">Applicable</option>
+                            <option value="0">Not Applicable</option>
+                        </select>
+                    </div>
+                    <template v-if="showGST">
+                    <div class="tally-row">
+                        <span class="tally-label">HSN / SAC</span>
+                        <input v-model="form.hsn_code" type="text" placeholder="e.g. 8471"
+                               class="tally-input tally-field w-48" />
+                    </div>
+                        <div class="tally-row">
+                            <span class="tally-label">Taxability</span>
+                            <select v-model="form.taxability" class="tally-input tally-field w-48">
+                                <option value="">— Select —</option>
+                                <option>Taxable</option>
+                                <option>Nil Rated</option>
+                                <option>Exempt</option>
+                                <option>Non-GST Supply</option>
+                            </select>
+                        </div>
+                        <div class="tally-row">
+                            <span class="tally-label">Calculation Type</span>
+                            <select v-model="form.calculation_type" class="tally-input tally-field w-48">
+                                <option value="">— Select —</option>
+                                <option>On Value</option>
+                                <option>On MRP Rate</option>
+                                <option>Based on Qty</option>
+                                <option>Fixed Amount</option>
+                            </select>
+                        </div>
+                        <div class="tally-row">
+                            <span class="tally-label">IGST Rate %</span>
+                            <input v-model="form.igst_rate" type="number" step="0.01" min="0" max="100" placeholder="0"
+                                   class="tally-input tally-field w-28" />
+                        </div>
+                        <div class="tally-row">
+                            <span class="tally-label">SGST Rate % <span class="text-gray-300 text-xs">(auto)</span></span>
+                            <input v-model="form.sgst_rate" type="number" step="0.01" min="0" max="100" placeholder="0"
+                                   class="tally-input tally-field w-28" />
+                        </div>
+                        <div class="tally-row">
+                            <span class="tally-label">CGST Rate % <span class="text-gray-300 text-xs">(auto)</span></span>
+                            <input v-model="form.cgst_rate" type="number" step="0.01" min="0" max="100" placeholder="0"
+                                   class="tally-input tally-field w-28" />
+                        </div>
+                        <div class="tally-row">
+                            <span class="tally-label">CESS Rate %</span>
+                            <input v-model="form.cess_rate" type="number" step="0.01" min="0" max="100" placeholder="0"
+                                   class="tally-input tally-field w-28" />
+                        </div>
+                    </template>
+
+                    <!-- ── Opening Balance ─────────────────────────────────── -->
+                    <div class="tally-section-header">Opening Balance</div>
+                    <div class="tally-row">
+                        <span class="tally-label">Quantity</span>
+                        <input v-model="form.opening_balance" type="number" step="0.0001" placeholder="0"
+                               @input="recalcOpeningValue"
+                               class="tally-input tally-field w-36" />
+                    </div>
+                    <div class="tally-row">
+                        <span class="tally-label">Rate</span>
+                        <input v-model="form.opening_rate" type="number" step="0.01" placeholder="0.00"
+                               @input="recalcOpeningValue"
+                               class="tally-input tally-field w-36" />
+                    </div>
+                    <div class="tally-row">
+                        <span class="tally-label">Value <span class="text-gray-300 text-xs">(auto)</span></span>
+                        <input v-model="form.opening_value" type="number" step="0.01" placeholder="0.00"
+                               class="tally-input tally-field w-36" />
+                    </div>
+
+                    <!-- ── Closing Balance ─────────────────────────────────── -->
+                    <div class="tally-section-header">Closing Balance</div>
+                    <div class="tally-row">
+                        <span class="tally-label">Quantity</span>
+                        <input v-model="form.closing_balance" type="number" step="0.0001" placeholder="0"
+                               @input="recalcClosingValue"
+                               class="tally-input tally-field w-36" />
+                    </div>
+                    <div class="tally-row">
+                        <span class="tally-label">Rate</span>
+                        <input v-model="form.closing_rate" type="number" step="0.01" placeholder="0.00"
+                               @input="recalcClosingValue"
+                               class="tally-input tally-field w-36" />
+                    </div>
+                    <div class="tally-row">
+                        <span class="tally-label">Value <span class="text-gray-300 text-xs">(auto)</span></span>
+                        <input v-model="form.closing_value" type="number" step="0.01" placeholder="0.00"
+                               class="tally-input tally-field w-36" />
+                    </div>
+
+                    <!-- ── Godown / Batch Allocations ──────────────────── -->
+                    <div class="tally-section-header flex items-center justify-between">
+                        <span>Godown / Batch Allocations</span>
+                        <div class="flex items-center gap-3 normal-case tracking-normal font-normal">
+                            <span v-if="form.opening_balance" class="text-xs"
+                                  :class="remainingOpening < 0 ? 'text-red-500 font-semibold' : 'text-violet-600'">
+                                Remaining: {{ remainingOpening }}
+                            </span>
+                            <button type="button" @click="addBatchAlloc"
+                                    class="text-xs text-violet-600 hover:text-violet-800 font-medium">+ Add</button>
                         </div>
                     </div>
 
-                    <!-- Closing -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Closing</label>
-                        <div class="grid grid-cols-3 gap-2">
-                            <div>
-                                <p class="text-xs text-gray-400 mb-1">Balance (Qty)</p>
-                                <input v-model="form.closing_balance" type="number" step="0.0001" placeholder="0"
-                                       @input="recalcClosingValue"
-                                       class="w-full rounded-lg border border-gray-300 px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                            </div>
-                            <div>
-                                <p class="text-xs text-gray-400 mb-1">Rate</p>
-                                <input v-model="form.closing_rate" type="number" step="0.01" placeholder="0"
-                                       @input="recalcClosingValue"
-                                       class="w-full rounded-lg border border-gray-300 px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                            </div>
-                            <div>
-                                <p class="text-xs text-gray-400 mb-1">Value <span class="text-gray-300">(auto)</span></p>
-                                <input v-model="form.closing_value" type="number" step="0.01" placeholder="0"
-                                       class="w-full rounded-lg border border-gray-300 px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                            </div>
+                    <div v-for="(ba, i) in form.batch_allocations" :key="i" class="divide-y divide-gray-100">
+                        <div class="tally-row bg-violet-50/40">
+                            <span class="tally-label text-violet-700 font-semibold">Allocation {{ i + 1 }}</span>
+                            <button type="button" @click="removeBatchAlloc(i)"
+                                    class="tally-input text-xs text-red-400 hover:text-red-600">✕ Remove</button>
+                        </div>
+                        <div class="tally-row">
+                            <span class="tally-label">Godown</span>
+                            <select @change="selectGodown(ba, godownNames.find(g => g.name === $event.target.value))"
+                                    :value="ba.GodownName" class="tally-input tally-field">
+                                <option value="">— Select Godown —</option>
+                                <option v-for="g in godownNames" :key="g.name" :value="g.name">{{ g.name }}</option>
+                            </select>
+                        </div>
+                        <div class="tally-row">
+                            <span class="tally-label">Batch Name</span>
+                            <input v-model="ba.BatchName" type="text" placeholder="e.g. Batch-001"
+                                   class="tally-input tally-field" />
+                        </div>
+                        <div class="tally-row">
+                            <span class="tally-label">
+                                Opening Qty
+                                <span class="text-gray-300 text-xs">(max {{ maxForBatch(i) }})</span>
+                            </span>
+                            <input v-model="ba.OpeningBalance" @input="clampBatchOpening(ba, i)"
+                                   type="number" step="0.0001" min="0" :max="maxForBatch(i)" placeholder="0"
+                                   class="tally-input tally-field w-36" />
+                        </div>
+                        <div class="tally-row">
+                            <span class="tally-label">Rate</span>
+                            <input v-model="ba.Rate" @input="calcOpeningValue(ba)"
+                                   type="number" step="0.01" placeholder="0"
+                                   class="tally-input tally-field w-36" />
+                        </div>
+                        <div class="tally-row">
+                            <span class="tally-label">Value <span class="text-gray-300 text-xs">(auto)</span></span>
+                            <input :value="ba.OpeningValue" readonly
+                                   class="tally-input tally-field w-36 bg-gray-50 text-gray-400 cursor-not-allowed" />
                         </div>
                     </div>
 
-                    <!-- Batch Allocations -->
-                    <div>
-                        <div class="flex items-center justify-between mb-2">
-                            <label class="text-sm font-medium text-gray-700">Batch Allocations (Godowns)</label>
-                            <div class="flex items-center gap-3">
-                                <span v-if="form.opening_balance" class="text-xs"
-                                      :class="remainingOpening < 0 ? 'text-red-500 font-medium' : 'text-gray-400'">
-                                    Remaining: {{ remainingOpening }}
-                                </span>
-                                <button type="button" @click="addBatchAlloc"
-                                        class="text-xs text-violet-600 hover:text-violet-800 font-medium">+ Add</button>
-                            </div>
-                        </div>
-                        <div v-for="(ba, i) in form.batch_allocations" :key="i"
-                             class="border border-gray-200 rounded-lg p-3 mb-2 space-y-2">
-                            <div class="flex items-center justify-between">
-                                <span class="text-xs font-medium text-gray-500">Allocation {{ i + 1 }}</span>
-                                <button type="button" @click="removeBatchAlloc(i)"
-                                        class="text-xs text-red-400 hover:text-red-600">✕ Remove</button>
-                            </div>
-                            <div class="grid grid-cols-2 gap-2">
-                                <div class="col-span-2">
-                                    <p class="text-xs text-gray-400 mb-1">Godown</p>
-                                    <select @change="selectGodown(ba, godownNames.find(g => g.name === $event.target.value))"
-                                            :value="ba.GodownName"
-                                            class="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
-                                        <option value="">— Select Godown —</option>
-                                        <option v-for="g in godownNames" :key="g.name" :value="g.name">{{ g.name }}</option>
-                                    </select>
-                                </div>
-                                <div class="col-span-2">
-                                    <p class="text-xs text-gray-400 mb-1">Batch Name</p>
-                                    <input v-model="ba.BatchName" type="text" placeholder="e.g. Batch-001"
-                                           class="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                                </div>
-                                <div>
-                                    <p class="text-xs text-gray-400 mb-1">
-                                        Opening Balance
-                                        <span class="text-gray-300">(max {{ maxForBatch(i) }})</span>
-                                    </p>
-                                    <input v-model="ba.OpeningBalance" @input="clampBatchOpening(ba, i)"
-                                           type="number" step="0.0001" min="0" :max="maxForBatch(i)" placeholder="0"
-                                           class="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                                </div>
-                                <div>
-                                    <p class="text-xs text-gray-400 mb-1">Rate</p>
-                                    <input v-model="ba.Rate" @input="calcOpeningValue(ba)"
-                                           type="number" step="0.01" placeholder="0"
-                                           class="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                                </div>
-                                <div class="col-span-2">
-                                    <p class="text-xs text-gray-400 mb-1">Opening Value <span class="text-gray-300">(auto)</span></p>
-                                    <input :value="ba.OpeningValue" readonly
-                                           class="w-full rounded-lg border border-gray-200 bg-gray-50 px-2 py-1.5 text-sm text-gray-500 cursor-not-allowed" />
-                                </div>
-                            </div>
-                        </div>
-                        <p v-if="batchOpeningError" class="text-xs text-red-500 mt-1">{{ batchOpeningError }}</p>
-                        <p v-if="form.errors.batch_allocations" class="text-xs text-red-500 mt-1">{{ form.errors.batch_allocations }}</p>
-                        <p v-if="!form.batch_allocations.length" class="text-xs text-gray-400">No batch allocations.</p>
+                    <div v-if="batchOpeningError" class="px-4 py-2 bg-red-50 text-xs text-red-600">
+                        {{ batchOpeningError }}
+                    </div>
+                    <div v-if="!form.batch_allocations.length" class="tally-row text-xs text-gray-400 italic">
+                        <span class="tally-label"></span>
+                        <span class="tally-input">No godown allocations.</span>
                     </div>
 
-                    <div class="flex gap-3 pt-2 border-t border-gray-100">
+                    <!-- ── Additional Info ─────────────────────────────────── -->
+                    <div class="tally-section-header">Additional Info</div>
+                    <div class="tally-row">
+                        <span class="tally-label">Description</span>
+                        <textarea v-model="form.description" rows="2" placeholder="Optional description"
+                                  class="tally-input tally-field resize-none" />
+                    </div>
+                    <div class="tally-row">
+                        <span class="tally-label">Remarks</span>
+                        <textarea v-model="form.remarks" rows="2" placeholder="Internal notes"
+                                  class="tally-input tally-field resize-none" />
+                    </div>
+
+                    <!-- Aliases -->
+                    <div class="tally-row items-start">
+                        <span class="tally-label pt-1">Aliases</span>
+                        <div class="tally-input space-y-1.5">
+                            <div v-for="(al, i) in form.aliases" :key="i" class="flex gap-2">
+                                <input v-model="al.Alias" type="text" placeholder="Alias name"
+                                       class="flex-1 tally-field" />
+                                <button type="button" @click="removeAlias(i)"
+                                        class="text-red-400 hover:text-red-600 text-xs px-1">✕</button>
+                            </div>
+                            <button type="button" @click="addAlias"
+                                    class="text-xs text-violet-600 hover:text-violet-800 font-medium">+ Add Alias</button>
+                        </div>
+                    </div>
+
+                    <!-- Part Numbers -->
+                    <div class="tally-row items-start">
+                        <span class="tally-label pt-1">Part Numbers</span>
+                        <div class="tally-input space-y-1.5">
+                            <div v-for="(pn, i) in form.part_nos" :key="i" class="flex gap-2">
+                                <input v-model="pn.PartNo" type="text" placeholder="Part number"
+                                       class="flex-1 tally-field" />
+                                <button type="button" @click="removePartNo(i)"
+                                        class="text-red-400 hover:text-red-600 text-xs px-1">✕</button>
+                            </div>
+                            <button type="button" @click="addPartNo"
+                                    class="text-xs text-violet-600 hover:text-violet-800 font-medium">+ Add Part No</button>
+                        </div>
+                    </div>
+
+                    <!-- ── Actions ─────────────────────────────────────────── -->
+                    <div class="px-4 py-4 flex gap-3">
                         <button type="submit" :disabled="form.processing || !!batchOpeningError"
-                                class="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 transition disabled:opacity-50">
+                                class="rounded-lg bg-violet-600 px-5 py-2 text-sm font-medium text-white hover:bg-violet-700 transition disabled:opacity-50">
                             {{ isEditing ? 'Update' : 'Create' }}
                         </button>
                         <button type="button" @click="closeModal"
-                                class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 transition">
+                                class="rounded-lg border border-gray-300 px-5 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 transition">
                             Cancel
                         </button>
                     </div>
@@ -662,3 +630,21 @@ function destroy(item) {
         </div>
     </Teleport>
 </template>
+
+<style scoped>
+.tally-row {
+    @apply flex items-center px-4 py-2.5 border-b border-gray-100 last:border-0;
+}
+.tally-label {
+    @apply w-44 flex-shrink-0 text-sm text-gray-600;
+}
+.tally-input {
+    @apply flex-1;
+}
+.tally-field {
+    @apply w-full rounded border border-gray-300 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent;
+}
+.tally-section-header {
+    @apply flex items-center px-4 py-2 bg-violet-50 border-y border-violet-100 text-xs font-semibold text-violet-700 uppercase tracking-wider;
+}
+</style>
