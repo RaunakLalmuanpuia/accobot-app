@@ -30,6 +30,7 @@ class BillingController extends Controller
                 'trial_ends_at'       => $subscription->trial_ends_at?->toDateString(),
                 'current_period_end'  => $subscription->current_period_end?->toDateString(),
                 'cancelled_at'        => $subscription->cancelled_at?->toDateString(),
+                'razorpay_short_url'  => $subscription->razorpay_short_url,
                 'has_ai_addon'        => $subscription->addons
                     ->where('status', 'active')
                     ->isNotEmpty(),
@@ -138,6 +139,7 @@ class BillingController extends Controller
             [
                 'plan_id'                  => $plan->id,
                 'razorpay_subscription_id' => $result['subscription_id'],
+                'razorpay_short_url'       => $result['short_url'],
                 'status'                   => 'pending',
                 'trial_ends_at'            => null,
                 'current_period_start'     => null,

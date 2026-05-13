@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Subscription extends Model
 {
     protected $fillable = [
-        'tenant_id', 'plan_id', 'razorpay_subscription_id', 'razorpay_customer_id',
+        'tenant_id', 'plan_id', 'razorpay_subscription_id', 'razorpay_customer_id', 'razorpay_short_url',
         'status', 'trial_ends_at', 'current_period_start', 'current_period_end', 'cancelled_at',
     ];
 

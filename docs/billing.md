@@ -118,6 +118,7 @@ tenant_id                   uuid FK → tenants.id (unique per tenant)
 plan_id                     bigint FK → plans.id
 razorpay_subscription_id    string nullable unique
 razorpay_customer_id        string nullable
+razorpay_short_url          string nullable    Razorpay hosted management page URL
 status                      enum: pending | trialing | active | halted | cancelled | expired
 trial_ends_at               timestamp nullable
 current_period_start        timestamp nullable
@@ -535,6 +536,15 @@ Internally reads `usePage().props.subscription.features`.
 |---|---|---|
 | `Billing/SelectPlan.vue` | `/t/{tenant}/billing/select-plan` | Plan picker after registration or when subscription expires |
 | `Billing/Index.vue` | `/t/{tenant}/billing` | Manage current plan, cancel, add AI addon (Personal only), switch plans |
+
+#### Halted (payment failed) banner
+
+When `subscription.status === 'halted'`, the billing page shows two action buttons:
+
+- **Update Payment Method** — opens `subscription.razorpay_short_url` in a new tab (Razorpay's hosted subscription management page where the user can update their card/UPI). Only shown when `razorpay_short_url` is set.
+- **Choose New Plan** — navigates to the plan picker to start a fresh subscription.
+
+The `razorpay_short_url` is stored on the `subscriptions` table when the subscription is first created and is included in the `Billing/Index` Inertia props.
 
 ---
 

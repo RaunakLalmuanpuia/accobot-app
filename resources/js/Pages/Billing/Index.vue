@@ -241,10 +241,21 @@ async function addAddon() {
                     <!-- Halted — payment failed banner -->
                     <div v-if="subscription.status === 'halted'" class="rounded-xl bg-red-50 border border-red-200 p-5">
                         <p class="text-sm font-semibold text-red-800">Payment failed</p>
-                        <p class="mt-1 text-sm text-red-700">Razorpay will retry your payment automatically. If it keeps failing, please update your payment method via Razorpay or choose a new plan.</p>
-                        <a :href="route('billing.select-plan', tenant)" class="mt-3 inline-flex items-center rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 transition">
-                            Choose New Plan
-                        </a>
+                        <p class="mt-1 text-sm text-red-700">Razorpay will retry your payment automatically. Update your payment method to avoid losing access.</p>
+                        <div class="mt-3 flex flex-wrap gap-3">
+                            <a
+                                v-if="subscription.razorpay_short_url"
+                                :href="subscription.razorpay_short_url"
+                                target="_blank"
+                                rel="noopener"
+                                class="inline-flex items-center rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 transition"
+                            >
+                                Update Payment Method
+                            </a>
+                            <a :href="route('billing.select-plan', tenant)" class="inline-flex items-center rounded-lg border border-red-300 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-100 transition">
+                                Choose New Plan
+                            </a>
+                        </div>
                     </div>
                 </template>
 
