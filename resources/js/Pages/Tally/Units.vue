@@ -186,38 +186,48 @@ function destroy(unit) {
     <Teleport to="body">
         <div v-if="modal !== null" class="fixed inset-0 z-40 flex justify-end">
             <div class="absolute inset-0 bg-black/30" @click="closeModal" />
-            <div class="relative z-50 w-full max-w-md bg-white shadow-xl flex flex-col">
+            <div class="relative z-50 w-full max-w-lg bg-white shadow-xl flex flex-col">
                 <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
                     <h2 class="text-base font-semibold text-gray-900">
                         {{ isEditing ? 'Edit Unit' : 'New Unit' }}
                     </h2>
                     <button @click="closeModal" class="text-gray-400 hover:text-gray-600 text-lg leading-none">✕</button>
                 </div>
-                <form @submit.prevent="submit" class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Name / Symbol <span class="text-red-500">*</span></label>
-                        <input v-model="form.name" type="text" placeholder="e.g. PCS"
-                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                        <p class="mt-1 text-xs text-gray-400">Name and symbol are always the same in Tally.</p>
-                        <p v-if="form.errors.name" class="mt-1 text-xs text-red-500">{{ form.errors.name }}</p>
+                <form @submit.prevent="submit" class="flex-1 overflow-y-auto divide-y divide-gray-100">
+                    <div class="tally-section-header">Unit Definition</div>
+
+                    <div class="tally-row">
+                        <span class="tally-label">Name / Symbol <span class="text-red-500">*</span></span>
+                        <div class="tally-input">
+                            <input v-model="form.name" type="text" placeholder="e.g. PCS" class="tally-field" />
+                            <p class="mt-0.5 text-xs text-gray-400">Name and symbol are always the same in Tally.</p>
+                            <p v-if="form.errors.name" class="mt-0.5 text-xs text-red-500">{{ form.errors.name }}</p>
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Formal Name</label>
-                        <input v-model="form.formal_name" type="text" placeholder="e.g. Pieces"
-                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                        <p v-if="form.errors.formal_name" class="mt-1 text-xs text-red-500">{{ form.errors.formal_name }}</p>
+
+                    <div class="tally-row">
+                        <span class="tally-label">Formal Name</span>
+                        <div class="tally-input">
+                            <input v-model="form.formal_name" type="text" placeholder="e.g. Pieces" class="tally-field" />
+                            <p v-if="form.errors.formal_name" class="mt-0.5 text-xs text-red-500">{{ form.errors.formal_name }}</p>
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Decimal Places</label>
-                        <input v-model.number="form.decimal_places" type="number" min="0" max="9"
-                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+
+                    <div class="tally-row">
+                        <span class="tally-label">Decimal Places</span>
+                        <div class="tally-input">
+                            <input v-model.number="form.decimal_places" type="number" min="0" max="9" class="tally-field" />
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">UQC</label>
-                        <input v-model="form.uqc" type="text" placeholder="e.g. PCS-PIECES"
-                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+
+                    <div class="tally-row">
+                        <span class="tally-label">UQC</span>
+                        <div class="tally-input">
+                            <input v-model="form.uqc" type="text" placeholder="e.g. PCS-PIECES" class="tally-field" />
+                        </div>
                     </div>
-                    <div class="flex gap-3 pt-2 border-t border-gray-100">
+
+                    <div class="flex gap-3 px-4 py-4">
                         <button type="submit" :disabled="form.processing"
                                 class="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 transition disabled:opacity-50">
                             {{ isEditing ? 'Update' : 'Create' }}
@@ -232,3 +242,11 @@ function destroy(unit) {
         </div>
     </Teleport>
 </template>
+
+<style scoped>
+.tally-row   { @apply flex items-stretch border-b border-gray-100; }
+.tally-label { @apply w-44 shrink-0 text-sm text-gray-600 bg-gray-50 px-4 py-2.5 border-r border-gray-100 flex items-center; }
+.tally-input { @apply flex-1 px-3 py-2; }
+.tally-field { @apply w-full text-sm border-0 outline-none focus:ring-1 focus:ring-violet-400 rounded bg-transparent; }
+.tally-section-header { @apply bg-violet-50 text-violet-700 text-xs font-semibold uppercase tracking-wider px-4 py-1.5 border-b border-violet-100; }
+</style>

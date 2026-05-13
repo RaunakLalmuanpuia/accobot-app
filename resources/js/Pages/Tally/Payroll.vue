@@ -660,28 +660,31 @@ function destroyAtt(att) {
     <Teleport to="body">
         <div v-if="empModal !== null" class="fixed inset-0 z-40 flex justify-end">
             <div class="absolute inset-0 bg-black/30" @click="closeEmpModal" />
-            <div class="relative z-50 w-full max-w-md bg-white shadow-xl flex flex-col">
+            <div class="relative z-50 w-full max-w-xl bg-white shadow-xl flex flex-col">
                 <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
                     <h2 class="text-base font-semibold text-gray-900">{{ isEditingEmp ? 'Edit Employee' : 'New Employee' }}</h2>
                     <button @click="closeEmpModal" class="text-gray-400 hover:text-gray-600 text-lg leading-none">✕</button>
                 </div>
-                <form @submit.prevent="submitEmp" class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Name <span class="text-red-500">*</span></label>
-                        <input v-model="empForm.name" type="text" placeholder="Full name"
-                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                        <p v-if="empForm.errors.name" class="mt-1 text-xs text-red-500">{{ empForm.errors.name }}</p>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Employee No.</label>
-                            <input v-model="empForm.employee_number" type="text" placeholder="e.g. EMP001"
-                                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                <form @submit.prevent="submitEmp" class="flex-1 overflow-y-auto divide-y divide-gray-100">
+                    <div class="tally-section-header">Basic Information</div>
+
+                    <div class="tally-row">
+                        <span class="tally-label">Name <span class="text-red-500">*</span></span>
+                        <div class="tally-input">
+                            <input v-model="empForm.name" type="text" placeholder="Full name" class="tally-field" />
+                            <p v-if="empForm.errors.name" class="mt-0.5 text-xs text-red-500">{{ empForm.errors.name }}</p>
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Gender</label>
-                            <select v-model="empForm.gender"
-                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
+                    </div>
+                    <div class="tally-row">
+                        <span class="tally-label">Employee No.</span>
+                        <div class="tally-input">
+                            <input v-model="empForm.employee_number" type="text" placeholder="e.g. EMP001" class="tally-field" />
+                        </div>
+                    </div>
+                    <div class="tally-row">
+                        <span class="tally-label">Gender</span>
+                        <div class="tally-input">
+                            <select v-model="empForm.gender" class="tally-field">
                                 <option value="">— Select —</option>
                                 <option>Male</option>
                                 <option>Female</option>
@@ -690,101 +693,112 @@ function destroyAtt(att) {
                             </select>
                         </div>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Employee Group</label>
-                        <select v-model="empForm.parent"
-                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
-                            <option value="">— Select Group —</option>
-                            <option v-for="n in empGroupOptions" :key="n" :value="n">{{ n }}</option>
-                        </select>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Designation</label>
-                            <input v-model="empForm.designation" type="text" placeholder="e.g. Manager"
-                                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Function</label>
-                            <input v-model="empForm.employee_function" type="text" placeholder="e.g. Sales"
-                                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                    <div class="tally-row">
+                        <span class="tally-label">Employee Group</span>
+                        <div class="tally-input">
+                            <select v-model="empForm.parent" class="tally-field">
+                                <option value="">— Select Group —</option>
+                                <option v-for="n in empGroupOptions" :key="n" :value="n">{{ n }}</option>
+                            </select>
                         </div>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Location</label>
-                        <input v-model="empForm.location" type="text" placeholder="e.g. Mumbai"
-                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Date of Joining</label>
-                            <input v-model="empForm.date_of_joining" type="date"
-                                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Date of Resignation</label>
-                            <input v-model="empForm.date_of_leaving" type="date"
-                                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                    <div class="tally-row">
+                        <span class="tally-label">Designation</span>
+                        <div class="tally-input">
+                            <input v-model="empForm.designation" type="text" placeholder="e.g. Manager" class="tally-field" />
                         </div>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
-                        <input v-model="empForm.date_of_birth" type="date"
-                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Father's Name</label>
-                            <input v-model="empForm.father_name" type="text" placeholder="e.g. Ramesh"
-                                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Spouse's Name</label>
-                            <input v-model="empForm.spouse_name" type="text" placeholder="e.g. Priya"
-                                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                    <div class="tally-row">
+                        <span class="tally-label">Function</span>
+                        <div class="tally-input">
+                            <input v-model="empForm.employee_function" type="text" placeholder="e.g. Sales" class="tally-field" />
                         </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Contact Number</label>
-                            <input v-model="empForm.contact_number" type="text" placeholder="e.g. +91 9876543210"
-                                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                            <p v-if="empForm.errors.contact_number" class="mt-1 text-xs text-red-500">{{ empForm.errors.contact_number }}</p>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                            <input v-model="empForm.email_address" type="email" placeholder="e.g. emp@company.com"
-                                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                            <p v-if="empForm.errors.email_address" class="mt-1 text-xs text-red-500">{{ empForm.errors.email_address }}</p>
+                    <div class="tally-row">
+                        <span class="tally-label">Location</span>
+                        <div class="tally-input">
+                            <input v-model="empForm.location" type="text" placeholder="e.g. Mumbai" class="tally-field" />
                         </div>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Address Lines</label>
-                        <div class="space-y-2">
-                            <div v-for="(addr, i) in empForm.address" :key="i" class="flex gap-2">
+
+                    <div class="tally-section-header">Dates</div>
+
+                    <div class="tally-row">
+                        <span class="tally-label">Date of Joining</span>
+                        <div class="tally-input">
+                            <input v-model="empForm.date_of_joining" type="date" class="tally-field" />
+                        </div>
+                    </div>
+                    <div class="tally-row">
+                        <span class="tally-label">Date of Resignation</span>
+                        <div class="tally-input">
+                            <input v-model="empForm.date_of_leaving" type="date" class="tally-field" />
+                        </div>
+                    </div>
+                    <div class="tally-row">
+                        <span class="tally-label">Date of Birth</span>
+                        <div class="tally-input">
+                            <input v-model="empForm.date_of_birth" type="date" class="tally-field" />
+                        </div>
+                    </div>
+
+                    <div class="tally-section-header">Personal</div>
+
+                    <div class="tally-row">
+                        <span class="tally-label">Father's Name</span>
+                        <div class="tally-input">
+                            <input v-model="empForm.father_name" type="text" placeholder="e.g. Ramesh" class="tally-field" />
+                        </div>
+                    </div>
+                    <div class="tally-row">
+                        <span class="tally-label">Spouse's Name</span>
+                        <div class="tally-input">
+                            <input v-model="empForm.spouse_name" type="text" placeholder="e.g. Priya" class="tally-field" />
+                        </div>
+                    </div>
+
+                    <div class="tally-section-header">Contact</div>
+
+                    <div class="tally-row">
+                        <span class="tally-label">Contact Number</span>
+                        <div class="tally-input">
+                            <input v-model="empForm.contact_number" type="text" placeholder="+91 9876543210" class="tally-field" />
+                            <p v-if="empForm.errors.contact_number" class="mt-0.5 text-xs text-red-500">{{ empForm.errors.contact_number }}</p>
+                        </div>
+                    </div>
+                    <div class="tally-row">
+                        <span class="tally-label">Email Address</span>
+                        <div class="tally-input">
+                            <input v-model="empForm.email_address" type="email" placeholder="emp@company.com" class="tally-field" />
+                            <p v-if="empForm.errors.email_address" class="mt-0.5 text-xs text-red-500">{{ empForm.errors.email_address }}</p>
+                        </div>
+                    </div>
+                    <div class="tally-row items-start">
+                        <span class="tally-label pt-2.5">Address</span>
+                        <div class="tally-input">
+                            <div v-for="(addr, i) in empForm.address" :key="i" class="flex gap-2 mb-1.5">
                                 <input v-model="empForm.address[i].Address" type="text" placeholder="Address line"
-                                       class="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                                <button type="button" @click="empForm.address.splice(i, 1)"
-                                        class="text-red-400 hover:text-red-600 text-lg leading-none px-1">✕</button>
+                                       class="tally-field flex-1 border border-gray-200 rounded px-2 py-1" />
+                                <button type="button" @click="empForm.address.splice(i, 1)" class="text-xs text-red-400 hover:text-red-600 px-1">✕</button>
                             </div>
                             <button type="button" @click="empForm.address.push({ Address: '' })"
-                                    class="text-sm text-violet-600 hover:text-violet-800 font-medium">+ Add Line</button>
+                                    class="mt-1 text-xs text-violet-600 hover:text-violet-800 font-medium">+ Add Line</button>
                         </div>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Aliases</label>
-                        <div class="space-y-2">
-                            <div v-for="(alias, i) in empForm.aliases" :key="i" class="flex gap-2">
+                    <div class="tally-row items-start">
+                        <span class="tally-label pt-2.5">Aliases</span>
+                        <div class="tally-input">
+                            <div v-for="(alias, i) in empForm.aliases" :key="i" class="flex gap-2 mb-1.5">
                                 <input v-model="empForm.aliases[i].Alias" type="text" placeholder="Alias name"
-                                       class="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                                <button type="button" @click="empForm.aliases.splice(i, 1)"
-                                        class="text-red-400 hover:text-red-600 text-lg leading-none px-1">✕</button>
+                                       class="tally-field flex-1 border border-gray-200 rounded px-2 py-1" />
+                                <button type="button" @click="empForm.aliases.splice(i, 1)" class="text-xs text-red-400 hover:text-red-600 px-1">✕</button>
                             </div>
                             <button type="button" @click="empForm.aliases.push({ Alias: '' })"
-                                    class="text-sm text-violet-600 hover:text-violet-800 font-medium">+ Add Alias</button>
+                                    class="mt-1 text-xs text-violet-600 hover:text-violet-800 font-medium">+ Add Alias</button>
                         </div>
                     </div>
-                    <div class="flex gap-3 pt-2 border-t border-gray-100">
+
+                    <div class="flex gap-3 px-4 py-4">
                         <button type="submit" :disabled="empForm.processing"
                                 class="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 transition disabled:opacity-50">
                             {{ isEditingEmp ? 'Update' : 'Create' }}
@@ -803,43 +817,50 @@ function destroyAtt(att) {
     <Teleport to="body">
         <div v-if="grpModal !== null" class="fixed inset-0 z-40 flex justify-end">
             <div class="absolute inset-0 bg-black/30" @click="closeGrpModal" />
-            <div class="relative z-50 w-full max-w-md bg-white shadow-xl flex flex-col">
+            <div class="relative z-50 w-full max-w-lg bg-white shadow-xl flex flex-col">
                 <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
                     <h2 class="text-base font-semibold text-gray-900">{{ isEditingGrp ? 'Edit Employee Group' : 'New Employee Group' }}</h2>
                     <button @click="closeGrpModal" class="text-gray-400 hover:text-gray-600 text-lg leading-none">✕</button>
                 </div>
-                <form @submit.prevent="submitGrp" class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Name <span class="text-red-500">*</span></label>
-                        <input v-model="grpForm.name" type="text" placeholder="e.g. Primary Cost Centre"
-                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                        <p v-if="grpForm.errors.name" class="mt-1 text-xs text-red-500">{{ grpForm.errors.name }}</p>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Under (Parent)</label>
-                        <select v-model="grpForm.under"
-                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
-                            <option value="Primary">Primary</option>
-                            <option v-for="g in grpUnderOptions" :key="g" :value="g">{{ g }}</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Cost Centre Category</label>
-                        <input v-model="grpForm.cost_centre_category" type="text" placeholder="e.g. Primary Cost Category"
-                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Aliases</label>
-                        <div v-for="(alias, i) in grpForm.aliases" :key="i" class="flex gap-2 mb-2">
-                            <input v-model="grpForm.aliases[i].Alias" type="text" placeholder="Alias name"
-                                   class="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                            <button type="button" @click="grpForm.aliases.splice(i, 1)"
-                                    class="text-red-400 hover:text-red-600 text-sm px-2">✕</button>
+                <form @submit.prevent="submitGrp" class="flex-1 overflow-y-auto divide-y divide-gray-100">
+                    <div class="tally-section-header">Basic Information</div>
+
+                    <div class="tally-row">
+                        <span class="tally-label">Name <span class="text-red-500">*</span></span>
+                        <div class="tally-input">
+                            <input v-model="grpForm.name" type="text" placeholder="e.g. Primary Cost Centre" class="tally-field" />
+                            <p v-if="grpForm.errors.name" class="mt-0.5 text-xs text-red-500">{{ grpForm.errors.name }}</p>
                         </div>
-                        <button type="button" @click="grpForm.aliases.push({ Alias: '' })"
-                                class="text-xs text-violet-600 hover:text-violet-800 font-medium">+ Add Alias</button>
                     </div>
-                    <div class="flex gap-3 pt-2 border-t border-gray-100">
+                    <div class="tally-row">
+                        <span class="tally-label">Under (Parent)</span>
+                        <div class="tally-input">
+                            <select v-model="grpForm.under" class="tally-field">
+                                <option value="Primary">Primary</option>
+                                <option v-for="g in grpUnderOptions" :key="g" :value="g">{{ g }}</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="tally-row">
+                        <span class="tally-label">Cost Centre Category</span>
+                        <div class="tally-input">
+                            <input v-model="grpForm.cost_centre_category" type="text" placeholder="e.g. Primary Cost Category" class="tally-field" />
+                        </div>
+                    </div>
+                    <div class="tally-row items-start">
+                        <span class="tally-label pt-2.5">Aliases</span>
+                        <div class="tally-input">
+                            <div v-for="(alias, i) in grpForm.aliases" :key="i" class="flex gap-2 mb-1.5">
+                                <input v-model="grpForm.aliases[i].Alias" type="text" placeholder="Alias name"
+                                       class="tally-field flex-1 border border-gray-200 rounded px-2 py-1" />
+                                <button type="button" @click="grpForm.aliases.splice(i, 1)" class="text-xs text-red-400 hover:text-red-600 px-1">✕</button>
+                            </div>
+                            <button type="button" @click="grpForm.aliases.push({ Alias: '' })"
+                                    class="mt-1 text-xs text-violet-600 hover:text-violet-800 font-medium">+ Add Alias</button>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-3 px-4 py-4">
                         <button type="submit" :disabled="grpForm.processing"
                                 class="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 transition disabled:opacity-50">
                             {{ isEditingGrp ? 'Update' : 'Create' }}
@@ -858,54 +879,63 @@ function destroyAtt(att) {
     <Teleport to="body">
         <div v-if="phModal !== null" class="fixed inset-0 z-40 flex justify-end">
             <div class="absolute inset-0 bg-black/30" @click="closePhModal" />
-            <div class="relative z-50 w-full max-w-md bg-white shadow-xl flex flex-col">
+            <div class="relative z-50 w-full max-w-lg bg-white shadow-xl flex flex-col">
                 <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
                     <h2 class="text-base font-semibold text-gray-900">{{ isEditingPh ? 'Edit Pay Head' : 'New Pay Head' }}</h2>
                     <button @click="closePhModal" class="text-gray-400 hover:text-gray-600 text-lg leading-none">✕</button>
                 </div>
-                <form @submit.prevent="submitPh" class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Name <span class="text-red-500">*</span></label>
-                        <input v-model="phForm.name" type="text" placeholder="e.g. Basic Pay"
-                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                        <p v-if="phForm.errors.name" class="mt-1 text-xs text-red-500">{{ phForm.errors.name }}</p>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Pay Type</label>
-                        <select v-model="phForm.pay_type"
-                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
-                            <option value="">— Select —</option>
-                            <option>Earnings for Employees</option>
-                            <option>Employees' Statutory Deductions</option>
-                            <option>Employer's Statutory Contributions</option>
-                            <option>Deductions</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Income Type</label>
-                        <input v-model="phForm.income_type" type="text" placeholder="e.g. Fixed"
-                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Parent Group</label>
-                        <select v-model="phForm.parent_group"
-                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
-                            <option value="">— Select —</option>
-                            <option>Direct Expenses</option>
-                            <option>Indirect Expenses</option>
-                            <option>Misc. Expenses (ASSET)</option>
-                        </select>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Calculation Type</label>
-                            <input v-model="phForm.calculation_type" type="text" placeholder="e.g. As Computed Value"
-                                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                <form @submit.prevent="submitPh" class="flex-1 overflow-y-auto divide-y divide-gray-100">
+                    <div class="tally-section-header">Basic Information</div>
+
+                    <div class="tally-row">
+                        <span class="tally-label">Name <span class="text-red-500">*</span></span>
+                        <div class="tally-input">
+                            <input v-model="phForm.name" type="text" placeholder="e.g. Basic Pay" class="tally-field" />
+                            <p v-if="phForm.errors.name" class="mt-0.5 text-xs text-red-500">{{ phForm.errors.name }}</p>
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Calculation Period</label>
-                            <select v-model="phForm.calculation_period"
-                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
+                    </div>
+                    <div class="tally-row">
+                        <span class="tally-label">Pay Type</span>
+                        <div class="tally-input">
+                            <select v-model="phForm.pay_type" class="tally-field">
+                                <option value="">— Select —</option>
+                                <option>Earnings for Employees</option>
+                                <option>Employees' Statutory Deductions</option>
+                                <option>Employer's Statutory Contributions</option>
+                                <option>Deductions</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="tally-row">
+                        <span class="tally-label">Income Type</span>
+                        <div class="tally-input">
+                            <input v-model="phForm.income_type" type="text" placeholder="e.g. Fixed" class="tally-field" />
+                        </div>
+                    </div>
+                    <div class="tally-row">
+                        <span class="tally-label">Parent Group</span>
+                        <div class="tally-input">
+                            <select v-model="phForm.parent_group" class="tally-field">
+                                <option value="">— Select —</option>
+                                <option>Direct Expenses</option>
+                                <option>Indirect Expenses</option>
+                                <option>Misc. Expenses (ASSET)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="tally-section-header">Calculation</div>
+
+                    <div class="tally-row">
+                        <span class="tally-label">Calculation Type</span>
+                        <div class="tally-input">
+                            <input v-model="phForm.calculation_type" type="text" placeholder="e.g. As Computed Value" class="tally-field" />
+                        </div>
+                    </div>
+                    <div class="tally-row">
+                        <span class="tally-label">Calculation Period</span>
+                        <div class="tally-input">
+                            <select v-model="phForm.calculation_period" class="tally-field">
                                 <option value="">— Select —</option>
                                 <option>Days</option>
                                 <option>Fortnights</option>
@@ -914,12 +944,14 @@ function destroyAtt(att) {
                             </select>
                         </div>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Leave Type</label>
-                        <input v-model="phForm.leave_type" type="text" placeholder="e.g. Casual Leave"
-                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                    <div class="tally-row">
+                        <span class="tally-label">Leave Type</span>
+                        <div class="tally-input">
+                            <input v-model="phForm.leave_type" type="text" placeholder="e.g. Casual Leave" class="tally-field" />
+                        </div>
                     </div>
-                    <div class="flex gap-3 pt-2 border-t border-gray-100">
+
+                    <div class="flex gap-3 px-4 py-4">
                         <button type="submit" :disabled="phForm.processing"
                                 class="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 transition disabled:opacity-50">
                             {{ isEditingPh ? 'Update' : 'Create' }}
@@ -938,61 +970,67 @@ function destroyAtt(att) {
     <Teleport to="body">
         <div v-if="attModal !== null" class="fixed inset-0 z-40 flex justify-end">
             <div class="absolute inset-0 bg-black/30" @click="closeAttModal" />
-            <div class="relative z-50 w-full max-w-md bg-white shadow-xl flex flex-col">
+            <div class="relative z-50 w-full max-w-lg bg-white shadow-xl flex flex-col">
                 <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
                     <h2 class="text-base font-semibold text-gray-900">{{ isEditingAtt ? 'Edit Attendance Type' : 'New Attendance Type' }}</h2>
                     <button @click="closeAttModal" class="text-gray-400 hover:text-gray-600 text-lg leading-none">✕</button>
                 </div>
-                <form @submit.prevent="submitAtt" class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Name <span class="text-red-500">*</span></label>
-                        <input v-model="attForm.name" type="text" placeholder="e.g. Present"
-                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                        <p v-if="attForm.errors.name" class="mt-1 text-xs text-red-500">{{ attForm.errors.name }}</p>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Under</label>
-                        <select v-model="attForm.under"
-                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
-                            <option value="Primary">Primary</option>
-                            <option v-for="n in attUnderOptions" :key="n" :value="n">{{ n }}</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Attendance Type</label>
-                        <select v-model="attForm.attendance_type"
-                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
-                            <option value="">— Select —</option>
-                            <option>Attendance / Leave with Pay</option>
-                            <option>Leave without Pay</option>
-                            <option>Production</option>
-                            <option>User Defined Calender Type</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Attendance Period</label>
-                        <select v-model="attForm.attendance_period"
-                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
-                            <option value="">— Select —</option>
-                            <option>Days</option>
-                            <option>Hours</option>
-                            <option>Minutes</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Aliases</label>
-                        <div class="space-y-2">
-                            <div v-for="(alias, i) in attForm.aliases" :key="i" class="flex gap-2">
-                                <input v-model="attForm.aliases[i].Alias" type="text" placeholder="Alias name"
-                                       class="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                                <button type="button" @click="attForm.aliases.splice(i, 1)"
-                                        class="text-red-400 hover:text-red-600 text-lg leading-none px-1">✕</button>
-                            </div>
-                            <button type="button" @click="attForm.aliases.push({ Alias: '' })"
-                                    class="text-sm text-violet-600 hover:text-violet-800 font-medium">+ Add Alias</button>
+                <form @submit.prevent="submitAtt" class="flex-1 overflow-y-auto divide-y divide-gray-100">
+                    <div class="tally-section-header">Basic Information</div>
+
+                    <div class="tally-row">
+                        <span class="tally-label">Name <span class="text-red-500">*</span></span>
+                        <div class="tally-input">
+                            <input v-model="attForm.name" type="text" placeholder="e.g. Present" class="tally-field" />
+                            <p v-if="attForm.errors.name" class="mt-0.5 text-xs text-red-500">{{ attForm.errors.name }}</p>
                         </div>
                     </div>
-                    <div class="flex gap-3 pt-2 border-t border-gray-100">
+                    <div class="tally-row">
+                        <span class="tally-label">Under</span>
+                        <div class="tally-input">
+                            <select v-model="attForm.under" class="tally-field">
+                                <option value="Primary">Primary</option>
+                                <option v-for="n in attUnderOptions" :key="n" :value="n">{{ n }}</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="tally-row">
+                        <span class="tally-label">Attendance Type</span>
+                        <div class="tally-input">
+                            <select v-model="attForm.attendance_type" class="tally-field">
+                                <option value="">— Select —</option>
+                                <option>Attendance / Leave with Pay</option>
+                                <option>Leave without Pay</option>
+                                <option>Production</option>
+                                <option>User Defined Calender Type</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="tally-row">
+                        <span class="tally-label">Attendance Period</span>
+                        <div class="tally-input">
+                            <select v-model="attForm.attendance_period" class="tally-field">
+                                <option value="">— Select —</option>
+                                <option>Days</option>
+                                <option>Hours</option>
+                                <option>Minutes</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="tally-row items-start">
+                        <span class="tally-label pt-2.5">Aliases</span>
+                        <div class="tally-input">
+                            <div v-for="(alias, i) in attForm.aliases" :key="i" class="flex gap-2 mb-1.5">
+                                <input v-model="attForm.aliases[i].Alias" type="text" placeholder="Alias name"
+                                       class="tally-field flex-1 border border-gray-200 rounded px-2 py-1" />
+                                <button type="button" @click="attForm.aliases.splice(i, 1)" class="text-xs text-red-400 hover:text-red-600 px-1">✕</button>
+                            </div>
+                            <button type="button" @click="attForm.aliases.push({ Alias: '' })"
+                                    class="mt-1 text-xs text-violet-600 hover:text-violet-800 font-medium">+ Add Alias</button>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-3 px-4 py-4">
                         <button type="submit" :disabled="attForm.processing"
                                 class="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 transition disabled:opacity-50">
                             {{ isEditingAtt ? 'Update' : 'Create' }}
@@ -1007,3 +1045,11 @@ function destroyAtt(att) {
         </div>
     </Teleport>
 </template>
+
+<style scoped>
+.tally-row   { @apply flex items-stretch border-b border-gray-100; }
+.tally-label { @apply w-44 shrink-0 text-sm text-gray-600 bg-gray-50 px-4 py-2.5 border-r border-gray-100 flex items-center; }
+.tally-input { @apply flex-1 px-3 py-2; }
+.tally-field { @apply w-full text-sm border-0 outline-none focus:ring-1 focus:ring-violet-400 rounded bg-transparent; }
+.tally-section-header { @apply bg-violet-50 text-violet-700 text-xs font-semibold uppercase tracking-wider px-4 py-1.5 border-b border-violet-100; }
+</style>
