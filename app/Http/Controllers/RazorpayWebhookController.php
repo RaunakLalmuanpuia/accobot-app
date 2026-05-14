@@ -31,6 +31,8 @@ class RazorpayWebhookController extends Controller
         $payload = json_decode($rawBody, true);
         $event   = $payload['event'] ?? null;
 
+        Log::info('Razorpay webhook received', ['event' => $event]);
+
         // Extract the subscription entity from the payload
         $entity = $payload['payload']['subscription']['entity'] ?? null;
 
