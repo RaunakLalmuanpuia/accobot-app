@@ -85,7 +85,7 @@ async function addAddon() {
             name:            'Accobot',
             description:     'AI Assistance Addon',
             handler: function () {
-                router.reload({ preserveScroll: true })
+                setTimeout(() => router.reload({ preserveScroll: true }), 4000)
             },
             modal: {
                 ondismiss: () => { addingAddon.value = false },
@@ -196,6 +196,22 @@ async function addAddon() {
                                         Never mind
                                     </button>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AI Addon active (Personal plan only) -->
+                    <div v-if="subscription?.plan_slug === 'personal' && subscription?.has_ai_addon && addonPlan" class="bg-white rounded-2xl border border-violet-200 shadow-sm p-6">
+                        <div class="flex items-start justify-between gap-4">
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <p class="text-sm font-semibold text-gray-900">{{ addonPlan.name }}</p>
+                                    <span class="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700">Active</span>
+                                </div>
+                                <p class="mt-1 text-xs text-gray-500">AI-powered accounting assistance is enabled on your plan.</p>
+                                <p class="mt-2 text-lg font-bold text-gray-900">
+                                    {{ formatPrice(addonPlan.price) }}<span class="text-sm font-normal text-gray-400">/mo</span>
+                                </p>
                             </div>
                         </div>
                     </div>

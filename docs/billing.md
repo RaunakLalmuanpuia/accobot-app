@@ -701,12 +701,13 @@ Simulate by triggering a payment failure via the Razorpay dashboard or using a t
 1. Use an active Personal plan tenant.
 2. Go to `/t/{tenant}/billing`, click **Add AI Assistance** (Rs. 499/mo).
 3. **Expected:** `subscription_addons` row created with `status = pending`.
-4. **Expected:** Redirected to Razorpay checkout for the addon plan.
-5. Complete payment.
+4. **Expected:** Razorpay checkout modal opens for the addon plan.
+5. Complete payment. Page reloads automatically after ~4 seconds (to allow webhook to fire).
 6. Wait for `subscription.activated` webhook for the addon's Razorpay subscription ID.
 7. **Expected:** `subscription_addons.status` becomes `active`.
-8. **Expected:** `usePage().props.subscription.features` now includes `ai_assistant`.
-9. **Expected:** Assistant nav link appears.
+8. **Expected:** Billing page shows **AI Assistance — Active** card with Rs. 499/mo.
+9. **Expected:** `usePage().props.subscription.features` now includes `ai_assistant`.
+10. **Expected:** Assistant nav link appears.
 
 ---
 
