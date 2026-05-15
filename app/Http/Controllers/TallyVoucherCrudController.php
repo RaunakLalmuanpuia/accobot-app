@@ -20,7 +20,7 @@ class TallyVoucherCrudController extends Controller
     {
         return [
             // Core
-            'voucher_base_type' => 'required|string|max:100',
+            'voucher_base_type' => 'required|string|in:Sales,Purchase,Receipt,Payment,Contra,Journal,CreditNote,DebitNote',
             'voucher_type'      => 'nullable|string|max:50',
             'voucher_number'    => 'nullable|string|max:100',
             'voucher_date'    => 'required|date',

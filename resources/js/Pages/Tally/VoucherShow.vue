@@ -16,8 +16,6 @@ const typeBadge = {
     'DebitNote':   'bg-red-100 text-red-700',
     'Contra':      'bg-gray-100 text-gray-600',
     'Journal':     'bg-pink-100 text-pink-700',
-    'Payroll':     'bg-teal-100 text-teal-700',
-    'Attendance':  'bg-sky-100 text-sky-700',
 }
 
 function badgeCls(type) {

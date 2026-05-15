@@ -903,8 +903,15 @@ All pages show data to any user with `integrations.view`. Edit / New / Delete ac
 | StatutoryMasters.vue | tally.statutory-masters.index | Statutory Masters — Name, Type, Reg. No., State Code, Reg. Type, PAN, TAN, Applicable From |
 | Payroll.vue | tally.payroll.index | 4 tabs with full CRUD, all slide-overs use Tally Prime tally-row layout. **Employee** (max-w-xl): sections — Basic Info (Name*, Employee No, Gender, Group, Designation, Function, Location), Dates (DOJ, Resignation, DOB), Personal (Father's/Spouse's Name), Contact (Phone, Email, Address lines, Aliases). **Employee Group** (max-w-lg): Name*, Under, Cost Centre Category, Aliases. **Pay Head** (max-w-lg): sections — Basic Info (Name*, Pay Type, Income Type, Parent Group), Calculation (Calculation Type, Calculation Period, Leave Type). **Attendance Type** (max-w-lg): Name*, Under, Attendance Type, Attendance Period, Aliases. |
 | Units.vue | tally.units.index | Units of Measure (max-w-lg, Tally Prime tally-row layout). Fields: Name/Symbol* (always the same), Formal Name, Decimal Places, UQC. Symbol auto-set to Name in backend. DB unique constraint on (tenant_id, name). |
-| Vouchers.vue | tally.vouchers.index | Full CRUD — generic slide-over (max-w-2xl) for all non-Sales types. When `voucher_base_type === 'Sales'`, the slide-over widens to max-w-4xl and renders **SalesVoucher.vue** (dedicated layout). All other voucher types use the existing generic form unchanged. |
-| SalesVoucher.vue | (component, rendered inside Vouchers.vue slide-over) | Tally Prime–style Sales invoice form. **Header (2×2 grid):** Invoice No, Date, Reference No, Reference Date. **Party row:** Party Name (datalist → Sundry Debtors) + Cost Centre. **Item/Accounting toggle** (`salesMode` ref, UI-only). **Item table** (item mode): compact row (Item, UOM, Billed Qty, Rate, Disc%, Amount) with ▼ expand per row → Actual Qty, Sales Ledger, HSN, IGST%, CESS%, Tax Amount, Godown, Batch, MRP, Item Code, Group Name, Deemed Positive, plus collapsible Batch Allocations and Accounting Allocations. **Ledger Entries:** per entry — Ledger Name/Group, Amount, Dr/Cr, Party Ledger toggle, IGST/HSN/CESS, and Bill References (AgstType, Reference, CreditPeriod, Amount). **Summary panel:** Taxable Value (computed) + editable Grand Total (↺ reset). **Footer:** Place of Supply, Is Invoice checkbox, Narration. **Collapsible sections:** Dispatch/Shipping (Delivery Note No/Date, Dispatch Doc No, Dispatch Through, Destination, Carrier Name, LR No, LR Date, Motor Vehicle No); Order Details (Order No, Order Date, Terms of Payment, Terms of Delivery, Other References); Buyer Details (Name, Alias, dynamic multi-line Billing Address, GSTIN, Pin Code, State, Country, GST Reg Type, Email, Mobile); Consignee Details; e-Invoice (IRN, Ack No, Ack Date, QR Code). All fields bind directly to `form` props from Vouchers.vue — no new backend fields needed. |
+| Vouchers.vue | tally.vouchers.index | Full CRUD. Slide-over shell + per-type component routing. **Type selector** (always shown first) — Voucher Base Type dropdown (locked when editing) + auto-filled Voucher Type read-only input. Slide-over width: `max-w-4xl` for Sales/Purchase/CreditNote/DebitNote (inventory forms); `max-w-2xl` for all others. Renders one of 10 dedicated sub-components based on `voucher_base_type`. |
+| Vouchers/SalesVoucherForm.vue | (component, rendered inside Vouchers.vue) | Full Tally Prime–style Sales invoice. Item/Accounting toggle. Inventory table (expand per row → Batch Allocations + Accounting Allocations). Ledger entries with bill refs. Buyer/Consignee/Dispatch/Order/e-Invoice collapsible sections. Summary panel (Taxable Value + Grand Total with ↺ reset). Party filtered to Sundry Debtors. |
+| Vouchers/PurchaseVoucherForm.vue | (component) | Same structure as SalesVoucherForm — inventory table + ledger entries + bill refs + Consignee/Dispatch/Order sections. Party filtered to Sundry Creditors. Blue summary panel. |
+| Vouchers/CreditNoteForm.vue | (component) | Inventory form (lighter) + ledger entries with bill refs. Party filtered to Sundry Debtors. Original Invoice Ref field. Yellow summary panel. |
+| Vouchers/DebitNoteForm.vue | (component) | Inventory form (lighter) + ledger entries with bill refs. Party filtered to Sundry Creditors. Original Purchase Ref field. Red summary panel. |
+| Vouchers/ReceiptVoucherForm.vue | (component) | Date, Receipt No, Received From (all-ledger datalist), Total, Place of Supply, Cost Centre, Narration. Ledger entries with both bill references and bank allocations per entry. |
+| Vouchers/PaymentVoucherForm.vue | (component) | Same as ReceiptVoucherForm — Payment No, Pay To party label. |
+| Vouchers/ContraVoucherForm.vue | (component) | Date, Contra No, Total, Cost Centre, Narration. Ledger entries with bank allocations only (no bill refs). No party field. |
+| Vouchers/JournalVoucherForm.vue | (component) | Date, Journal No, Reference, Reference Date, Place of Supply, Cost Centre, Narration. Ledger entries with bill refs. Live Dr/Cr balance panel (green when balanced, amber when not). |
 | VoucherShow.vue | tally.vouchers.show | Read-only detail with inventory + ledger entries. |
 
 #### Controllers
@@ -1061,6 +1068,15 @@ resources/js/Pages/Tally/
   VoucherShow.vue
   StatutoryMasters.vue
   Payroll.vue
+  Vouchers/
+    SalesVoucherForm.vue
+    PurchaseVoucherForm.vue
+    CreditNoteForm.vue
+    DebitNoteForm.vue
+    ReceiptVoucherForm.vue
+    PaymentVoucherForm.vue
+    ContraVoucherForm.vue
+    JournalVoucherForm.vue
 
 database/seeders/
   TallySeeder.php

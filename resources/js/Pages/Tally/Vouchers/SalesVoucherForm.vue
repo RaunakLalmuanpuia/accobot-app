@@ -9,9 +9,6 @@ const props = defineProps({
     isEditing:  Boolean,
 })
 
-const emit = defineEmits(['submit', 'close'])
-
-// ── UI-only state ──────────────────────────────────────────────────────────────
 const salesMode     = ref('item')
 const expandedItems = ref(new Set())
 
@@ -29,7 +26,6 @@ function toggleExpand(i) {
     expandedItems.value = s
 }
 
-// ── Buyer address lines (local, syncs to form.buyer_address string) ────────────
 const buyerAddressLines = ref(
     props.form.buyer_address
         ? String(props.form.buyer_address).split('\n')
@@ -52,7 +48,6 @@ function removeAddressLine(i) {
     if (buyerAddressLines.value.length > 1) buyerAddressLines.value.splice(i, 1)
 }
 
-// ── Lookup maps ────────────────────────────────────────────────────────────────
 const stockItemMap = computed(() => {
     const m = {}
     props.stockItems.forEach(s => { m[s.name] = s })
@@ -72,17 +67,15 @@ const sundryDebtorLedgers = computed(() => {
     return filtered.length ? filtered : props.ledgers
 })
 
-// ── Item amount auto-calculation ───────────────────────────────────────────────
 function recalcItemAmount(ie) {
-    const qty  = parseFloat(ie.billed_qty)      || 0
-    const rate = parseFloat(ie.rate)            || 0
-    const disc = parseFloat(ie.discount_percent)|| 0
+    const qty  = parseFloat(ie.billed_qty)       || 0
+    const rate = parseFloat(ie.rate)             || 0
+    const disc = parseFloat(ie.discount_percent) || 0
     if (qty && rate) {
         ie.amount = parseFloat((qty * rate * (1 - disc / 100)).toFixed(2))
     }
 }
 
-// ── Computed totals ────────────────────────────────────────────────────────────
 const taxableValue = computed(() =>
     props.form.inventory_entries.reduce((s, ie) => s + (parseFloat(ie.amount) || 0), 0)
 )
@@ -111,7 +104,6 @@ function resetGrandTotal() {
     props.form.voucher_total = v || ''
 }
 
-// ── Auto-fill helpers ──────────────────────────────────────────────────────────
 function onStockItemChange(ie) {
     const m = stockItemMap.value[ie.stock_item_name]
     if (!m) return
@@ -128,7 +120,6 @@ function onLedgerChange(le) {
     if (m?.group_name) le.ledger_group = m.group_name
 }
 
-// ── Inventory entry helpers ────────────────────────────────────────────────────
 function emptyInventory() {
     return {
         stock_item_name: '', item_code: '', group_name: '', hsn_code: '', unit: '',
@@ -164,7 +155,6 @@ function emptyAccAlloc() {
 function addAccAlloc(i)       { props.form.inventory_entries[i].accounting_allocations.push(emptyAccAlloc()) }
 function removeAccAlloc(i, j) { props.form.inventory_entries[i].accounting_allocations.splice(j, 1) }
 
-// ── Ledger entry helpers ───────────────────────────────────────────────────────
 function emptyLedger() {
     return {
         ledger_name: '', ledger_group: '', ledger_amount: '',
@@ -183,7 +173,6 @@ function emptyBillRef() {
 function addBillRef(i)       { props.form.ledger_entries[i].bills_allocation.push(emptyBillRef()) }
 function removeBillRef(i, j) { props.form.ledger_entries[i].bills_allocation.splice(j, 1) }
 
-// ── Constants ──────────────────────────────────────────────────────────────────
 const INDIAN_STATES = [
     'Andaman and Nicobar Islands', 'Andhra Pradesh', 'Arunachal Pradesh', 'Assam',
     'Bihar', 'Chandigarh', 'Chhattisgarh',
@@ -212,7 +201,6 @@ function fmt(v) {
 </script>
 
 <template>
-    <!-- ── 1. Invoice header ──────────────────────────────────────────────── -->
     <div class="grid grid-cols-2 gap-3">
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Invoice Number</label>
@@ -239,7 +227,6 @@ function fmt(v) {
         </div>
     </div>
 
-    <!-- ── 2. Party Name + Cost Centre ───────────────────────────────────── -->
     <div class="grid grid-cols-2 gap-3">
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">
@@ -259,7 +246,6 @@ function fmt(v) {
         </div>
     </div>
 
-    <!-- ── 3. Item / Accounting toggle ───────────────────────────────────── -->
     <div class="flex items-center gap-1 p-1 bg-gray-100 rounded-lg w-fit">
         <button type="button" @click="salesMode = 'item'"
                 :class="['px-4 py-1.5 text-sm font-medium rounded-md transition',
@@ -277,9 +263,7 @@ function fmt(v) {
         </button>
     </div>
 
-    <!-- ── 4. Item table (item mode) ─────────────────────────────────────── -->
     <div v-if="salesMode === 'item'">
-        <!-- Table header -->
         <div class="grid grid-cols-[2.5fr_0.8fr_0.9fr_0.9fr_0.7fr_1fr_auto] gap-2 px-2 mb-1">
             <span class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Item</span>
             <span class="text-xs font-semibold text-gray-400 uppercase tracking-wide">UOM</span>
@@ -290,11 +274,8 @@ function fmt(v) {
             <span class="w-14" />
         </div>
 
-        <!-- Item rows -->
         <div v-for="(ie, i) in form.inventory_entries" :key="i"
              class="border border-gray-200 rounded-lg mb-2 overflow-hidden">
-
-            <!-- Compact row -->
             <div class="grid grid-cols-[2.5fr_0.8fr_0.9fr_0.9fr_0.7fr_1fr_auto] gap-2 items-center px-2 py-2 bg-white">
                 <div>
                     <select v-model="ie.stock_item_name" @change="onStockItemChange(ie)"
@@ -319,18 +300,14 @@ function fmt(v) {
                 <div class="flex items-center gap-1 pr-1">
                     <button type="button" @click="toggleExpand(i)"
                             :class="['text-gray-400 hover:text-violet-600 transition-transform text-sm leading-none',
-                                     expandedItems.has(i) ? 'rotate-180' : '']">
-                        ▼
-                    </button>
+                                     expandedItems.has(i) ? 'rotate-180' : '']">▼</button>
                     <button type="button" @click="removeInventory(i)"
                             class="text-red-400 hover:text-red-600 text-sm leading-none">✕</button>
                 </div>
             </div>
 
-            <!-- Expanded detail panel -->
             <div v-if="expandedItems.has(i)"
                  class="border-t border-gray-100 bg-gray-50 px-3 pt-3 pb-2 space-y-3">
-
                 <div class="grid grid-cols-3 gap-2">
                     <div>
                         <label class="block text-xs text-gray-500 mb-0.5">Actual Qty</label>
@@ -348,7 +325,6 @@ function fmt(v) {
                                class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
                     </div>
                 </div>
-
                 <div class="grid grid-cols-3 gap-2">
                     <div>
                         <label class="block text-xs text-gray-500 mb-0.5">IGST Rate %</label>
@@ -366,7 +342,6 @@ function fmt(v) {
                                class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
                     </div>
                 </div>
-
                 <div class="grid grid-cols-3 gap-2">
                     <div>
                         <label class="block text-xs text-gray-500 mb-0.5">Godown</label>
@@ -387,7 +362,6 @@ function fmt(v) {
                                class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
                     </div>
                 </div>
-
                 <div class="grid grid-cols-3 gap-2">
                     <div>
                         <label class="block text-xs text-gray-500 mb-0.5">Item Code</label>
@@ -408,7 +382,6 @@ function fmt(v) {
                     </div>
                 </div>
 
-                <!-- Batch Allocations -->
                 <details class="border border-gray-200 rounded-lg overflow-hidden">
                     <summary class="cursor-pointer px-3 py-2 text-xs font-semibold text-gray-600 select-none bg-white flex items-center justify-between">
                         <span>Batch Allocations</span>
@@ -470,7 +443,6 @@ function fmt(v) {
                     </div>
                 </details>
 
-                <!-- Accounting Allocations -->
                 <details class="border border-gray-200 rounded-lg overflow-hidden">
                     <summary class="cursor-pointer px-3 py-2 text-xs font-semibold text-gray-600 select-none bg-white flex items-center justify-between">
                         <span>Accounting Allocations</span>
@@ -520,18 +492,14 @@ function fmt(v) {
         </div>
 
         <button type="button" @click="addInventory"
-                class="text-xs text-violet-600 hover:text-violet-800 font-medium">
-            + Add Item
-        </button>
+                class="text-xs text-violet-600 hover:text-violet-800 font-medium">+ Add Item</button>
         <p v-if="!form.inventory_entries.length" class="text-xs text-gray-400 mt-1">No items. Click + Add Item.</p>
     </div>
 
-    <!-- ── 4b. Accounting Invoice header ─────────────────────────────────── -->
     <div v-if="salesMode === 'accounting'">
         <p class="text-xs text-gray-400 mb-2">Add ledger entries directly (no inventory tracking).</p>
     </div>
 
-    <!-- ── 5. Ledger Entries ──────────────────────────────────────────────── -->
     <div>
         <div class="flex items-center justify-between mb-2">
             <h3 class="text-sm font-semibold text-gray-700">
@@ -551,7 +519,6 @@ function fmt(v) {
                 <button type="button" @click="removeLedger(i)"
                         class="text-xs text-red-400 hover:text-red-600">Remove</button>
             </div>
-
             <div class="grid grid-cols-2 gap-2">
                 <div>
                     <label class="block text-xs text-gray-500 mb-0.5">Ledger Name *</label>
@@ -567,7 +534,6 @@ function fmt(v) {
                            class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
                 </div>
             </div>
-
             <div class="grid grid-cols-3 gap-2">
                 <div>
                     <label class="block text-xs text-gray-500 mb-0.5">Amount *</label>
@@ -590,7 +556,6 @@ function fmt(v) {
                     </label>
                 </div>
             </div>
-
             <div class="grid grid-cols-3 gap-2">
                 <div>
                     <label class="block text-xs text-gray-500 mb-0.5">IGST Rate</label>
@@ -608,8 +573,6 @@ function fmt(v) {
                            class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
                 </div>
             </div>
-
-            <!-- Bill References -->
             <div class="pt-1">
                 <div class="flex items-center justify-between mb-1">
                     <span class="text-xs font-medium text-gray-500">Bill References</span>
@@ -654,7 +617,6 @@ function fmt(v) {
         <p v-if="!form.ledger_entries.length" class="text-xs text-gray-400">No ledger entries. Click + Add Entry.</p>
     </div>
 
-    <!-- ── 6. Summary panel ───────────────────────────────────────────────── -->
     <div class="rounded-lg bg-violet-50 border border-violet-200 p-4 space-y-2">
         <h3 class="text-sm font-semibold text-violet-800 mb-3">Invoice Summary</h3>
         <div class="flex items-center justify-between text-sm">
@@ -675,7 +637,6 @@ function fmt(v) {
         </div>
     </div>
 
-    <!-- ── 7. Place of Supply · Is Invoice · Narration ────────────────────── -->
     <div class="grid grid-cols-2 gap-3">
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Place of Supply</label>
@@ -700,9 +661,6 @@ function fmt(v) {
                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 resize-none" />
     </div>
 
-    <!-- ── 8. Collapsible sections ────────────────────────────────────────── -->
-
-    <!-- Dispatch / Shipping Details -->
     <details class="border border-gray-200 rounded-lg overflow-hidden">
         <summary class="cursor-pointer px-4 py-3 text-sm font-semibold text-gray-700 select-none bg-gray-50">
             Dispatch / Shipping Details
@@ -764,7 +722,6 @@ function fmt(v) {
         </div>
     </details>
 
-    <!-- Order Details -->
     <details class="border border-gray-200 rounded-lg overflow-hidden">
         <summary class="cursor-pointer px-4 py-3 text-sm font-semibold text-gray-700 select-none bg-gray-50">
             Order Details
@@ -802,7 +759,6 @@ function fmt(v) {
         </div>
     </details>
 
-    <!-- Buyer Details -->
     <details class="border border-gray-200 rounded-lg overflow-hidden">
         <summary class="cursor-pointer px-4 py-3 text-sm font-semibold text-gray-700 select-none bg-gray-50">
             Buyer Details
@@ -820,8 +776,6 @@ function fmt(v) {
                            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
                 </div>
             </div>
-
-            <!-- Billing Address (dynamic lines) -->
             <div>
                 <div class="flex items-center justify-between mb-1">
                     <label class="block text-sm font-medium text-gray-700">Billing Address</label>
@@ -835,7 +789,6 @@ function fmt(v) {
                             class="text-red-400 hover:text-red-600 text-sm px-2">✕</button>
                 </div>
             </div>
-
             <div class="grid grid-cols-2 gap-3">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Buyer GSTIN</label>
@@ -886,7 +839,6 @@ function fmt(v) {
         </div>
     </details>
 
-    <!-- Consignee Details -->
     <details class="border border-gray-200 rounded-lg overflow-hidden">
         <summary class="cursor-pointer px-4 py-3 text-sm font-semibold text-gray-700 select-none bg-gray-50">
             Consignee Details
@@ -942,7 +894,6 @@ function fmt(v) {
         </div>
     </details>
 
-    <!-- e-Invoice -->
     <details class="border border-gray-200 rounded-lg overflow-hidden">
         <summary class="cursor-pointer px-4 py-3 text-sm font-semibold text-gray-700 select-none bg-gray-50">
             e-Invoice
@@ -973,7 +924,6 @@ function fmt(v) {
         </div>
     </details>
 
-    <!-- Shared datalist for sales ledger input -->
     <datalist id="sales-ledger-list">
         <option v-for="l in ledgers" :key="l.id" :value="l.ledger_name" />
     </datalist>
