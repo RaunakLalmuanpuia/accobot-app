@@ -168,44 +168,44 @@ class TallyDataController extends Controller
     {
         $map = $this->queueMap($tenant->id, TallyVoucher::class);
         return inertia('Tally/Vouchers', [
-            'tenant'         => $tenant,
-            'vouchers'       => $this->addSyncStatus(
+            'tenant'   => $tenant,
+            'vouchers' => $this->addSyncStatus(
                 TallyVoucher::where('tenant_id', $tenant->id)
-                    ->with([
-                        'ledgerEntries:id,tally_voucher_id,ledger_name,ledger_group,ledger_amount,is_deemed_positive,is_party_ledger,igst_rate,hsn_code,cess_rate,bills_allocation,bank_allocation_details',
-                        'inventoryEntries:id,tally_voucher_id,stock_item_name,item_code,group_name,hsn_code,unit,igst_rate,cess_rate,is_deemed_positive,actual_qty,billed_qty,rate,discount_percent,amount,tax_amount,mrp,sales_ledger,godown_name,batch_name,batch_allocations,accounting_allocations',
-                    ])
                     ->orderByDesc('voucher_date')
                     ->orderByDesc('id')
                     ->get([
-                        'id', 'tally_id', 'voucher_type', 'voucher_base_type', 'voucher_number', 'voucher_date',
-                        'party_name', 'voucher_total', 'is_invoice', 'is_deleted',
-                        'narration', 'is_active', 'last_synced_at', 'mapped_invoice_id',
-                        'reference', 'reference_date', 'place_of_supply', 'cost_centre',
-                        'delivery_note_no', 'delivery_note_date', 'dispatch_doc_no', 'dispatch_through',
-                        'destination', 'carrier_name', 'lr_no', 'lr_date', 'motor_vehicle_no',
-                        'order_no', 'order_date', 'terms_of_payment', 'terms_of_delivery', 'other_references',
-                        'buyer_name', 'buyer_alias', 'buyer_gstin', 'buyer_pin_code', 'buyer_state',
-                        'buyer_country', 'buyer_gst_registration_type', 'buyer_email', 'buyer_mobile', 'buyer_address',
-                        'consignee_name', 'consignee_gstin', 'consignee_tally_group', 'consignee_pin_code',
-                        'consignee_state', 'consignee_country', 'consignee_gst_registration_type',
-                        'irn', 'acknowledgement_no', 'acknowledgement_date', 'qr_code',
+                        'id', 'tally_id', 'voucher_type', 'voucher_base_type',
+                        'voucher_number', 'voucher_date', 'party_name', 'voucher_total',
+                        'narration', 'is_active', 'last_synced_at',
                     ]),
                 $map
             ),
-            'ledgers'    => TallyLedger::where('tenant_id', $tenant->id)
-                ->where('is_active', true)
-                ->orderBy('ledger_name')
-                ->get(['id', 'ledger_name', 'group_name']),
-            'stockItems' => TallyStockItem::where('tenant_id', $tenant->id)
-                ->where('is_active', true)
-                ->orderBy('name')
-                ->get(['id', 'name', 'hsn_code', 'unit_name', 'igst_rate', 'cess_rate', 'stock_group_name', 'mrp_rate']),
-            'godowns'    => TallyGodown::where('tenant_id', $tenant->id)
-                ->where('is_active', true)
-                ->orderBy('name')
-                ->get(['id', 'name']),
+        ]);
+    }
+
+    public function voucherCreate(Tenant $tenant)
+    {
+        return inertia('Tally/VoucherCreate', [
+            'tenant'                 => $tenant,
+            'ledgers'                => TallyLedger::where('tenant_id', $tenant->id)->where('is_active', true)->orderBy('ledger_name')->get(['id', 'ledger_name', 'group_name']),
+            'stockItems'             => TallyStockItem::where('tenant_id', $tenant->id)->where('is_active', true)->orderBy('name')->get(['id', 'name', 'hsn_code', 'unit_name', 'igst_rate', 'cess_rate', 'stock_group_name', 'mrp_rate']),
+            'godowns'                => TallyGodown::where('tenant_id', $tenant->id)->where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'nextSalesVoucherNumber' => $this->nextSalesVoucherNumber($tenant->id),
+        ]);
+    }
+
+    public function voucherEdit(Tenant $tenant, TallyVoucher $voucher)
+    {
+        $voucher->load([
+            'ledgerEntries:id,tally_voucher_id,ledger_name,ledger_group,ledger_amount,is_deemed_positive,is_party_ledger,igst_rate,hsn_code,cess_rate,bills_allocation,bank_allocation_details',
+            'inventoryEntries:id,tally_voucher_id,stock_item_name,item_code,group_name,hsn_code,unit,igst_rate,cess_rate,is_deemed_positive,actual_qty,billed_qty,rate,discount_percent,amount,tax_amount,mrp,sales_ledger,godown_name,batch_name,batch_allocations,accounting_allocations',
+        ]);
+        return inertia('Tally/VoucherEdit', [
+            'tenant'     => $tenant,
+            'voucher'    => $voucher,
+            'ledgers'    => TallyLedger::where('tenant_id', $tenant->id)->where('is_active', true)->orderBy('ledger_name')->get(['id', 'ledger_name', 'group_name']),
+            'stockItems' => TallyStockItem::where('tenant_id', $tenant->id)->where('is_active', true)->orderBy('name')->get(['id', 'name', 'hsn_code', 'unit_name', 'igst_rate', 'cess_rate', 'stock_group_name', 'mrp_rate']),
+            'godowns'    => TallyGodown::where('tenant_id', $tenant->id)->where('is_active', true)->orderBy('name')->get(['id', 'name']),
         ]);
     }
 

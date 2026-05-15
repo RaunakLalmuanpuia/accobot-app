@@ -852,7 +852,12 @@ All web routes are inside the `Route::middleware(['auth', 'verified', 'member'])
 | PUT | /t/{tenant}/tally/stock-items/{stockItem} | tally.stock-items.update | integrations.manage |
 | DELETE | /t/{tenant}/tally/stock-items/{stockItem} | tally.stock-items.destroy | integrations.manage |
 | GET | /t/{tenant}/tally/vouchers | tally.vouchers.index | integrations.view |
+| GET | /t/{tenant}/tally/vouchers/create | tally.vouchers.create | integrations.manage |
 | GET | /t/{tenant}/tally/vouchers/{voucher} | tally.vouchers.show | integrations.view |
+| GET | /t/{tenant}/tally/vouchers/{voucher}/edit | tally.vouchers.edit | integrations.manage |
+| POST | /t/{tenant}/tally/vouchers | tally.vouchers.store | integrations.manage |
+| PUT | /t/{tenant}/tally/vouchers/{voucher} | tally.vouchers.update | integrations.manage |
+| DELETE | /t/{tenant}/tally/vouchers/{voucher} | tally.vouchers.destroy | integrations.manage |
 | GET | /t/{tenant}/tally/statutory-masters | tally.statutory-masters.index | integrations.view |
 | POST | /t/{tenant}/tally/statutory-masters | tally.statutory-masters.store | integrations.manage |
 | PUT | /t/{tenant}/tally/statutory-masters/{statutoryMaster} | tally.statutory-masters.update | integrations.manage |

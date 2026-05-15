@@ -188,7 +188,9 @@ Route::middleware(['auth', 'verified', 'member', 'subscription'])
         Route::get('/tally/stock-masters', [TallyDataController::class, 'stockMasters'])->name('tally.stock-masters.index')->middleware('tenant.permission:integrations.view');
         Route::get('/tally/stock-items', [TallyDataController::class, 'stockItems'])->name('tally.stock-items.index')->middleware('tenant.permission:integrations.view');
         Route::get('/tally/vouchers', [TallyDataController::class, 'vouchers'])->name('tally.vouchers.index')->middleware('tenant.permission:integrations.view');
+        Route::get('/tally/vouchers/create', [TallyDataController::class, 'voucherCreate'])->name('tally.vouchers.create')->middleware('tenant.permission:integrations.manage');
         Route::get('/tally/vouchers/{voucher}', [TallyDataController::class, 'voucherShow'])->name('tally.vouchers.show')->middleware('tenant.permission:integrations.view');
+        Route::get('/tally/vouchers/{voucher}/edit', [TallyDataController::class, 'voucherEdit'])->name('tally.vouchers.edit')->middleware('tenant.permission:integrations.manage');
         Route::get('/tally/statutory-masters', [TallyDataController::class, 'statutoryMasters'])->name('tally.statutory-masters.index')->middleware('tenant.permission:integrations.view');
         Route::get('/tally/companies', [TallyDataController::class, 'companies'])->name('tally.companies.index')->middleware('tenant.permission:integrations.view');
         Route::get('/tally/payroll', [TallyDataController::class, 'payroll'])->name('tally.payroll.index')->middleware('tenant.permission:integrations.view');
