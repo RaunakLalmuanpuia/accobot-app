@@ -1,0 +1,94 @@
+{
+    "Data": [
+        {
+            "MasterID": 11, 
+            "AlterID": 11, 
+            "Action": "Create", 
+            "VoucherNumber": "4", 
+            "VoucherDate": "20260401", 
+            "Reference": "", 
+            "ReferenceDate": "", 
+            "PartyName": "Mr. James", 
+            "VoucherType": "Payment", 
+            "VoucherBaseType": "Payment", 
+            "DeliveryNoteNo": "", 
+            "Voucher_Total": 5000.00, 
+            "DeliveryNoteDate": "", 
+            "DispatchDocNo": "", 
+            "DispatchThrough": "", 
+            "Destination": "", 
+            "CarrierName": "", 
+            "LRNo": "", 
+            "LRDate": "", 
+            "MotorVehicleNo": "", 
+            "OrderNo": "", 
+            "OrderDate": "", 
+            "TermsOfPayment": "", 
+            "OtherReferences": "", 
+            "TermsOfDelivery": "", 
+            "PlaceOfSupply": "", 
+            "IsInvoice": "No", 
+            "IsDeleted": "No", 
+            "BuyerName": "Mr. James", 
+            "BuyerAlias": "", 
+            "BuyerGSTIN": "", 
+            "BuyerPinCode": "", 
+            "BuyerState": "", 
+            "BuyerCountryName": "", 
+            "BuyerGSTRegistrationType": "Unregistered/Consumer", 
+            "BuyerEmail": "", 
+            "BuyerMobile": "", 
+            "ConsigneeName": "", 
+            "ConsigneeGSTIN": "", 
+            "ConsigneeTallyGroup": "", 
+            "ConsigneePinCode": "", 
+            "ConsigneeState": "", 
+            "ConsigneeCountryName": "", 
+            "VoucherCostCentre": "", 
+            "ConsigneeGSTRegistrationType": "Unregistered/Consumer", 
+            "Narration": "", 
+            "BuyerAddress": [
+                {
+                    "BuyerAddress": ""
+                }
+            ], 
+            "ledgerentries": [
+                {
+                    "LedgerName": "Mr. James", 
+                    "LedgerAmount": 5000, 
+                    "LedgerGroup": "", 
+                    "IsDeemedPositive": "Yes", 
+                    "IsPartyLedger": "Yes", 
+                    "IGSTRate": "", 
+                    "HSNCode": "", 
+                    "Cess_Rate": ""
+                }, 
+                {
+                    "LedgerName": "Test from Accobot", 
+                    "LedgerAmount": 5000, 
+                    "LedgerGroup": "", 
+                    "IsDeemedPositive": "No", 
+                    "IsPartyLedger": "Yes", 
+                    "IGSTRate": "", 
+                    "HSNCode": "", 
+                    "Cess_Rate": "", 
+                    "BankAllocationDetails": [
+                        {
+                            "Date": "2026-04-01", 
+                            "InstrumentDate": "2026-04-01", 
+                            "TRANSACTIONTYPE": "Cheque", 
+                            "IFSCODE": "", 
+                            "BANKNAME": "", 
+                            "ACCOUNTNUMBER": "", 
+                            "PAYMENTFAVOURING": "Mr. James", 
+                            "TRANSFERMODE": "", 
+                            "INSTRUMENTNUMBER": "", 
+                            "AMOUNT": "5,000.00", 
+                            "BankersDate": ""
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

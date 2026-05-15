@@ -1,0 +1,124 @@
+{
+    "Data": [
+        {
+            "MasterID": 14, 
+            "AlterID": 14, 
+            "Action": "Create", 
+            "VoucherNumber": "3", 
+            "VoucherDate": "20260401", 
+            "Reference": "", 
+            "ReferenceDate": "", 
+            "PartyName": "Test from Accobot", 
+            "VoucherType": "Receipt", 
+            "VoucherBaseType": "Receipt", 
+            "DeliveryNoteNo": "", 
+            "Voucher_Total": 6000.00, 
+            "DeliveryNoteDate": "", 
+            "DispatchDocNo": "", 
+            "DispatchThrough": "", 
+            "Destination": "", 
+            "CarrierName": "", 
+            "LRNo": "", 
+            "LRDate": "", 
+            "MotorVehicleNo": "", 
+            "OrderNo": "", 
+            "OrderDate": "", 
+            "TermsOfPayment": "", 
+            "OtherReferences": "", 
+            "TermsOfDelivery": "", 
+            "PlaceOfSupply": "", 
+            "IsInvoice": "No", 
+            "IsDeleted": "No", 
+            "BuyerName": "Test from Accobot", 
+            "BuyerAlias": "", 
+            "BuyerGSTIN": "", 
+            "BuyerPinCode": "", 
+            "BuyerState": "", 
+            "BuyerCountryName": "", 
+            "BuyerGSTRegistrationType": "Unregistered/Consumer", 
+            "BuyerEmail": "", 
+            "BuyerMobile": "", 
+            "ConsigneeName": "", 
+            "ConsigneeGSTIN": "", 
+            "ConsigneeTallyGroup": "", 
+            "ConsigneePinCode": "", 
+            "ConsigneeState": "", 
+            "ConsigneeCountryName": "", 
+            "VoucherCostCentre": "", 
+            "ConsigneeGSTRegistrationType": "Unregistered/Consumer", 
+            "Narration": "", 
+            "BuyerAddress": [
+                {
+                    "BuyerAddress": ""
+                }
+            ], 
+            "ledgerentries": [
+                {
+                    "LedgerName": "Acc", 
+                    "LedgerAmount": 6000, 
+                    "LedgerGroup": "", 
+                    "IsDeemedPositive": "No", 
+                    "IsPartyLedger": "No", 
+                    "IGSTRate": "", 
+                    "HSNCode": "", 
+                    "Cess_Rate": "", 
+                    "CategoryAllocation": [
+                        {
+                            "Name": "Primary Cost Category", 
+                            "Amount": 6000.00, 
+                            "CostCentreAllocations": [
+                                {
+                                    "Name": "Acc", 
+                                    "Amount": 6000.00
+                                }
+                            ]
+                        }
+                    ]
+                }, 
+                {
+                    "LedgerName": "Test from Accobot", 
+                    "LedgerAmount": 6000, 
+                    "LedgerGroup": "", 
+                    "IsDeemedPositive": "Yes", 
+                    "IsPartyLedger": "Yes", 
+                    "IGSTRate": "", 
+                    "HSNCode": "", 
+                    "Cess_Rate": "", 
+                    "BankAllocationDetails": [
+                        {
+                            "Date": "2026-04-01", 
+                            "InstrumentDate": "2026-04-01", 
+                            "TRANSACTIONTYPE": "Cheque/DD", 
+                            "IFSCODE": "", 
+                            "BANKNAME": "State Bank of India (India)", 
+                            "ACCOUNTNUMBER": "", 
+                            "PAYMENTFAVOURING": "Acc", 
+                            "TRANSFERMODE": "", 
+                            "INSTRUMENTNUMBER": "nihhdwedg", 
+                            "AMOUNT": "6,000.00", 
+                            "BankersDate": ""
+                        }
+                    ]
+                }
+            ], 
+            "CategoryEntries": [
+                {
+                    "CATEGORY": "Primary Cost Category", 
+                    "EmployeeEntries": [
+                        {
+                            "EmployeeName": "Acc", 
+                            "Amount": "6,000.00", 
+                            "PayHeadAllocations": [
+                                {
+                                    "Payhead": "Acc", 
+                                    "IsDeemedPositive": "No", 
+                                    "Amount": "6,000.00"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,115 @@
+{
+    "Data": [
+        {
+            "TallyId": 298, 
+            "AccobotId": "", 
+            "AlterID": 337, 
+            "LedgerName": "ABC", 
+            "Action": "Update", 
+            "Group": "Sales Accounts", 
+            "ParentGroup": "Sales Accounts", 
+            "Description": "", 
+            "Notes": "", 
+            "CurrencyName": "₹", 
+            "MailingName": "ABC", 
+            "CreditPeriod": 0, 
+            "CreditLimit": 0, 
+            "IsCreditDaysCheckOn": "", 
+            "OverrideCreditLimit": "No", 
+            "InventoryAffected": true, 
+            "StateName": "", 
+            "CountryName": "India", 
+            "PinCode": "", 
+            "LedgerCountryISDCode": "", 
+            "MobileNumber": "", 
+            "ContactPerson": "", 
+            "ContactPersonEmail": "", 
+            "ContactPersonEmailCC": "", 
+            "ContactPersonFax": "", 
+            "ContactPersonMobile": "", 
+            "ContactPersonWebsite": "", 
+            "OpeningBalance": 0.00, 
+            "OpeningBalanceType": "Cr", 
+            "GSTINNumber": "", 
+            "GSTRegistrationType": "Regular", 
+            "GSTApplicableFrom": "20260401", 
+            "IsGSTApplicable": "No", 
+            "IsSEZParty": "", 
+            "IsTransporter": "", 
+            "IsCommonParty": "", 
+            "IsOtherTerritoryAssessee": "No", 
+            "GSTTypeLedger": "", 
+            "AppropriateFor": "", 
+            "PANNumber": "", 
+            "PANApplicableFrom": "", 
+            "NameOnPAN": "", 
+            "IsTDSApplicable": "No", 
+            "TDSDeducteeType": "", 
+            "IsTDSProjected": "", 
+            "IsTCSApplicable": "No", 
+            "IsBillWiseOn": "No", 
+            "IsInterestOn": "No", 
+            "TypeOfInterestOn": "", 
+            "InterestOnBillWise": "No", 
+            "OverrideInterest": "No", 
+            "OverrideAdvInterest": "No", 
+            "InterestInclDayOfAddition": "No", 
+            "InterestInclDayOfDeduction": "No", 
+            "IsInterestInclLastDay": "No", 
+            "IsCostCentresOn": "No", 
+            "IsCostTrackingOn": "No", 
+            "BankAccountHolderName": "", 
+            "SwiftCode": "", 
+            "BranchName": "", 
+            "BankBSRCode": "", 
+            "DefaultTransferMode": "", 
+            "IsChequePrintingEnabled": "Yes", 
+            "IsRelatedParty": "No", 
+            "ForPayroll": "No", 
+            "UseForESIEligibility": "No", 
+            "IsECashLedger": "", 
+            "IgnoreMismatchWithWarning": "No", 
+            "IgnoreTDSExempt": "No", 
+            "ITExemptApplicable": "Applicable", 
+            "LedgerAddress": [
+                {
+                    "Address": ""
+                }
+            ], 
+            "Aliases": [
+                {
+                    "Alias": "ABC"
+                }
+            ], 
+            "ContactDetails": [
+                {
+                    "ContactName": "Primary Mobile No.", 
+                    "CountryISDCode": "+91", 
+                    "IsDefaultWhatsAppNum": "Yes"
+                }
+            ], 
+            "GSTRegistrationDetails": [
+                {
+                    "ApplicableFrom": "20260401", 
+                    "GSTRegistrationType": "Regular", 
+                    "GSTIN": "", 
+                    "TransporterID": "", 
+                    "PlaceOfSupply": "", 
+                    "IsTransporter": "", 
+                    "IsCommonParty": "", 
+                    "IsOtherTerritoryAssessee": ""
+                }
+            ], 
+            "LanguageNames": [
+                {
+                    "LanguageID": 1033, 
+                    "Names": [
+                        {
+                            "Name": "ABC"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

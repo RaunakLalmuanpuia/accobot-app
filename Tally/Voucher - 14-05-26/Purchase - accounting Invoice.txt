@@ -1,0 +1,89 @@
+{
+    "Data": [
+        {
+            "MasterID": 9, 
+            "AlterID": 9, 
+            "Action": "Create", 
+            "VoucherNumber": "3", 
+            "VoucherDate": "20260401", 
+            "Reference": "4568", 
+            "ReferenceDate": "20260401", 
+            "PartyName": "Cash", 
+            "VoucherType": "Purchase", 
+            "VoucherBaseType": "Purchase", 
+            "DeliveryNoteNo": "fgfx", 
+            "Voucher_Total": 11000.00, 
+            "DeliveryNoteDate": "1-Apr-26", 
+            "DispatchDocNo": "Gvhc", 
+            "DispatchThrough": "Vghgv", 
+            "Destination": "Vghgv", 
+            "CarrierName": "Vhvgh", 
+            "LRNo": "Vhjvh", 
+            "LRDate": "", 
+            "MotorVehicleNo": "", 
+            "OrderNo": "", 
+            "OrderDate": "", 
+            "TermsOfPayment": "Vghcg'", 
+            "OtherReferences": "Vhc", 
+            "TermsOfDelivery": "Chfhch'", 
+            "PlaceOfSupply": "", 
+            "IsInvoice": "Yes", 
+            "IsDeleted": "No", 
+            "BuyerName": "Cash", 
+            "BuyerAlias": "", 
+            "BuyerGSTIN": "", 
+            "BuyerPinCode": "", 
+            "BuyerState": "", 
+            "BuyerCountryName": "India", 
+            "BuyerGSTRegistrationType": "Unregistered/Consumer", 
+            "BuyerEmail": "", 
+            "BuyerMobile": "", 
+            "ConsigneeName": "ACCOBOT TESTER", 
+            "ConsigneeGSTIN": "", 
+            "ConsigneeTallyGroup": "", 
+            "ConsigneePinCode": "", 
+            "ConsigneeState": "", 
+            "ConsigneeCountryName": "India", 
+            "VoucherCostCentre": "", 
+            "ConsigneeGSTRegistrationType": "Unregistered/Consumer", 
+            "Narration": "", 
+            "BuyerAddress": [
+                {
+                    "BuyerAddress": ""
+                }
+            ], 
+            "ledgerentries": [
+                {
+                    "LedgerName": "Cash", 
+                    "LedgerAmount": 11000, 
+                    "LedgerGroup": "", 
+                    "IsDeemedPositive": "No", 
+                    "IsPartyLedger": "Yes", 
+                    "IGSTRate": "", 
+                    "HSNCode": "", 
+                    "Cess_Rate": ""
+                }, 
+                {
+                    "LedgerName": "Accc", 
+                    "LedgerAmount": 5000, 
+                    "LedgerGroup": "", 
+                    "IsDeemedPositive": "Yes", 
+                    "IsPartyLedger": "No", 
+                    "IGSTRate": "", 
+                    "HSNCode": "", 
+                    "Cess_Rate": ""
+                }, 
+                {
+                    "LedgerName": "Led Sales", 
+                    "LedgerAmount": 6000, 
+                    "LedgerGroup": "", 
+                    "IsDeemedPositive": "Yes", 
+                    "IsPartyLedger": "No", 
+                    "IGSTRate": "", 
+                    "HSNCode": "", 
+                    "Cess_Rate": "0"
+                }
+            ]
+        }
+    ]
+}

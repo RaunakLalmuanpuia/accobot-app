@@ -1,0 +1,117 @@
+{
+    "Data": [
+        {
+            "MasterID": 6, 
+            "AlterID": 6, 
+            "Action": "Create", 
+            "VoucherNumber": "2", 
+            "VoucherDate": "20260401", 
+            "Reference": "", 
+            "ReferenceDate": "", 
+            "PartyName": "Cash Tester", 
+            "VoucherType": "Sales", 
+            "VoucherBaseType": "Sales", 
+            "DeliveryNoteNo": "", 
+            "Voucher_Total": 2000.00, 
+            "DeliveryNoteDate": "", 
+            "DispatchDocNo": "", 
+            "DispatchThrough": "", 
+            "Destination": "", 
+            "CarrierName": "", 
+            "LRNo": "", 
+            "LRDate": "", 
+            "MotorVehicleNo": "", 
+            "OrderNo": "", 
+            "OrderDate": "", 
+            "TermsOfPayment": "", 
+            "OtherReferences": "", 
+            "TermsOfDelivery": "", 
+            "PlaceOfSupply": "", 
+            "IsInvoice": "Yes", 
+            "IsDeleted": "No", 
+            "BuyerName": "Cash Tester", 
+            "BuyerAlias": "", 
+            "BuyerGSTIN": "", 
+            "BuyerPinCode": "", 
+            "BuyerState": "", 
+            "BuyerCountryName": "India", 
+            "BuyerGSTRegistrationType": "Unregistered/Consumer", 
+            "BuyerEmail": "", 
+            "BuyerMobile": "", 
+            "ConsigneeName": "Cash Tester", 
+            "ConsigneeGSTIN": "", 
+            "ConsigneeTallyGroup": "", 
+            "ConsigneePinCode": "", 
+            "ConsigneeState": "", 
+            "ConsigneeCountryName": "India", 
+            "VoucherCostCentre": "", 
+            "ConsigneeGSTRegistrationType": "Unregistered/Consumer", 
+            "Narration": "", 
+            "BuyerAddress": [
+                {
+                    "BuyerAddress": ""
+                }
+            ], 
+            "ledgerentries": [
+                {
+                    "LedgerName": "Cash Tester", 
+                    "LedgerAmount": 2000, 
+                    "LedgerGroup": "", 
+                    "IsDeemedPositive": "Yes", 
+                    "IsPartyLedger": "Yes", 
+                    "IGSTRate": "", 
+                    "HSNCode": "", 
+                    "Cess_Rate": "", 
+                    "BillsAllocation": [
+                        {
+                            "AgstType": "New Ref", 
+                            "Reference": "2", 
+                            "CreditPeriod": "", 
+                            "Amount": -2000
+                        }
+                    ]
+                }, 
+                {
+                    "LedgerName": "Accc", 
+                    "LedgerAmount": 2000, 
+                    "LedgerGroup": "", 
+                    "IsDeemedPositive": "No", 
+                    "IsPartyLedger": "No", 
+                    "IGSTRate": "", 
+                    "HSNCode": "", 
+                    "Cess_Rate": "", 
+                    "CategoryAllocation": [
+                        {
+                            "Name": "Primary Cost Category", 
+                            "Amount": 2000.00, 
+                            "CostCentreAllocations": [
+                                {
+                                    "Name": "Acc", 
+                                    "Amount": 2000.00
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ], 
+            "CategoryEntries": [
+                {
+                    "CATEGORY": "Primary Cost Category", 
+                    "EmployeeEntries": [
+                        {
+                            "EmployeeName": "Acc", 
+                            "Amount": "2,000.00", 
+                            "PayHeadAllocations": [
+                                {
+                                    "Payhead": "Accc", 
+                                    "IsDeemedPositive": "No", 
+                                    "Amount": "2,000.00"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

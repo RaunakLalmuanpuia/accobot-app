@@ -1,0 +1,109 @@
+{
+    "Data": [
+        {
+            "MasterID": 17, 
+            "AlterID": 17, 
+            "Action": "Create", 
+            "VoucherNumber": "1", 
+            "VoucherDate": "20260401", 
+            "Reference": "Wefwef", 
+            "ReferenceDate": "20260401", 
+            "PartyName": "Cash", 
+            "VoucherType": "Credit Note", 
+            "VoucherBaseType": "Credit Note", 
+            "DeliveryNoteNo": "adawdw", 
+            "Voucher_Total": 5000.00, 
+            "DeliveryNoteDate": "1-Apr-26", 
+            "DispatchDocNo": "Awfwf", 
+            "DispatchThrough": "Wafaefre", 
+            "Destination": "Egfwe", 
+            "CarrierName": "Wefwe", 
+            "LRNo": "Wef", 
+            "LRDate": "", 
+            "MotorVehicleNo": "", 
+            "OrderNo": "wefwe", 
+            "OrderDate": "20260201", 
+            "TermsOfPayment": "Wef", 
+            "OtherReferences": "Wefwe", 
+            "TermsOfDelivery": "Wef", 
+            "PlaceOfSupply": "Mizoram", 
+            "IsInvoice": "Yes", 
+            "IsDeleted": "No", 
+            "BuyerName": "Cash", 
+            "BuyerAlias": "", 
+            "BuyerGSTIN": "15ACEMP1980K1ZH", 
+            "BuyerPinCode": "", 
+            "BuyerState": "Mizoram", 
+            "BuyerCountryName": "India", 
+            "BuyerGSTRegistrationType": "Regular", 
+            "BuyerEmail": "", 
+            "BuyerMobile": "", 
+            "ConsigneeName": "Cash", 
+            "ConsigneeGSTIN": "", 
+            "ConsigneeTallyGroup": "", 
+            "ConsigneePinCode": "", 
+            "ConsigneeState": "", 
+            "ConsigneeCountryName": "India", 
+            "VoucherCostCentre": "", 
+            "ConsigneeGSTRegistrationType": "Unregistered/Consumer", 
+            "Narration": "", 
+            "BuyerAddress": [
+                {
+                    "BuyerAddress": ""
+                }
+            ], 
+            "ledgerentries": [
+                {
+                    "LedgerName": "Cash", 
+                    "LedgerAmount": 5000, 
+                    "LedgerGroup": "", 
+                    "IsDeemedPositive": "No", 
+                    "IsPartyLedger": "Yes", 
+                    "IGSTRate": "", 
+                    "HSNCode": "", 
+                    "Cess_Rate": ""
+                }, 
+                {
+                    "LedgerName": "Accc", 
+                    "LedgerAmount": 5000, 
+                    "LedgerGroup": "", 
+                    "IsDeemedPositive": "Yes", 
+                    "IsPartyLedger": "No", 
+                    "IGSTRate": "", 
+                    "HSNCode": "", 
+                    "Cess_Rate": "", 
+                    "CategoryAllocation": [
+                        {
+                            "Name": "Primary Cost Category", 
+                            "Amount": 5000.00, 
+                            "CostCentreAllocations": [
+                                {
+                                    "Name": "Acc", 
+                                    "Amount": 5000.00
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ], 
+            "CategoryEntries": [
+                {
+                    "CATEGORY": "Primary Cost Category", 
+                    "EmployeeEntries": [
+                        {
+                            "EmployeeName": "Acc", 
+                            "Amount": "5,000.00", 
+                            "PayHeadAllocations": [
+                                {
+                                    "Payhead": "Accc", 
+                                    "IsDeemedPositive": "Yes", 
+                                    "Amount": "5,000.00"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,112 @@
+{
+    "Data": [
+        {
+            "MasterID": 22, 
+            "AlterID": 22, 
+            "Action": "Create", 
+            "VoucherNumber": "3", 
+            "VoucherDate": "20260401", 
+            "Reference": "", 
+            "ReferenceDate": "", 
+            "PartyName": "Cash", 
+            "VoucherType": "Debit Note", 
+            "VoucherBaseType": "Debit Note", 
+            "DeliveryNoteNo": "", 
+            "Voucher_Total": 2500.00, 
+            "DeliveryNoteDate": "", 
+            "DispatchDocNo": "", 
+            "DispatchThrough": "", 
+            "Destination": "", 
+            "CarrierName": "", 
+            "LRNo": "", 
+            "LRDate": "", 
+            "MotorVehicleNo": "", 
+            "OrderNo": "", 
+            "OrderDate": "", 
+            "TermsOfPayment": "", 
+            "OtherReferences": "", 
+            "TermsOfDelivery": "", 
+            "PlaceOfSupply": "", 
+            "IsInvoice": "Yes", 
+            "IsDeleted": "No", 
+            "BuyerName": "Cash", 
+            "BuyerAlias": "", 
+            "BuyerGSTIN": "", 
+            "BuyerPinCode": "", 
+            "BuyerState": "", 
+            "BuyerCountryName": "India", 
+            "BuyerGSTRegistrationType": "Unregistered/Consumer", 
+            "BuyerEmail": "", 
+            "BuyerMobile": "", 
+            "ConsigneeName": "Cash", 
+            "ConsigneeGSTIN": "", 
+            "ConsigneeTallyGroup": "", 
+            "ConsigneePinCode": "", 
+            "ConsigneeState": "", 
+            "ConsigneeCountryName": "India", 
+            "VoucherCostCentre": "", 
+            "ConsigneeGSTRegistrationType": "Unregistered/Consumer", 
+            "Narration": "", 
+            "BuyerAddress": [
+                {
+                    "BuyerAddress": ""
+                }
+            ], 
+            "InventoryEntries": [
+                {
+                    "StockItemName": "Acc", 
+                    "ItemCode": "Stock of Acc", 
+                    "GroupName": "\u0004 Primary", 
+                    "HSNCode": "", 
+                    "Unit": "pcs", 
+                    "IGSTRate": 0, 
+                    "CessRate": 0.00, 
+                    "IsDeemedPositive": "No", 
+                    "ActualQty": 50, 
+                    "BilledQty": 50, 
+                    "Rate": 50, 
+                    "DiscountPercent": 0, 
+                    "Amount": 2500.00, 
+                    "SalesLedger": "XYZ", 
+                    "GodownName": "AA", 
+                    "BatchName": "1", 
+                    "TaxAmount": 0.00, 
+                    "MRP": 0, 
+                    "BatchAllocations": [
+                        {
+                            "BatchName": "1", 
+                            "ExpiryDate": "", 
+                            "GodownName": "AA", 
+                            "ActualQty": 50.00, 
+                            "BilledQty": 50.00, 
+                            "Rate": 50.00, 
+                            "DiscountPercent": 0.00, 
+                            "Amount": 2500.00
+                        }
+                    ], 
+                    "AccountingAllocations": [
+                        {
+                            "LedgerName": "XYZ", 
+                            "LedgerGroup": "Purchase Accounts", 
+                            "GSTClassification": "\u0004 Not Applicable", 
+                            "IGSTRate": 0, 
+                            "Amount": 2500.00
+                        }
+                    ]
+                }
+            ], 
+            "ledgerentries": [
+                {
+                    "LedgerName": "Cash", 
+                    "LedgerAmount": 2500, 
+                    "LedgerGroup": "", 
+                    "IsDeemedPositive": "Yes", 
+                    "IsPartyLedger": "Yes", 
+                    "IGSTRate": "", 
+                    "HSNCode": "", 
+                    "Cess_Rate": ""
+                }
+            ]
+        }
+    ]
+}

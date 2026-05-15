@@ -1,0 +1,133 @@
+{
+    "Data": [
+        {
+            "MasterID": 8, 
+            "AlterID": 8, 
+            "Action": "Create", 
+            "VoucherNumber": "2", 
+            "VoucherDate": "20260401", 
+            "Reference": "345678", 
+            "ReferenceDate": "20260401", 
+            "PartyName": "Cash Tester", 
+            "VoucherType": "Purchase", 
+            "VoucherBaseType": "Purchase", 
+            "DeliveryNoteNo": "987654", 
+            "Voucher_Total": 237500.00, 
+            "DeliveryNoteDate": "1-Apr-26", 
+            "DispatchDocNo": "987654", 
+            "DispatchThrough": "Agent", 
+            "Destination": "Khatla", 
+            "CarrierName": "Zira", 
+            "LRNo": "", 
+            "LRDate": "", 
+            "MotorVehicleNo": "", 
+            "OrderNo": "", 
+            "OrderDate": "", 
+            "TermsOfPayment": "COD", 
+            "OtherReferences": "", 
+            "TermsOfDelivery": "", 
+            "PlaceOfSupply": "Mizoram", 
+            "IsInvoice": "Yes", 
+            "IsDeleted": "No", 
+            "BuyerName": "Cash Tester", 
+            "BuyerAlias": "", 
+            "BuyerGSTIN": "15ACPP1970K1ZP", 
+            "BuyerPinCode": "", 
+            "BuyerState": "Mizoram", 
+            "BuyerCountryName": "India", 
+            "BuyerGSTRegistrationType": "Regular", 
+            "BuyerEmail": "", 
+            "BuyerMobile": "", 
+            "ConsigneeName": "ACCOBOT TESTER", 
+            "ConsigneeGSTIN": "", 
+            "ConsigneeTallyGroup": "", 
+            "ConsigneePinCode": "", 
+            "ConsigneeState": "", 
+            "ConsigneeCountryName": "India", 
+            "VoucherCostCentre": "", 
+            "ConsigneeGSTRegistrationType": "Unregistered/Consumer", 
+            "Narration": "", 
+            "BuyerAddress": [
+                {
+                    "BuyerAddress": "Khatla"
+                }
+            ], 
+            "EWayBillDetails": [
+                {
+                    "EWayBillNo": "", 
+                    "EWayBillDate": "", 
+                    "Distance": "0", 
+                    "TransporterName": "", 
+                    "TransporterID": "", 
+                    "DocNo": "", 
+                    "DocDate": "", 
+                    "VehicleNo": "", 
+                    "VehicleType": ""
+                }
+            ], 
+            "InventoryEntries": [
+                {
+                    "StockItemName": "Acc", 
+                    "ItemCode": "Stock of Acc", 
+                    "GroupName": "\u0004 Primary", 
+                    "HSNCode": "", 
+                    "Unit": "pcs", 
+                    "IGSTRate": 0, 
+                    "CessRate": 0.00, 
+                    "IsDeemedPositive": "Yes", 
+                    "ActualQty": 5000, 
+                    "BilledQty": 5000, 
+                    "Rate": 50, 
+                    "DiscountPercent": 5, 
+                    "Amount": 237500.00, 
+                    "SalesLedger": "XYZ", 
+                    "GodownName": "AA", 
+                    "BatchName": "1", 
+                    "TaxAmount": 0.00, 
+                    "MRP": 0, 
+                    "BatchAllocations": [
+                        {
+                            "BatchName": "1", 
+                            "ExpiryDate": "", 
+                            "GodownName": "AA", 
+                            "ActualQty": 5000.00, 
+                            "BilledQty": 5000.00, 
+                            "Rate": 50.00, 
+                            "DiscountPercent": 5.00, 
+                            "Amount": 237500.00
+                        }
+                    ], 
+                    "AccountingAllocations": [
+                        {
+                            "LedgerName": "XYZ", 
+                            "LedgerGroup": "Purchase Accounts", 
+                            "GSTClassification": "\u0004 Not Applicable", 
+                            "IGSTRate": 0, 
+                            "Amount": 237500.00
+                        }
+                    ]
+                }
+            ], 
+            "ledgerentries": [
+                {
+                    "LedgerName": "Cash Tester", 
+                    "LedgerAmount": 237500, 
+                    "LedgerGroup": "", 
+                    "IsDeemedPositive": "No", 
+                    "IsPartyLedger": "Yes", 
+                    "IGSTRate": "", 
+                    "HSNCode": "", 
+                    "Cess_Rate": "", 
+                    "BillsAllocation": [
+                        {
+                            "AgstType": "New Ref", 
+                            "Reference": "345678", 
+                            "CreditPeriod": "", 
+                            "Amount": 237500
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

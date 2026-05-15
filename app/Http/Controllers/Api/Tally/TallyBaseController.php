@@ -8,6 +8,7 @@ use App\Models\TallyCompany;
 use App\Models\TallyConnection;
 use App\Models\TallyInboundLog;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class TallyBaseController extends Controller
 {
@@ -35,11 +36,21 @@ class TallyBaseController extends Controller
 
         $this->upsertCompany($conn, $request);
 
+        $payload = $request->all();
+
+        Log::info('tally.inbound', [
+            'tenant_id'    => $conn->tenant_id,
+            'connection_id' => $conn->id,
+            'endpoint'     => $request->path(),
+            'record_count' => count(data_get($payload, 'Data', data_get($payload, 'data', []))),
+            'payload'      => $payload,
+        ]);
+
         TallyInboundLog::create([
             'tenant_id'           => $conn->tenant_id,
             'tally_connection_id' => $conn->id,
             'endpoint'            => $request->path(),
-            'payload'             => $request->all(),
+            'payload'             => $payload,
         ]);
 
         return $conn;

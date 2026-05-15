@@ -1,0 +1,136 @@
+{
+    "Data": [
+        {
+            "MasterID": 23, 
+            "AlterID": 23, 
+            "Action": "Create", 
+            "VoucherNumber": "4", 
+            "VoucherDate": "20260401", 
+            "Reference": "Sefwf", 
+            "ReferenceDate": "20260401", 
+            "PartyName": "Cash", 
+            "VoucherType": "Debit Note", 
+            "VoucherBaseType": "Debit Note", 
+            "DeliveryNoteNo": "sfwa", 
+            "Voucher_Total": 15000.00, 
+            "DeliveryNoteDate": "1-Apr-26", 
+            "DispatchDocNo": "", 
+            "DispatchThrough": "", 
+            "Destination": "", 
+            "CarrierName": "Awfd", 
+            "LRNo": "Awfawf", 
+            "LRDate": "", 
+            "MotorVehicleNo": "", 
+            "OrderNo": "", 
+            "OrderDate": "", 
+            "TermsOfPayment": "Awf", 
+            "OtherReferences": "Awf", 
+            "TermsOfDelivery": "Wf", 
+            "PlaceOfSupply": "", 
+            "IsInvoice": "Yes", 
+            "IsDeleted": "No", 
+            "BuyerName": "Cash", 
+            "BuyerAlias": "", 
+            "BuyerGSTIN": "", 
+            "BuyerPinCode": "", 
+            "BuyerState": "", 
+            "BuyerCountryName": "India", 
+            "BuyerGSTRegistrationType": "Unregistered/Consumer", 
+            "BuyerEmail": "", 
+            "BuyerMobile": "", 
+            "ConsigneeName": "Cash", 
+            "ConsigneeGSTIN": "", 
+            "ConsigneeTallyGroup": "", 
+            "ConsigneePinCode": "", 
+            "ConsigneeState": "", 
+            "ConsigneeCountryName": "India", 
+            "VoucherCostCentre": "", 
+            "ConsigneeGSTRegistrationType": "Unregistered/Consumer", 
+            "Narration": "", 
+            "BuyerAddress": [
+                {
+                    "BuyerAddress": ""
+                }
+            ], 
+            "ledgerentries": [
+                {
+                    "LedgerName": "Cash", 
+                    "LedgerAmount": 15000, 
+                    "LedgerGroup": "", 
+                    "IsDeemedPositive": "Yes", 
+                    "IsPartyLedger": "Yes", 
+                    "IGSTRate": "", 
+                    "HSNCode": "", 
+                    "Cess_Rate": ""
+                }, 
+                {
+                    "LedgerName": "Accc", 
+                    "LedgerAmount": 5000, 
+                    "LedgerGroup": "", 
+                    "IsDeemedPositive": "No", 
+                    "IsPartyLedger": "No", 
+                    "IGSTRate": "", 
+                    "HSNCode": "", 
+                    "Cess_Rate": "", 
+                    "CategoryAllocation": [
+                        {
+                            "Name": "Primary Cost Category", 
+                            "Amount": 5000.00, 
+                            "CostCentreAllocations": [
+                                {
+                                    "Name": "Acc", 
+                                    "Amount": 5000.00
+                                }
+                            ]
+                        }
+                    ]
+                }, 
+                {
+                    "LedgerName": "Led Sales", 
+                    "LedgerAmount": 10000, 
+                    "LedgerGroup": "", 
+                    "IsDeemedPositive": "No", 
+                    "IsPartyLedger": "No", 
+                    "IGSTRate": "", 
+                    "HSNCode": "", 
+                    "Cess_Rate": "0", 
+                    "CategoryAllocation": [
+                        {
+                            "Name": "Primary Cost Category", 
+                            "Amount": 10000.00, 
+                            "CostCentreAllocations": [
+                                {
+                                    "Name": "Acc", 
+                                    "Amount": 10000.00
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ], 
+            "CategoryEntries": [
+                {
+                    "CATEGORY": "Primary Cost Category", 
+                    "EmployeeEntries": [
+                        {
+                            "EmployeeName": "Acc", 
+                            "Amount": "15,000.00", 
+                            "PayHeadAllocations": [
+                                {
+                                    "Payhead": "Accc", 
+                                    "IsDeemedPositive": "No", 
+                                    "Amount": "5,000.00"
+                                }, 
+                                {
+                                    "Payhead": "Led Sales", 
+                                    "IsDeemedPositive": "No", 
+                                    "Amount": "10,000.00"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
