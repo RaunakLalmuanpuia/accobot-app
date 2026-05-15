@@ -1,8 +1,8 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import OnboardingChecklist from '@/Components/OnboardingChecklist.vue'
-import { computed } from 'vue'
-import { Link, usePage } from '@inertiajs/vue3'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { Link, router, usePage } from '@inertiajs/vue3'
 
 const props = defineProps({
     tenant:        Object,
@@ -17,6 +17,26 @@ const props = defineProps({
 
 const page = usePage()
 const can = (p) => props.permissions.includes(p)
+
+// When a user returns from Razorpay checkout with a pending subscription,
+// poll until the webhook activates it, then reload so sidebar features appear.
+const pollTimer = ref(null)
+
+onMounted(() => {
+    if (page.props.subscription?.status === 'pending') {
+        pollTimer.value = setInterval(() => {
+            router.reload({ preserveScroll: true, preserveState: false, onSuccess: () => {
+                if (page.props.subscription?.status !== 'pending') {
+                    clearInterval(pollTimer.value)
+                }
+            }})
+        }, 4000)
+    }
+})
+
+onUnmounted(() => {
+    if (pollTimer.value) clearInterval(pollTimer.value)
+})
 
 const avatarColors = ['bg-violet-500','bg-violet-500','bg-sky-500','bg-teal-500','bg-emerald-500','bg-amber-500','bg-rose-500']
 const initials     = (name) => name.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase()

@@ -4,8 +4,10 @@ namespace Database\Seeders;
 
 use App\Models\ChatRoom;
 use App\Models\Tenant;
+use App\Models\TallyConnection;
 use App\Models\TenantUserRole;
 use App\Models\User;
+use Illuminate\Support\Str;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
@@ -43,6 +45,11 @@ class DummyDataSeeder extends Seeder
         // CA firm tenants are personal to the owning CA (is_personal = true).
         $alphaCA = Tenant::create(['name' => 'Alpha Advisors',  'type' => 'ca_firm', 'status' => 'active', 'is_personal' => true, 'created_by_user_id' => $ca1->id]);
         $betaCA  = Tenant::create(['name' => 'Beta Consulting', 'type' => 'ca_firm', 'status' => 'active', 'is_personal' => true, 'created_by_user_id' => $ca2->id]);
+
+        // ─── Tally tokens — mirrors AuthController::register ──────────
+        foreach ([$tili, $awab, $eightsis, $alphaCA, $betaCA] as $t) {
+            TallyConnection::create(['tenant_id' => $t->id, 'inbound_token' => Str::random(48)]);
+        }
 
         // ─── Set last_tenant_id now that tenants exist ────────────────
         $fela->update(['last_tenant_id' => $tili->id]);

@@ -88,6 +88,10 @@ async function subscribe() {
 <template>
     <Head title="Choose a Plan" />
     <AuthenticatedLayout>
+        <template #header>
+            <h1 class="text-xl font-semibold text-gray-900">Choose a Plan</h1>
+        </template>
+
         <div class="min-h-screen bg-gray-50 py-12 px-4">
             <div class="max-w-3xl mx-auto">
 

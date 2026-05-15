@@ -481,7 +481,8 @@ database/
 
 resources/js/
 ├── Components/               ← reusable Vue components
-├── Layouts/AuthenticatedLayout.vue
+├── Layouts/AuthenticatedLayout.vue   ← left sidebar layout (fixed-width, slide-in drawer on mobile)
+├── Components/SidebarNavLink.vue     ← active-aware sidebar link (violet highlight)
 └── Pages/                    ← one file per page/route
 
 config/

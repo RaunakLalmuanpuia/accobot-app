@@ -112,13 +112,14 @@ function formatDate(iso) {
     <Head title="Audit Log" />
 
     <AuthenticatedLayout>
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-
-            <!-- Header -->
-            <div class="mb-6">
-                <h1 class="text-2xl font-bold text-gray-900">Audit Log</h1>
-                <p class="text-sm text-gray-500 mt-1">Immutable record of all actions taken in this workspace.</p>
+        <template #header>
+            <div>
+                <h1 class="text-xl font-semibold text-gray-900">Audit Log</h1>
+                <p class="mt-0.5 text-sm text-gray-500">Immutable record of all actions taken in this workspace.</p>
             </div>
+        </template>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
             <!-- Filter bar -->
             <div class="bg-white border border-gray-200 rounded-xl p-4 mb-6 shadow-sm">

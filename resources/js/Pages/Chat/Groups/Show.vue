@@ -1,6 +1,10 @@
 <template>
     <AuthenticatedLayout>
-        <div class="flex h-[calc(100vh-4rem)] overflow-hidden relative">
+        <template #header>
+            <h1 class="text-xl font-semibold text-gray-900">{{ room.name }}</h1>
+        </template>
+
+        <div class="flex h-[calc(100vh-7.5rem)] lg:h-[calc(100vh-4rem)] overflow-hidden relative">
 
             <!-- Backdrop (mobile/tablet) -->
             <div

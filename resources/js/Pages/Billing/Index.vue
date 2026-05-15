@@ -109,6 +109,13 @@ async function addAddon() {
 <template>
     <Head title="Billing" />
     <AuthenticatedLayout>
+        <template #header>
+            <div>
+                <h1 class="text-xl font-semibold text-gray-900">Billing &amp; Subscription</h1>
+                <p class="mt-0.5 text-sm text-gray-500">Manage your plan for <span class="font-medium text-gray-700">{{ tenant.name }}</span>.</p>
+            </div>
+        </template>
+
         <div class="py-8">
             <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
 
@@ -118,12 +125,6 @@ async function addAddon() {
                 </div>
                 <div v-if="$page.props.flash?.error" class="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
                     {{ $page.props.flash.error }}
-                </div>
-
-                <!-- Page header -->
-                <div>
-                    <h1 class="text-xl font-bold text-gray-900">Billing &amp; Subscription</h1>
-                    <p class="mt-1 text-sm text-gray-500">Manage your plan for <span class="font-medium text-gray-700">{{ tenant.name }}</span>.</p>
                 </div>
 
                 <!-- No subscription -->

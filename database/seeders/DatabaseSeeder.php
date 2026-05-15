@@ -25,6 +25,7 @@ class DatabaseSeeder extends Seeder
             RolesAndPermissionsSeeder::class,
             PlanSeeder::class,
             DummyDataSeeder::class,
+            SubscriptionSeeder::class,
             NarrationHeadSeeder::class,
             NarrationRuleSeeder::class,
             ClientSeeder::class,
