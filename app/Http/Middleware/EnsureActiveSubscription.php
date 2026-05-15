@@ -40,6 +40,12 @@ class EnsureActiveSubscription
             return $next($request);
         }
 
+        // Halted subscriptions have a razorpay_short_url to fix the payment method —
+        // send them to billing.index where that banner is shown, not the plan picker.
+        if ($subscription && $subscription->status === 'halted') {
+            return redirect()->route('billing.index', $tenant);
+        }
+
         return redirect()->route('billing.select-plan', $tenant);
     }
 

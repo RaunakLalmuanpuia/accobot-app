@@ -432,10 +432,17 @@ Applied to all routes in the `subscription` middleware group (all `/t/{tenant}/.
 1. User has the `admin` role
 2. Route name starts with `billing.` (avoids infinite redirect loop)
 3. Route is `onboarding.dismiss` or `logout`
-4. Subscription status is `active`
-5. Subscription status is `trialing` AND `trial_ends_at` is in the future
+4. `Subscription::isAccessible()` returns true — covers:
+   - `status = active` AND not (`cancelled_at` set AND `current_period_end` is past)
+   - `status = trialing` AND `trial_ends_at` is in the future
 
-**Blocks otherwise:** Redirects to `billing.select-plan`.
+**Blocks and redirects:**
+- `status = halted` → `billing.index` (payment failure banner + "Update Payment Method" button using `razorpay_short_url`)
+- All other non-accessible statuses (`pending`, `cancelled`, `expired`, trial expired) → `billing.select-plan`
+
+> **Why halted goes to `billing.index` not `billing.select-plan`:** A halted user's mandate is still intact — they should fix their payment method via `razorpay_short_url`, not create an entirely new subscription. The plan picker would mislead them into thinking they need to re-subscribe.
+
+**Safety net for missed webhooks:** `isAccessible()` returns false if `cancelled_at` is set and `current_period_end` is in the past, even if `status` is still `active`. This guards against Razorpay's `subscription.cancelled` webhook being delayed or lost — the tenant is blocked on period end regardless.
 
 ### `CheckSubscriptionFeature`
 

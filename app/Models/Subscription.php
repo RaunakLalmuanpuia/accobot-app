@@ -54,7 +54,22 @@ class Subscription extends Model
 
     public function isAccessible(): bool
     {
-        return $this->isActive() || $this->onTrial();
+        if ($this->onTrial()) {
+            return true;
+        }
+
+        if (! $this->isActive()) {
+            return false;
+        }
+
+        // Safety net for missed/delayed webhooks: if the tenant cancelled and the
+        // billing period has already passed, treat as inaccessible even if Razorpay
+        // hasn't fired subscription.cancelled yet.
+        if ($this->cancelled_at && $this->current_period_end?->isPast()) {
+            return false;
+        }
+
+        return true;
     }
 
     public function hasFeature(string $feature): bool
