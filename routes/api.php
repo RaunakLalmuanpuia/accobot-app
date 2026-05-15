@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\MobileAdminBillingController;
 use App\Http\Controllers\Api\MobileAuthController;
 use App\Http\Controllers\Api\MobileBillingController;
 use App\Http\Controllers\Api\MobileCaClientController;
@@ -54,6 +55,18 @@ Route::prefix('mobile')->name('api.mobile.')->middleware(['auth:sanctum'])->grou
     Route::patch('profile',                  [MobileProfileController::class, 'update'])->name('profile.update');
     Route::post('profile/change-password',   [MobileProfileController::class, 'changePassword'])->name('profile.change-password');
     Route::delete('profile',                 [MobileProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+// ── Mobile admin routes (role:admin only) ─────────────────────────────
+Route::prefix('mobile/admin')->name('api.mobile.admin.')->middleware(['auth:sanctum', 'role:admin'])->group(function () {
+    Route::prefix('billing')->name('billing.')->group(function () {
+        Route::get('',                                       [MobileAdminBillingController::class, 'index'])->name('index');
+        Route::post('{tenant}/change-plan',                  [MobileAdminBillingController::class, 'changePlan'])->name('change-plan');
+        Route::post('{tenant}/change-plan-rebill',           [MobileAdminBillingController::class, 'changePlanAndRebill'])->name('change-plan-rebill');
+        Route::post('{tenant}/cancel',                       [MobileAdminBillingController::class, 'cancel'])->name('cancel');
+        Route::post('{tenant}/grant-trial',                  [MobileAdminBillingController::class, 'grantTrial'])->name('grant-trial');
+        Route::post('{tenant}/override-status',              [MobileAdminBillingController::class, 'overrideStatus'])->name('override-status');
+    });
 });
 
 // ── Tenant-scoped routes ───────────────────────────────────────────────

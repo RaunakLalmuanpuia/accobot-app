@@ -33,6 +33,7 @@ use App\Http\Controllers\ChatRoomController;
 use App\Http\Controllers\ChatMessageController;
 use App\Http\Controllers\ChatReactionController;
 use App\Http\Controllers\ChatAttachmentController;
+use App\Http\Controllers\Admin\AdminBillingController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\PushSubscriptionController;
 use Illuminate\Support\Facades\Route;
@@ -64,6 +65,14 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'adminIndex'])->name('admin.dashboard');
     Route::get('/admin/ai-usage', [AiUsageController::class, 'index'])->name('admin.ai-usage');
+
+    // Admin billing
+    Route::get('/admin/billing', [AdminBillingController::class, 'index'])->name('admin.billing');
+    Route::post('/admin/billing/{tenant}/change-plan', [AdminBillingController::class, 'changePlan'])->name('admin.billing.change-plan');
+    Route::post('/admin/billing/{tenant}/change-plan-rebill', [AdminBillingController::class, 'changePlanAndRebill'])->name('admin.billing.change-plan-rebill');
+    Route::post('/admin/billing/{tenant}/cancel', [AdminBillingController::class, 'cancel'])->name('admin.billing.cancel');
+    Route::post('/admin/billing/{tenant}/grant-trial', [AdminBillingController::class, 'grantTrial'])->name('admin.billing.grant-trial');
+    Route::post('/admin/billing/{tenant}/override-status', [AdminBillingController::class, 'overrideStatus'])->name('admin.billing.override-status');
 
     // Impersonation — Super Admin only
     Route::post('/admin/impersonate/{user}', [ImpersonationController::class, 'start'])->name('impersonate.start');

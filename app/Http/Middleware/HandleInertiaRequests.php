@@ -27,9 +27,10 @@ class HandleInertiaRequests extends Middleware
             ...parent::share($request),
 
             'flash' => [
-                'success' => session('success'),
-                'error'   => session('error'),
-                'info'    => session('info'),
+                'success'     => session('success'),
+                'error'       => session('error'),
+                'info'        => session('info'),
+                'payment_url' => session('payment_url'),
             ],
 
             'subscription' => $tenant

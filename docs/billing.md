@@ -548,6 +548,121 @@ The `razorpay_short_url` is stored on the `subscriptions` table when the subscri
 
 ---
 
+## Admin Billing Page
+
+Super-admins can manage billing across all tenants at `/admin/billing`. The page shows a stats bar (total tenants, active, trialing, halted, no-sub, MRR) and a searchable/filterable table with one row per tenant.
+
+### Key files
+
+| File | Purpose |
+|---|---|
+| `app/Http/Controllers/Admin/AdminBillingController.php` | Web controller (Inertia) |
+| `app/Http/Controllers/Api/MobileAdminBillingController.php` | Mobile API controller |
+| `resources/js/Pages/Admin/Billing.vue` | Vue page |
+
+All mutating actions are logged to `audit_events` with `source: admin`.
+
+---
+
+### Action 1 — Plan (local override)
+
+**Button:** Plan (violet) · **Route:** `POST /admin/billing/{tenant}/change-plan`
+
+Updates only `plan_id` in the local database. **Razorpay is never called.** The tenant's feature access changes immediately — they get the features of the new plan — but Razorpay continues charging whatever the original subscription was set up for.
+
+**Use when:** Granting a higher plan for free (compensation, beta access, partnership), or correcting a mislabeled plan without disrupting the payment mandate.
+
+**Does NOT affect:** billing amount, Razorpay subscription, next charge date.
+
+**Audit event:** `subscription.plan_changed`
+
+---
+
+### Action 2 — Rebill (change plan + new Razorpay subscription)
+
+**Button:** Rebill (green) · **Route:** `POST /admin/billing/{tenant}/change-plan-rebill`
+
+Full end-to-end plan migration that affects what Razorpay charges:
+
+1. Cancels the existing Razorpay subscription (`cancel_at_cycle_end = 1`). Errors are swallowed if the sub is already gone.
+2. Creates a new Razorpay subscription at the new plan's `razorpay_plan_id` using the tenant owner's email/name.
+3. Updates the local record: new `plan_id`, new `razorpay_subscription_id`, `status = pending`, clears trial/period/cancelled dates.
+4. Returns a `short_url` payment link displayed in a banner on the admin page for copying and sharing with the tenant.
+
+The tenant is **locked out** (status `pending` fails `EnsureActiveSubscription`) until they pay through the link. Once paid, Razorpay fires `subscription.activated` → webhook sets status to `active` at the new billing rate.
+
+**Use when:** You want the tenant to actually be charged the new plan's amount going forward — a real plan migration.
+
+**Audit event:** `subscription.plan_changed_and_rebilled`
+
+---
+
+### Action 3 — Cancel
+
+**Button:** Cancel (red, only visible for `active` subscriptions) · **Route:** `POST /admin/billing/{tenant}/cancel`
+
+1. Calls `RazorpayService::cancelSubscription()` with `cancel_at_cycle_end = 1` — Razorpay will not charge again after the current period.
+2. Stamps `cancelled_at = now()` locally. The tenant stays accessible until `current_period_end`, then the middleware blocks them.
+
+**Use when:** A tenant requests cancellation, is churning, or you need to force-end their subscription.
+
+**Audit event:** `subscription.cancelled`
+
+---
+
+### Action 4 — Trial
+
+**Button:** Trial (blue, visible for all tenants including those with no subscription) · **Route:** `POST /admin/billing/{tenant}/grant-trial`
+
+Sets the subscription to `status = trialing` with a custom `trial_ends_at` date you pick. No Razorpay call is made. If the tenant has no subscription row at all, one is created (uses `ca_firm` plan, or the cheapest active plan as fallback). Clears `cancelled_at`, `current_period_start`, `current_period_end`.
+
+**Use when:** Extending a CA firm's free trial, giving a new tenant a grace period, or unblocking a tenant while their payment situation is sorted.
+
+**Audit event:** `subscription.trial_granted`
+
+---
+
+### Action 5 — Override
+
+**Button:** Override (gray, only visible when a subscription exists) · **Route:** `POST /admin/billing/{tenant}/override-status`
+
+Directly writes any status value to the DB. Optionally also changes the plan and/or sets `trial_ends_at`. No Razorpay call is made. Clears `cancelled_at` for any status except `cancelled`.
+
+Valid statuses: `pending`, `trialing`, `active`, `halted`, `cancelled`, `expired`.
+
+**Use when:** A Razorpay webhook failed and the tenant is stuck in `pending` after paying (set to `active`); manually unblocking or blocking a tenant for support reasons; testing status transitions locally.
+
+**Audit event:** `subscription.status_overridden`
+
+---
+
+### Action comparison
+
+| | Plan | Rebill | Cancel | Trial | Override |
+|---|---|---|---|---|---|
+| Razorpay called | ✗ | ✓ (cancel + create) | ✓ (cancel) | ✗ | ✗ |
+| Billing amount changes | ✗ | ✓ (new sub) | — | — | — |
+| Tenant locked out | ✗ | ✓ until payment | ✓ after period end | ✗ | Depends on status |
+| Payment link generated | ✗ | ✓ | ✗ | ✗ | ✗ |
+| Creates sub if missing | ✗ | ✗ | ✗ | ✓ | ✗ |
+
+---
+
+### Mobile API admin endpoints
+
+Require Bearer token + `role:admin`. Prefix: `/api/mobile/admin/billing/`.
+
+| Method | Path | Purpose |
+|---|---|---|
+| `GET` | `` | All tenants summary + stats |
+| `POST` | `{tenant}/change-plan` | Local plan override (no Razorpay) |
+| `POST` | `{tenant}/change-plan-rebill` | Change plan + cancel old sub + new Razorpay sub |
+| `POST` | `{tenant}/cancel` | Cancel subscription on Razorpay |
+| `POST` | `{tenant}/grant-trial` | Grant / extend trial |
+| `POST` | `{tenant}/override-status` | Override status + optional plan/trial |
+
+---
+
 ## Mobile API
 
 All billing endpoints are under `/api/mobile/tenants/{tenant}/billing/`. See `docs/api-mobile.md` for full request/response shapes.
