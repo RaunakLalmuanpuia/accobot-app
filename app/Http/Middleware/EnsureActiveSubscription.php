@@ -33,8 +33,10 @@ class EnsureActiveSubscription
         $subscription = $tenant->subscription()->with('plan', 'addons.plan')->first();
 
         // isAccessible() covers active + on-trial.
-        // isPending() covers the window between Razorpay checkout and webhook confirmation.
-        if ($subscription && ($subscription->isAccessible() || $subscription->isPending())) {
+        // pending is intentionally excluded: billing.* routes already bypass this middleware,
+        // so legitimate checkout flows are unaffected. Excluding pending ensures admin-initiated
+        // rebills properly block the tenant until the webhook activates the new subscription.
+        if ($subscription && $subscription->isAccessible()) {
             return $next($request);
         }
 
