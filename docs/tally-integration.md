@@ -1255,7 +1255,7 @@ In Tally, each inventory entry's `AccountingAllocations` is auto-derived from th
 
 ### Stock item auto-fill improvements — 2026-05-16
 
-`onStockItemChange()` now also sets `ie.rate` from `standard_price` (preferred) or `opening_rate` as fallback (when non-zero). Both fields are now included in the `stockItems` query in `TallyDataController`.
+`onStockItemChange()` now also sets `ie.rate` from `opening_rate` (when non-zero). `opening_rate` is included in the `stockItems` query in `TallyDataController`.
 
-Fields that auto-fill on item select: `unit`, `igst_rate`, `cess_rate`, `hsn_code`, `group_name`, `mrp`, `rate`.
-Fields that cannot auto-fill (not in Tally master): `sales_ledger`, `godown_name`.
+Fields that auto-fill on item select: `unit`, `igst_rate`, `cess_rate`, `hsn_code`, `group_name`, `mrp`, `rate` (from `opening_rate`).
+Fields that cannot auto-fill: `sales_ledger`, `godown_name`.

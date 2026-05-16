@@ -68,9 +68,7 @@ export function useInvoiceVoucherForm(props, config = {}) {
         if (m.cess_rate != null) ie.cess_rate  = m.cess_rate
         if (m.stock_group_name)  ie.group_name = m.stock_group_name
         if (m.mrp_rate  != null) ie.mrp        = m.mrp_rate
-        // standard_price (manually maintained selling price) takes priority over opening_rate (cost-based)
-        const rate = m.standard_price ?? m.opening_rate
-        if (rate != null && rate !== 0) ie.rate = rate
+        if (m.opening_rate != null && m.opening_rate !== 0) ie.rate = m.opening_rate
     }
 
     function emptyInventory() {

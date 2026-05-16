@@ -188,7 +188,7 @@ class TallyDataController extends Controller
         return inertia('Tally/VoucherCreate', [
             'tenant'                 => $tenant,
             'ledgers'                => TallyLedger::where('tenant_id', $tenant->id)->where('is_active', true)->orderBy('ledger_name')->get(['id', 'ledger_name', 'group_name', 'gstin_number', 'gst_type', 'mailing_name', 'mobile_number', 'contact_person_email', 'state_name', 'pin_code', 'country_name', 'addresses']),
-            'stockItems'             => TallyStockItem::where('tenant_id', $tenant->id)->where('is_active', true)->orderBy('name')->get(['id', 'name', 'hsn_code', 'unit_name', 'igst_rate', 'cess_rate', 'stock_group_name', 'mrp_rate', 'standard_price', 'opening_rate']),
+            'stockItems'             => TallyStockItem::where('tenant_id', $tenant->id)->where('is_active', true)->orderBy('name')->get(['id', 'name', 'hsn_code', 'unit_name', 'igst_rate', 'cess_rate', 'stock_group_name', 'mrp_rate', 'opening_rate']),
             'godowns'                => TallyGodown::where('tenant_id', $tenant->id)->where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'nextSalesVoucherNumber' => $this->nextSalesVoucherNumber($tenant->id),
         ]);
@@ -204,7 +204,7 @@ class TallyDataController extends Controller
             'tenant'     => $tenant,
             'voucher'    => $voucher,
             'ledgers'    => TallyLedger::where('tenant_id', $tenant->id)->where('is_active', true)->orderBy('ledger_name')->get(['id', 'ledger_name', 'group_name', 'gstin_number', 'gst_type', 'mailing_name', 'mobile_number', 'contact_person_email', 'state_name', 'pin_code', 'country_name', 'addresses']),
-            'stockItems' => TallyStockItem::where('tenant_id', $tenant->id)->where('is_active', true)->orderBy('name')->get(['id', 'name', 'hsn_code', 'unit_name', 'igst_rate', 'cess_rate', 'stock_group_name', 'mrp_rate', 'standard_price', 'opening_rate']),
+            'stockItems' => TallyStockItem::where('tenant_id', $tenant->id)->where('is_active', true)->orderBy('name')->get(['id', 'name', 'hsn_code', 'unit_name', 'igst_rate', 'cess_rate', 'stock_group_name', 'mrp_rate', 'opening_rate']),
             'godowns'    => TallyGodown::where('tenant_id', $tenant->id)->where('is_active', true)->orderBy('name')->get(['id', 'name']),
         ]);
     }
