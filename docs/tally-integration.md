@@ -1242,3 +1242,20 @@ When a user selects a party ledger in the Sales/Purchase/CreditNote/DebitNote fo
 - `is_party_ledger = true` on any already-added ledger entry matching the party name
 
 When a ledger entry is selected, `onLedgerChange(le, form)` auto-sets `is_party_ledger = true` if the selected ledger matches `form.party_name`. This mirrors how Tally marks the party leg of a voucher.
+
+
+### AccountingAllocations auto-generation — 2026-05-16
+
+In Tally, each inventory entry's `AccountingAllocations` is auto-derived from the `SalesLedger` field and the item amount. Users do not need to fill the Accounting Allocations section in the Vue form.
+
+`TallyOutboundFormatter::resolveAccountingAllocations()` handles this:
+- If `accounting_allocations` is non-empty (inbound-synced voucher): returned as-is
+- If empty and `sales_ledger` is set: auto-generates `[{LedgerName, IGSTRate, Amount}]`
+- If empty and no `sales_ledger`: returns `[]`
+
+### Stock item auto-fill improvements — 2026-05-16
+
+`onStockItemChange()` now also sets `ie.rate` from `standard_price` (preferred) or `opening_rate` as fallback (when non-zero). Both fields are now included in the `stockItems` query in `TallyDataController`.
+
+Fields that auto-fill on item select: `unit`, `igst_rate`, `cess_rate`, `hsn_code`, `group_name`, `mrp`, `rate`.
+Fields that cannot auto-fill (not in Tally master): `sales_ledger`, `godown_name`.

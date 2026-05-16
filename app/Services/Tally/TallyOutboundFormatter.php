@@ -525,7 +525,7 @@ class TallyOutboundFormatter
                 'GodownName'            => $ie->godown_name,
                 'BatchName'             => $ie->batch_name,
                 'BatchAllocations'      => $ie->batch_allocations ?? [],
-                'AccountingAllocations' => $ie->accounting_allocations ?? [],
+                'AccountingAllocations' => $this->resolveAccountingAllocations($ie),
             ]))->values()->all();
 
             $base['ledgerentries'] = $v->ledgerEntries->map(fn ($le) => $this->dropNulls([
@@ -544,6 +544,23 @@ class TallyOutboundFormatter
 
             return $base;
         })->values()->all();
+    }
+
+    private function resolveAccountingAllocations($ie): array
+    {
+        // If explicitly provided (e.g. inbound-synced voucher), use as-is
+        if (!empty($ie->accounting_allocations)) {
+            return $ie->accounting_allocations;
+        }
+        // Auto-generate from SalesLedger so Tally receives the required accounting leg
+        if ($ie->sales_ledger) {
+            return [[
+                'LedgerName' => $ie->sales_ledger,
+                'IGSTRate'   => $ie->igst_rate ?? 0,
+                'Amount'     => $ie->amount ?? 0,
+            ]];
+        }
+        return [];
     }
 
     private function dropNulls(array $record): array
