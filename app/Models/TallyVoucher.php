@@ -28,6 +28,7 @@ class TallyVoucher extends Model
         'consignee_pin_code', 'consignee_state', 'consignee_country',
         'consignee_gst_registration_type',
         'irn', 'acknowledgement_no', 'acknowledgement_date', 'qr_code',
+        'eway_bill_details', 'category_entries',
         'narration', 'cost_centre',
         'is_active', 'last_synced_at',
         'mapped_invoice_id', 'mapped_vendor_id',
@@ -39,8 +40,10 @@ class TallyVoucher extends Model
         'is_invoice'    => 'boolean',
         'is_deleted'    => 'boolean',
         'is_active'     => 'boolean',
-        'buyer_address' => 'array',
-        'last_synced_at' => 'datetime',
+        'buyer_address'      => 'array',
+        'eway_bill_details'  => 'array',
+        'category_entries'   => 'array',
+        'last_synced_at'     => 'datetime',
     ];
 
     public function tenant(): BelongsTo

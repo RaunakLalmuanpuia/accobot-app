@@ -447,7 +447,7 @@ class TallyOutboundFormatter
                 'Reference'     => $v->reference,
                 'ReferenceDate' => $v->reference_date,
                 'PartyName'     => $v->party_name,
-                'VoucherTotal'  => $v->voucher_total,
+                'Voucher_Total'  => $v->voucher_total,
                 'IsInvoice'     => $this->boolStr($v->is_invoice),
                 'PlaceOfSupply' => $v->place_of_supply,
                 'VoucherCostCentre' => $v->cost_centre,
@@ -483,7 +483,9 @@ class TallyOutboundFormatter
                 'BuyerMobile'              => $v->buyer_mobile,
                 'BuyerAddress' => is_array($v->buyer_address)
                     ? $v->buyer_address
-                    : ($v->buyer_address ? [['BuyerAddress' => $v->buyer_address]] : []),
+                    : (is_string($v->buyer_address) && $v->buyer_address !== ''
+                        ? array_map(fn($l) => ['BuyerAddress' => $l], explode("\n", $v->buyer_address))
+                        : []),
 
                 // Consignee
                 'ConsigneeName'                => $v->consignee_name,
@@ -495,6 +497,8 @@ class TallyOutboundFormatter
                 'ConsigneeGSTRegistrationType' => $v->consignee_gst_registration_type,
 
                 'Narration'           => $v->narration,
+                'EWayBillDetails'     => $v->eway_bill_details ?? [],
+                'CategoryEntries'     => $v->category_entries ?? [],
                 'IRN'                 => $v->irn,
                 'AcknowledgementNo'   => $v->acknowledgement_no,
                 'AcknowledgementDate' => $v->acknowledgement_date,
@@ -524,7 +528,7 @@ class TallyOutboundFormatter
                 'AccountingAllocations' => $ie->accounting_allocations ?? [],
             ]))->values()->all();
 
-            $base['LedgerEntries'] = $v->ledgerEntries->map(fn ($le) => $this->dropNulls([
+            $base['ledgerentries'] = $v->ledgerEntries->map(fn ($le) => $this->dropNulls([
                 'LedgerName'            => $le->ledger_name,
                 'LedgerGroup'           => $le->ledger_group,
                 'LedgerAmount'          => $le->ledger_amount,
@@ -532,9 +536,10 @@ class TallyOutboundFormatter
                 'IsPartyLedger'         => $this->boolStr($le->is_party_ledger),
                 'IGSTRate'              => $le->igst_rate,
                 'HSNCode'               => $le->hsn_code,
-                'CessRate'              => $le->cess_rate,
+                'Cess_Rate'             => $le->cess_rate,
                 'BillsAllocation'       => $le->bills_allocation ?? [],
                 'BankAllocationDetails' => $le->bank_allocation_details ?? [],
+                'CategoryAllocation'    => $le->category_allocation ?? [],
             ]))->values()->all();
 
             return $base;

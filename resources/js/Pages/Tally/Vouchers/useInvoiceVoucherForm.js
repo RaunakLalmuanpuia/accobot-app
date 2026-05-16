@@ -93,10 +93,52 @@ export function useInvoiceVoucherForm(props, config = {}) {
         expandedItems.value = s
     }
 
+    // ── Party auto-fill (Tally-style: party select → populate all buyer fields) ─
+    function onPartyChange(form) {
+        const m = ledgerMap.value[form.party_name]
+        if (!m) return
+
+        // Buyer name — prefer MailingName (the "print name" in Tally) over LedgerName
+        form.buyer_name  = m.mailing_name  || form.party_name
+        form.buyer_alias = ''
+
+        // GST / tax details
+        form.buyer_gstin                 = m.gstin_number || ''
+        form.buyer_gst_registration_type = m.gst_type     || ''
+
+        // Address — Tally stores addresses as [{Address:"line1"},{Address:"line2"}]
+        const lines = Array.isArray(m.addresses)
+            ? m.addresses.map(a => a.Address || a.address || '').filter(Boolean)
+            : []
+        form.buyer_address = lines.join('\n')
+
+        // Geographic
+        form.buyer_state   = m.state_name   || ''
+        form.buyer_country = m.country_name || 'India'
+        form.buyer_pin_code = m.pin_code    || ''
+
+        // Contact
+        form.buyer_mobile = m.mobile_number       || ''
+        form.buyer_email  = m.contact_person_email || ''
+
+        // Also mark any already-added ledger entry that matches the party as IsPartyLedger
+        form.ledger_entries.forEach(le => {
+            le.is_party_ledger = le.ledger_name === form.party_name
+        })
+    }
+
     // ── Ledger entry helpers ──────────────────────────────────────────────────
-    function onLedgerChange(le) {
+    function onLedgerChange(le, form) {
         const m = ledgerMap.value[le.ledger_name]
-        if (m?.group_name) le.ledger_group = m.group_name
+        if (!m) return
+        if (m.group_name) le.ledger_group = m.group_name
+        // Auto-fill tax fields from the ledger master (mirrors Tally behaviour)
+        // Only fill if the ledger entry itself doesn't already have values
+        // (Tally stores igst_rate on the stock item, not the ledger — leave blank for tax ledgers)
+        // Mark as party ledger when this entry's ledger matches the voucher's party
+        if (form?.party_name && le.ledger_name === form.party_name) {
+            le.is_party_ledger = true
+        }
     }
 
     function emptyLedger() {
@@ -227,6 +269,8 @@ export function useInvoiceVoucherForm(props, config = {}) {
         taxableTotal,
         ledgerTotal,
         autoTaxGroups,
+        // Party / ledger functions
+        onPartyChange,
         // Item functions
         toggleExpand,
         recalcItemAmount,

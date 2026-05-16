@@ -73,6 +73,10 @@ class TallyVoucherCrudController extends Controller
             'consignee_gst_registration_type' => 'nullable|string|max:100',
 
             // e-Invoice
+            'eway_bill_details' => 'nullable|array',
+            'category_entries'  => 'nullable|array',
+
+            // e-Invoice
             'irn'                  => 'nullable|string|max:100',
             'acknowledgement_no'   => 'nullable|string|max:100',
             'acknowledgement_date' => 'nullable|string|max:50',
@@ -88,6 +92,7 @@ class TallyVoucherCrudController extends Controller
             'ledger_entries.*.igst_rate'                          => 'nullable|string|max:20',
             'ledger_entries.*.hsn_code'                           => 'nullable|string|max:20',
             'ledger_entries.*.cess_rate'                          => 'nullable|string|max:20',
+            'ledger_entries.*.category_allocation'                => 'nullable|array',
             'ledger_entries.*.bills_allocation'                   => 'nullable|array',
             'ledger_entries.*.bills_allocation.*.AgstType'        => 'nullable|string|max:50',
             'ledger_entries.*.bills_allocation.*.Reference'       => 'nullable|string|max:255',

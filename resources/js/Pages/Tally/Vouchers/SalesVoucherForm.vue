@@ -13,6 +13,7 @@ const {
     voucherNoLabel, voucherNoPlaceholder,
     mode, expandedItems, grandTotalLocked, buyerAddressLines,
     partyLedgers, taxableTotal, ledgerTotal, autoTaxGroups,
+    onPartyChange,
     toggleExpand, recalcItemAmount, onStockItemChange, addInventory, removeInventory,
     addBatchAlloc, removeBatchAlloc, addAccAlloc, removeAccAlloc,
     onLedgerChange, addLedger, removeLedger, addBillRef, removeBillRef,
@@ -83,6 +84,7 @@ const {
             </label>
             <input v-model="form.party_name" type="text" list="sales-party-list"
                    placeholder="Select debtor ledger…"
+                   @change="onPartyChange(form)"
                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
             <datalist id="sales-party-list">
                 <option v-for="l in partyLedgers" :key="l.id" :value="l.ledger_name" />
@@ -223,13 +225,21 @@ const {
                              class="grid grid-cols-4 gap-1.5 items-end">
                             <div><label class="block text-xs text-gray-400 mb-0.5">Batch</label>
                                 <input v-model="ba.BatchName" type="text" class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" /></div>
+                            <div><label class="block text-xs text-gray-400 mb-0.5">Expiry Date</label>
+                                <input v-model="ba.ExpiryDate" type="date" class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" /></div>
                             <div><label class="block text-xs text-gray-400 mb-0.5">Godown</label>
                                 <select v-model="ba.GodownName" class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500">
                                     <option value="">— Select —</option>
                                     <option v-for="g in godowns" :key="g.id" :value="g.name">{{ g.name }}</option>
                                 </select></div>
+                            <div><label class="block text-xs text-gray-400 mb-0.5">Actual Qty</label>
+                                <input v-model="ba.ActualQty" type="number" step="0.0001" class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" /></div>
                             <div><label class="block text-xs text-gray-400 mb-0.5">Billed Qty</label>
                                 <input v-model="ba.BilledQty" type="number" step="0.0001" class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" /></div>
+                            <div><label class="block text-xs text-gray-400 mb-0.5">Rate</label>
+                                <input v-model="ba.Rate" type="number" step="0.01" class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" /></div>
+                            <div><label class="block text-xs text-gray-400 mb-0.5">Disc %</label>
+                                <input v-model="ba.DiscountPercent" type="number" step="0.01" class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" /></div>
                             <div class="flex gap-1">
                                 <div class="flex-1"><label class="block text-xs text-gray-400 mb-0.5">Amount</label>
                                     <input v-model="ba.Amount" type="number" step="0.01" class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" /></div>
@@ -298,19 +308,22 @@ const {
         </div>
 
         <div v-if="form.ledger_entries.length">
-            <div class="grid grid-cols-[2fr_1fr_0.7fr_1fr_auto] gap-2 px-4 py-1.5 bg-gray-50 border-b border-gray-100 text-xs font-medium text-gray-400">
+            <div class="grid grid-cols-[2fr_1fr_1fr_0.5fr_0.5fr_0.5fr_1fr_auto] gap-2 px-4 py-1.5 bg-gray-50 border-b border-gray-100 text-xs font-medium text-gray-400">
                 <span>Ledger Name</span>
                 <span>Amount</span>
-                <span>Dr/Cr</span>
+                <span>Dr/Cr + Party</span>
+                <span>IGST%</span>
+                <span>HSN</span>
+                <span>Cess%</span>
                 <span>Bill Ref</span>
                 <span class="w-6" />
             </div>
 
             <div v-for="(le, i) in form.ledger_entries" :key="i"
                  class="border-b border-gray-50 last:border-0 px-4 py-2 space-y-2">
-                <div class="grid grid-cols-[2fr_1fr_0.7fr_1fr_auto] gap-2 items-center">
+                <div class="grid grid-cols-[2fr_1fr_1fr_0.5fr_0.5fr_0.5fr_1fr_auto] gap-2 items-center">
                     <div>
-                        <select v-model="le.ledger_name" @change="onLedgerChange(le)"
+                        <select v-model="le.ledger_name" @change="onLedgerChange(le, form)"
                                 class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500">
                             <option value="">{{ le._suggestLabel ? `— ${le._suggestLabel} Ledger —` : '— Select Ledger —' }}</option>
                             <option v-for="l in ledgers" :key="l.id" :value="l.ledger_name">{{ l.ledger_name }}</option>
@@ -320,11 +333,24 @@ const {
                     </div>
                     <input v-model="le.ledger_amount" type="number" step="0.01" placeholder="0.00"
                            class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
-                    <select v-model="le.is_deemed_positive"
-                            class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500">
-                        <option :value="true">Dr</option>
-                        <option :value="false">Cr</option>
-                    </select>
+                    <div class="flex items-center gap-2">
+                        <select v-model="le.is_deemed_positive"
+                                class="flex-1 rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500">
+                            <option :value="true">Dr</option>
+                            <option :value="false">Cr</option>
+                        </select>
+                        <label class="flex items-center gap-1 text-xs text-gray-500 whitespace-nowrap" title="Is Party Ledger">
+                            <input v-model="le.is_party_ledger" type="checkbox"
+                                   class="h-3.5 w-3.5 rounded border-gray-300 text-violet-600 focus:ring-violet-500" />
+                            Party
+                        </label>
+                    </div>
+                    <input v-model="le.igst_rate" type="text" placeholder="IGST%"
+                           class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                    <input v-model="le.hsn_code" type="text" placeholder="HSN"
+                           class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                    <input v-model="le.cess_rate" type="text" placeholder="Cess%"
+                           class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
                     <div>
                         <div class="flex items-center justify-between mb-0.5">
                             <span class="text-xs text-gray-400">{{ le.bills_allocation.length }} ref(s)</span>
@@ -479,8 +505,14 @@ const {
             <div class="grid grid-cols-3 gap-3">
                 <div><label class="block text-sm font-medium text-gray-700 mb-1">LR / RR No</label>
                     <input v-model="form.lr_no" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" /></div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">LR Date</label>
+                    <input v-model="form.lr_date" type="date" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" /></div>
                 <div><label class="block text-sm font-medium text-gray-700 mb-1">Motor Vehicle No</label>
                     <input v-model="form.motor_vehicle_no" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" /></div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">Carrier Name</label>
+                    <input v-model="form.carrier_name" type="text" placeholder="e.g. Bluedart" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" /></div>
                 <div><label class="block text-sm font-medium text-gray-700 mb-1">Destination</label>
                     <input v-model="form.destination" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" /></div>
             </div>

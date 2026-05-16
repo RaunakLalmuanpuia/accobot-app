@@ -1208,10 +1208,37 @@ The real Tally connector uses different field name conventions from the simplifi
 | `Category` (stock item) | `CategoryName` |
 | `Unit` (stock item) | `UnitName` |
 | `Closing_Balance` | `ClosingBalance` |
-| `Voucher_Total` | `VoucherTotal` |
-| `ledgerentries` (lowercase) | `LedgerEntries` |
+| `Voucher_Total` | `VoucherTotal` | ✅ outbound now uses `Voucher_Total` |
+| `ledgerentries` (lowercase) | `LedgerEntries` | ✅ outbound now uses `ledgerentries` |
 | `BuyerCountryName` | `BuyerCountry` |
 | `ConsigneeCountryName` | `ConsigneeCountry` |
 | `VoucherCostCentre` | `CostCentre` |
-| `Cess_Rate` (ledger entry) | `CessRate` |
+| `Cess_Rate` (ledger entry) | `CessRate` | ✅ outbound now uses `Cess_Rate` |
 | `"Applicable"` for IsGSTApplicable | `"Yes"` |
+
+---
+
+### New columns added 2026-05-16
+
+Three new nullable `jsonb` columns were added to support full round-trip fidelity with the real Tally connector:
+
+| Table | Column | Tally field | Notes |
+|---|---|---|---|
+| `tally_vouchers` | `eway_bill_details` | `EWayBillDetails` | e-Way Bill array; stored raw, returned as-is outbound |
+| `tally_vouchers` | `category_entries` | `CategoryEntries` | Cost category allocations at voucher level |
+| `tally_voucher_ledger_entries` | `category_allocation` | `CategoryAllocation` | Per-ledger cost category split |
+
+All three are mapped in `TallyInboundSync`, validated in `TallyVoucherCrudController`, output in `TallyOutboundFormatter`, and exposed in the Vue CRUD forms.
+
+### Party auto-fill (Tally-style) — 2026-05-16
+
+When a user selects a party ledger in the Sales/Purchase/CreditNote/DebitNote form, `onPartyChange()` (in `useInvoiceVoucherForm.js`) auto-populates:
+
+- `buyer_name` from `mailing_name` (Tally's print name)
+- `buyer_gstin`, `buyer_gst_registration_type`
+- `buyer_address` (flattened from the ledger's `addresses` JSON array)
+- `buyer_state`, `buyer_country`, `buyer_pin_code`
+- `buyer_mobile`, `buyer_email`
+- `is_party_ledger = true` on any already-added ledger entry matching the party name
+
+When a ledger entry is selected, `onLedgerChange(le, form)` auto-sets `is_party_ledger = true` if the selected ledger matches `form.party_name`. This mirrors how Tally marks the party leg of a voucher.

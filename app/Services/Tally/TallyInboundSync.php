@@ -468,6 +468,8 @@ class TallyInboundSync
                     'acknowledgement_no'      => $item['AcknowledgementNo'] ?? null,
                     'acknowledgement_date'    => $item['AcknowledgementDate'] ?? null,
                     'qr_code'                 => $item['QRCode'] ?? null,
+                    'eway_bill_details'       => $item['EWayBillDetails'] ?? null,
+                    'category_entries'        => $item['CategoryEntries'] ?? null,
                     'narration'               => $item['Narration'] ?? null,
                     'cost_centre'             => $item['VoucherCostCentre'] ?? $item['CostCentre'] ?? null,
                     'is_active'               => true,
@@ -567,6 +569,7 @@ class TallyInboundSync
                                 'cess_rate'          => $le['Cess_Rate'] ?? $le['CessRate'] ?? null,
                                 'bills_allocation'        => $le['BillsAllocation'] ?? null,
                                 'bank_allocation_details' => $le['BankAllocationDetails'] ?? null,
+                                'category_allocation'     => $le['CategoryAllocation'] ?? null,
                             ]);
                         }
                     });
