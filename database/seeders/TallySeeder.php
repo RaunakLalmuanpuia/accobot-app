@@ -143,6 +143,11 @@ class TallySeeder extends Seeder
         foreach ($ledgerRows as [$id, $name, $group, $gstin, $gstType, $mailing, $mobile, $email, $pin, $state, $creditDays, $creditLimit, $openBal, $openType, $billWise]) {
             $mappedClientId = ($group === 'Sundry Debtors'  && isset($clients[$name])) ? $clients[$name]->id : null;
             $mappedVendorId = ($group === 'Sundry Creditors' && $vendors->first())     ? $vendors->first()->id : null;
+            $category = match(true) {
+                str_contains(strtolower($group), 'debtor')   => 'customer',
+                str_contains(strtolower($group), 'creditor') => 'vendor',
+                default                                      => null,
+            };
 
             $ledgers[$id] = TallyLedger::firstOrCreate(
                 ['tenant_id' => $tid, 'tally_id' => $id],
@@ -150,6 +155,7 @@ class TallySeeder extends Seeder
                     'alter_id'              => $id,
                     'ledger_name'           => $name,
                     'group_name'            => $group,
+                    'ledger_category'       => $category,
                     'gstin_number'          => $gstin,
                     'gst_type'              => $gstType,
                     'mailing_name'          => $mailing ?? $name,
@@ -283,6 +289,7 @@ class TallySeeder extends Seeder
             [
                 'alter_id'              => 4001,
                 'voucher_type'          => 'Sales',
+                'voucher_base_type'     => 'Sales',
                 'voucher_number'        => 'SV/25-26/001',
                 'voucher_date'          => '2025-04-02',
                 'party_name'            => 'Rahul Enterprises',
@@ -328,9 +335,9 @@ class TallySeeder extends Seeder
         );
         // Ledger entries: Rahul Dr 1,77,000 | Sales Cr 1,50,000 | Output CGST Cr 13,500 | Output SGST Cr 13,500
         $this->le($tid, $v[4001], $ledgers[101],  177000, true,  true,  [['AgstType' => 'New Ref', 'Reference' => 'SV/25-26/001', 'CreditPeriod' => '30 Days', 'Amount' => 177000]]);
-        $this->le($tid, $v[4001], $ledgers[301], -150000, false, false, []);
-        $this->le($tid, $v[4001], $ledgers[703],  -13500, false, false, []);
-        $this->le($tid, $v[4001], $ledgers[704],  -13500, false, false, []);
+        $this->le($tid, $v[4001], $ledgers[301], 150000, false, false, []);
+        $this->le($tid, $v[4001], $ledgers[703], 13500, false, false, []);
+        $this->le($tid, $v[4001], $ledgers[704], 13500, false, false, []);
 
         // ── SV/25-26/002 — Priya Trading Co., Karnataka (inter-state: IGST) ──
         // 2 Samsung Galaxy S24 × ₹80,000 = ₹1,60,000 + IGST 18% ₹28,800 = ₹1,88,800
@@ -339,6 +346,7 @@ class TallySeeder extends Seeder
             [
                 'alter_id'              => 4002,
                 'voucher_type'          => 'Sales',
+                'voucher_base_type'     => 'Sales',
                 'voucher_number'        => 'SV/25-26/002',
                 'voucher_date'          => '2025-04-05',
                 'party_name'            => 'Priya Trading Co.',
@@ -383,8 +391,8 @@ class TallySeeder extends Seeder
             ]
         );
         $this->le($tid, $v[4002], $ledgers[102],  188800, true,  true,  [['AgstType' => 'New Ref', 'Reference' => 'SV/25-26/002', 'CreditPeriod' => '45 Days', 'Amount' => 188800]]);
-        $this->le($tid, $v[4002], $ledgers[301], -160000, false, false, []);
-        $this->le($tid, $v[4002], $ledgers[701],  -28800, false, false, []);
+        $this->le($tid, $v[4002], $ledgers[301], 160000, false, false, []);
+        $this->le($tid, $v[4002], $ledgers[701], 28800, false, false, []);
 
         // ── SV/25-26/003 — Suresh & Sons, Maharashtra (inter-state: IGST) ──
         // 5 Office Chairs × ₹12,000 = ₹60,000 + IGST 18% ₹10,800 = ₹70,800
@@ -393,6 +401,7 @@ class TallySeeder extends Seeder
             [
                 'alter_id'              => 4003,
                 'voucher_type'          => 'Sales',
+                'voucher_base_type'     => 'Sales',
                 'voucher_number'        => 'SV/25-26/003',
                 'voucher_date'          => '2025-04-10',
                 'party_name'            => 'Suresh & Sons',
@@ -437,8 +446,8 @@ class TallySeeder extends Seeder
             ]
         );
         $this->le($tid, $v[4003], $ledgers[103],  70800, true,  true,  [['AgstType' => 'New Ref', 'Reference' => 'SV/25-26/003', 'CreditPeriod' => '30 Days', 'Amount' => 70800]]);
-        $this->le($tid, $v[4003], $ledgers[301], -60000, false, false, []);
-        $this->le($tid, $v[4003], $ledgers[701], -10800, false, false, []);
+        $this->le($tid, $v[4003], $ledgers[301], 60000, false, false, []);
+        $this->le($tid, $v[4003], $ledgers[701], 10800, false, false, []);
 
         // ── PV/25-26/001 — Kapoor Suppliers, Delhi (intra-state: CGST+SGST) ──
         // 3 Dell Laptops × ₹60,000 = ₹1,80,000 + CGST 9% ₹16,200 + SGST 9% ₹16,200 = ₹2,12,400
@@ -447,6 +456,7 @@ class TallySeeder extends Seeder
             [
                 'alter_id'              => 4004,
                 'voucher_type'          => 'Purchase',
+                'voucher_base_type'     => 'Purchase',
                 'voucher_number'        => 'PV/25-26/001',
                 'voucher_date'          => '2025-04-03',
                 'party_name'            => 'Kapoor Suppliers',
@@ -484,7 +494,7 @@ class TallySeeder extends Seeder
         $this->le($tid, $v[4004], $ledgers[401],  180000, true,  false, []);
         $this->le($tid, $v[4004], $ledgers[705],   16200, true,  false, []);
         $this->le($tid, $v[4004], $ledgers[706],   16200, true,  false, []);
-        $this->le($tid, $v[4004], $ledgers[201], -212400, false, true,  [['AgstType' => 'New Ref', 'Reference' => 'PV/25-26/001', 'CreditPeriod' => '60 Days', 'Amount' => 212400]]);
+        $this->le($tid, $v[4004], $ledgers[201], 212400, false, true,  [['AgstType' => 'New Ref', 'Reference' => 'PV/25-26/001', 'CreditPeriod' => '60 Days', 'Amount' => 212400]]);
 
         // ── PV/25-26/002 — National Goods Ltd, Kerala (inter-state: IGST) ──
         // 2 Samsung Galaxy S24 × ₹65,000 = ₹1,30,000 + IGST 18% ₹23,400 = ₹1,53,400
@@ -493,6 +503,7 @@ class TallySeeder extends Seeder
             [
                 'alter_id'              => 4005,
                 'voucher_type'          => 'Purchase',
+                'voucher_base_type'     => 'Purchase',
                 'voucher_number'        => 'PV/25-26/002',
                 'voucher_date'          => '2025-04-12',
                 'party_name'            => 'National Goods Ltd',
@@ -529,7 +540,7 @@ class TallySeeder extends Seeder
         );
         $this->le($tid, $v[4005], $ledgers[401],  130000, true,  false, []);
         $this->le($tid, $v[4005], $ledgers[702],   23400, true,  false, []);
-        $this->le($tid, $v[4005], $ledgers[202], -153400, false, true,  [['AgstType' => 'New Ref', 'Reference' => 'PV/25-26/002', 'CreditPeriod' => '30 Days', 'Amount' => 153400]]);
+        $this->le($tid, $v[4005], $ledgers[202], 153400, false, true,  [['AgstType' => 'New Ref', 'Reference' => 'PV/25-26/002', 'CreditPeriod' => '30 Days', 'Amount' => 153400]]);
 
         // ── RC/25-26/001 — Rahul full receipt (HDFC Bank) ────────────────
         // Fully settles SV/25-26/001 ₹1,77,000
@@ -538,6 +549,7 @@ class TallySeeder extends Seeder
             [
                 'alter_id'              => 4006,
                 'voucher_type'          => 'Receipt',
+                'voucher_base_type'     => 'Receipt',
                 'voucher_number'        => 'RC/25-26/001',
                 'voucher_date'          => '2025-05-02',
                 'party_name'            => 'Rahul Enterprises',
@@ -551,7 +563,7 @@ class TallySeeder extends Seeder
             ]
         );
         $this->le($tid, $v[4006], $ledgers[501],  177000, true,  false, []);
-        $this->le($tid, $v[4006], $ledgers[101], -177000, false, true,  [['AgstType' => 'Agst Ref', 'Reference' => 'SV/25-26/001', 'CreditPeriod' => '2-Apr-25', 'Amount' => 177000]]);
+        $this->le($tid, $v[4006], $ledgers[101], 177000, false, true,  [['AgstType' => 'Agst Ref', 'Reference' => 'SV/25-26/001', 'CreditPeriod' => '2-Apr-25', 'Amount' => 177000]]);
 
         // ── RC/25-26/002 — Priya partial receipt ─────────────────────────
         // Partial ₹50,000 against SV/25-26/002 (₹1,88,800)
@@ -560,6 +572,7 @@ class TallySeeder extends Seeder
             [
                 'alter_id'              => 4007,
                 'voucher_type'          => 'Receipt',
+                'voucher_base_type'     => 'Receipt',
                 'voucher_number'        => 'RC/25-26/002',
                 'voucher_date'          => '2025-04-30',
                 'party_name'            => 'Priya Trading Co.',
@@ -573,7 +586,7 @@ class TallySeeder extends Seeder
             ]
         );
         $this->le($tid, $v[4007], $ledgers[501],   50000, true,  false, []);
-        $this->le($tid, $v[4007], $ledgers[102],  -50000, false, true,  [['AgstType' => 'Agst Ref', 'Reference' => 'SV/25-26/002', 'CreditPeriod' => '5-Apr-25', 'Amount' => 50000]]);
+        $this->le($tid, $v[4007], $ledgers[102], 50000, false, true,  [['AgstType' => 'Agst Ref', 'Reference' => 'SV/25-26/002', 'CreditPeriod' => '5-Apr-25', 'Amount' => 50000]]);
 
         // ── RC/25-26/003 — Suresh full receipt ───────────────────────────
         $v[4008] = TallyVoucher::firstOrCreate(
@@ -581,6 +594,7 @@ class TallySeeder extends Seeder
             [
                 'alter_id'              => 4008,
                 'voucher_type'          => 'Receipt',
+                'voucher_base_type'     => 'Receipt',
                 'voucher_number'        => 'RC/25-26/003',
                 'voucher_date'          => '2025-05-05',
                 'party_name'            => 'Suresh & Sons',
@@ -594,7 +608,7 @@ class TallySeeder extends Seeder
             ]
         );
         $this->le($tid, $v[4008], $ledgers[501],   70800, true,  false, []);
-        $this->le($tid, $v[4008], $ledgers[103],  -70800, false, true,  [['AgstType' => 'Agst Ref', 'Reference' => 'SV/25-26/003', 'CreditPeriod' => '10-Apr-25', 'Amount' => 70800]]);
+        $this->le($tid, $v[4008], $ledgers[103], 70800, false, true,  [['AgstType' => 'Agst Ref', 'Reference' => 'SV/25-26/003', 'CreditPeriod' => '10-Apr-25', 'Amount' => 70800]]);
 
         // ── PY/25-26/001 — Kapoor Suppliers full payment ─────────────────
         $v[4009] = TallyVoucher::firstOrCreate(
@@ -602,6 +616,7 @@ class TallySeeder extends Seeder
             [
                 'alter_id'              => 4009,
                 'voucher_type'          => 'Payment',
+                'voucher_base_type'     => 'Payment',
                 'voucher_number'        => 'PY/25-26/001',
                 'voucher_date'          => '2025-04-15',
                 'party_name'            => 'Kapoor Suppliers',
@@ -615,7 +630,7 @@ class TallySeeder extends Seeder
             ]
         );
         $this->le($tid, $v[4009], $ledgers[201],  212400, true,  true,  [['AgstType' => 'Agst Ref', 'Reference' => 'PV/25-26/001', 'CreditPeriod' => '3-Apr-25', 'Amount' => 212400]]);
-        $this->le($tid, $v[4009], $ledgers[501], -212400, false, false, []);
+        $this->le($tid, $v[4009], $ledgers[501], 212400, false, false, []);
 
         // ── CN/25-26/001 — Priya returns 1 Samsung (credit note) ─────────
         // ₹80,000 + IGST ₹14,400 = ₹94,400 — settles ₹94,400 of SV/25-26/002
@@ -624,6 +639,7 @@ class TallySeeder extends Seeder
             [
                 'alter_id'              => 4010,
                 'voucher_type'          => 'Credit Note',
+                'voucher_base_type'     => 'CreditNote',
                 'voucher_number'        => 'CN/25-26/001',
                 'voucher_date'          => '2025-04-20',
                 'party_name'            => 'Priya Trading Co.',
@@ -641,7 +657,7 @@ class TallySeeder extends Seeder
             ]
         );
         // Party Cr (is_deemed_positive=false for CN party); settles against SV/25-26/002
-        $this->le($tid, $v[4010], $ledgers[102],  -94400, false, true,  [['AgstType' => 'Agst Ref', 'Reference' => 'SV/25-26/002', 'CreditPeriod' => '5-Apr-25', 'Amount' => 94400]]);
+        $this->le($tid, $v[4010], $ledgers[102], 94400, false, true,  [['AgstType' => 'Agst Ref', 'Reference' => 'SV/25-26/002', 'CreditPeriod' => '5-Apr-25', 'Amount' => 94400]]);
         $this->le($tid, $v[4010], $ledgers[301],   80000, true,  false, []);
         $this->le($tid, $v[4010], $ledgers[701],   14400, true,  false, []);
 
@@ -654,6 +670,7 @@ class TallySeeder extends Seeder
             [
                 'alter_id'              => 4011,
                 'voucher_type'          => 'Sales',
+                'voucher_base_type'     => 'Sales',
                 'voucher_number'        => 'SV/25-26/004',
                 'voucher_date'          => '2025-05-15',
                 'party_name'            => 'Priya Trading Co.',
@@ -698,8 +715,8 @@ class TallySeeder extends Seeder
             ]
         );
         $this->le($tid, $v[4011], $ledgers[102],  106200, true,  true,  [['AgstType' => 'New Ref', 'Reference' => 'SV/25-26/004', 'CreditPeriod' => '45 Days', 'Amount' => 106200]]);
-        $this->le($tid, $v[4011], $ledgers[301],  -90000, false, false, []);
-        $this->le($tid, $v[4011], $ledgers[701],  -16200, false, false, []);
+        $this->le($tid, $v[4011], $ledgers[301], 90000, false, false, []);
+        $this->le($tid, $v[4011], $ledgers[701], 16200, false, false, []);
 
         // ── SV/25-26/005 — Meenakshi Retail, Tamil Nadu (inter-state) ────
         // 10 Wireless Keyboards × ₹2,800 = ₹28,000 + IGST 18% ₹5,040 = ₹33,040 — OUTSTANDING
@@ -708,6 +725,7 @@ class TallySeeder extends Seeder
             [
                 'alter_id'              => 4012,
                 'voucher_type'          => 'Sales',
+                'voucher_base_type'     => 'Sales',
                 'voucher_number'        => 'SV/25-26/005',
                 'voucher_date'          => '2025-05-20',
                 'party_name'            => 'Meenakshi Retail',
@@ -752,8 +770,8 @@ class TallySeeder extends Seeder
             ]
         );
         $this->le($tid, $v[4012], $ledgers[104],  33040, true,  true,  [['AgstType' => 'New Ref', 'Reference' => 'SV/25-26/005', 'CreditPeriod' => '30 Days', 'Amount' => 33040]]);
-        $this->le($tid, $v[4012], $ledgers[302], -28000, false, false, []);
-        $this->le($tid, $v[4012], $ledgers[701],  -5040, false, false, []);
+        $this->le($tid, $v[4012], $ledgers[302], 28000, false, false, []);
+        $this->le($tid, $v[4012], $ledgers[701], 5040, false, false, []);
 
         // ── DN/25-26/001 — National Goods quality deduction (debit note) ─
         // ₹5,000 + IGST ₹900 = ₹5,900 — reduces PV/25-26/002 outstanding to ₹1,47,500
@@ -762,6 +780,7 @@ class TallySeeder extends Seeder
             [
                 'alter_id'              => 4013,
                 'voucher_type'          => 'Debit Note',
+                'voucher_base_type'     => 'DebitNote',
                 'voucher_number'        => 'DN/25-26/001',
                 'voucher_date'          => '2025-04-25',
                 'party_name'            => 'National Goods Ltd',
@@ -776,8 +795,8 @@ class TallySeeder extends Seeder
         );
         // Debit Note: party entry Dr (reducing payable) is_deemed_positive=true
         $this->le($tid, $v[4013], $ledgers[202],   5900, true,  true,  [['AgstType' => 'Agst Ref', 'Reference' => 'PV/25-26/002', 'CreditPeriod' => '12-Apr-25', 'Amount' => 5900]]);
-        $this->le($tid, $v[4013], $ledgers[401],  -5000, false, false, []);
-        $this->le($tid, $v[4013], $ledgers[702],   -900, false, false, []);
+        $this->le($tid, $v[4013], $ledgers[401], 5000, false, false, []);
+        $this->le($tid, $v[4013], $ledgers[702], 900, false, false, []);
 
         // ── JV/25-26/001 — Input IGST setoff ─────────────────────────────
         $v[4014] = TallyVoucher::firstOrCreate(
@@ -785,6 +804,7 @@ class TallySeeder extends Seeder
             [
                 'alter_id'       => 4014,
                 'voucher_type'   => 'Journal',
+                'voucher_base_type' => 'Journal',
                 'voucher_number' => 'JV/25-26/001',
                 'voucher_date'   => '2025-04-30',
                 'voucher_total'  => 15000,
@@ -796,7 +816,7 @@ class TallySeeder extends Seeder
             ]
         );
         $this->le($tid, $v[4014], $ledgers[701],  15000, true,  false, []);
-        $this->le($tid, $v[4014], $ledgers[702], -15000, false, false, []);
+        $this->le($tid, $v[4014], $ledgers[702], 15000, false, false, []);
 
         // ── CT/25-26/001 — Cash withdrawal from HDFC ─────────────────────
         $v[4015] = TallyVoucher::firstOrCreate(
@@ -804,6 +824,7 @@ class TallySeeder extends Seeder
             [
                 'alter_id'       => 4015,
                 'voucher_type'   => 'Contra',
+                'voucher_base_type' => 'Contra',
                 'voucher_number' => 'CT/25-26/001',
                 'voucher_date'   => '2025-04-30',
                 'voucher_total'  => 25000,
@@ -815,7 +836,7 @@ class TallySeeder extends Seeder
             ]
         );
         $this->le($tid, $v[4015], $ledgers[601],  25000, true,  false, []);
-        $this->le($tid, $v[4015], $ledgers[501], -25000, false, false, []);
+        $this->le($tid, $v[4015], $ledgers[501], 25000, false, false, []);
 
         // ── Reports ───────────────────────────────────────────────────────
         foreach ([
@@ -997,6 +1018,7 @@ class TallySeeder extends Seeder
             [
                 'alter_id'       => 6001,
                 'voucher_type'   => 'Payroll',
+                'voucher_base_type' => 'Payroll',
                 'voucher_number' => 'SAL/25-26/001',
                 'voucher_date'   => '2025-04-30',
                 'narration'      => 'Salary for the month of April 2025',
@@ -1062,6 +1084,7 @@ class TallySeeder extends Seeder
             [
                 'alter_id'       => 6002,
                 'voucher_type'   => 'Attendance',
+                'voucher_base_type' => 'Attendance',
                 'voucher_number' => 'ATT/25-26/001',
                 'voucher_date'   => '2025-04-30',
                 'narration'      => 'Attendance for the month of April 2025',
@@ -1214,6 +1237,7 @@ class TallySeeder extends Seeder
                 [
                     'alter_id'              => $tallyId,
                     'voucher_type'          => 'Sales',
+                    'voucher_base_type'     => 'Sales',
                     'voucher_number'        => $number,
                     'voucher_date'          => $date,
                     'party_name'            => 'BlueStar Technologies',
@@ -1261,8 +1285,8 @@ class TallySeeder extends Seeder
                 : [['AgstType' => 'New Ref', 'Reference' => $number, 'CreditPeriod' => '30 Days', 'Amount' => 17700]];
 
             $this->le($tid, $lsv, $bluestarLedger,   17700, true,  true,  $billRef);
-            $this->le($tid, $lsv, $salesLeaseLedger, -15000, false, false, []);
-            $this->le($tid, $lsv, $ledgers[701],      -2700, false, false, []);
+            $this->le($tid, $lsv, $salesLeaseLedger, 15000, false, false, []);
+            $this->le($tid, $lsv, $ledgers[701], 2700, false, false, []);
 
             $invoice = Invoice::firstOrCreate(
                 ['tally_voucher_id' => $lsv->id, 'tenant_id' => $tid],
@@ -1304,6 +1328,7 @@ class TallySeeder extends Seeder
                     [
                         'alter_id'       => $tallyId + 100,
                         'voucher_type'   => 'Receipt',
+                        'voucher_base_type' => 'Receipt',
                         'voucher_number' => 'RC/25-26/' . str_pad($tallyId - 5000 + 3, 3, '0', STR_PAD_LEFT),
                         'voucher_date'   => date('Y-m-d', strtotime($date . ' +28 days')),
                         'party_name'     => 'BlueStar Technologies',
@@ -1318,7 +1343,7 @@ class TallySeeder extends Seeder
                 );
                 $invDate = date('j-M-y', strtotime($date));
                 $this->le($tid, $rcv, $ledgers[501],   17700, true,  false, []);
-                $this->le($tid, $rcv, $bluestarLedger, -17700, false, true,  [['AgstType' => 'Agst Ref', 'Reference' => $number, 'CreditPeriod' => $invDate, 'Amount' => 17700]]);
+                $this->le($tid, $rcv, $bluestarLedger, 17700, false, true,  [['AgstType' => 'Agst Ref', 'Reference' => $number, 'CreditPeriod' => $invDate, 'Amount' => 17700]]);
             }
         }
 
