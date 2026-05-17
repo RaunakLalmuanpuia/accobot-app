@@ -444,43 +444,43 @@ class TallyOutboundFormatter
                 'VoucherBaseType' => $v->voucher_base_type,
                 'VoucherNumber'   => $v->voucher_number,
                 'VoucherDate'   => $v->voucher_date?->format('Ymd'),
-                'Reference'     => $v->reference,
+                'Reference'     => $v->reference ?? '',
                 'ReferenceDate' => $this->formatDateStr($v->reference_date),
-                'PartyName'     => $v->party_name,
-                'Voucher_Total'  => $v->voucher_total,
+                'PartyName'     => $v->party_name ?? '',
+                'Voucher_Total'  => (float) $v->voucher_total,
                 'IsInvoice'     => $this->boolStr($v->is_invoice),
-                'PlaceOfSupply' => $v->place_of_supply,
-                'VoucherCostCentre' => $v->cost_centre,
+                'PlaceOfSupply' => $v->place_of_supply ?? '',
+                'VoucherCostCentre' => $v->cost_centre ?? '',
                 'IsDeleted'         => $this->boolStr($v->is_deleted),
 
                 // Dispatch / shipping
-                'DeliveryNoteNo'   => $v->delivery_note_no,
+                'DeliveryNoteNo'   => $v->delivery_note_no ?? '',
                 'DeliveryNoteDate' => $this->formatDateStr($v->delivery_note_date),
-                'DispatchDocNo'    => $v->dispatch_doc_no,
-                'DispatchThrough'  => $v->dispatch_through,
-                'Destination'      => $v->destination,
-                'CarrierName'      => $v->carrier_name,
-                'LRNo'             => $v->lr_no,
+                'DispatchDocNo'    => $v->dispatch_doc_no ?? '',
+                'DispatchThrough'  => $v->dispatch_through ?? '',
+                'Destination'      => $v->destination ?? '',
+                'CarrierName'      => $v->carrier_name ?? '',
+                'LRNo'             => $v->lr_no ?? '',
                 'LRDate'           => $this->formatDateStr($v->lr_date),
-                'MotorVehicleNo'   => $v->motor_vehicle_no,
+                'MotorVehicleNo'   => $v->motor_vehicle_no ?? '',
 
                 // Order
-                'OrderNo'          => $v->order_no,
+                'OrderNo'          => $v->order_no ?? '',
                 'OrderDate'        => $this->formatDateStr($v->order_date),
-                'TermsOfPayment'   => $v->terms_of_payment,
-                'OtherReferences'  => $v->other_references,
-                'TermsOfDelivery'  => $v->terms_of_delivery,
+                'TermsOfPayment'   => $v->terms_of_payment ?? '',
+                'OtherReferences'  => $v->other_references ?? '',
+                'TermsOfDelivery'  => $v->terms_of_delivery ?? '',
 
                 // Buyer
-                'BuyerName'                => $v->buyer_name,
-                'BuyerAlias'               => $v->buyer_alias,
-                'BuyerGSTIN'               => $v->buyer_gstin,
-                'BuyerPinCode'             => $v->buyer_pin_code,
-                'BuyerState'               => $v->buyer_state,
+                'BuyerName'                => $v->buyer_name ?? '',
+                'BuyerAlias'               => $v->buyer_alias ?? '',
+                'BuyerGSTIN'               => $v->buyer_gstin ?? '',
+                'BuyerPinCode'             => $v->buyer_pin_code ?? '',
+                'BuyerState'               => $v->buyer_state ?? '',
                 'BuyerCountryName'         => $v->buyer_country ?: 'India',
-                'BuyerGSTRegistrationType' => $v->buyer_gst_registration_type,
-                'BuyerEmail'               => $v->buyer_email,
-                'BuyerMobile'              => $v->buyer_mobile,
+                'BuyerGSTRegistrationType' => $v->buyer_gst_registration_type ?? '',
+                'BuyerEmail'               => $v->buyer_email ?? '',
+                'BuyerMobile'              => $v->buyer_mobile ?? '',
                 'BuyerAddress' => is_array($v->buyer_address)
                     ? $v->buyer_address
                     : (is_string($v->buyer_address) && $v->buyer_address !== ''
@@ -488,20 +488,20 @@ class TallyOutboundFormatter
                         : []),
 
                 // Consignee
-                'ConsigneeName'                => $v->consignee_name,
-                'ConsigneeGSTIN'               => $v->consignee_gstin,
-                'ConsigneeTallyGroup'          => $v->consignee_tally_group,
-                'ConsigneePinCode'             => $v->consignee_pin_code,
-                'ConsigneeState'               => $v->consignee_state,
+                'ConsigneeName'                => $v->consignee_name ?? '',
+                'ConsigneeGSTIN'               => $v->consignee_gstin ?? '',
+                'ConsigneeTallyGroup'          => $v->consignee_tally_group ?? '',
+                'ConsigneePinCode'             => $v->consignee_pin_code ?? '',
+                'ConsigneeState'               => $v->consignee_state ?? '',
                 'ConsigneeCountryName'         => $v->consignee_country ?: 'India',
-                'ConsigneeGSTRegistrationType' => $v->consignee_gst_registration_type,
+                'ConsigneeGSTRegistrationType' => $v->consignee_gst_registration_type ?? '',
                 'ConsigneeAddress' => is_array($v->consignee_address)
                     ? $v->consignee_address
                     : (is_string($v->consignee_address) && $v->consignee_address !== ''
                         ? array_map(fn($l) => ['ConsigneeAddress' => $l], explode("\n", $v->consignee_address))
                         : []),
 
-                'Narration'           => $v->narration,
+                'Narration'           => $v->narration ?? '',
                 'EWayBillDetails'     => $v->eway_bill_details ?? [],
                 'CategoryEntries'     => $v->category_entries ?? [],
                 'IRN'                 => $v->irn,
@@ -512,36 +512,36 @@ class TallyOutboundFormatter
 
             $base['InventoryEntries'] = $v->inventoryEntries->map(fn ($ie) => $this->dropNulls([
                 'StockItemName'    => $ie->stock_item_name,
-                'ItemCode'         => $ie->item_code,
-                'GroupName'        => $ie->group_name,
-                'HSNCode'          => $ie->hsn_code,
+                'ItemCode'         => $ie->item_code ?? '',
+                'GroupName'        => $ie->group_name ?? '',
+                'HSNCode'          => $ie->hsn_code ?? '',
                 'Unit'             => $ie->unit,
-                'IGSTRate'         => $ie->igst_rate,
-                'CessRate'         => $ie->cess_rate,
+                'IGSTRate'         => (float) $ie->igst_rate,
+                'CessRate'         => (float) $ie->cess_rate,
                 'IsDeemedPositive' => $this->boolStr($ie->is_deemed_positive),
-                'ActualQty'        => $ie->actual_qty,
-                'BilledQty'        => $ie->billed_qty,
-                'Rate'             => $ie->rate,
-                'DiscountPercent'  => $ie->discount_percent,
-                'Amount'           => $ie->amount,
-                'TaxAmount'        => $ie->tax_amount,
-                'MRP'              => $ie->mrp,
-                'SalesLedger'           => $ie->sales_ledger,
-                'GodownName'            => $ie->godown_name,
-                'BatchName'             => $ie->batch_name,
+                'ActualQty'        => (float) $ie->actual_qty,
+                'BilledQty'        => (float) $ie->billed_qty,
+                'Rate'             => (float) $ie->rate,
+                'DiscountPercent'  => (float) $ie->discount_percent,
+                'Amount'           => (float) $ie->amount,
+                'TaxAmount'        => (float) $ie->tax_amount,
+                'MRP'              => (float) ($ie->mrp ?? 0),
+                'SalesLedger'           => $ie->sales_ledger ?? '',
+                'GodownName'            => $ie->godown_name ?? '',
+                'BatchName'             => $ie->batch_name ?? '',
                 'BatchAllocations'      => $ie->batch_allocations ?? [],
                 'AccountingAllocations' => $this->resolveAccountingAllocations($ie),
             ]))->values()->all();
 
             $base['ledgerentries'] = $v->ledgerEntries->map(fn ($le) => $this->dropNulls([
                 'LedgerName'            => $le->ledger_name,
-                'LedgerGroup'           => $le->ledger_group,
-                'LedgerAmount'          => $le->ledger_amount,
+                'LedgerGroup'           => $le->ledger_group ?? '',
+                'LedgerAmount'          => (float) $le->ledger_amount,
                 'IsDeemedPositive'      => $this->boolStr($le->is_deemed_positive),
                 'IsPartyLedger'         => $this->boolStr($le->is_party_ledger),
-                'IGSTRate'              => $le->igst_rate,
-                'HSNCode'               => $le->hsn_code,
-                'Cess_Rate'             => $le->cess_rate,
+                'IGSTRate'              => $le->igst_rate ?? '',
+                'HSNCode'               => $le->hsn_code ?? '',
+                'Cess_Rate'             => $le->cess_rate ?? '',
                 'BillsAllocation'       => $le->bills_allocation ?? [],
                 'BankAllocationDetails' => $le->bank_allocation_details ?? [],
                 'CategoryAllocation'    => $le->category_allocation ?? [],
@@ -553,22 +553,32 @@ class TallyOutboundFormatter
 
     private function resolveAccountingAllocations($ie): array
     {
-        // If explicitly provided (e.g. inbound-synced or Vue-pre-populated), use as-is
         if (!empty($ie->accounting_allocations)) {
-            return $ie->accounting_allocations;
+            return array_map(fn($aa) => array_merge($aa, [
+                'GSTClassification' => $this->normGSTClass($aa['GSTClassification'] ?? ''),
+                'IGSTRate'          => (float) ($aa['IGSTRate'] ?? 0),
+                'Amount'            => (float) ($aa['Amount'] ?? 0),
+            ]), $ie->accounting_allocations);
         }
-        // Fallback: auto-generate from SalesLedger with all required fields
         if ($ie->sales_ledger) {
             $igst = (float) ($ie->igst_rate ?? 0);
             return [[
                 'LedgerName'        => $ie->sales_ledger,
                 'LedgerGroup'       => '',
-                'GSTClassification' => $igst > 0 ? 'Taxable' : 'Not Applicable',
+                'GSTClassification' => $this->normGSTClass($igst > 0 ? 'Taxable' : 'Not Applicable'),
                 'IGSTRate'          => $igst,
                 'Amount'            => (float) ($ie->amount ?? 0),
             ]];
         }
         return [];
+    }
+
+    // Tally prefixes GST classification values with the EOT character (U+0004).
+    private function normGSTClass(string $val): string
+    {
+        $val = ltrim($val, "\u{0004} ");
+        if ($val === '') return '';
+        return "\u{0004} {$val}";
     }
 
     private function formatDateStr(?string $dateStr): string

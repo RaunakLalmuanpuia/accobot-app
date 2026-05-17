@@ -277,7 +277,11 @@ const MODE_HINT   = {
                             <div><label class="block text-xs text-gray-400 mb-0.5">GST Class</label>
                                 <select v-model="aa.GSTClassification" class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500">
                                     <option value="">— Select —</option>
-                                    <option v-for="c in ['Not Applicable','Taxable','Nil Rated','Exempt','Non-GST Supply']" :key="c" :value="c">{{ c }}</option>
+                                    <option value=" Not Applicable">Not Applicable</option>
+                                    <option value="Taxable">Taxable</option>
+                                    <option value="Nil Rated">Nil Rated</option>
+                                    <option value="Exempt">Exempt</option>
+                                    <option value="Non-GST Supply">Non-GST Supply</option>
                                 </select></div>
                             <div><label class="block text-xs text-gray-400 mb-0.5">IGST Rate</label>
                                 <input v-model="aa.IGSTRate" type="number" step="0.01" class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" /></div>

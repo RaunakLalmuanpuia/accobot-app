@@ -1315,3 +1315,32 @@ This allows testing the outbound pipeline without waiting for the connector to p
 - Party Details section (Party's Name, GSTIN/UIN, Registration Type)
 - Order Details section with Cost Centre moved here
 - VoucherGuide with `voucher-type="DebitNote"`
+
+### Outbound payload parity fixes — 2026-05-17
+
+Three mismatches between the Vue-created outbound payload and Tally's inbound format were identified and fixed.
+
+#### 1. Numeric fields sent as strings
+
+All decimal DB columns (stored as `DECIMAL` in Postgres) were serialising to JSON as strings (e.g. `"1200.00"`) instead of numbers. Tally expects numeric JSON values.
+
+**Fixed in `TallyOutboundFormatter.php`:** Added explicit `(float)` casts to:
+- `Voucher_Total`
+- Inventory: `IGSTRate`, `CessRate`, `ActualQty`, `BilledQty`, `Rate`, `DiscountPercent`, `Amount`, `TaxAmount`, `MRP`
+- Ledger entries: `LedgerAmount`
+- Accounting allocations: `IGSTRate`, `Amount`
+
+#### 2. GSTClassification missing Tally's U+0004 prefix
+
+Tally stores GST classification values with a leading EOT character (U+0004), e.g. `" Not Applicable"`. The outbound formatter was emitting plain `"Not Applicable"`.
+
+**Fixed in `TallyOutboundFormatter::resolveAccountingAllocations()`:** Added `normGSTClass()` which strips any leading `` or space and re-applies the correct `" {value}"` prefix. Applied to both explicit allocations from the DB and the auto-generated fallback.
+
+#### 3. Nullable fields dropped instead of sent as empty string
+
+`dropNulls()` was stripping fields that Tally always expects to be present (even as `""`):
+- Base voucher: `Reference`, `ReferenceDate`, `PartyName`, `PlaceOfSupply`, `VoucherCostCentre`, `Narration`, all shipping fields (`DeliveryNoteNo`, `DispatchDocNo`, `DispatchThrough`, `Destination`, `CarrierName`, `LRNo`, `MotorVehicleNo`), all order fields (`OrderNo`, `TermsOfPayment`, `OtherReferences`, `TermsOfDelivery`), all buyer/consignee detail fields
+- Inventory: `ItemCode`, `GroupName`, `HSNCode`, `SalesLedger`, `GodownName`, `BatchName`
+- Ledger entries: `LedgerGroup`, `IGSTRate`, `HSNCode`, `Cess_Rate`
+
+**Fixed:** All nullable string fields now default to `''` with `?? ''` so they are always included in the payload, matching the inbound format where Tally always sends every field even when empty.
