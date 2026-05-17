@@ -580,6 +580,38 @@ Tally uses ALL-CAPS keys for this object. Pass through unchanged; do not rename 
 
 ---
 
+## Outstanding Bills Lookup
+
+**`GET /tally/vouchers/outstanding-bills?party_name=<name>`**
+
+Returns all unsettled bills for a party by computing `New Ref` total minus all `Agst Ref` totals per reference across the tenant's voucher history. Used by the Receipt/Payment voucher form to suggest bills to settle.
+
+### Query parameters
+
+| Param | Required | Notes |
+|---|---|---|
+| `party_name` | Yes | Exact ledger name of the party |
+
+### Response
+
+```json
+[
+  {
+    "reference":    "INV-001",
+    "invoiced":     11800.00,
+    "settled":      5000.00,
+    "outstanding":  6800.00,
+    "invoice_date": "1-Apr-26"
+  }
+]
+```
+
+Returns `[]` if no outstanding bills exist for the party.
+
+**Auth:** Standard tenant web session cookie (same as the voucher CRUD routes).
+
+---
+
 ## Voucher Types
 
 | `VoucherType` | `IsInvoice` | Inventory | BillRefs | BankAlloc | Consignee/Dispatch/Order/eInv | Reference | PlaceOfSupply |

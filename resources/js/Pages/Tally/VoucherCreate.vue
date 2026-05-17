@@ -184,9 +184,9 @@ const hasInventoryTypes = ['Sales', 'Purchase', 'CreditNote', 'DebitNote']
                         :form="form" :ledgers="ledgers" :stock-items="stockItems" :godowns="godowns" :is-editing="false"
                         default-mode="item" />
                     <ReceiptVoucherForm v-else-if="selectedType === 'Receipt'"
-                        :form="form" :ledgers="ledgers" :is-editing="false" />
+                        :form="form" :ledgers="ledgers" :is-editing="false" :tenant="tenant" />
                     <PaymentVoucherForm v-else-if="selectedType === 'Payment'"
-                        :form="form" :ledgers="ledgers" :is-editing="false" />
+                        :form="form" :ledgers="ledgers" :is-editing="false" :tenant="tenant" />
                     <ContraVoucherForm v-else-if="selectedType === 'Contra'"
                         :form="form" :ledgers="ledgers" :is-editing="false" />
                     <JournalVoucherForm v-else-if="selectedType === 'Journal'"

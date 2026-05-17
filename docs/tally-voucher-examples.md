@@ -22,9 +22,9 @@ For rules and theory see `tally-voucher-entry-guide.md`.
 
 ## Sales
 
-### Item Invoice
+### Item Invoice (no GST)
 
-Sell stock items and issue a GST invoice.
+Sell stock items and issue an invoice with no tax.
 
 **Header**
 | Field | Value |
@@ -53,10 +53,66 @@ Sell stock items and issue a GST invoice.
 |---|---|---|
 | Test Debtors | 1200 | Dr (Debit) + ☑ Party |
 
+**Bill References** (on the Test Debtors ledger row):
+| AgstType | Reference | CreditPeriod | Amount |
+|---|---|---|---|
+| New Ref | `1` | `30 Days` | 1200 |
+
 **Grand Total:** `1200`
 
 > Only the party goes in Ledger Allocations. Test Sales is already handled
-> by the Sales Ledger row above.
+> by the Sales Ledger row above.  
+> Adding a `New Ref` bill reference creates a trackable outstanding in Tally's
+> bill-wise ledger. The Reference (`1`) is the invoice number — use it when
+> creating the matching Receipt later.
+
+---
+
+### Item Invoice (with GST — IGST 18%)
+
+Sell stock items with GST to an out-of-state customer (inter-state → IGST).
+
+**Header**
+| Field | Value |
+|---|---|
+| Invoice No | `2` |
+| Date | `2026-05-17` |
+| Mode | **Item Invoice** |
+
+**Party & Supply**
+| Field | Value |
+|---|---|
+| Party A/c Name | `Test Debtors` |
+| Place of Supply | `Delhi` *(different from company state — inter-state)* |
+
+**Item Grid** — expand the row (▼) to set IGST Rate:
+| Name of Item | Qty | Per | Rate | Disc% | Amount | IGST Rate% |
+|---|---|---|---|---|---|---|
+| TEst Stock Item | 10 | Box | 100 | 0 | 1000 | 18 |
+
+**Sales Ledger** (violet row): `Test Sales`
+
+Click **"Suggest Tax Lines"** — it calculates `1000 × 18% = 180` and adds a row.
+The ledger name is **auto-picked** by matching a ledger in the "Duties & Taxes" group whose
+name contains "igst" (or "cess" for cess lines). If no match is found the name is left blank
+and you can type it manually.
+
+**Party & Tax Ledgers**
+| Ledger Name | Amount | Dr / Cr & Party | IGST% |
+|---|---|---|---|
+| Test Debtors | 1180 | Dr (Debit) + ☑ Party | — |
+| Output IGST 18% | 180 | Cr (Credit) | 18 |
+
+**Bill References** (on Test Debtors row):
+| AgstType | Reference | CreditPeriod | Amount |
+|---|---|---|---|
+| New Ref | `2` | `30 Days` | 1180 |
+
+**Grand Total:** `1180`
+
+> The `Output IGST 18%` ledger must be in the **Duties & Taxes** group in Tally.
+> For intra-state sales (same state) use two lines instead:
+> `Output CGST 9%` (90) Cr and `Output SGST 9%` (90) Cr.
 
 ---
 
@@ -176,7 +232,11 @@ Same as Purchase Item Invoice with Mode set to **As Voucher** (`IsInvoice: No`).
 
 ## Receipt
 
-Money received from a customer.
+Money received from a customer. The form shows an **Outstanding Bills** table
+automatically when you select a party that has unsettled `New Ref` invoices —
+tick the ones being settled and the `Agst Ref` entries are filled in for you.
+
+### Simple receipt (full settlement, one invoice)
 
 **Header**
 | Field | Value |
@@ -195,17 +255,58 @@ Money received from a customer.
 |---|---|
 | Test Debtors | 1200 |
 
+Select `Test Debtors` → the Outstanding Bills table appears:
+
+| Reference | Date | Invoiced | Settled | Outstanding | ☑ |
+|---|---|---|---|---|---|
+| 1 | 1-May-26 | 1200.00 | 0.00 | 1200.00 | ☑ |
+
+Ticking invoice `1` auto-fills Bill References:
+| AgstType | Reference | CreditPeriod | Amount |
+|---|---|---|---|
+| Agst Ref | `1` | `1-May-26` | 1200 |
+
 **Narration:** *(blank)*
 
-> Cash Dr (money in), Test Debtors Cr (receivable reduces).
-> Add Bill References in Particulars to knock off specific invoices
-> (AgstType: `Agst Ref`, Reference: invoice number).
+> `Cash` Dr (money in), `Test Debtors` Cr (receivable closes).
+> The `Agst Ref` entry links this receipt to the original Sales invoice `1`,
+> closing it in Tally's bill-wise ledger.
+
+---
+
+### Partial settlement across two invoices
+
+Customer pays 1500 against two outstanding invoices (1200 + 800).
+
+**Account Ledger**: `Cash` / Amount: `1500`
+
+**Particulars**: `Test Debtors` / Amount: `1500`
+
+Outstanding Bills — tick both invoices:
+
+| Reference | Outstanding | ☑ |
+|---|---|---|
+| 1 | 1200.00 | ☑ |
+| 2 | 800.00 | ☑ |
+
+This adds two `Agst Ref` entries totalling 2000. Since the customer only paid
+1500, manually adjust `Amount` on one of the bill refs — e.g. set invoice `2`
+to 300 so total = 1500. Invoice `2` remains partly outstanding (500 left).
+
+Bill References after adjustment:
+| AgstType | Reference | CreditPeriod | Amount |
+|---|---|---|---|
+| Agst Ref | `1` | `1-May-26` | 1200 |
+| Agst Ref | `2` | `3-May-26` | 300 |
 
 ---
 
 ## Payment
 
-Money paid to a supplier or for an expense.
+Money paid to a supplier or for an expense. Same outstanding bills flow as
+Receipt — selecting a creditor party shows unsettled purchase bills to tick.
+
+### Simple payment (full settlement)
 
 **Header**
 | Field | Value |
@@ -224,9 +325,16 @@ Money paid to a supplier or for an expense.
 |---|---|
 | Test Creditor | 1200 |
 
+Select `Test Creditor` → Outstanding Bills table appears (populated from
+`New Ref` entries on purchase vouchers). Tick the invoice to settle:
+
+| AgstType | Reference | CreditPeriod | Amount |
+|---|---|---|---|
+| Agst Ref | `BILL-001` | `1-May-26` | 1200 |
+
 **Narration:** *(blank)*
 
-> Cash Cr (money out), Test Creditor Dr (liability reduces).
+> `Cash` Cr (money out), `Test Creditor` Dr (liability reduces).
 > Mirror image of Receipt — same two fields, directions flipped.
 
 ---
@@ -366,6 +474,54 @@ Identical form to Purchase.
 
 ---
 
+## Bill-Wise Settlement — Full Lifecycle
+
+Tally's bill-wise ledger tracks which invoices are outstanding and which
+receipts/payments settle them. Every step happens via `BillsAllocation` inside
+the party ledger entry.
+
+### Step 1 — Sales invoice creates a `New Ref`
+
+When you save a Sales voucher with a bill reference on the party ledger:
+
+```
+Party: Test Debtors  Amount: 1180  IsDeemedPositive: Yes (Dr)
+BillsAllocation: [{ AgstType: "New Ref", Reference: "INV-001", CreditPeriod: "30 Days", Amount: 1180 }]
+```
+
+Tally registers INV-001 as an **open receivable** of ₹1,180.
+
+### Step 2 — Receipt partially settles it
+
+```
+Party: Test Debtors  Amount: 700  IsDeemedPositive: No (Cr)
+BillsAllocation: [{ AgstType: "Agst Ref", Reference: "INV-001", CreditPeriod: "17-May-26", Amount: 700 }]
+```
+
+The Outstanding Bills picker shows: INV-001 — invoiced ₹1,180, settled ₹0, **outstanding ₹1,180**.
+Tick it → auto-fills the Agst Ref at ₹1,180. Reduce to ₹700 for partial payment.
+Tally now shows INV-001 as partly paid: ₹480 remaining.
+
+### Step 3 — Second receipt closes it
+
+```
+BillsAllocation: [{ AgstType: "Agst Ref", Reference: "INV-001", CreditPeriod: "17-May-26", Amount: 480 }]
+```
+
+The Outstanding Bills picker now shows: invoiced ₹1,180, settled ₹700, **outstanding ₹480**.
+Tick → auto-fills ₹480. INV-001 is now fully closed.
+
+### `CreditPeriod` meaning
+
+| AgstType | CreditPeriod means |
+|---|---|
+| `New Ref` | Credit terms, e.g. `"30 Days"` or `"60 Days"` |
+| `Agst Ref` | Original invoice date, e.g. `"17-May-26"` |
+| `On Account` | Blank or any note |
+| `Advance` | Blank |
+
+---
+
 ## Quick Reference
 
 | Voucher | Mode | Party Dr/Cr | Sales/Purchase ledger goes in |
@@ -397,3 +553,8 @@ Identical form to Purchase.
 | Empty Ledger Allocations | `ledgerentries: []` — Tally rejects | Always add at least the party ledger entry |
 | Party checkbox not ticked | Bill-wise tracking breaks | Tick ☑ Party on the customer/supplier ledger line |
 | Wrong Place of Supply | Wrong GST state code on invoice | Set to customer's state for inter-state, company state for intra-state |
+| GST ledger added but IGST% not filled in the ledger row | GST return shows ₹0 tax | Fill the `IGST%` field on the GST ledger entry row |
+| Using IGST for intra-state sale | Wrong GST return bucket | Use CGST + SGST (each at half the rate) when buyer state = seller state |
+| `New Ref` missing on Sales party ledger | Invoice doesn't appear in Outstanding Bills picker | Always add a `New Ref` bill reference on the party ledger when bill-wise is enabled |
+| `Agst Ref` amount > outstanding balance | Tally shows negative balance for the bill | Reduce Amount to the actual outstanding; use a second `On Account` line for excess |
+| `Reference` in `Agst Ref` doesn't match any `New Ref` | Bill remains open, double outstanding | Use the exact same reference string as the original `New Ref` |

@@ -1,4 +1,4 @@
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { emptyBillRef, emptyBankAlloc, BANK_TRANSACTION_TYPES, TRANSFER_MODES, fmt } from './voucherHelpers.js'
 
 /**
@@ -9,7 +9,7 @@ import { emptyBillRef, emptyBankAlloc, BANK_TRANSACTION_TYPES, TRANSFER_MODES, f
  *
  * @param {Object} props  - Vue props: { form, ledgers, isEditing }
  * @param {Object} config - { voucherNoLabel, voucherNoPlaceholder,
- *                            accountDeemedPositive, particularDeemedPositive }
+ *                            accountDeemedPositive, particularDeemedPositive, tenantId }
  */
 export function useAccountParticularsForm(props, config = {}) {
     const {
@@ -17,6 +17,7 @@ export function useAccountParticularsForm(props, config = {}) {
         voucherNoPlaceholder      = 'e.g. VCH-001',
         accountDeemedPositive     = true,
         particularDeemedPositive  = false,
+        tenantId                  = null,
     } = config
 
     const accountEntry = computed(() => props.form.ledger_entries.find(le => !le.is_party_ledger) ?? null)
@@ -61,9 +62,56 @@ export function useAccountParticularsForm(props, config = {}) {
         if (idx !== -1) props.form.ledger_entries.splice(idx, 1)
     }
 
+    // ── Outstanding bills ─────────────────────────────────────────────────────
+    // billsMap: { [partyName]: Bill[] }  — null means "not yet fetched"
+    const billsMap   = ref({})
+    const loadingBills = ref(false)
+
+    async function fetchBillsForParty(partyName) {
+        if (!tenantId || !partyName) return
+        if (billsMap.value[partyName] !== undefined) return  // already fetched
+        loadingBills.value = true
+        try {
+            const { data } = await window.axios.get(
+                route('tally.vouchers.outstanding-bills', { tenant: tenantId }),
+                { params: { party_name: partyName } }
+            )
+            billsMap.value = { ...billsMap.value, [partyName]: data }
+        } catch {
+            billsMap.value = { ...billsMap.value, [partyName]: [] }
+        } finally {
+            loadingBills.value = false
+        }
+    }
+
+    function outstandingBillsFor(partyName) {
+        return billsMap.value[partyName] ?? []
+    }
+
+    function isBillSelected(bill, le) {
+        return le.bills_allocation.some(br => br.AgstType === 'Agst Ref' && br.Reference === bill.reference)
+    }
+
+    function toggleBill(bill, le) {
+        if (isBillSelected(bill, le)) {
+            const idx = le.bills_allocation.findIndex(br => br.AgstType === 'Agst Ref' && br.Reference === bill.reference)
+            le.bills_allocation.splice(idx, 1)
+        } else {
+            le.bills_allocation.push({
+                AgstType: 'Agst Ref',
+                Reference: bill.reference,
+                CreditPeriod: bill.invoice_date,
+                Amount: bill.outstanding,
+            })
+        }
+        le.ledger_amount = le.bills_allocation.reduce((s, br) => s + (parseFloat(br.Amount) || 0), 0)
+        syncAccountAmount()
+    }
+
     function onParticularLedgerChange(le) {
         const m = props.ledgers.find(l => l.ledger_name === le.ledger_name)
         if (m?.group_name) le.ledger_group = m.group_name
+        fetchBillsForParty(le.ledger_name)
     }
 
     function addBillRef(le)       { le.bills_allocation.push(emptyBillRef('Agst Ref')) }
@@ -73,6 +121,11 @@ export function useAccountParticularsForm(props, config = {}) {
     function removeBankAlloc(le, j) { le.bank_allocation_details.splice(j, 1) }
 
     if (!accountEntry.value) ensureAccountEntry()
+
+    // Pre-fetch bills for any party ledgers already present (edit mode)
+    watch(particulars, (list) => {
+        list.forEach(le => { if (le.ledger_name) fetchBillsForParty(le.ledger_name) })
+    }, { immediate: true })
 
     return {
         voucherNoLabel,
@@ -90,6 +143,11 @@ export function useAccountParticularsForm(props, config = {}) {
         removeBillRef,
         addBankAlloc,
         removeBankAlloc,
+        // Outstanding bills
+        loadingBills,
+        outstandingBillsFor,
+        isBillSelected,
+        toggleBill,
         BANK_TRANSACTION_TYPES,
         TRANSFER_MODES,
         fmt,

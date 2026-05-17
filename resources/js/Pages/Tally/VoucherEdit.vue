@@ -200,9 +200,9 @@ function destroy() {
                         :form="form" :ledgers="ledgers" :stock-items="stockItems" :godowns="godowns" :is-editing="true"
                         :default-mode="purchaseInitialMode" />
                     <ReceiptVoucherForm v-else-if="voucher.voucher_base_type === 'Receipt'"
-                        :form="form" :ledgers="ledgers" :is-editing="true" />
+                        :form="form" :ledgers="ledgers" :is-editing="true" :tenant="tenant" />
                     <PaymentVoucherForm v-else-if="voucher.voucher_base_type === 'Payment'"
-                        :form="form" :ledgers="ledgers" :is-editing="true" />
+                        :form="form" :ledgers="ledgers" :is-editing="true" :tenant="tenant" />
                     <ContraVoucherForm v-else-if="voucher.voucher_base_type === 'Contra'"
                         :form="form" :ledgers="ledgers" :is-editing="true" />
                     <JournalVoucherForm v-else-if="voucher.voucher_base_type === 'Journal'"

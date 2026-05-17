@@ -7,6 +7,7 @@ const props = defineProps({
     form:      Object,
     ledgers:   Array,
     isEditing: Boolean,
+    tenant:    Object,
 })
 
 const {
@@ -14,10 +15,12 @@ const {
     ensureAccountEntry, onAccountLedgerChange, syncAccountAmount,
     addParticular, removeParticular, onParticularLedgerChange,
     addBillRef, removeBillRef, addBankAlloc, removeBankAlloc,
+    loadingBills, outstandingBillsFor, isBillSelected, toggleBill,
     BANK_TRANSACTION_TYPES, TRANSFER_MODES, fmt,
 } = useAccountParticularsForm(props, {
     accountDeemedPositive:    true,   // Receipt: bank receives → Dr
     particularDeemedPositive: false,  // Party pays → Cr
+    tenantId: props.tenant?.id,
 })
 
 const showGuide = ref(false)
@@ -179,26 +182,66 @@ const showGuide = ref(false)
                     </div>
                     <input v-model="le.ledger_amount" type="number" step="0.01" placeholder="0.00"
                            class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
-                    <div>
-                        <div class="flex items-center justify-between mb-1">
-                            <span class="text-xs text-gray-400">{{ le.bills_allocation.length }} ref(s)</span>
-                            <button type="button" @click="addBillRef(le)"
-                                    class="text-xs text-violet-600 hover:text-violet-800">+ Add</button>
+                    <div class="space-y-2">
+                        <!-- Outstanding bills picker -->
+                        <div v-if="le.ledger_name && (outstandingBillsFor(le.ledger_name).length || loadingBills)"
+                             class="border border-violet-200 rounded-lg overflow-hidden">
+                            <div class="bg-violet-50 px-3 py-1.5 flex items-center justify-between">
+                                <span class="text-xs font-semibold text-violet-700">Outstanding Bills</span>
+                                <span v-if="loadingBills" class="text-xs text-gray-400">Loading…</span>
+                            </div>
+                            <table class="w-full text-xs">
+                                <thead>
+                                    <tr class="border-b border-violet-100 text-gray-500">
+                                        <th class="px-3 py-1.5 text-left font-medium">Reference</th>
+                                        <th class="px-3 py-1.5 text-left font-medium">Date</th>
+                                        <th class="px-3 py-1.5 text-right font-medium">Invoiced</th>
+                                        <th class="px-3 py-1.5 text-right font-medium">Settled</th>
+                                        <th class="px-3 py-1.5 text-right font-medium text-violet-700">Outstanding</th>
+                                        <th class="px-3 py-1.5 w-8"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="bill in outstandingBillsFor(le.ledger_name)" :key="bill.reference"
+                                        class="border-t border-gray-100 hover:bg-gray-50 cursor-pointer"
+                                        @click="toggleBill(bill, le)">
+                                        <td class="px-3 py-1.5 font-mono">{{ bill.reference }}</td>
+                                        <td class="px-3 py-1.5 text-gray-500">{{ bill.invoice_date }}</td>
+                                        <td class="px-3 py-1.5 text-right font-mono">{{ fmt(bill.invoiced) }}</td>
+                                        <td class="px-3 py-1.5 text-right font-mono text-gray-400">{{ fmt(bill.settled) }}</td>
+                                        <td class="px-3 py-1.5 text-right font-mono font-semibold text-violet-700">{{ fmt(bill.outstanding) }}</td>
+                                        <td class="px-3 py-1.5 text-center">
+                                            <input type="checkbox" :checked="isBillSelected(bill, le)"
+                                                   @click.stop="toggleBill(bill, le)"
+                                                   class="h-3.5 w-3.5 rounded border-gray-300 text-violet-600 focus:ring-violet-500" />
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
-                        <div v-for="(br, j) in le.bills_allocation" :key="j"
-                             class="grid grid-cols-[0.7fr_1fr_0.7fr_0.7fr_auto] gap-1 mb-1 items-center">
-                            <select v-model="br.AgstType" class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500">
-                                <option>New Ref</option><option>Agst Ref</option><option>On Account</option><option>Advance</option>
-                            </select>
-                            <input v-model="br.Reference" type="text" placeholder="Ref No"
-                                   class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
-                            <input v-model="br.CreditPeriod" type="text" placeholder="Period"
-                                   class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
-                            <input v-model="br.Amount" type="number" step="0.01"
-                                   class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
-                            <button type="button" @click="removeBillRef(le, j)" class="text-red-400 hover:text-red-600 text-xs">✕</button>
+
+                        <!-- Manual bill refs -->
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-xs text-gray-400">{{ le.bills_allocation.length }} ref(s)</span>
+                                <button type="button" @click="addBillRef(le)"
+                                        class="text-xs text-violet-600 hover:text-violet-800">+ Add</button>
+                            </div>
+                            <div v-for="(br, j) in le.bills_allocation" :key="j"
+                                 class="grid grid-cols-[0.7fr_1fr_0.7fr_0.7fr_auto] gap-1 mb-1 items-center">
+                                <select v-model="br.AgstType" class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500">
+                                    <option>New Ref</option><option>Agst Ref</option><option>On Account</option><option>Advance</option>
+                                </select>
+                                <input v-model="br.Reference" type="text" placeholder="Ref No"
+                                       class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                                <input v-model="br.CreditPeriod" type="text" placeholder="Period"
+                                       class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                                <input v-model="br.Amount" type="number" step="0.01"
+                                       class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
+                                <button type="button" @click="removeBillRef(le, j)" class="text-red-400 hover:text-red-600 text-xs">✕</button>
+                            </div>
+                            <p v-if="!le.bills_allocation.length" class="text-xs text-gray-400 italic">No bill references.</p>
                         </div>
-                        <p v-if="!le.bills_allocation.length" class="text-xs text-gray-400 italic">No bill references.</p>
                     </div>
                     <button type="button" @click="removeParticular(le)"
                             class="text-red-400 hover:text-red-600 text-sm leading-none mt-1">✕</button>

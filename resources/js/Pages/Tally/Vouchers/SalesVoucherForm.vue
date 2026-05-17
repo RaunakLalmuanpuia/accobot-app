@@ -385,7 +385,7 @@ const MODE_HINT   = {
                            class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
                     <input v-model="le.cess_rate" type="text" placeholder="—"
                            class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
-                    <div>
+                    <div v-if="le.is_party_ledger">
                         <div class="flex items-center justify-between mb-0.5">
                             <span class="text-xs text-gray-400">{{ le.bills_allocation.length || '' }} ref(s)</span>
                             <button type="button" @click="addBillRef(i)" class="text-xs text-violet-600 hover:text-violet-800">+ Add</button>
@@ -404,6 +404,7 @@ const MODE_HINT   = {
                             <button type="button" @click="removeBillRef(i,j)" class="text-red-400 hover:text-red-600 text-xs">✕</button>
                         </div>
                     </div>
+                    <div v-else />
                     <button type="button" @click="removeLedger(i)" class="text-red-400 hover:text-red-600 text-sm leading-none">✕</button>
                 </div>
             </div>

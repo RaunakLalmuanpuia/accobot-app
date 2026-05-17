@@ -280,10 +280,28 @@ export function useInvoiceVoucherForm(props, config = {}) {
         }))
     })
 
+    const taxLedgers = computed(() =>
+        props.ledgers.filter(l =>
+            l.group_name?.toLowerCase().includes('duties') &&
+            l.group_name?.toLowerCase().includes('tax')
+        )
+    )
+
+    function findTaxLedger(type) {
+        const keyword = type === 'igst' ? 'igst'
+                      : type === 'cgst' ? 'cgst'
+                      : type === 'sgst' ? 'sgst'
+                      : 'cess'
+        return taxLedgers.value.find(l => l.ledger_name?.toLowerCase().includes(keyword))
+    }
+
     function suggestTaxLines() {
         autoTaxGroups.value.forEach(g => {
+            const matched     = findTaxLedger(g.type)
+            const ledgerName  = matched?.ledger_name  || ''
+            const ledgerGroup = matched?.group_name   || 'Duties & Taxes'
             props.form.ledger_entries.push({
-                ledger_name: '', ledger_group: 'Duties & Taxes',
+                ledger_name: ledgerName, ledger_group: ledgerGroup,
                 ledger_amount: g.amount,
                 is_deemed_positive: false, is_party_ledger: false,
                 igst_rate: g.type === 'igst' ? g.rate : '',
@@ -350,6 +368,7 @@ export function useInvoiceVoucherForm(props, config = {}) {
         taxableTotal,
         ledgerTotal,
         autoTaxGroups,
+        taxLedgers,
         // Common sales ledger
         commonSalesLedger,
         applyCommonSalesLedger,

@@ -237,6 +237,53 @@ class TallyVoucherCrudController extends Controller
         return back()->with('success', 'Voucher marked inactive and queued for deletion in Tally.');
     }
 
+    public function outstandingBills(Request $request, Tenant $tenant)
+    {
+        $partyName = trim($request->string('party_name'));
+        if ($partyName === '') return response()->json([]);
+
+        $entries = TallyVoucherLedgerEntry::where('tenant_id', $tenant->id)
+            ->where('ledger_name', $partyName)
+            ->where('is_party_ledger', true)
+            ->whereNotNull('bills_allocation')
+            ->with('voucher:id,voucher_date')
+            ->get(['id', 'tally_voucher_id', 'bills_allocation']);
+
+        $bills = [];
+        foreach ($entries as $entry) {
+            foreach ($entry->bills_allocation ?? [] as $ba) {
+                $ref = trim($ba['Reference'] ?? '');
+                if ($ref === '') continue;
+                if (!isset($bills[$ref])) {
+                    $bills[$ref] = ['reference' => $ref, 'invoiced' => 0.0, 'settled' => 0.0, 'invoice_date' => ''];
+                }
+                $amount = (float) ($ba['Amount'] ?? 0);
+                $type   = $ba['AgstType'] ?? '';
+                if ($type === 'New Ref') {
+                    $bills[$ref]['invoiced'] += $amount;
+                    if ($bills[$ref]['invoice_date'] === '' && $entry->voucher?->voucher_date) {
+                        $bills[$ref]['invoice_date'] = $entry->voucher->voucher_date->format('j-M-y');
+                    }
+                } elseif ($type === 'Agst Ref') {
+                    $bills[$ref]['settled'] += $amount;
+                }
+            }
+        }
+
+        return response()->json(
+            collect($bills)
+                ->filter(fn ($b) => ($b['invoiced'] - $b['settled']) > 0.005)
+                ->map(fn ($b) => [
+                    'reference'    => $b['reference'],
+                    'invoiced'     => round($b['invoiced'], 2),
+                    'settled'      => round($b['settled'], 2),
+                    'outstanding'  => round($b['invoiced'] - $b['settled'], 2),
+                    'invoice_date' => $b['invoice_date'],
+                ])
+                ->values()
+        );
+    }
+
     private function inventoryEntryDefaults(array $ie): array
     {
         return [
