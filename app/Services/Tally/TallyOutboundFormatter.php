@@ -445,7 +445,7 @@ class TallyOutboundFormatter
                 'VoucherNumber'   => $v->voucher_number,
                 'VoucherDate'   => $v->voucher_date?->format('Ymd'),
                 'Reference'     => $v->reference,
-                'ReferenceDate' => $v->reference_date,
+                'ReferenceDate' => $this->formatDateStr($v->reference_date),
                 'PartyName'     => $v->party_name,
                 'Voucher_Total'  => $v->voucher_total,
                 'IsInvoice'     => $this->boolStr($v->is_invoice),
@@ -455,18 +455,18 @@ class TallyOutboundFormatter
 
                 // Dispatch / shipping
                 'DeliveryNoteNo'   => $v->delivery_note_no,
-                'DeliveryNoteDate' => $v->delivery_note_date,
+                'DeliveryNoteDate' => $this->formatDateStr($v->delivery_note_date),
                 'DispatchDocNo'    => $v->dispatch_doc_no,
                 'DispatchThrough'  => $v->dispatch_through,
                 'Destination'      => $v->destination,
                 'CarrierName'      => $v->carrier_name,
                 'LRNo'             => $v->lr_no,
-                'LRDate'           => $v->lr_date,
+                'LRDate'           => $this->formatDateStr($v->lr_date),
                 'MotorVehicleNo'   => $v->motor_vehicle_no,
 
                 // Order
                 'OrderNo'          => $v->order_no,
-                'OrderDate'        => $v->order_date,
+                'OrderDate'        => $this->formatDateStr($v->order_date),
                 'TermsOfPayment'   => $v->terms_of_payment,
                 'OtherReferences'  => $v->other_references,
                 'TermsOfDelivery'  => $v->terms_of_delivery,
@@ -477,7 +477,7 @@ class TallyOutboundFormatter
                 'BuyerGSTIN'               => $v->buyer_gstin,
                 'BuyerPinCode'             => $v->buyer_pin_code,
                 'BuyerState'               => $v->buyer_state,
-                'BuyerCountryName'         => $v->buyer_country,
+                'BuyerCountryName'         => $v->buyer_country ?: 'India',
                 'BuyerGSTRegistrationType' => $v->buyer_gst_registration_type,
                 'BuyerEmail'               => $v->buyer_email,
                 'BuyerMobile'              => $v->buyer_mobile,
@@ -493,8 +493,13 @@ class TallyOutboundFormatter
                 'ConsigneeTallyGroup'          => $v->consignee_tally_group,
                 'ConsigneePinCode'             => $v->consignee_pin_code,
                 'ConsigneeState'               => $v->consignee_state,
-                'ConsigneeCountryName'         => $v->consignee_country,
+                'ConsigneeCountryName'         => $v->consignee_country ?: 'India',
                 'ConsigneeGSTRegistrationType' => $v->consignee_gst_registration_type,
+                'ConsigneeAddress' => is_array($v->consignee_address)
+                    ? $v->consignee_address
+                    : (is_string($v->consignee_address) && $v->consignee_address !== ''
+                        ? array_map(fn($l) => ['ConsigneeAddress' => $l], explode("\n", $v->consignee_address))
+                        : []),
 
                 'Narration'           => $v->narration,
                 'EWayBillDetails'     => $v->eway_bill_details ?? [],
@@ -548,19 +553,32 @@ class TallyOutboundFormatter
 
     private function resolveAccountingAllocations($ie): array
     {
-        // If explicitly provided (e.g. inbound-synced voucher), use as-is
+        // If explicitly provided (e.g. inbound-synced or Vue-pre-populated), use as-is
         if (!empty($ie->accounting_allocations)) {
             return $ie->accounting_allocations;
         }
-        // Auto-generate from SalesLedger so Tally receives the required accounting leg
+        // Fallback: auto-generate from SalesLedger with all required fields
         if ($ie->sales_ledger) {
+            $igst = (float) ($ie->igst_rate ?? 0);
             return [[
-                'LedgerName' => $ie->sales_ledger,
-                'IGSTRate'   => $ie->igst_rate ?? 0,
-                'Amount'     => $ie->amount ?? 0,
+                'LedgerName'        => $ie->sales_ledger,
+                'LedgerGroup'       => '',
+                'GSTClassification' => $igst > 0 ? 'Taxable' : 'Not Applicable',
+                'IGSTRate'          => $igst,
+                'Amount'            => (float) ($ie->amount ?? 0),
             ]];
         }
         return [];
+    }
+
+    private function formatDateStr(?string $dateStr): string
+    {
+        if (!$dateStr) return '';
+        try {
+            return \Carbon\Carbon::parse($dateStr)->format('Ymd');
+        } catch (\Throwable $e) {
+            return $dateStr;
+        }
     }
 
     private function dropNulls(array $record): array

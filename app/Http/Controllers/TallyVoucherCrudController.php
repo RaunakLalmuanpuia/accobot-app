@@ -71,6 +71,7 @@ class TallyVoucherCrudController extends Controller
             'consignee_state'                 => 'nullable|string|max:100',
             'consignee_country'               => 'nullable|string|max:100',
             'consignee_gst_registration_type' => 'nullable|string|max:100',
+            'consignee_address'               => 'nullable|string|max:500',
 
             // e-Invoice
             'eway_bill_details' => 'nullable|array',
@@ -151,7 +152,9 @@ class TallyVoucherCrudController extends Controller
                 ]));
             }
 
+            $stockIn = in_array($data['voucher_base_type'], ['Purchase', 'DebitNote']);
             foreach ($data['inventory_entries'] ?? [] as $ie) {
+                $ie['is_deemed_positive'] = $stockIn;
                 TallyVoucherInventoryEntry::create(array_merge($ie, $this->inventoryEntryDefaults($ie), [
                     'tenant_id'        => $tenant->id,
                     'tally_voucher_id' => $voucher->id,
@@ -191,7 +194,9 @@ class TallyVoucherCrudController extends Controller
             }
 
             $voucher->inventoryEntries()->delete();
+            $stockIn = in_array($data['voucher_base_type'], ['Purchase', 'DebitNote']);
             foreach ($data['inventory_entries'] ?? [] as $ie) {
+                $ie['is_deemed_positive'] = $stockIn;
                 TallyVoucherInventoryEntry::create(array_merge($ie, $this->inventoryEntryDefaults($ie), [
                     'tenant_id'        => $tenant->id,
                     'tally_voucher_id' => $voucher->id,

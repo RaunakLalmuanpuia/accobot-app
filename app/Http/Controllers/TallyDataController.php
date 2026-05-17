@@ -17,6 +17,7 @@ use App\Models\TallyPayHead;
 use App\Models\TallyStatutoryMaster;
 use App\Models\TallyStockItem;
 use App\Models\TallyVoucher;
+use App\Services\Tally\TallyOutboundFormatter;
 use Illuminate\Support\Facades\DB;
 
 class TallyDataController extends Controller
@@ -317,9 +318,24 @@ class TallyDataController extends Controller
             'mappedInvoice:id,invoice_number',
         ]);
 
+        $formatter = app(TallyOutboundFormatter::class);
+        $col       = collect([$voucher]);
+        $payload   = match ($voucher->voucher_base_type) {
+            'Sales'      => $formatter->formatSalesVouchers($col),
+            'Purchase'   => $formatter->formatPurchaseVouchers($col),
+            'Receipt'    => $formatter->formatReceiptVouchers($col),
+            'Payment'    => $formatter->formatPaymentVouchers($col),
+            'Contra'     => $formatter->formatContraVouchers($col),
+            'Journal'    => $formatter->formatJournalVouchers($col),
+            'CreditNote' => $formatter->formatCreditNoteVouchers($col),
+            'DebitNote'  => $formatter->formatDebitNoteVouchers($col),
+            default      => [],
+        };
+
         return inertia('Tally/VoucherShow', [
             'tenant'  => $tenant,
             'voucher' => $voucher,
+            'payload' => $payload[0] ?? null,
         ]);
     }
 }

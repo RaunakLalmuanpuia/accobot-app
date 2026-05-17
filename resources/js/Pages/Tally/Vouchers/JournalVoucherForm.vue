@@ -1,6 +1,7 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { fmt, emptyBillRef } from './voucherHelpers.js'
+import VoucherGuide from './VoucherGuide.vue'
 
 const props = defineProps({
     form:      Object,
@@ -45,12 +46,17 @@ const crTotal = computed(() =>
 )
 const isBalanced = computed(() => Math.abs(drTotal.value - crTotal.value) < 0.01)
 const diff       = computed(() => Math.abs(drTotal.value - crTotal.value))
+
+const showGuide = ref(false)
 </script>
 
 <template>
+    <VoucherGuide :show="showGuide" voucher-type="Journal" @close="showGuide = false" />
+
     <!-- ── HEADER BAR ─────────────────────────────────────────────────────── -->
     <div class="bg-gray-50 border border-gray-200 rounded-xl p-4">
-        <div class="grid grid-cols-4 gap-3">
+        <div class="flex items-start justify-between gap-3">
+        <div class="grid grid-cols-4 gap-3 flex-1">
             <div>
                 <label class="block text-xs font-medium text-gray-500 mb-1">Journal No</label>
                 <input v-model="form.voucher_number" type="text" placeholder="e.g. JNL-001"
@@ -72,6 +78,11 @@ const diff       = computed(() => Math.abs(drTotal.value - crTotal.value))
                 <input v-model="form.reference_date" type="date"
                        class="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
             </div>
+        </div>
+        <button type="button" @click="showGuide = true"
+                class="flex items-center gap-1.5 text-xs text-violet-600 hover:text-violet-800 border border-violet-200 hover:border-violet-300 rounded-lg px-3 py-1.5 bg-white transition whitespace-nowrap mt-0.5">
+            <span>?</span> Guide
+        </button>
         </div>
     </div>
 

@@ -73,6 +73,7 @@ const form = useForm({
     consignee_state:       '',
     consignee_country:     '',
     consignee_gst_registration_type: '',
+    consignee_address: '',
     delivery_note_no:   '',
     delivery_note_date: '',
     dispatch_doc_no:    '',
@@ -171,13 +172,17 @@ const hasInventoryTypes = ['Sales', 'Purchase', 'CreditNote', 'DebitNote']
                 <!-- Form -->
                 <form v-if="selectedType" @submit.prevent="submit" class="space-y-5">
                     <SalesVoucherForm v-if="selectedType === 'Sales'"
-                        :form="form" :ledgers="ledgers" :stock-items="stockItems" :godowns="godowns" :is-editing="false" />
+                        :form="form" :ledgers="ledgers" :stock-items="stockItems" :godowns="godowns" :is-editing="false"
+                        default-mode="item" />
                     <PurchaseVoucherForm v-else-if="selectedType === 'Purchase'"
-                        :form="form" :ledgers="ledgers" :stock-items="stockItems" :godowns="godowns" :is-editing="false" />
+                        :form="form" :ledgers="ledgers" :stock-items="stockItems" :godowns="godowns" :is-editing="false"
+                        default-mode="item" />
                     <CreditNoteForm v-else-if="selectedType === 'CreditNote'"
-                        :form="form" :ledgers="ledgers" :stock-items="stockItems" :godowns="godowns" :is-editing="false" />
+                        :form="form" :ledgers="ledgers" :stock-items="stockItems" :godowns="godowns" :is-editing="false"
+                        default-mode="item" />
                     <DebitNoteForm v-else-if="selectedType === 'DebitNote'"
-                        :form="form" :ledgers="ledgers" :stock-items="stockItems" :godowns="godowns" :is-editing="false" />
+                        :form="form" :ledgers="ledgers" :stock-items="stockItems" :godowns="godowns" :is-editing="false"
+                        default-mode="item" />
                     <ReceiptVoucherForm v-else-if="selectedType === 'Receipt'"
                         :form="form" :ledgers="ledgers" :is-editing="false" />
                     <PaymentVoucherForm v-else-if="selectedType === 'Payment'"

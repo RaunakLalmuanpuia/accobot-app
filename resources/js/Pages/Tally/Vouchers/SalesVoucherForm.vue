@@ -1,36 +1,58 @@
 <script setup>
+import { ref } from 'vue'
 import { useInvoiceVoucherForm } from './useInvoiceVoucherForm.js'
+import VoucherGuide from './VoucherGuide.vue'
 
 const props = defineProps({
-    form:       Object,
-    ledgers:    Array,
-    stockItems: Array,
-    godowns:    Array,
-    isEditing:  Boolean,
+    form:        Object,
+    ledgers:     Array,
+    stockItems:  Array,
+    godowns:     Array,
+    isEditing:   Boolean,
+    defaultMode: { type: String, default: 'item' },
 })
 
 const {
     voucherNoLabel, voucherNoPlaceholder,
-    mode, expandedItems, grandTotalLocked, buyerAddressLines,
-    partyLedgers, taxableTotal, ledgerTotal, autoTaxGroups,
+    mode, expandedItems, grandTotalLocked,
+    buyerAddressLines, consigneeAddressLines,
+    partyLedgers, salesLedgers, taxableTotal, ledgerTotal, autoTaxGroups,
+    commonSalesLedger, applyCommonSalesLedger,
     onPartyChange,
-    toggleExpand, recalcItemAmount, onStockItemChange, addInventory, removeInventory,
-    addBatchAlloc, removeBatchAlloc, addAccAlloc, removeAccAlloc,
+    toggleExpand, recalcItemAmount, onStockItemChange, onSalesLedgerChange,
+    addInventory, removeInventory,
+    addBatchAlloc, removeBatchAlloc,
+    addAccAlloc, removeAccAlloc,
     onLedgerChange, addLedger, removeLedger, addBillRef, removeBillRef,
     resetGrandTotal, suggestTaxLines,
     addAddressLine, removeAddressLine,
-    INDIAN_STATES, GST_REG_TYPES, GST_CLASSIFICATIONS, fmt,
+    addConsigneeAddressLine, removeConsigneeAddressLine,
+    INDIAN_STATES, GST_REG_TYPES, fmt,
 } = useInvoiceVoucherForm(props, {
     voucherNoLabel:       'Invoice No',
     voucherNoPlaceholder: 'e.g. INV-001',
     partyType:            'debtor',
+    defaultMode:          props.defaultMode,
+    syncIsInvoice:        true,
 })
+
+const showGuide = ref(false)
+
+const MODE_LABELS = { item: 'Party, Tax & Charges', accounting: 'Ledger Entries', voucher: 'Dr / Cr Entries' }
+const MODE_HINT   = {
+    item:       'Add the party (customer) as Dr + Party, then tax / charge ledgers as Cr.',
+    accounting: 'Add the party ledger (Dr + Party) and service / income ledger (Cr).',
+    voucher:    'Enter Dr and Cr entries. Mark the customer ledger as Party.',
+}
 </script>
 
 <template>
-    <!-- ── HEADER BAR ─────────────────────────────────────────────────────── -->
+    <VoucherGuide :show="showGuide" voucher-type="Sales" @close="showGuide = false" />
+
+    <!-- ── HEADER ───────────────────────────────────────────────────────────── -->
     <div class="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-3">
-        <div class="grid grid-cols-4 gap-3">
+        <div class="flex items-start justify-between gap-3">
+        <div class="grid grid-cols-4 gap-3 flex-1">
             <div>
                 <label class="block text-xs font-medium text-gray-500 mb-1">{{ voucherNoLabel }}</label>
                 <input v-model="form.voucher_number" type="text" :placeholder="voucherNoPlaceholder"
@@ -40,7 +62,7 @@ const {
                 <label class="block text-xs font-medium text-gray-500 mb-1">Date <span class="text-red-500">*</span></label>
                 <input v-model="form.voucher_date" type="date"
                        class="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-                <p v-if="form.errors.voucher_date" class="mt-0.5 text-xs text-red-500">{{ form.errors.voucher_date }}</p>
+                <p v-if="form.errors?.voucher_date" class="mt-0.5 text-xs text-red-500">{{ form.errors.voucher_date }}</p>
             </div>
             <div>
                 <label class="block text-xs font-medium text-gray-500 mb-1">Ref No</label>
@@ -53,37 +75,41 @@ const {
                        class="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
             </div>
         </div>
+        <button type="button" @click="showGuide = true"
+                class="flex items-center gap-1.5 text-xs text-violet-600 hover:text-violet-800 border border-violet-200 hover:border-violet-300 rounded-lg px-3 py-1.5 bg-white transition whitespace-nowrap mt-0.5">
+            <span>?</span> Guide
+        </button>
+        </div>
 
-        <!-- Mode toggle -->
-        <div class="flex items-center gap-4">
-            <div class="flex items-center gap-1 p-0.5 bg-gray-200 rounded-lg w-fit text-xs">
-                <button type="button" @click="mode = 'item'"
-                        :class="['px-3 py-1 rounded-md font-medium transition',
-                                 mode === 'item' ? 'bg-white text-violet-700 shadow-sm' : 'text-gray-500 hover:text-gray-700']">
-                    Item Invoice
-                </button>
-                <button type="button" @click="mode = 'accounting'"
-                        :class="['px-3 py-1 rounded-md font-medium transition',
-                                 mode === 'accounting' ? 'bg-white text-violet-700 shadow-sm' : 'text-gray-500 hover:text-gray-700']">
-                    Accounting Invoice
-                </button>
-            </div>
-            <label class="flex items-center gap-1.5 cursor-pointer text-xs text-gray-600">
-                <input v-model="form.is_invoice" type="checkbox"
-                       class="h-3.5 w-3.5 rounded border-gray-300 text-violet-600 focus:ring-violet-500" />
-                Is Invoice
-            </label>
+        <!-- 3-mode toggle — controls IsInvoice automatically -->
+        <div class="flex items-center gap-1 p-0.5 bg-gray-200 rounded-lg w-fit text-xs">
+            <button type="button" @click="mode = 'item'"
+                    :class="['px-3 py-1 rounded-md font-medium transition',
+                             mode === 'item' ? 'bg-white text-violet-700 shadow-sm' : 'text-gray-500 hover:text-gray-700']">
+                Item Invoice
+            </button>
+            <button type="button" @click="mode = 'accounting'"
+                    :class="['px-3 py-1 rounded-md font-medium transition',
+                             mode === 'accounting' ? 'bg-white text-violet-700 shadow-sm' : 'text-gray-500 hover:text-gray-700']">
+                Accounting Invoice
+            </button>
+            <button type="button" @click="mode = 'voucher'"
+                    :class="['px-3 py-1 rounded-md font-medium transition',
+                             mode === 'voucher' ? 'bg-white text-violet-700 shadow-sm' : 'text-gray-500 hover:text-gray-700']">
+                As Voucher
+            </button>
         </div>
     </div>
 
-    <!-- ── PARTY & SUPPLY ─────────────────────────────────────────────────── -->
-    <div class="grid grid-cols-3 gap-3">
-        <div class="col-span-1">
+    <!-- ── PARTY & SUPPLY ────────────────────────────────────────────────────── -->
+    <div class="grid grid-cols-2 gap-3">
+        <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">
                 Party A/c Name <span class="text-red-500">*</span>
+                <span class="text-xs font-normal text-gray-400 ml-1">(Sundry Debtors / Cash / Bank)</span>
             </label>
             <input v-model="form.party_name" type="text" list="sales-party-list"
-                   placeholder="Select debtor ledger…"
+                   placeholder="Select customer ledger…"
                    @change="onPartyChange(form)"
                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
             <datalist id="sales-party-list">
@@ -98,19 +124,14 @@ const {
                 <option v-for="s in INDIAN_STATES" :key="s" :value="s">{{ s }}</option>
             </select>
         </div>
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Cost Centre</label>
-            <input v-model="form.cost_centre" type="text" placeholder="e.g. Head Office"
-                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
-        </div>
     </div>
 
-    <!-- ── ITEM GRID ──────────────────────────────────────────────────────── -->
-    <div v-if="mode === 'item'" class="border border-gray-200 rounded-xl overflow-hidden">
+    <!-- ── ITEM GRID (Item Invoice & As Voucher) ─────────────────────────────── -->
+    <div v-if="mode !== 'accounting'" class="border border-gray-200 rounded-xl overflow-hidden">
         <div class="bg-gray-50 border-b border-gray-200 px-4 py-2 grid grid-cols-[2.5fr_0.7fr_0.7fr_0.9fr_0.7fr_0.9fr_auto] gap-2 text-xs font-semibold text-gray-400 uppercase tracking-wide">
             <span>Name of Item</span>
             <span>Qty</span>
-            <span>per</span>
+            <span>Per</span>
             <span>Rate</span>
             <span>Disc%</span>
             <span class="text-right">Amount</span>
@@ -118,6 +139,7 @@ const {
         </div>
 
         <div v-for="(ie, i) in form.inventory_entries" :key="i" class="border-b border-gray-100 last:border-0">
+            <!-- Main row -->
             <div class="grid grid-cols-[2.5fr_0.7fr_0.7fr_0.9fr_0.7fr_0.9fr_auto] gap-2 items-center px-4 py-2">
                 <select v-model="ie.stock_item_name" @change="onStockItemChange(ie)"
                         class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500">
@@ -146,7 +168,7 @@ const {
                 </div>
             </div>
 
-            <!-- Expanded row details -->
+            <!-- Expanded details -->
             <div v-if="expandedItems.has(i)" class="border-t border-gray-100 bg-gray-50 px-4 pt-3 pb-3 space-y-3">
                 <div class="grid grid-cols-4 gap-2">
                     <div>
@@ -162,6 +184,7 @@ const {
                     <div>
                         <label class="block text-xs text-gray-500 mb-0.5">IGST Rate %</label>
                         <input v-model="ie.igst_rate" type="number" step="0.01"
+                               @input="recalcItemAmount(ie)"
                                class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
                     </div>
                     <div>
@@ -180,7 +203,7 @@ const {
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs text-gray-500 mb-0.5">Batch</label>
+                        <label class="block text-xs text-gray-500 mb-0.5">Batch / Lot No</label>
                         <input v-model="ie.batch_name" type="text"
                                class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
                     </div>
@@ -195,26 +218,13 @@ const {
                                class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
                     </div>
                 </div>
-                <div class="grid grid-cols-3 gap-2">
-                    <div>
-                        <label class="block text-xs text-gray-500 mb-0.5">Sales Ledger</label>
-                        <input v-model="ie.sales_ledger" type="text" list="sales-item-ledger-list"
-                               class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
-                    </div>
-                    <div>
-                        <label class="block text-xs text-gray-500 mb-0.5">Item Code</label>
-                        <input v-model="ie.item_code" type="text"
-                               class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
-                    </div>
-                    <div class="flex items-end pb-1">
-                        <label class="flex items-center gap-1.5 cursor-pointer text-xs text-gray-600">
-                            <input v-model="ie.is_deemed_positive" type="checkbox"
-                                   class="h-3.5 w-3.5 rounded border-gray-300 text-violet-600 focus:ring-violet-500" />
-                            Deemed Positive
-                        </label>
-                    </div>
+                <div>
+                    <label class="block text-xs text-gray-500 mb-0.5">Item Code</label>
+                    <input v-model="ie.item_code" type="text" placeholder="SKU / barcode"
+                           class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
                 </div>
 
+                <!-- Batch Allocations -->
                 <details class="border border-gray-200 rounded-lg overflow-hidden">
                     <summary class="cursor-pointer px-3 py-2 text-xs font-semibold text-gray-600 bg-white flex items-center justify-between select-none">
                         Batch Allocations
@@ -246,16 +256,18 @@ const {
                                 <button type="button" @click="removeBatchAlloc(i,j)" class="text-red-400 hover:text-red-600 text-xs self-end pb-1">✕</button>
                             </div>
                         </div>
-                        <p v-if="!ie.batch_allocations.length" class="text-xs text-gray-400 italic">No batch allocations.</p>
+                        <p v-if="!ie.batch_allocations.length" class="text-xs text-gray-400 italic">No batch allocations. Add only if batch-tracked.</p>
                     </div>
                 </details>
 
+                <!-- Accounting Allocations (advanced / auto-managed) -->
                 <details class="border border-gray-200 rounded-lg overflow-hidden">
-                    <summary class="cursor-pointer px-3 py-2 text-xs font-semibold text-gray-600 bg-white flex items-center justify-between select-none">
-                        Accounting Allocations
+                    <summary class="cursor-pointer px-3 py-2 text-xs font-semibold text-gray-500 bg-white flex items-center justify-between select-none">
+                        <span>Accounting Allocations <span class="font-normal text-gray-400">(auto-managed from Sales Ledger)</span></span>
                         <button type="button" @click.stop="addAccAlloc(i)" class="text-xs text-violet-600 hover:text-violet-800">+ Add</button>
                     </summary>
                     <div class="px-3 pb-2 pt-1 space-y-1.5">
+                        <p class="text-xs text-gray-400 italic mb-2">Auto-filled when you select a Sales Ledger below. Edit only for advanced corrections.</p>
                         <div v-for="(aa, j) in ie.accounting_allocations" :key="j"
                              class="grid grid-cols-5 gap-1.5 items-end">
                             <div><label class="block text-xs text-gray-400 mb-0.5">Ledger</label>
@@ -265,7 +277,7 @@ const {
                             <div><label class="block text-xs text-gray-400 mb-0.5">GST Class</label>
                                 <select v-model="aa.GSTClassification" class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500">
                                     <option value="">— Select —</option>
-                                    <option v-for="c in GST_CLASSIFICATIONS" :key="c" :value="c">{{ c }}</option>
+                                    <option v-for="c in ['Not Applicable','Taxable','Nil Rated','Exempt','Non-GST Supply']" :key="c" :value="c">{{ c }}</option>
                                 </select></div>
                             <div><label class="block text-xs text-gray-400 mb-0.5">IGST Rate</label>
                                 <input v-model="aa.IGSTRate" type="number" step="0.01" class="w-full rounded border border-gray-300 px-1.5 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" /></div>
@@ -275,12 +287,13 @@ const {
                                 <button type="button" @click="removeAccAlloc(i,j)" class="text-red-400 hover:text-red-600 text-xs self-end pb-1">✕</button>
                             </div>
                         </div>
-                        <p v-if="!ie.accounting_allocations.length" class="text-xs text-gray-400 italic">No accounting allocations.</p>
+                        <p v-if="!ie.accounting_allocations.length" class="text-xs text-gray-400 italic">Select a Sales Ledger below to auto-fill.</p>
                     </div>
                 </details>
             </div>
         </div>
 
+        <!-- Add item + subtotal -->
         <div class="px-4 py-2 bg-white flex items-center justify-between">
             <button type="button" @click="addInventory"
                     class="text-xs text-violet-600 hover:text-violet-800 font-medium">+ Add Item</button>
@@ -288,14 +301,32 @@ const {
                 Sub-total: <span class="font-mono font-semibold text-gray-800 ml-1">{{ fmt(taxableTotal) }}</span>
             </div>
         </div>
+
+        <!-- ── SALES LEDGER (common for all items) ───────────────────────── -->
+        <div v-if="form.inventory_entries.length" class="border-t border-violet-100 bg-violet-50 px-4 py-3 flex items-center gap-3">
+            <label class="text-sm font-medium text-violet-800 whitespace-nowrap">Sales Ledger</label>
+            <input v-model="commonSalesLedger" type="text" list="sales-ledger-list"
+                   placeholder="Select sales / income ledger…"
+                   @change="applyCommonSalesLedger"
+                   class="flex-1 rounded-lg border border-violet-300 bg-white px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+            <datalist id="sales-ledger-list">
+                <option v-for="l in salesLedgers" :key="l.id" :value="l.ledger_name" />
+            </datalist>
+            <span class="text-xs text-violet-500 whitespace-nowrap">
+                Applies to all items · <span class="font-medium">Sales Accounts</span> group
+            </span>
+        </div>
     </div>
 
-    <!-- ── LEDGER ALLOCATIONS ─────────────────────────────────────────────── -->
+    <!-- ── PARTY, TAX & CHARGES ──────────────────────────────────────────────── -->
     <div class="border border-gray-200 rounded-xl overflow-hidden">
-        <div class="bg-gray-50 border-b border-gray-200 px-4 py-2 flex items-center justify-between">
-            <h3 class="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                {{ mode === 'item' ? 'Ledger Allocations (Tax & Charges)' : 'Accounting Lines' }}
-            </h3>
+        <div class="bg-gray-50 border-b border-gray-200 px-4 py-2.5 flex items-center justify-between">
+            <div>
+                <h3 class="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                    {{ MODE_LABELS[mode] }}
+                </h3>
+                <p class="text-xs text-gray-400 mt-0.5">{{ MODE_HINT[mode] }}</p>
+            </div>
             <div class="flex items-center gap-2">
                 <button v-if="mode === 'item' && autoTaxGroups.length" type="button"
                         @click="suggestTaxLines"
@@ -308,10 +339,10 @@ const {
         </div>
 
         <div v-if="form.ledger_entries.length">
-            <div class="grid grid-cols-[2fr_1fr_1fr_0.5fr_0.5fr_0.5fr_1fr_auto] gap-2 px-4 py-1.5 bg-gray-50 border-b border-gray-100 text-xs font-medium text-gray-400">
+            <div class="grid grid-cols-[2fr_1fr_1.1fr_0.5fr_0.5fr_0.5fr_1fr_auto] gap-2 px-4 py-1.5 bg-gray-50 border-b border-gray-100 text-xs font-medium text-gray-400">
                 <span>Ledger Name</span>
                 <span>Amount</span>
-                <span>Dr/Cr + Party</span>
+                <span>Dr / Cr &amp; Party</span>
                 <span>IGST%</span>
                 <span>HSN</span>
                 <span>Cess%</span>
@@ -321,39 +352,38 @@ const {
 
             <div v-for="(le, i) in form.ledger_entries" :key="i"
                  class="border-b border-gray-50 last:border-0 px-4 py-2 space-y-2">
-                <div class="grid grid-cols-[2fr_1fr_1fr_0.5fr_0.5fr_0.5fr_1fr_auto] gap-2 items-center">
+                <div class="grid grid-cols-[2fr_1fr_1.1fr_0.5fr_0.5fr_0.5fr_1fr_auto] gap-2 items-center">
                     <div>
                         <select v-model="le.ledger_name" @change="onLedgerChange(le, form)"
                                 class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500">
                             <option value="">{{ le._suggestLabel ? `— ${le._suggestLabel} Ledger —` : '— Select Ledger —' }}</option>
                             <option v-for="l in ledgers" :key="l.id" :value="l.ledger_name">{{ l.ledger_name }}</option>
                         </select>
-                        <input v-if="le.ledger_group" v-model="le.ledger_group" type="text" readonly
-                               class="mt-0.5 w-full rounded border-0 px-2 py-0.5 text-xs text-gray-400 bg-transparent" />
+                        <p v-if="le.ledger_group" class="mt-0.5 px-2 text-xs text-gray-400">{{ le.ledger_group }}</p>
                     </div>
                     <input v-model="le.ledger_amount" type="number" step="0.01" placeholder="0.00"
                            class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-1.5">
                         <select v-model="le.is_deemed_positive"
                                 class="flex-1 rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500">
-                            <option :value="true">Dr</option>
-                            <option :value="false">Cr</option>
+                            <option :value="true">Dr (Debit)</option>
+                            <option :value="false">Cr (Credit)</option>
                         </select>
-                        <label class="flex items-center gap-1 text-xs text-gray-500 whitespace-nowrap" title="Is Party Ledger">
+                        <label class="flex items-center gap-1 text-xs text-gray-500 whitespace-nowrap cursor-pointer" title="Is Party Ledger — mark for the customer/party account">
                             <input v-model="le.is_party_ledger" type="checkbox"
                                    class="h-3.5 w-3.5 rounded border-gray-300 text-violet-600 focus:ring-violet-500" />
                             Party
                         </label>
                     </div>
-                    <input v-model="le.igst_rate" type="text" placeholder="IGST%"
+                    <input v-model="le.igst_rate" type="text" placeholder="—"
                            class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
-                    <input v-model="le.hsn_code" type="text" placeholder="HSN"
+                    <input v-model="le.hsn_code" type="text" placeholder="—"
                            class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
-                    <input v-model="le.cess_rate" type="text" placeholder="Cess%"
+                    <input v-model="le.cess_rate" type="text" placeholder="—"
                            class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500" />
                     <div>
                         <div class="flex items-center justify-between mb-0.5">
-                            <span class="text-xs text-gray-400">{{ le.bills_allocation.length }} ref(s)</span>
+                            <span class="text-xs text-gray-400">{{ le.bills_allocation.length || '' }} ref(s)</span>
                             <button type="button" @click="addBillRef(i)" class="text-xs text-violet-600 hover:text-violet-800">+ Add</button>
                         </div>
                         <div v-for="(br, j) in le.bills_allocation" :key="j"
@@ -376,11 +406,14 @@ const {
         </div>
         <p v-else class="px-4 py-3 text-xs text-gray-400 italic">
             No ledger lines yet.
-            <span v-if="mode === 'item' && autoTaxGroups.length">Click "Suggest Tax Lines" to auto-add GST entries.</span>
+            <template v-if="mode === 'item'">Add the customer ledger (Dr + Party) and tax/charge ledgers (Cr).</template>
+            <template v-else-if="mode === 'accounting'">Add the party ledger (Dr + Party) and service/income ledger (Cr).</template>
+            <template v-else>Add Dr and Cr entries for this transaction.</template>
+            <span v-if="mode === 'item' && autoTaxGroups.length"> Click "Suggest Tax Lines" to auto-add GST entries.</span>
         </p>
     </div>
 
-    <!-- ── INVOICE SUMMARY ────────────────────────────────────────────────── -->
+    <!-- ── INVOICE SUMMARY ────────────────────────────────────────────────────── -->
     <div class="bg-violet-50 border border-violet-200 rounded-xl p-4">
         <div class="flex items-center justify-between text-sm mb-2">
             <span class="text-gray-600">Taxable Value</span>
@@ -402,28 +435,35 @@ const {
         </div>
     </div>
 
-    <!-- ── NARRATION ──────────────────────────────────────────────────────── -->
+    <!-- ── NARRATION ──────────────────────────────────────────────────────────── -->
     <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Narration</label>
         <textarea v-model="form.narration" rows="2" placeholder="Notes / description…"
                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 resize-none" />
     </div>
 
-    <!-- ── COLLAPSIBLE SECTIONS ───────────────────────────────────────────── -->
+    <!-- ── PARTY DETAILS ──────────────────────────────────────────────────────── -->
     <details class="border border-gray-200 rounded-xl overflow-hidden">
         <summary class="cursor-pointer px-4 py-3 text-sm font-semibold text-gray-700 select-none bg-gray-50 flex items-center justify-between">
-            <span>Buyer Details</span><span class="text-xs text-gray-400 font-normal">Name, GSTIN, Address</span>
+            <span>Party Details</span>
+            <span class="text-xs text-gray-400 font-normal">Auto-filled from Party A/c Name · edit if different on invoice</span>
         </summary>
         <div class="px-4 pb-4 pt-3 space-y-3">
             <div class="grid grid-cols-2 gap-3">
-                <div><label class="block text-sm font-medium text-gray-700 mb-1">Buyer Name</label>
-                    <input v-model="form.buyer_name" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" /></div>
-                <div><label class="block text-sm font-medium text-gray-700 mb-1">Buyer GSTIN</label>
-                    <input v-model="form.buyer_gstin" type="text" placeholder="15-char GSTIN" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-violet-500" /></div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Party's Name</label>
+                    <input v-model="form.buyer_name" type="text"
+                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">GSTIN/UIN</label>
+                    <input v-model="form.buyer_gstin" type="text" placeholder="15-char GSTIN"
+                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                </div>
             </div>
             <div>
                 <div class="flex items-center justify-between mb-1">
-                    <label class="block text-sm font-medium text-gray-700">Billing Address</label>
+                    <label class="block text-sm font-medium text-gray-700">Address</label>
                     <button type="button" @click="addAddressLine" class="text-xs text-violet-600 hover:text-violet-800">+ Add Line</button>
                 </div>
                 <div v-for="(line, idx) in buyerAddressLines" :key="idx" class="flex gap-2 mb-1.5">
@@ -434,136 +474,227 @@ const {
                 </div>
             </div>
             <div class="grid grid-cols-3 gap-3">
-                <div><label class="block text-sm font-medium text-gray-700 mb-1">State</label>
-                    <select v-model="form.buyer_state" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">State</label>
+                    <select v-model="form.buyer_state"
+                            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
                         <option value="">— Select —</option>
                         <option v-for="s in INDIAN_STATES" :key="s" :value="s">{{ s }}</option>
-                    </select></div>
-                <div><label class="block text-sm font-medium text-gray-700 mb-1">Pin Code</label>
-                    <input v-model="form.buyer_pin_code" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" /></div>
-                <div><label class="block text-sm font-medium text-gray-700 mb-1">GST Reg Type</label>
-                    <select v-model="form.buyer_gst_registration_type" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Pin Code</label>
+                    <input v-model="form.buyer_pin_code" type="text"
+                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Registration Type</label>
+                    <select v-model="form.buyer_gst_registration_type"
+                            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
                         <option value="">— Select —</option>
                         <option v-for="t in GST_REG_TYPES" :key="t" :value="t">{{ t }}</option>
-                    </select></div>
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-                <div><label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                    <input v-model="form.buyer_email" type="email" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" /></div>
-                <div><label class="block text-sm font-medium text-gray-700 mb-1">Mobile</label>
-                    <input v-model="form.buyer_mobile" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" /></div>
+                    </select>
+                </div>
             </div>
         </div>
     </details>
 
+    <!-- ── CONSIGNEE / SHIPPING ───────────────────────────────────────────────── -->
     <details class="border border-gray-200 rounded-xl overflow-hidden">
         <summary class="cursor-pointer px-4 py-3 text-sm font-semibold text-gray-700 select-none bg-gray-50 flex items-center justify-between">
-            <span>Consignee Details</span><span class="text-xs text-gray-400 font-normal">Ship-to address</span>
+            <span>Consignee / Shipping Details</span>
+            <span class="text-xs text-gray-400 font-normal">Ship-to party (if different from buyer)</span>
         </summary>
         <div class="px-4 pb-4 pt-3 space-y-3">
-            <div class="grid grid-cols-2 gap-3">
-                <div><label class="block text-sm font-medium text-gray-700 mb-1">Consignee Name</label>
-                    <input v-model="form.consignee_name" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" /></div>
-                <div><label class="block text-sm font-medium text-gray-700 mb-1">Consignee GSTIN</label>
-                    <input v-model="form.consignee_gstin" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-violet-500" /></div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                <input v-model="form.consignee_name" type="text"
+                       class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+            </div>
+            <div>
+                <div class="flex items-center justify-between mb-1">
+                    <label class="block text-sm font-medium text-gray-700">Address</label>
+                    <button type="button" @click="addConsigneeAddressLine" class="text-xs text-violet-600 hover:text-violet-800">+ Add Line</button>
+                </div>
+                <div v-for="(line, idx) in consigneeAddressLines" :key="idx" class="flex gap-2 mb-1.5">
+                    <input v-model="consigneeAddressLines[idx]" type="text" :placeholder="`Address line ${idx + 1}`"
+                           class="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                    <button v-if="consigneeAddressLines.length > 1" type="button" @click="removeConsigneeAddressLine(idx)"
+                            class="text-red-400 hover:text-red-600 text-sm px-2">✕</button>
+                </div>
             </div>
             <div class="grid grid-cols-3 gap-3">
-                <div><label class="block text-sm font-medium text-gray-700 mb-1">State</label>
-                    <select v-model="form.consignee_state" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">State</label>
+                    <select v-model="form.consignee_state"
+                            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
                         <option value="">— Select —</option>
                         <option v-for="s in INDIAN_STATES" :key="s" :value="s">{{ s }}</option>
-                    </select></div>
-                <div><label class="block text-sm font-medium text-gray-700 mb-1">Pin Code</label>
-                    <input v-model="form.consignee_pin_code" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" /></div>
-                <div><label class="block text-sm font-medium text-gray-700 mb-1">GST Reg Type</label>
-                    <select v-model="form.consignee_gst_registration_type" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Pin Code</label>
+                    <input v-model="form.consignee_pin_code" type="text"
+                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Registration Type</label>
+                    <select v-model="form.consignee_gst_registration_type"
+                            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500">
                         <option value="">— Select —</option>
                         <option v-for="t in GST_REG_TYPES" :key="t" :value="t">{{ t }}</option>
-                    </select></div>
+                    </select>
+                </div>
             </div>
         </div>
     </details>
 
+    <!-- ── DISPATCH DETAILS ──────────────────────────────────────────────────── -->
     <details class="border border-gray-200 rounded-xl overflow-hidden">
         <summary class="cursor-pointer px-4 py-3 text-sm font-semibold text-gray-700 select-none bg-gray-50 flex items-center justify-between">
-            <span>Dispatch / Shipping</span><span class="text-xs text-gray-400 font-normal">Transport details</span>
+            <span>Dispatch Details</span>
+            <span class="text-xs text-gray-400 font-normal">Delivery note, transport &amp; carrier info</span>
         </summary>
         <div class="px-4 pb-4 pt-3 space-y-3">
             <div class="grid grid-cols-2 gap-3">
-                <div><label class="block text-sm font-medium text-gray-700 mb-1">Delivery Note No</label>
-                    <input v-model="form.delivery_note_no" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" /></div>
-                <div><label class="block text-sm font-medium text-gray-700 mb-1">Delivery Note Date</label>
-                    <input v-model="form.delivery_note_date" type="date" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" /></div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Delivery Note No.</label>
+                    <input v-model="form.delivery_note_no" type="text"
+                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Delivery Note Date</label>
+                    <input v-model="form.delivery_note_date" type="date"
+                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                </div>
             </div>
             <div class="grid grid-cols-2 gap-3">
-                <div><label class="block text-sm font-medium text-gray-700 mb-1">Dispatch Doc No</label>
-                    <input v-model="form.dispatch_doc_no" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" /></div>
-                <div><label class="block text-sm font-medium text-gray-700 mb-1">Dispatch Through</label>
-                    <input v-model="form.dispatch_through" type="text" placeholder="e.g. Road / Rail"
-                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" /></div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Despatch Doc No.</label>
+                    <input v-model="form.dispatch_doc_no" type="text"
+                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Despatched Through</label>
+                    <input v-model="form.dispatch_through" type="text" placeholder="e.g. Road / Courier"
+                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                </div>
             </div>
             <div class="grid grid-cols-3 gap-3">
-                <div><label class="block text-sm font-medium text-gray-700 mb-1">LR / RR No</label>
-                    <input v-model="form.lr_no" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" /></div>
-                <div><label class="block text-sm font-medium text-gray-700 mb-1">LR Date</label>
-                    <input v-model="form.lr_date" type="date" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" /></div>
-                <div><label class="block text-sm font-medium text-gray-700 mb-1">Motor Vehicle No</label>
-                    <input v-model="form.motor_vehicle_no" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" /></div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">LR-RR No.</label>
+                    <input v-model="form.lr_no" type="text"
+                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">LR-RR Date</label>
+                    <input v-model="form.lr_date" type="date"
+                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Motor Vehicle No.</label>
+                    <input v-model="form.motor_vehicle_no" type="text"
+                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                </div>
             </div>
             <div class="grid grid-cols-2 gap-3">
-                <div><label class="block text-sm font-medium text-gray-700 mb-1">Carrier Name</label>
-                    <input v-model="form.carrier_name" type="text" placeholder="e.g. Bluedart" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" /></div>
-                <div><label class="block text-sm font-medium text-gray-700 mb-1">Destination</label>
-                    <input v-model="form.destination" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" /></div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Carrier/Agent Name</label>
+                    <input v-model="form.carrier_name" type="text" placeholder="e.g. Bluedart"
+                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Destination</label>
+                    <input v-model="form.destination" type="text"
+                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                </div>
             </div>
         </div>
     </details>
 
+    <!-- ── ORDER DETAILS ──────────────────────────────────────────────────────── -->
     <details class="border border-gray-200 rounded-xl overflow-hidden">
         <summary class="cursor-pointer px-4 py-3 text-sm font-semibold text-gray-700 select-none bg-gray-50 flex items-center justify-between">
-            <span>Order Details</span><span class="text-xs text-gray-400 font-normal">PO / payment terms</span>
+            <span>Order Details</span>
+            <span class="text-xs text-gray-400 font-normal">Purchase order, payment &amp; delivery terms</span>
         </summary>
         <div class="px-4 pb-4 pt-3 space-y-3">
             <div class="grid grid-cols-2 gap-3">
-                <div><label class="block text-sm font-medium text-gray-700 mb-1">Order No</label>
-                    <input v-model="form.order_no" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" /></div>
-                <div><label class="block text-sm font-medium text-gray-700 mb-1">Order Date</label>
-                    <input v-model="form.order_date" type="date" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" /></div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Order No.</label>
+                    <input v-model="form.order_no" type="text"
+                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Order Date</label>
+                    <input v-model="form.order_date" type="date"
+                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                </div>
             </div>
             <div class="grid grid-cols-2 gap-3">
-                <div><label class="block text-sm font-medium text-gray-700 mb-1">Terms of Payment</label>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Terms of Payment</label>
                     <input v-model="form.terms_of_payment" type="text" placeholder="e.g. Net 30"
-                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" /></div>
-                <div><label class="block text-sm font-medium text-gray-700 mb-1">Terms of Delivery</label>
+                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Terms of Delivery</label>
                     <input v-model="form.terms_of_delivery" type="text" placeholder="e.g. CIF, FOB"
-                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" /></div>
+                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                </div>
             </div>
-            <div><label class="block text-sm font-medium text-gray-700 mb-1">Other References</label>
-                <input v-model="form.other_references" type="text"
-                       class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" /></div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Other Reference(s)</label>
+                    <input v-model="form.other_references" type="text"
+                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Cost Centre</label>
+                    <input v-model="form.cost_centre" type="text" placeholder="e.g. Head Office"
+                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                </div>
+            </div>
         </div>
     </details>
 
+    <!-- ── e-INVOICE DETAILS ─────────────────────────────────────────────────── -->
     <details class="border border-gray-200 rounded-xl overflow-hidden">
         <summary class="cursor-pointer px-4 py-3 text-sm font-semibold text-gray-700 select-none bg-gray-50 flex items-center justify-between">
-            <span>e-Invoice</span><span class="text-xs text-gray-400 font-normal">IRN, Ack No, QR Code</span>
+            <span>e-Invoice Details</span>
+            <span class="text-xs text-gray-400 font-normal">IRN, Ack. No., QR Code — system-generated by Tally</span>
         </summary>
         <div class="px-4 pb-4 pt-3 space-y-3">
+            <p class="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                These fields are auto-generated by Tally after e-Invoice upload. Only fill if you are manually recording a confirmed e-invoice.
+            </p>
             <div class="grid grid-cols-2 gap-3">
-                <div><label class="block text-sm font-medium text-gray-700 mb-1">IRN</label>
-                    <input v-model="form.irn" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-violet-500" /></div>
-                <div><label class="block text-sm font-medium text-gray-700 mb-1">Acknowledgement No</label>
-                    <input v-model="form.acknowledgement_no" type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" /></div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">IRN</label>
+                    <input v-model="form.irn" type="text"
+                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Ack. No.</label>
+                    <input v-model="form.acknowledgement_no" type="text"
+                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                </div>
             </div>
-            <div><label class="block text-sm font-medium text-gray-700 mb-1">Acknowledgement Date</label>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Ack. Date</label>
                 <input v-model="form.acknowledgement_date" type="text" placeholder="e.g. 20250401"
-                       class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" /></div>
-            <div><label class="block text-sm font-medium text-gray-700 mb-1">QR Code</label>
-                <textarea v-model="form.qr_code" rows="2" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-violet-500 resize-none" /></div>
+                       class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">QR Code</label>
+                <textarea v-model="form.qr_code" rows="2"
+                          class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-violet-500 resize-none" />
+            </div>
         </div>
     </details>
 
-    <datalist id="sales-item-ledger-list">
+    <!-- Hidden datalist for all ledgers (used by ledger entries selector) -->
+    <datalist id="sales-all-ledger-list">
         <option v-for="l in ledgers" :key="l.id" :value="l.ledger_name" />
     </datalist>
 </template>

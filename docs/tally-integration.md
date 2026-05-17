@@ -912,12 +912,12 @@ All pages show data to any user with `integrations.view`. Edit / New / Delete ac
 | Vouchers/SalesVoucherForm.vue | (component, rendered inside Vouchers.vue) | Full Tally Prime–style Sales invoice. Item/Accounting toggle. Inventory table (expand per row → Batch Allocations + Accounting Allocations). Ledger entries with bill refs. Buyer/Consignee/Dispatch/Order/e-Invoice collapsible sections. Summary panel (Taxable Value + Grand Total with ↺ reset). Party filtered to Sundry Debtors. |
 | Vouchers/PurchaseVoucherForm.vue | (component) | Same structure as SalesVoucherForm — inventory table + ledger entries + bill refs + Consignee/Dispatch/Order sections. Party filtered to Sundry Creditors. Blue summary panel. |
 | Vouchers/CreditNoteForm.vue | (component) | Inventory form (lighter) + ledger entries with bill refs. Party filtered to Sundry Debtors. Original Invoice Ref field. Yellow summary panel. |
-| Vouchers/DebitNoteForm.vue | (component) | Inventory form (lighter) + ledger entries with bill refs. Party filtered to Sundry Creditors. Original Purchase Ref field. Red summary panel. |
+| Vouchers/DebitNoteForm.vue | (component) | Full Tally Prime–style Debit Note (mirrors PurchaseVoucherForm). 3-mode toggle (Item/Accounting/As Voucher). Party "A/c Name" (Sundry Creditors / Cash / Bank). Original Bill No. / Original Bill Date header fields. Common "Purchase Ledger" violet row auto-applies to all inventory items. Accounting Allocations collapsed/auto-filled. Batch/Lot No column. "Dr/Cr & Party" column header. Party Details section (Name, GSTIN, Registration Type). Order Details + Cost Centre. Red summary panel. VoucherGuide with `voucher-type="DebitNote"`. |
 | Vouchers/ReceiptVoucherForm.vue | (component) | Date, Receipt No, Received From (all-ledger datalist), Total, Place of Supply, Cost Centre, Narration. Ledger entries with both bill references and bank allocations per entry. |
 | Vouchers/PaymentVoucherForm.vue | (component) | Same as ReceiptVoucherForm — Payment No, Pay To party label. |
 | Vouchers/ContraVoucherForm.vue | (component) | Date, Contra No, Total, Cost Centre, Narration. Ledger entries with bank allocations only (no bill refs). No party field. |
 | Vouchers/JournalVoucherForm.vue | (component) | Date, Journal No, Reference, Reference Date, Place of Supply, Cost Centre, Narration. Ledger entries with bill refs. Live Dr/Cr balance panel (green when balanced, amber when not). |
-| VoucherShow.vue | tally.vouchers.show | Read-only detail with inventory + ledger entries. |
+| VoucherShow.vue | tally.vouchers.show | Read-only detail with inventory + ledger entries. Sync status badge in header ("Synced ✓" / "Pending sync" based on `tally_id`). Collapsible "Outbound Payload" section at bottom shows the JSON sent to the Tally connector (computed by `TallyOutboundFormatter` and passed as an Inertia prop from `TallyDataController::voucherShow()`). |
 
 #### Controllers
 `TallyMasterCrudController` — 30 methods (store/update/destroy × 10 master entities). Handles both Option A (new Accobot-originated record) and Option B (editing an inbound-synced record). All saves trigger `TallyModelObserver` → outbound queue automatically.
@@ -1259,3 +1259,59 @@ In Tally, each inventory entry's `AccountingAllocations` is auto-derived from th
 
 Fields that auto-fill on item select: `unit`, `igst_rate`, `cess_rate`, `hsn_code`, `group_name`, `mrp`, `rate` (from `opening_rate`).
 Fields that cannot auto-fill: `sales_ledger`, `godown_name`.
+
+### Changes — 2026-05-17
+
+#### IsDeemedPositive fix for Purchase / DebitNote inventory entries
+
+**Bug:** `IsDeemedPositive` was always `"No"` for all voucher types, including Purchase and DebitNote where Tally requires `"Yes"` (stock coming in).
+
+**Fix applied in three places:**
+
+1. **`useInvoiceVoucherForm.js`** — Added `inventoryDeemedPositive` config option (default `false`). `emptyInventory()` now sets `is_deemed_positive` from this config:
+   ```js
+   const { ..., inventoryDeemedPositive = false } = config
+   function emptyInventory() {
+       return { ..., is_deemed_positive: inventoryDeemedPositive }
+   }
+   ```
+
+2. **`PurchaseVoucherForm.vue` and `DebitNoteForm.vue`** — Pass `inventoryDeemedPositive: true` to the composable so newly added inventory rows start with the correct value.
+
+3. **`TallyVoucherCrudController`** — Server-side override in both `voucherStore()` and `voucherUpdate()`: `is_deemed_positive` is forced to `true` for Purchase/DebitNote regardless of what the client sends:
+   ```php
+   $stockIn = in_array($data['voucher_base_type'], ['Purchase', 'DebitNote']);
+   foreach ($data['inventory_entries'] ?? [] as $ie) {
+       $ie['is_deemed_positive'] = $stockIn;
+       TallyVoucherInventoryEntry::create(...);
+   }
+   ```
+
+This matches the reference JSON: `IsDeemedPositive: "Yes"` for Purchase items, `"No"` for Sales items.
+
+#### Outbound Payload Preview on VoucherShow
+
+`TallyDataController::voucherShow()` now injects `TallyOutboundFormatter`, computes the outbound JSON for the voucher's type, and passes it as a `payload` Inertia prop. `VoucherShow.vue` renders:
+- A sync status badge in the header ("Synced ✓" / "Pending sync") based on whether `tally_id` is set
+- A collapsible dark-theme "Outbound Payload" section at the bottom showing the full JSON that would be sent to the Tally connector
+
+This allows testing the outbound pipeline without waiting for the connector to poll — open any voucher's show page and verify the JSON directly.
+
+#### defaultMode prop flow
+
+`VoucherCreate.vue` now explicitly passes `default-mode="item"` to all four inventory forms (Sales, Purchase, CreditNote, DebitNote), ensuring new vouchers always start in Item Invoice mode.
+
+`VoucherEdit.vue` passes `:default-mode="salesInitialMode"` / `:default-mode="purchaseInitialMode"` to CreditNote and DebitNote forms respectively, restoring the saved mode on edit (based on whether the voucher has inventory entries).
+
+#### DebitNoteForm full Tally Prime rewrite
+
+`DebitNoteForm.vue` was fully rewritten to match the Tally Prime debit note UI (mirroring `PurchaseVoucherForm.vue`):
+- 3-mode toggle (Item Invoice / Accounting Invoice / As Voucher) replacing the 2-mode + checkbox layout
+- `partyType: 'creditor'` filtering party ledger to Sundry Creditors / Cash / Bank
+- "Original Bill No." + "Original Bill Date" in the header
+- Common Purchase Ledger violet row (`commonSalesLedger` / `applyCommonSalesLedger`) with `purchaseLedgers` datalist (filtered to Purchase Accounts + Direct Expense groups)
+- Accounting Allocations collapsed by default with "Auto-filled when you select a Purchase Ledger below" note
+- Batch/Lot No column, "Dr (Debit)"/"Cr (Credit)" header, "Dr / Cr & Party" column header
+- Party Details section (Party's Name, GSTIN/UIN, Registration Type)
+- Order Details section with Cost Centre moved here
+- VoucherGuide with `voucher-type="DebitNote"`

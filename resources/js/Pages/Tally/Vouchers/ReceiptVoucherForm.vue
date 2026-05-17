@@ -1,5 +1,7 @@
 <script setup>
+import { ref } from 'vue'
 import { useAccountParticularsForm } from './useAccountParticularsForm.js'
+import VoucherGuide from './VoucherGuide.vue'
 
 const props = defineProps({
     form:      Object,
@@ -17,12 +19,17 @@ const {
     accountDeemedPositive:    true,   // Receipt: bank receives → Dr
     particularDeemedPositive: false,  // Party pays → Cr
 })
+
+const showGuide = ref(false)
 </script>
 
 <template>
+    <VoucherGuide :show="showGuide" voucher-type="Receipt" @close="showGuide = false" />
+
     <!-- ── HEADER BAR ─────────────────────────────────────────────────────── -->
     <div class="bg-gray-50 border border-gray-200 rounded-xl p-4">
-        <div class="grid grid-cols-2 gap-3">
+        <div class="flex items-start justify-between gap-3">
+        <div class="grid grid-cols-2 gap-3 flex-1">
             <div>
                 <label class="block text-xs font-medium text-gray-500 mb-1">Receipt No</label>
                 <input v-model="form.voucher_number" type="text" placeholder="e.g. REC-001"
@@ -34,6 +41,11 @@ const {
                        class="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500" />
                 <p v-if="form.errors.voucher_date" class="mt-0.5 text-xs text-red-500">{{ form.errors.voucher_date }}</p>
             </div>
+        </div>
+        <button type="button" @click="showGuide = true"
+                class="flex items-center gap-1.5 text-xs text-violet-600 hover:text-violet-800 border border-violet-200 hover:border-violet-300 rounded-lg px-3 py-1.5 bg-white transition whitespace-nowrap mt-0.5">
+            <span>?</span> Guide
+        </button>
         </div>
     </div>
 

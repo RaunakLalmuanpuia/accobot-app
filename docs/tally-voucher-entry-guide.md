@@ -58,14 +58,14 @@ Expand the row (▼) to fill:
 | HSN Code | Auto-fills from stock master if configured in Tally — enter manually if blank |
 | IGST Rate % | Auto-fills from stock master (0 if not set) |
 | Godown | Select warehouse |
-| Sales Ledger | Enter manually — Tally item master does not export a default sales ledger |
-| Batch | Batch number if batch-tracked |
+| Sales Ledger (common, violet row below grid) | Select once — applies to all items and auto-populates Accounting Allocations |
+| Batch / Lot No | Batch number if batch-tracked |
 
 > **Why fields appear blank:** HSN Code and Rate only auto-fill if those values are configured on the stock item in Tally master (`Standard Price`, `HSN Code` fields). If an item was not fully configured in Tally, fill them manually here.
 
 **Batch Allocations** — fill only if your item is batch-tracked (expiry dates, lot numbers). Leave empty otherwise.
 
-**Accounting Allocations — leave this empty.** The system auto-generates it from the Sales Ledger you entered above. You do not need to fill it manually.
+**Accounting Allocations** — auto-populated when you select a Sales Ledger. Fills `LedgerName`, `LedgerGroup`, `GSTClassification`, `IGSTRate`, and `Amount` from the ledger master and item values. The `Amount` stays in sync when you change Qty / Rate / Disc. You can override or add more allocations manually if needed.
 
 **Ledger Allocations** (mandatory)
 After entering items, click **"Suggest Tax Lines"** if IGST rates are set — it auto-creates tax ledger entries.
@@ -118,6 +118,7 @@ ledgerentries:
 A sales transaction that is **not** a formal invoice (no GST invoice number needed). Same as Item Invoice but:
 - **Is Invoice:** ✗ unchecked
 - No Dispatch / e-Invoice sections needed
+- **Consignee Details** → Ship-to Address lines are included in the outbound payload (`ConsigneeAddress`)
 
 Ledger entries: same pattern as Item Invoice.
 

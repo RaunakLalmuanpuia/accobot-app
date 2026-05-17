@@ -1,11 +1,18 @@
 <script setup>
+import { ref, computed } from 'vue'
 import { Link } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 
 const props = defineProps({
     tenant:  Object,
     voucher: Object,
+    payload: Object,
 })
+
+const showPayload = ref(false)
+const payloadJson = computed(() =>
+    props.payload ? JSON.stringify(props.payload, null, 2) : null
+)
 
 const typeBadge = {
     'Sales':       'bg-emerald-100 text-emerald-700',
@@ -77,8 +84,12 @@ const hasConsignee = v.consignee_name || v.consignee_gstin
                         <p class="text-sm text-gray-500 mt-0.5">{{ formatDate(v.voucher_date) }}</p>
                     </div>
                 </div>
-                <div v-if="v.mapped_invoice" class="text-sm text-violet-600">
-                    Mapped Invoice: <span class="font-medium">{{ v.mapped_invoice.invoice_number }}</span>
+                <div class="flex items-center gap-2">
+                    <div v-if="v.mapped_invoice" class="text-sm text-violet-600">
+                        Mapped Invoice: <span class="font-medium">{{ v.mapped_invoice.invoice_number }}</span>
+                    </div>
+                    <span v-if="v.tally_id" class="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-medium">Synced ✓</span>
+                    <span v-else class="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium">Pending sync</span>
                 </div>
             </div>
         </template>
@@ -320,6 +331,26 @@ const hasConsignee = v.consignee_name || v.consignee_gstin
                             <p class="text-xs text-gray-400 mb-0.5">Other References</p>
                             <p class="text-gray-800 text-xs">{{ v.other_references }}</p>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Outbound Payload Preview -->
+                <div v-if="payloadJson" class="border border-gray-200 rounded-2xl overflow-hidden">
+                    <button type="button"
+                            @click="showPayload = !showPayload"
+                            class="w-full flex items-center justify-between px-5 py-4 bg-gray-50 hover:bg-gray-100 transition text-left">
+                        <div>
+                            <span class="text-sm font-semibold text-gray-700">Outbound Payload</span>
+                            <span class="ml-2 text-xs text-gray-400">JSON sent to Tally connector</span>
+                        </div>
+                        <span class="text-gray-400 text-xs transition-transform" :class="showPayload ? 'rotate-180' : ''">▼</span>
+                    </button>
+                    <div v-if="showPayload" class="px-5 pb-5 pt-3 bg-white">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs text-gray-400">Formatted for Tally connector — action: <span class="font-mono font-medium text-gray-700">{{ payload.Action }}</span></span>
+                            <span v-if="payload.TallyId" class="text-xs text-green-600 font-medium">TallyId: {{ payload.TallyId }}</span>
+                        </div>
+                        <pre class="bg-gray-950 text-green-300 rounded-xl px-4 py-4 text-xs overflow-x-auto leading-relaxed max-h-[600px] overflow-y-auto">{{ payloadJson }}</pre>
                     </div>
                 </div>
 

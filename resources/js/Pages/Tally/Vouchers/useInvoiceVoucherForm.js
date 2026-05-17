@@ -11,18 +11,26 @@ import { fmt, emptyBillRef } from './voucherHelpers.js'
  */
 export function useInvoiceVoucherForm(props, config = {}) {
     const {
-        voucherNoLabel       = 'Voucher No',
-        voucherNoPlaceholder = 'e.g. VCH-001',
-        partyType            = 'debtor',   // 'debtor' | 'creditor'
+        voucherNoLabel           = 'Voucher No',
+        voucherNoPlaceholder     = 'e.g. VCH-001',
+        partyType                = 'debtor',   // 'debtor' | 'creditor'
+        defaultMode              = 'item',     // 'item' | 'accounting' | 'voucher'
+        syncIsInvoice            = false,      // if true, mode drives form.is_invoice
+        inventoryDeemedPositive  = false,      // true for Purchase/DebitNote (stock in)
     } = config
 
     // ── Mode ─────────────────────────────────────────────────────────────────
-    const mode = ref('item')
+    const mode = ref(defaultMode)
 
     watch(mode, (m) => {
         if (m === 'accounting') props.form.inventory_entries = []
         grandTotalLocked.value = false
     })
+
+    // Keep is_invoice in sync with mode (opt-in per form)
+    if (syncIsInvoice) {
+        watch(mode, (m) => { props.form.is_invoice = m !== 'voucher' }, { immediate: true })
+    }
 
     // ── Maps ──────────────────────────────────────────────────────────────────
     const stockItemMap = computed(() => {
@@ -43,6 +51,26 @@ export function useInvoiceVoucherForm(props, config = {}) {
         return filtered.length ? filtered : props.ledgers
     })
 
+    // Ledgers suitable as a sales/income ledger (Sales Accounts or Direct Incomes)
+    const salesLedgers = computed(() => {
+        const salesGroups = ['sales account', 'direct income']
+        const filtered = props.ledgers.filter(l =>
+            salesGroups.some(g => l.group_name?.toLowerCase().includes(g))
+        )
+        return filtered.length ? filtered : props.ledgers
+    })
+
+    // ── Common sales ledger (applies to all inventory items) ──────────────────
+    const commonSalesLedger = ref('')
+
+    function applyCommonSalesLedger() {
+        if (!commonSalesLedger.value) return
+        props.form.inventory_entries.forEach(ie => {
+            ie.sales_ledger = commonSalesLedger.value
+            onSalesLedgerChange(ie)
+        })
+    }
+
     // ── Item helpers ──────────────────────────────────────────────────────────
     const expandedItems = ref(new Set())
 
@@ -57,6 +85,30 @@ export function useInvoiceVoucherForm(props, config = {}) {
         const rate = parseFloat(ie.rate)             || 0
         const disc = parseFloat(ie.discount_percent) || 0
         if (qty && rate) ie.amount = parseFloat((qty * rate * (1 - disc / 100)).toFixed(2))
+        // Keep auto-generated accounting allocation in sync
+        const alloc = ie.accounting_allocations
+        if (alloc?.length === 1 && alloc[0].LedgerName === ie.sales_ledger) {
+            const igst = parseFloat(ie.igst_rate) || 0
+            alloc[0].Amount            = parseFloat(ie.amount) || 0
+            alloc[0].IGSTRate          = igst
+            alloc[0].GSTClassification = igst > 0 ? 'Taxable' : 'Not Applicable'
+        }
+    }
+
+    function onSalesLedgerChange(ie) {
+        if (!ie.sales_ledger) {
+            ie.accounting_allocations = []
+            return
+        }
+        const ledger = ledgerMap.value[ie.sales_ledger]
+        const igst   = parseFloat(ie.igst_rate) || 0
+        ie.accounting_allocations = [{
+            LedgerName:        ie.sales_ledger,
+            LedgerGroup:       ledger?.group_name || '',
+            GSTClassification: igst > 0 ? 'Taxable' : 'Not Applicable',
+            IGSTRate:          igst,
+            Amount:            parseFloat(ie.amount) || 0,
+        }]
     }
 
     function onStockItemChange(ie) {
@@ -77,7 +129,7 @@ export function useInvoiceVoucherForm(props, config = {}) {
             billed_qty: '', actual_qty: '', rate: '', igst_rate: '', cess_rate: '',
             discount_percent: '', amount: '', tax_amount: '', mrp: '',
             sales_ledger: '', godown_name: '', batch_name: '',
-            is_deemed_positive: false,
+            is_deemed_positive: inventoryDeemedPositive,
             batch_allocations: [], accounting_allocations: [],
         }
     }
@@ -240,6 +292,18 @@ export function useInvoiceVoucherForm(props, config = {}) {
     function addAddressLine()     { buyerAddressLines.value.push('') }
     function removeAddressLine(i) { if (buyerAddressLines.value.length > 1) buyerAddressLines.value.splice(i, 1) }
 
+    // ── Consignee address lines ───────────────────────────────────────────────
+    const consigneeAddressLines = ref(
+        props.form.consignee_address ? String(props.form.consignee_address).split('\n') : ['']
+    )
+    watch(consigneeAddressLines, (lines) => { props.form.consignee_address = lines.join('\n') }, { deep: true })
+    watch(() => props.form.consignee_address, (val) => {
+        const inc = val ? String(val).split('\n') : ['']
+        if (JSON.stringify(inc) !== JSON.stringify(consigneeAddressLines.value)) consigneeAddressLines.value = inc
+    })
+    function addConsigneeAddressLine()     { consigneeAddressLines.value.push('') }
+    function removeConsigneeAddressLine(i) { if (consigneeAddressLines.value.length > 1) consigneeAddressLines.value.splice(i, 1) }
+
     // ── Constants ─────────────────────────────────────────────────────────────
     const INDIAN_STATES = [
         'Andaman and Nicobar Islands','Andhra Pradesh','Arunachal Pradesh','Assam',
@@ -267,15 +331,20 @@ export function useInvoiceVoucherForm(props, config = {}) {
         buyerAddressLines,
         // Computed
         partyLedgers,
+        salesLedgers,
         taxableTotal,
         ledgerTotal,
         autoTaxGroups,
+        // Common sales ledger
+        commonSalesLedger,
+        applyCommonSalesLedger,
         // Party / ledger functions
         onPartyChange,
         // Item functions
         toggleExpand,
         recalcItemAmount,
         onStockItemChange,
+        onSalesLedgerChange,
         addInventory,
         removeInventory,
         addBatchAlloc,
@@ -294,6 +363,9 @@ export function useInvoiceVoucherForm(props, config = {}) {
         // Address functions
         addAddressLine,
         removeAddressLine,
+        consigneeAddressLines,
+        addConsigneeAddressLine,
+        removeConsigneeAddressLine,
         // Constants
         INDIAN_STATES,
         GST_REG_TYPES,

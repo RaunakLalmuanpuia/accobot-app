@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { Link, useForm, router } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import SalesVoucherForm    from './Vouchers/SalesVoucherForm.vue'
@@ -47,8 +47,8 @@ const form = useForm({
     buyer_gst_registration_type: s(v.buyer_gst_registration_type),
     buyer_email:       s(v.buyer_email),
     buyer_mobile:      s(v.buyer_mobile),
-    buyer_address:     Array.isArray(v.buyer_address)
-        ? (v.buyer_address[0]?.BuyerAddress ?? '')
+    buyer_address: Array.isArray(v.buyer_address)
+        ? v.buyer_address.map(a => a.BuyerAddress || '').filter(Boolean).join('\n')
         : s(v.buyer_address),
     consignee_name:    s(v.consignee_name),
     consignee_gstin:   s(v.consignee_gstin),
@@ -57,6 +57,9 @@ const form = useForm({
     consignee_state:       s(v.consignee_state),
     consignee_country:     s(v.consignee_country),
     consignee_gst_registration_type: s(v.consignee_gst_registration_type),
+    consignee_address: Array.isArray(v.consignee_address)
+        ? v.consignee_address.map(a => a.ConsigneeAddress || '').filter(Boolean).join('\n')
+        : s(v.consignee_address),
     delivery_note_no:   s(v.delivery_note_no),
     delivery_note_date: s(v.delivery_note_date),
     dispatch_doc_no:    s(v.dispatch_doc_no),
@@ -109,6 +112,16 @@ const form = useForm({
         batch_allocations:      ie.batch_allocations      ? JSON.parse(JSON.stringify(ie.batch_allocations))      : [],
         accounting_allocations: ie.accounting_allocations ? JSON.parse(JSON.stringify(ie.accounting_allocations)) : [],
     })),
+})
+
+const salesInitialMode = computed(() => {
+    if (!v.is_invoice) return 'voucher'
+    return (v.inventory_entries?.length ?? 0) > 0 ? 'item' : 'accounting'
+})
+
+const purchaseInitialMode = computed(() => {
+    if (!v.is_invoice) return 'voucher'
+    return (v.inventory_entries?.length ?? 0) > 0 ? 'item' : 'accounting'
 })
 
 const TYPE_COLORS = {
@@ -175,13 +188,17 @@ function destroy() {
 
                 <form @submit.prevent="submit" class="space-y-5">
                     <SalesVoucherForm v-if="voucher.voucher_base_type === 'Sales'"
-                        :form="form" :ledgers="ledgers" :stock-items="stockItems" :godowns="godowns" :is-editing="true" />
+                        :form="form" :ledgers="ledgers" :stock-items="stockItems" :godowns="godowns" :is-editing="true"
+                        :default-mode="salesInitialMode" />
                     <PurchaseVoucherForm v-else-if="voucher.voucher_base_type === 'Purchase'"
-                        :form="form" :ledgers="ledgers" :stock-items="stockItems" :godowns="godowns" :is-editing="true" />
+                        :form="form" :ledgers="ledgers" :stock-items="stockItems" :godowns="godowns" :is-editing="true"
+                        :default-mode="purchaseInitialMode" />
                     <CreditNoteForm v-else-if="voucher.voucher_base_type === 'CreditNote'"
-                        :form="form" :ledgers="ledgers" :stock-items="stockItems" :godowns="godowns" :is-editing="true" />
+                        :form="form" :ledgers="ledgers" :stock-items="stockItems" :godowns="godowns" :is-editing="true"
+                        :default-mode="salesInitialMode" />
                     <DebitNoteForm v-else-if="voucher.voucher_base_type === 'DebitNote'"
-                        :form="form" :ledgers="ledgers" :stock-items="stockItems" :godowns="godowns" :is-editing="true" />
+                        :form="form" :ledgers="ledgers" :stock-items="stockItems" :godowns="godowns" :is-editing="true"
+                        :default-mode="purchaseInitialMode" />
                     <ReceiptVoucherForm v-else-if="voucher.voucher_base_type === 'Receipt'"
                         :form="form" :ledgers="ledgers" :is-editing="true" />
                     <PaymentVoucherForm v-else-if="voucher.voucher_base_type === 'Payment'"
