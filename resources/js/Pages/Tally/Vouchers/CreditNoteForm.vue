@@ -28,11 +28,12 @@ const {
     addAddressLine, removeAddressLine,
     INDIAN_STATES, GST_REG_TYPES, fmt,
 } = useInvoiceVoucherForm(props, {
-    voucherNoLabel:       'Credit Note No',
-    voucherNoPlaceholder: 'e.g. CN-001',
-    partyType:            'debtor',
-    defaultMode:          props.defaultMode,
-    syncIsInvoice:        true,
+    voucherNoLabel:          'Credit Note No',
+    voucherNoPlaceholder:    'e.g. CN-001',
+    partyType:               'debtor',
+    defaultMode:             props.defaultMode,
+    syncIsInvoice:           true,
+    inventoryDeemedPositive: true,
 })
 
 const showGuide = ref(false)

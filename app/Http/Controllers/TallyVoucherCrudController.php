@@ -152,7 +152,7 @@ class TallyVoucherCrudController extends Controller
                 ]));
             }
 
-            $stockIn = in_array($data['voucher_base_type'], ['Purchase', 'DebitNote']);
+            $stockIn = in_array($data['voucher_base_type'], ['Purchase', 'CreditNote']);
             foreach ($data['inventory_entries'] ?? [] as $ie) {
                 $ie['is_deemed_positive'] = $stockIn;
                 TallyVoucherInventoryEntry::create(array_merge($ie, $this->inventoryEntryDefaults($ie), [
@@ -194,7 +194,7 @@ class TallyVoucherCrudController extends Controller
             }
 
             $voucher->inventoryEntries()->delete();
-            $stockIn = in_array($data['voucher_base_type'], ['Purchase', 'DebitNote']);
+            $stockIn = in_array($data['voucher_base_type'], ['Purchase', 'CreditNote']);
             foreach ($data['inventory_entries'] ?? [] as $ie) {
                 $ie['is_deemed_positive'] = $stockIn;
                 TallyVoucherInventoryEntry::create(array_merge($ie, $this->inventoryEntryDefaults($ie), [

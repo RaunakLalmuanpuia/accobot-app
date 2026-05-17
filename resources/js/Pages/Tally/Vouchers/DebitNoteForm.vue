@@ -33,7 +33,7 @@ const {
     partyType:            'creditor',
     defaultMode:             props.defaultMode,
     syncIsInvoice:           true,
-    inventoryDeemedPositive: true,
+    inventoryDeemedPositive: false,
 })
 
 const purchaseLedgers = computed(() => {
