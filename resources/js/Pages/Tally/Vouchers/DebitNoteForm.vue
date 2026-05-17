@@ -16,7 +16,7 @@ const {
     voucherNoLabel, voucherNoPlaceholder,
     mode, expandedItems, grandTotalLocked,
     buyerAddressLines,
-    partyLedgers, taxableTotal, ledgerTotal, autoTaxGroups,
+    partyLedgers, ledgerEntryOptions, taxableTotal, ledgerTotal, autoTaxGroups,
     commonSalesLedger, applyCommonSalesLedger,
     onPartyChange,
     toggleExpand, recalcItemAmount, onStockItemChange,
@@ -48,8 +48,8 @@ const showGuide = ref(false)
 
 const MODE_LABELS = { item: 'Party, Tax & Charges', accounting: 'Ledger Entries', voucher: 'Dr / Cr Entries' }
 const MODE_HINT   = {
-    item:       'Add the supplier as Cr + Party, then tax / charge ledgers as Dr.',
-    accounting: 'Add the party ledger (Cr + Party) and purchase / expense ledger (Dr).',
+    item:       'Add the supplier (Cr + Party) and any tax ledgers (Dr). The purchase ledger is already set via the Purchase Ledger row above — do not add it here.',
+    accounting: 'Add the party ledger (Cr + Party) and the purchase / expense ledger (Dr).',
     voucher:    'Enter Dr and Cr entries. Mark the supplier ledger as Party.',
 }
 </script>
@@ -294,7 +294,7 @@ const MODE_HINT   = {
                         <select v-model="le.ledger_name" @change="onLedgerChange(le, form)"
                                 class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500">
                             <option value="">{{ le._suggestLabel ? `— ${le._suggestLabel} Ledger —` : '— Select Ledger —' }}</option>
-                            <option v-for="l in ledgers" :key="l.id" :value="l.ledger_name">{{ l.ledger_name }}</option>
+                            <option v-for="l in ledgerEntryOptions" :key="l.id" :value="l.ledger_name">{{ l.ledger_name }}</option>
                         </select>
                         <p v-if="le.ledger_group" class="mt-0.5 px-2 text-xs text-gray-400">{{ le.ledger_group }}</p>
                     </div>

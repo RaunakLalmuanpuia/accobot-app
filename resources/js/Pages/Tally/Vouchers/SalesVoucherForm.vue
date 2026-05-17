@@ -16,7 +16,7 @@ const {
     voucherNoLabel, voucherNoPlaceholder,
     mode, expandedItems, grandTotalLocked,
     buyerAddressLines, consigneeAddressLines,
-    partyLedgers, salesLedgers, taxableTotal, ledgerTotal, autoTaxGroups,
+    partyLedgers, salesLedgers, ledgerEntryOptions, taxableTotal, ledgerTotal, autoTaxGroups,
     commonSalesLedger, applyCommonSalesLedger,
     onPartyChange,
     toggleExpand, recalcItemAmount, onStockItemChange, onSalesLedgerChange,
@@ -38,10 +38,10 @@ const {
 
 const showGuide = ref(false)
 
-const MODE_LABELS = { item: 'Party, Tax & Charges', accounting: 'Ledger Entries', voucher: 'Dr / Cr Entries' }
+const MODE_LABELS = { item: 'Party & Tax Ledgers', accounting: 'Ledger Entries', voucher: 'Dr / Cr Entries' }
 const MODE_HINT   = {
-    item:       'Add the party (customer) as Dr + Party, then tax / charge ledgers as Cr.',
-    accounting: 'Add the party ledger (Dr + Party) and service / income ledger (Cr).',
+    item:       'Add the customer (Dr + Party) and any tax ledgers (Cr). The sales ledger is already set above via the Sales Ledger row — do not add it here.',
+    accounting: 'Add the party ledger (Dr + Party) and the sales / income ledger (Cr).',
     voucher:    'Enter Dr and Cr entries. Mark the customer ledger as Party.',
 }
 </script>
@@ -361,7 +361,7 @@ const MODE_HINT   = {
                         <select v-model="le.ledger_name" @change="onLedgerChange(le, form)"
                                 class="w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-violet-500">
                             <option value="">{{ le._suggestLabel ? `— ${le._suggestLabel} Ledger —` : '— Select Ledger —' }}</option>
-                            <option v-for="l in ledgers" :key="l.id" :value="l.ledger_name">{{ l.ledger_name }}</option>
+                            <option v-for="l in ledgerEntryOptions" :key="l.id" :value="l.ledger_name">{{ l.ledger_name }}</option>
                         </select>
                         <p v-if="le.ledger_group" class="mt-0.5 px-2 text-xs text-gray-400">{{ le.ledger_group }}</p>
                     </div>

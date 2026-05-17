@@ -60,6 +60,20 @@ export function useInvoiceVoucherForm(props, config = {}) {
         return filtered.length ? filtered : props.ledgers
     })
 
+    // In item invoice mode the sales/purchase ledger is handled by AccountingAllocations
+    // inside the inventory entry — it must NOT appear in ledger entries too or Tally
+    // will double-count the credit/debit and reject with "Voucher totals do not match".
+    const itemModeExcludedGroups = partyType === 'creditor'
+        ? ['purchase account', 'direct expense']
+        : ['sales account', 'direct income']
+
+    const ledgerEntryOptions = computed(() => {
+        if (mode.value !== 'item') return props.ledgers
+        return props.ledgers.filter(l =>
+            !itemModeExcludedGroups.some(g => l.group_name?.toLowerCase().includes(g))
+        )
+    })
+
     // ── Common sales ledger (applies to all inventory items) ──────────────────
     const commonSalesLedger = ref('')
 
@@ -332,6 +346,7 @@ export function useInvoiceVoucherForm(props, config = {}) {
         // Computed
         partyLedgers,
         salesLedgers,
+        ledgerEntryOptions,
         taxableTotal,
         ledgerTotal,
         autoTaxGroups,
