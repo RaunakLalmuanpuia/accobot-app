@@ -47,8 +47,11 @@ export function useInvoiceVoucherForm(props, config = {}) {
     })
 
     const partyLedgers = computed(() => {
-        const keyword = partyType === 'creditor' ? 'sundry creditor' : 'sundry debtor'
-        const filtered = props.ledgers.filter(l => l.group_name?.toLowerCase().includes(keyword))
+        const primary = partyType === 'creditor' ? 'sundry creditor' : 'sundry debtor'
+        const keywords = [primary, 'cash-in-hand', 'bank account']
+        const filtered = props.ledgers.filter(l =>
+            keywords.some(k => l.group_name?.toLowerCase().includes(k))
+        )
         return filtered.length ? filtered : props.ledgers
     })
 
