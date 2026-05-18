@@ -106,6 +106,18 @@ class TallyConnectionController extends Controller
         }
     }
 
+    public function downloadPlugin(Tenant $tenant)
+    {
+        $dir = storage_path('app/tally-plugin');
+        $files = collect(glob("$dir/*"))->filter(fn ($f) => is_file($f) && ! str_starts_with(basename($f), '.'));
+
+        abort_unless($files->isNotEmpty(), 404, 'Tally plugin file not available yet.');
+
+        $path = $files->first();
+
+        return response()->download($path, basename($path));
+    }
+
     private function guardManagedByCa(Tenant $tenant): void
     {
         abort_if($tenant->tally_managed_by_ca, 403, 'Your Tally connection is managed by your CA firm.');

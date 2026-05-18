@@ -176,6 +176,7 @@ Route::middleware(['auth', 'verified', 'member', 'subscription'])
         // ── Tally Integration ─────────────────────────────────────────
         Route::middleware('subscription.feature:tally_sync')->group(function () {
         Route::get('/settings/tally', [TallyConnectionController::class, 'show'])->name('tally.connection.show')->middleware('tenant.permission:integrations.view');
+        Route::get('/settings/tally/plugin/download', [TallyConnectionController::class, 'downloadPlugin'])->name('tally.plugin.download')->middleware('tenant.permission:integrations.view');
         Route::post('/settings/tally', [TallyConnectionController::class, 'save'])->name('tally.connection.save')->middleware('tenant.permission:integrations.manage');
         Route::get('/settings/tally/test', [TallyConnectionController::class, 'testConnection'])->name('tally.connection.test')->middleware('tenant.permission:integrations.manage');
         Route::post('/settings/tally/regenerate-token', [TallyConnectionController::class, 'regenerateToken'])->name('tally.connection.regenerate-token')->middleware('tenant.permission:integrations.manage');

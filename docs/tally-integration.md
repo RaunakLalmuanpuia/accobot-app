@@ -121,6 +121,12 @@ The `BelongsToTenant` trait scopes queries by the `{tenant}` URL parameter from 
 
 ## 4. Setting Up a Connection
 
+### Step 0 — Download the Tally Connector Plugin
+
+On the **Settings → Tally** page, click **Download Plugin**. This serves the plugin file from `storage/app/tally-plugin/` via `GET /tenant/{tenant}/settings/tally/plugin/download` (route: `tally.plugin.download`). Install the downloaded file in Tally ERP before proceeding.
+
+> **Deploying a new plugin version:** replace the file inside `storage/app/tally-plugin/` on the server. The controller serves the first non-hidden file it finds in that directory — no code change required.
+
 ### Step 1 — Tenant configures in Accobot
 
 Navigate to **Settings → Tally**. Enter the Tally `Company ID` (the UUID from Tally's company settings). Save. Accobot creates a `tally_connections` row and auto-generates the token.

@@ -69,6 +69,27 @@ async function copyToClipboard(text, key) {
                     {{ $page.props.flash.error }}
                 </div>
 
+                <!-- Download Plugin card -->
+                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+                    <div class="flex items-start justify-between gap-4">
+                        <div>
+                            <h2 class="text-base font-semibold text-gray-900">Tally Connector Plugin</h2>
+                            <p class="text-sm text-gray-500 mt-1">
+                                Install this plugin in your Tally ERP to enable cloud sync.
+                                After installing, enter the Base URL and Token shown below.
+                            </p>
+                        </div>
+                        <a :href="route('tally.plugin.download', { tenant: tenant.id })"
+                           class="shrink-0 inline-flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 transition">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            Download Plugin
+                        </a>
+                    </div>
+                </div>
+
                 <!-- Token card (shown after first save) -->
                 <div v-if="connection" class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 space-y-4">
                     <h2 class="text-base font-semibold text-gray-900">Connection Token</h2>
