@@ -376,43 +376,100 @@ class TallyInboundSync
                     continue;
                 }
 
+                // Strip Tally's internal \x04 prefix on "Not Applicable" strings
+                $alternateUnit = $item['AlternateUnit'] ?? null;
+                if ($alternateUnit !== null) {
+                    $alternateUnit = ltrim($alternateUnit, "\x04 ");
+                    if ($alternateUnit === 'Not Applicable') $alternateUnit = null;
+                }
+
                 $data = [
-                    'tenant_id'               => $conn->tenant_id,
-                    'tally_id'                => $tallyId,
-                    'alter_id'                => $alterId,
-                    'action'                  => $action,
-                    'name'                    => $item['Name'] ?? '',
-                    'description'             => $item['Description'] ?? null,
-                    'remarks'                 => $item['Remarks'] ?? null,
-                    'aliases'                 => $item['Aliases'] ?? null,
-                    'part_nos'                => $item['PartNos'] ?? null,
-                    'stock_group_id'          => isset($item['StockGroupID']) ? (int) $item['StockGroupID'] : null,
-                    'stock_group_name'        => $item['StockGroupName'] ?? null,
-                    'stock_category_id'       => isset($item['StockCategoryID']) ? (int) $item['StockCategoryID'] : null,
-                    'category_name'           => $item['Category'] ?? $item['CategoryName'] ?? null,
-                    'unit_id'                 => isset($item['UnitID']) ? (int) $item['UnitID'] : null,
-                    'unit_name'               => $item['Unit'] ?? $item['UnitName'] ?? null,
-                    'alternate_unit'          => $item['AlternateUnit'] ?? null,
-                    'conversion'              => isset($item['Conversion']) ? (float) $item['Conversion'] : null,
-                    'denominator'             => isset($item['Denominator']) ? (int) $item['Denominator'] : 1,
-                    'is_gst_applicable'       => $this->parseBool($item['IsGSTApplicable'] ?? null) ?? false,
-                    'taxability'              => $item['Taxablity'] ?? $item['Taxability'] ?? null,
-                    'calculation_type'        => $item['CalculationType'] ?? null,
-                    'igst_rate'               => (float) ($item['IGST_Rate'] ?? $item['IGSTRate'] ?? 0),
-                    'sgst_rate'               => (float) ($item['SGST_Rate'] ?? $item['SGSTRate'] ?? 0),
-                    'cgst_rate'               => (float) ($item['CGST_Rate'] ?? $item['CGSTRate'] ?? 0),
-                    'cess_rate'               => (float) ($item['CESS_Rate'] ?? $item['CessRate'] ?? 0),
-                    'hsn_code'                => ($item['HSNCode'] ?? null) ?: null,
-                    'mrp_rate'        => isset($item['MRPRate']) ? (float) $item['MRPRate'] : null,
-                    'opening_balance' => (float) ($item['Opening_Balance'] ?? $item['OpeningBalance'] ?? 0),
-                    'opening_rate'            => (float) ($item['Opening_Rate'] ?? $item['OpeningRate'] ?? 0),
-                    'opening_value'           => (float) ($item['Opening_Value'] ?? $item['OpeningValue'] ?? 0),
-                    'closing_balance'         => (float) ($item['Closing_Balance'] ?? $item['ClosingBalance'] ?? 0),
-                    'closing_rate'            => (float) ($item['Closing_Rate'] ?? $item['ClosingRate'] ?? 0),
-                    'closing_value'           => (float) ($item['Closing_Value'] ?? $item['ClosingValue'] ?? 0),
-                    'batch_allocations'       => $item['BatchAllocations'] ?? null,
-                    'is_active'       => true,
-                    'last_synced_at'          => now(),
+                    'tenant_id'         => $conn->tenant_id,
+                    'tally_id'          => $tallyId,
+                    'alter_id'          => $alterId,
+                    'action'            => $action,
+                    // Identity
+                    'guid'              => $item['Guid'] ?? null,
+                    'name'              => $item['Name'] ?? '',
+                    'description'       => $item['Description'] ?? null,
+                    'remarks'           => $item['Remarks'] ?? null,
+                    'aliases'           => $item['Aliases'] ?? null,
+                    'part_nos'          => $item['PartNos'] ?? null,
+                    // Classification
+                    'stock_group_id'    => isset($item['StockGroupID']) ? (int) $item['StockGroupID'] : null,
+                    'stock_group_name'  => $item['StockGroupName'] ?? null,
+                    'stock_category_id' => isset($item['StockCategoryID']) ? (int) $item['StockCategoryID'] : null,
+                    'category_name'     => $item['Category'] ?? $item['CategoryName'] ?? null,
+                    // Units
+                    'unit_id'           => isset($item['UnitID']) ? (int) $item['UnitID'] : null,
+                    'unit_name'         => $item['Unit'] ?? $item['UnitName'] ?? null,
+                    'alternate_unit'    => $alternateUnit,
+                    'conversion'        => isset($item['Conversion']) ? (float) $item['Conversion'] : null,
+                    'denominator'       => isset($item['Denominator']) ? (int) $item['Denominator'] : 1,
+                    'reporting_uom'     => ($item['ReportingUOM'] ?? null) ?: null,
+                    'reporting_uom_date'=> ($item['ReportingUOMDate'] ?? null) ?: null,
+                    // GST & Tax
+                    'is_gst_applicable' => $this->parseBool($item['IsGSTApplicable'] ?? null) ?? false,
+                    'taxability'        => $item['Taxablity'] ?? $item['Taxability'] ?? null,
+                    'calculation_type'  => ($item['CalculationType'] ?? null) ?: null,
+                    'igst_rate'         => (float) ($item['IGST_Rate'] ?? $item['IGSTRate'] ?? 0),
+                    'sgst_rate'         => (float) ($item['SGST_Rate'] ?? $item['SGSTRate'] ?? 0),
+                    'cgst_rate'         => (float) ($item['CGST_Rate'] ?? $item['CGSTRate'] ?? 0),
+                    'cess_rate'         => (float) ($item['CESS_Rate'] ?? $item['CessRate'] ?? 0),
+                    'hsn_code'          => ($item['HSNCode'] ?? null) ?: null,
+                    'hsn_desc'          => ($item['HSNDesc'] ?? null) ?: null,
+                    'type_of_supply'    => ($item['TypeOfSupply'] ?? null) ?: null,
+                    // TCS
+                    'tcs_applicable'    => ($item['TCSApplicable'] ?? null) ?: null,
+                    'tcs_category'      => ($item['TCSCategory'] ?? null) ?: null,
+                    // Pricing
+                    'mrp_rate'          => isset($item['MRPRate']) ? (float) $item['MRPRate'] : null,
+                    'inclusive_tax'     => $this->parseBool($item['InclusiveTax'] ?? null) ?? false,
+                    'modify_mrp_rate'   => $this->parseBool($item['ModifyMRPRate'] ?? null) ?? false,
+                    'calc_on_mrp'       => $this->parseBool($item['CalcOnMRP'] ?? null) ?? false,
+                    'mrp_incl_of_tax'   => $this->parseBool($item['MRPInclOfTax'] ?? null) ?? false,
+                    'basic_rate_of_excise' => isset($item['BasicRateOfExcise']) ? (float) $item['BasicRateOfExcise'] : null,
+                    // Costing / Valuation
+                    'costing_method'    => ($item['CostingMethod'] ?? null) ?: null,
+                    'valuation_method'  => ($item['ValuationMethod'] ?? null) ?: null,
+                    // Default Ledgers
+                    'sales_ledger'      => ($item['SalesLedger'] ?? null) ?: null,
+                    'sales_ledger_rate' => isset($item['SalesLedgerRate']) ? (float) $item['SalesLedgerRate'] : null,
+                    'purchase_ledger'   => ($item['PurchaseLedger'] ?? null) ?: null,
+                    'purchase_ledger_rate' => isset($item['PurchaseLedgerRate']) ? (float) $item['PurchaseLedgerRate'] : null,
+                    // Stock Levels
+                    'opening_balance'   => (float) ($item['Opening_Balance'] ?? $item['OpeningBalance'] ?? 0),
+                    'opening_rate'      => (float) ($item['Opening_Rate'] ?? $item['OpeningRate'] ?? 0),
+                    'opening_value'     => (float) ($item['Opening_Value'] ?? $item['OpeningValue'] ?? 0),
+                    'closing_balance'   => (float) ($item['Closing_Balance'] ?? $item['ClosingBalance'] ?? 0),
+                    'closing_rate'      => (float) ($item['Closing_Rate'] ?? $item['ClosingRate'] ?? 0),
+                    'closing_value'     => (float) ($item['Closing_Value'] ?? $item['ClosingValue'] ?? 0),
+                    // Inventory Behaviour
+                    'is_batch_wise'         => $this->parseBool($item['IsBatchWise'] ?? null) ?? false,
+                    'is_perishable'         => $this->parseBool($item['IsPerishable'] ?? null) ?? false,
+                    'has_mfg_date'          => $this->parseBool($item['HasMfgDate'] ?? null) ?? false,
+                    'allow_expired_items'   => $this->parseBool($item['AllowExpiredItems'] ?? null) ?? false,
+                    'ignore_batches'        => $this->parseBool($item['IgnoreBatches'] ?? null) ?? false,
+                    'ignore_godowns'        => $this->parseBool($item['IgnoreGodowns'] ?? null) ?? false,
+                    'ignore_phys_diff'      => $this->parseBool($item['IgnorePhysDiff'] ?? null) ?? false,
+                    'ignore_neg_stock'      => $this->parseBool($item['IgnoreNegStock'] ?? null) ?? false,
+                    'treat_sales_as_mfg'    => $this->parseBool($item['TreatSalesAsMfg'] ?? null) ?? false,
+                    'treat_purch_consumed'  => $this->parseBool($item['TreatPurchConsumed'] ?? null) ?? false,
+                    'treat_rejects_scrap'   => $this->parseBool($item['TreatRejectsScrap'] ?? null) ?? false,
+                    'is_cost_centres_on'    => $this->parseBool($item['IsCostCentresOn'] ?? null) ?? false,
+                    'is_cost_tracking_on'   => $this->parseBool($item['IsCostTrackingOn'] ?? null) ?? false,
+                    // Legacy VAT
+                    'is_entry_tax_applicable' => ($item['IsEntryTaxApplicable'] ?? null) ?: null,
+                    'is_rate_inclusive_vat'   => ($item['IsRateInclusiveVAT'] ?? null) ?: null,
+                    'vat_base_unit'           => ($item['VATBaseUnit'] ?? null) ?: null,
+                    // Batch / Godown
+                    'batch_allocations'     => $item['BatchAllocations'] ?? null,
+                    // Structured arrays
+                    'gst_details_list'      => $item['GSTDetailsList'] ?? null,
+                    'hsn_details_list'      => $item['HSNDetailsList'] ?? null,
+                    'vat_details'           => $item['VATDetails'] ?? null,
+                    'is_active'             => true,
+                    'last_synced_at'        => now(),
                 ];
 
                 $stockItem = null;

@@ -148,13 +148,22 @@ class TallyDataController extends Controller
                     ->get([
                         'id', 'tally_id', 'name', 'description', 'remarks',
                         'aliases', 'part_nos',
-                        'stock_group_name', 'category_name', 'unit_name', 'alternate_unit',
-                        'conversion', 'denominator',
+                        'stock_group_name', 'category_name',
+                        'unit_name', 'alternate_unit', 'conversion', 'denominator',
+                        'reporting_uom',
                         'is_gst_applicable', 'taxability', 'calculation_type',
-                        'hsn_code', 'igst_rate', 'cgst_rate', 'sgst_rate', 'cess_rate',
-                        'mrp_rate',
+                        'hsn_code', 'hsn_desc', 'type_of_supply',
+                        'igst_rate', 'cgst_rate', 'sgst_rate', 'cess_rate',
+                        'tcs_applicable', 'tcs_category',
+                        'mrp_rate', 'inclusive_tax', 'modify_mrp_rate', 'calc_on_mrp', 'mrp_incl_of_tax',
+                        'basic_rate_of_excise',
+                        'costing_method', 'valuation_method',
+                        'sales_ledger', 'purchase_ledger',
                         'opening_balance', 'opening_rate', 'opening_value',
                         'closing_balance', 'closing_rate', 'closing_value',
+                        'is_batch_wise', 'is_perishable', 'has_mfg_date', 'allow_expired_items',
+                        'ignore_batches', 'ignore_godowns', 'ignore_neg_stock',
+                        'is_cost_centres_on', 'is_cost_tracking_on',
                         'batch_allocations',
                         'is_active', 'last_synced_at', 'mapped_product_id',
                     ]),
@@ -176,6 +185,16 @@ class TallyDataController extends Controller
                 ->where('is_active', true)
                 ->orderBy('name')
                 ->get(['name', 'tally_id']),
+            'salesLedgerNames'   => TallyLedger::where('tenant_id', $tenant->id)
+                ->where('is_active', true)
+                ->where('group_name', 'Sales Accounts')
+                ->orderBy('ledger_name')
+                ->pluck('ledger_name'),
+            'purchaseLedgerNames' => TallyLedger::where('tenant_id', $tenant->id)
+                ->where('is_active', true)
+                ->where('group_name', 'Purchase Accounts')
+                ->orderBy('ledger_name')
+                ->pluck('ledger_name'),
         ]);
     }
 

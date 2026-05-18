@@ -5,12 +5,14 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import { hasPermission } from '@/utils/permissions'
 
 const props = defineProps({
-    tenant:             Object,
-    items:              Array,
-    stockGroupNames:    Array,
-    stockCategoryNames: Array,
-    unitNames:          Array,
-    godownNames:        Array,
+    tenant:              Object,
+    items:               Array,
+    stockGroupNames:     Array,
+    stockCategoryNames:  Array,
+    unitNames:           Array,
+    godownNames:         Array,
+    salesLedgerNames:    Array,
+    purchaseLedgerNames: Array,
 })
 
 const canManage = hasPermission('integrations.manage')
@@ -77,17 +79,35 @@ const form = useForm({
     taxability:        '',
     calculation_type:  '',
     hsn_code:          '',
+    type_of_supply:    '',
     igst_rate:         '',
     sgst_rate:         '',
     cgst_rate:         '',
     cess_rate:         '',
     mrp_rate:          '',
+    inclusive_tax:     false,
+    modify_mrp_rate:   false,
+    calc_on_mrp:       false,
+    mrp_incl_of_tax:   false,
+    costing_method:    '',
+    valuation_method:  '',
+    sales_ledger:      '',
+    purchase_ledger:   '',
     opening_balance:   '',
     opening_rate:      '',
     opening_value:     '',
     closing_balance:   '',
     closing_rate:      '',
     closing_value:     '',
+    is_batch_wise:     false,
+    is_perishable:     false,
+    has_mfg_date:      false,
+    allow_expired_items: false,
+    ignore_batches:    false,
+    ignore_godowns:    false,
+    ignore_neg_stock:  false,
+    is_cost_centres_on:  false,
+    is_cost_tracking_on: false,
     batch_allocations: [],
 })
 
@@ -95,7 +115,7 @@ function addAlias()         { form.aliases.push({ Alias: '' }) }
 function removeAlias(i)     { form.aliases.splice(i, 1) }
 function addPartNo()        { form.part_nos.push({ PartNo: '' }) }
 function removePartNo(i)    { form.part_nos.splice(i, 1) }
-function addBatchAlloc()    { form.batch_allocations.push({ GodownName: '', GodownID: '', BatchName: '', OpeningBalance: '', Rate: '', OpeningValue: 0 }) }
+function addBatchAlloc()    { form.batch_allocations.push({ GodownName: '', GodownID: '', BatchName: '', MFDON: '', ExpiryPeriod: '', OpeningBalance: '', Rate: '', OpeningValue: 0 }) }
 function removeBatchAlloc(i){ form.batch_allocations.splice(i, 1) }
 
 function calcOpeningValue(ba) {
@@ -124,8 +144,11 @@ watch(() => form.igst_rate, (val) => {
 })
 
 // Conditional visibility
-const showGST       = computed(() => form.is_gst_applicable === '1' || form.is_gst_applicable === 'Applicable')
-const showAltUnit   = computed(() => !!form.alternate_unit)
+const showGST         = computed(() => form.is_gst_applicable === '1' || form.is_gst_applicable === 'Applicable')
+const showAltUnit     = computed(() => !!form.alternate_unit)
+const showBatchFields = computed(() => form.is_batch_wise)
+const showMfgDate     = computed(() => showBatchFields.value && form.has_mfg_date)
+const showExpiry      = computed(() => showBatchFields.value && form.is_perishable)
 
 const totalBatchOpening = computed(() =>
     form.batch_allocations.reduce((sum, ba) => sum + (parseFloat(ba.OpeningBalance) || 0), 0)
@@ -185,22 +208,40 @@ function openEdit(item) {
     form.alternate_unit    = item.alternate_unit ?? ''
     form.conversion        = item.conversion ?? ''
     form.denominator       = item.denominator ?? ''
-    form.is_gst_applicable = item.is_gst_applicable !== null ? (item.is_gst_applicable ? '1' : '0') : ''
-    form.taxability        = item.taxability ?? ''
-    form.calculation_type  = item.calculation_type ?? ''
-    form.hsn_code          = item.hsn_code ?? ''
-    form.igst_rate         = item.igst_rate ?? ''
-    form.sgst_rate         = item.sgst_rate ?? ''
-    form.cgst_rate         = item.cgst_rate ?? ''
-    form.cess_rate         = item.cess_rate ?? ''
-    form.mrp_rate          = item.mrp_rate ?? ''
-    form.opening_balance   = item.opening_balance ?? ''
-    form.opening_rate      = item.opening_rate ?? ''
-    form.opening_value     = item.opening_value ?? ''
-    form.closing_balance   = item.closing_balance ?? ''
-    form.closing_rate      = item.closing_rate ?? ''
-    form.closing_value     = item.closing_value ?? ''
-    form.batch_allocations = item.batch_allocations ? JSON.parse(JSON.stringify(item.batch_allocations)) : []
+    form.is_gst_applicable   = item.is_gst_applicable !== null ? (item.is_gst_applicable ? '1' : '0') : ''
+    form.taxability          = item.taxability ?? ''
+    form.calculation_type    = item.calculation_type ?? ''
+    form.hsn_code            = item.hsn_code ?? ''
+    form.type_of_supply      = item.type_of_supply ?? ''
+    form.igst_rate           = item.igst_rate ?? ''
+    form.sgst_rate           = item.sgst_rate ?? ''
+    form.cgst_rate           = item.cgst_rate ?? ''
+    form.cess_rate           = item.cess_rate ?? ''
+    form.mrp_rate            = item.mrp_rate ?? ''
+    form.inclusive_tax       = !!item.inclusive_tax
+    form.modify_mrp_rate     = !!item.modify_mrp_rate
+    form.calc_on_mrp         = !!item.calc_on_mrp
+    form.mrp_incl_of_tax     = !!item.mrp_incl_of_tax
+    form.costing_method      = item.costing_method ?? ''
+    form.valuation_method    = item.valuation_method ?? ''
+    form.sales_ledger        = item.sales_ledger ?? ''
+    form.purchase_ledger     = item.purchase_ledger ?? ''
+    form.opening_balance     = item.opening_balance ?? ''
+    form.opening_rate        = item.opening_rate ?? ''
+    form.opening_value       = item.opening_value ?? ''
+    form.closing_balance     = item.closing_balance ?? ''
+    form.closing_rate        = item.closing_rate ?? ''
+    form.closing_value       = item.closing_value ?? ''
+    form.is_batch_wise       = !!item.is_batch_wise
+    form.is_perishable       = !!item.is_perishable
+    form.has_mfg_date        = !!item.has_mfg_date
+    form.allow_expired_items = !!item.allow_expired_items
+    form.ignore_batches      = !!item.ignore_batches
+    form.ignore_godowns      = !!item.ignore_godowns
+    form.ignore_neg_stock    = !!item.ignore_neg_stock
+    form.is_cost_centres_on  = !!item.is_cost_centres_on
+    form.is_cost_tracking_on = !!item.is_cost_tracking_on
+    form.batch_allocations   = item.batch_allocations ? JSON.parse(JSON.stringify(item.batch_allocations)) : []
     form.clearErrors()
     modal.value = item
 }
@@ -410,6 +451,13 @@ function destroy(item) {
                         <input v-model="form.mrp_rate" type="number" step="0.01" min="0" placeholder="0"
                                class="tally-input tally-field w-40" />
                     </div>
+                    <div class="tally-row">
+                        <span class="tally-label">MRP Incl. of Tax</span>
+                        <label class="tally-input flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" v-model="form.mrp_incl_of_tax" class="rounded border-gray-300 text-violet-600" />
+                            <span class="text-sm text-gray-600">MRP is inclusive of tax</span>
+                        </label>
+                    </div>
 
                     <!-- ── GST Details ─────────────────────────────────────── -->
                     <div class="tally-section-header">GST Details</div>
@@ -419,6 +467,15 @@ function destroy(item) {
                             <option value="">— Select —</option>
                             <option value="1">Applicable</option>
                             <option value="0">Not Applicable</option>
+                        </select>
+                    </div>
+                    <div class="tally-row">
+                        <span class="tally-label">Type of Supply</span>
+                        <select v-model="form.type_of_supply" class="tally-input tally-field w-48">
+                            <option value="">— Select —</option>
+                            <option>Goods</option>
+                            <option>Services</option>
+                            <option>Capital Goods</option>
                         </select>
                     </div>
                     <template v-if="showGST">
@@ -468,6 +525,119 @@ function destroy(item) {
                                    class="tally-input tally-field w-28" />
                         </div>
                     </template>
+
+                    <!-- ── Inventory Behaviour ─────────────────────────────── -->
+                    <div class="tally-section-header">Inventory Behaviour</div>
+                    <div class="tally-row">
+                        <span class="tally-label">Costing Method</span>
+                        <select v-model="form.costing_method" class="tally-input tally-field w-48">
+                            <option value="">— Default —</option>
+                            <option>Avg. Cost</option>
+                            <option>FIFO</option>
+                            <option>LIFO Annual</option>
+                            <option>LIFO Perpetual</option>
+                            <option>Standard Cost</option>
+                        </select>
+                    </div>
+                    <div class="tally-row">
+                        <span class="tally-label">Valuation Method</span>
+                        <select v-model="form.valuation_method" class="tally-input tally-field w-48">
+                            <option value="">— Default —</option>
+                            <option>Avg. Price</option>
+                            <option>FIFO</option>
+                            <option>LIFO Annual</option>
+                            <option>LIFO Perpetual</option>
+                            <option>Standard Price</option>
+                            <option>At Zero Price</option>
+                        </select>
+                    </div>
+                    <div class="tally-row">
+                        <span class="tally-label">Batch-wise</span>
+                        <label class="tally-input flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" v-model="form.is_batch_wise" class="rounded border-gray-300 text-violet-600" />
+                            <span class="text-sm text-gray-600">Track batches / lots</span>
+                        </label>
+                    </div>
+                    <template v-if="showBatchFields">
+                        <div class="tally-row">
+                            <span class="tally-label">Perishable</span>
+                            <label class="tally-input flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" v-model="form.is_perishable" class="rounded border-gray-300 text-violet-600" />
+                                <span class="text-sm text-gray-600">Has expiry date</span>
+                            </label>
+                        </div>
+                        <div class="tally-row">
+                            <span class="tally-label">Mfg Date</span>
+                            <label class="tally-input flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" v-model="form.has_mfg_date" class="rounded border-gray-300 text-violet-600" />
+                                <span class="text-sm text-gray-600">Track manufacturing date</span>
+                            </label>
+                        </div>
+                        <div class="tally-row">
+                            <span class="tally-label">Allow Expired</span>
+                            <label class="tally-input flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" v-model="form.allow_expired_items" class="rounded border-gray-300 text-violet-600" />
+                                <span class="text-sm text-gray-600">Allow use of expired batches</span>
+                            </label>
+                        </div>
+                        <div class="tally-row">
+                            <span class="tally-label">Ignore Batches</span>
+                            <label class="tally-input flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" v-model="form.ignore_batches" class="rounded border-gray-300 text-violet-600" />
+                                <span class="text-sm text-gray-600">Skip batch entry in vouchers</span>
+                            </label>
+                        </div>
+                    </template>
+                    <div class="tally-row">
+                        <span class="tally-label">Ignore Godowns</span>
+                        <label class="tally-input flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" v-model="form.ignore_godowns" class="rounded border-gray-300 text-violet-600" />
+                            <span class="text-sm text-gray-600">Skip godown entry in vouchers</span>
+                        </label>
+                    </div>
+                    <div class="tally-row">
+                        <span class="tally-label">Allow Negative Stock</span>
+                        <label class="tally-input flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" v-model="form.ignore_neg_stock" class="rounded border-gray-300 text-violet-600" />
+                            <span class="text-sm text-gray-600">Allow negative stock balance</span>
+                        </label>
+                    </div>
+                    <div class="tally-row">
+                        <span class="tally-label">Cost Tracking</span>
+                        <label class="tally-input flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" v-model="form.is_cost_tracking_on" class="rounded border-gray-300 text-violet-600" />
+                            <span class="text-sm text-gray-600">Enable cost tracking</span>
+                        </label>
+                    </div>
+
+                    <!-- ── Default Ledgers ─────────────────────────────────── -->
+                    <div class="tally-section-header">Default Ledgers</div>
+                    <div class="tally-row">
+                        <span class="tally-label">Sales Ledger</span>
+                        <div class="tally-input">
+                            <input v-model="form.sales_ledger" type="text"
+                                   list="sales-ledger-list"
+                                   placeholder="— Select or type —"
+                                   class="tally-field" />
+                            <datalist id="sales-ledger-list">
+                                <option v-for="n in salesLedgerNames" :key="n" :value="n" />
+                            </datalist>
+                            <p class="mt-0.5 text-xs text-gray-400">Sales Accounts group from Tally</p>
+                        </div>
+                    </div>
+                    <div class="tally-row">
+                        <span class="tally-label">Purchase Ledger</span>
+                        <div class="tally-input">
+                            <input v-model="form.purchase_ledger" type="text"
+                                   list="purchase-ledger-list"
+                                   placeholder="— Select or type —"
+                                   class="tally-field" />
+                            <datalist id="purchase-ledger-list">
+                                <option v-for="n in purchaseLedgerNames" :key="n" :value="n" />
+                            </datalist>
+                            <p class="mt-0.5 text-xs text-gray-400">Purchase Accounts group from Tally</p>
+                        </div>
+                    </div>
 
                     <!-- ── Opening Balance ─────────────────────────────────── -->
                     <div class="tally-section-header">Opening Balance</div>
@@ -540,6 +710,16 @@ function destroy(item) {
                             <span class="tally-label">Batch Name</span>
                             <input v-model="ba.BatchName" type="text" placeholder="e.g. Batch-001"
                                    class="tally-input tally-field" />
+                        </div>
+                        <div v-if="showMfgDate" class="tally-row">
+                            <span class="tally-label">Mfg Date</span>
+                            <input v-model="ba.MFDON" type="text" placeholder="YYYYMMDD"
+                                   class="tally-input tally-field w-40" />
+                        </div>
+                        <div v-if="showExpiry" class="tally-row">
+                            <span class="tally-label">Expiry</span>
+                            <input v-model="ba.ExpiryPeriod" type="text" placeholder="e.g. 31-Mar-27"
+                                   class="tally-input tally-field w-40" />
                         </div>
                         <div class="tally-row">
                             <span class="tally-label">

@@ -18,14 +18,7 @@ return new class extends Migration
             $table->dropColumn(['parent_id', 'nature_of_group', 'should_add_quantities']);
         });
 
-        Schema::table('tally_stock_items', function (Blueprint $table) {
-            $table->dropColumn([
-                'standard_cost', 'standard_price', 'costing_method',
-                'is_batch_applicable', 'is_expiry_date_applicable',
-                'reorder_level', 'reorder_quantity', 'maximum_quantity',
-                'batch_allocations',
-            ]);
-        });
+        // tally_stock_items columns consolidated into 2026_04_19_000006_create_tally_stock_items_table
 
         Schema::table('tally_employees', function (Blueprint $table) {
             $table->dropColumn([
@@ -56,17 +49,7 @@ return new class extends Migration
             $table->boolean('should_add_quantities')->default(false);
         });
 
-        Schema::table('tally_stock_items', function (Blueprint $table) {
-            $table->decimal('standard_cost', 12, 2)->nullable();
-            $table->decimal('standard_price', 12, 2)->nullable();
-            $table->string('costing_method')->nullable();
-            $table->boolean('is_batch_applicable')->default(false);
-            $table->boolean('is_expiry_date_applicable')->default(false);
-            $table->decimal('reorder_level', 15, 4)->nullable();
-            $table->decimal('reorder_quantity', 15, 4)->nullable();
-            $table->decimal('maximum_quantity', 15, 4)->nullable();
-            $table->jsonb('batch_allocations')->nullable();
-        });
+        // tally_stock_items columns consolidated into 2026_04_19_000006_create_tally_stock_items_table
 
         Schema::table('tally_employees', function (Blueprint $table) {
             $table->string('department')->nullable();

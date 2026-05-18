@@ -433,12 +433,15 @@ class TallyMasterCrudController extends Controller
             'aliases.*.Alias'                   => 'nullable|string|max:255',
             'part_nos'                          => 'nullable|array',
             'part_nos.*.PartNo'                 => 'nullable|string|max:100',
+            // Classification
             'stock_group_name'                  => 'required|string|max:255',
             'category_name'                     => 'nullable|string|max:255',
+            // Units
             'unit_name'                         => 'required|string|max:50',
             'alternate_unit'                    => 'nullable|string|max:50',
             'conversion'                        => 'nullable|numeric|min:0',
             'denominator'                       => 'nullable|integer|min:1',
+            // GST
             'is_gst_applicable'                 => 'nullable|boolean',
             'taxability'                        => 'nullable|string|max:50',
             'calculation_type'                  => 'nullable|string|max:50',
@@ -447,34 +450,73 @@ class TallyMasterCrudController extends Controller
             'sgst_rate'                         => 'nullable|numeric|min:0|max:100',
             'cgst_rate'                         => 'nullable|numeric|min:0|max:100',
             'cess_rate'                         => 'nullable|numeric|min:0|max:100',
+            'type_of_supply'                    => 'nullable|string|max:50',
+            // Pricing
             'mrp_rate'                          => 'nullable|numeric|min:0',
+            'inclusive_tax'                     => 'nullable|boolean',
+            'modify_mrp_rate'                   => 'nullable|boolean',
+            'calc_on_mrp'                       => 'nullable|boolean',
+            'mrp_incl_of_tax'                   => 'nullable|boolean',
+            // Costing
+            'costing_method'                    => 'nullable|string|max:50',
+            'valuation_method'                  => 'nullable|string|max:50',
+            // Default Ledgers
+            'sales_ledger'                      => 'nullable|string|max:255',
+            'purchase_ledger'                   => 'nullable|string|max:255',
+            // Stock Levels
             'opening_balance'                   => 'nullable|numeric|min:0',
             'opening_rate'                      => 'nullable|numeric|min:0',
             'opening_value'                     => 'nullable|numeric|min:0',
             'closing_balance'                   => 'nullable|numeric',
             'closing_rate'                      => 'nullable|numeric|min:0',
             'closing_value'                     => 'nullable|numeric',
-            'batch_allocations'                 => 'nullable|array',
-            'batch_allocations.*.GodownName'    => 'nullable|string|max:255',
-            'batch_allocations.*.GodownID'      => 'nullable|integer',
-            'batch_allocations.*.BatchName'     => 'nullable|string|max:255',
-            'batch_allocations.*.OpeningBalance'=> 'nullable|numeric|min:0',
-            'batch_allocations.*.Rate'          => 'nullable|numeric|min:0',
-            'batch_allocations.*.OpeningValue'  => 'nullable|numeric',
+            // Inventory Behaviour
+            'is_batch_wise'                     => 'nullable|boolean',
+            'is_perishable'                     => 'nullable|boolean',
+            'has_mfg_date'                      => 'nullable|boolean',
+            'allow_expired_items'               => 'nullable|boolean',
+            'ignore_batches'                    => 'nullable|boolean',
+            'ignore_godowns'                    => 'nullable|boolean',
+            'ignore_neg_stock'                  => 'nullable|boolean',
+            'is_cost_centres_on'                => 'nullable|boolean',
+            'is_cost_tracking_on'               => 'nullable|boolean',
+            // Batch Allocations
+            'batch_allocations'                     => 'nullable|array',
+            'batch_allocations.*.GodownName'        => 'nullable|string|max:255',
+            'batch_allocations.*.GodownID'          => 'nullable|integer',
+            'batch_allocations.*.BatchName'         => 'nullable|string|max:255',
+            'batch_allocations.*.OpeningBalance'    => 'nullable|numeric|min:0',
+            'batch_allocations.*.Rate'              => 'nullable|numeric|min:0',
+            'batch_allocations.*.OpeningValue'      => 'nullable|numeric',
+            'batch_allocations.*.MFDON'             => 'nullable|string|max:20',
+            'batch_allocations.*.ExpiryPeriod'      => 'nullable|string|max:50',
         ]);
 
-        $data['igst_rate']         = $data['igst_rate']         ?? 0;
-        $data['sgst_rate']         = $data['sgst_rate']         ?? 0;
-        $data['cgst_rate']         = $data['cgst_rate']         ?? 0;
-        $data['cess_rate']         = $data['cess_rate']         ?? 0;
-        $data['denominator']       = $data['denominator']       ?? 1;
-        $data['is_gst_applicable'] = $data['is_gst_applicable'] ?? false;
-        $data['opening_balance']   = $data['opening_balance']   ?? 0;
-        $data['opening_rate']      = $data['opening_rate']      ?? 0;
-        $data['opening_value']     = $data['opening_value']     ?? 0;
-        $data['closing_balance']   = $data['closing_balance']   ?? 0;
-        $data['closing_rate']      = $data['closing_rate']      ?? 0;
-        $data['closing_value']     = $data['closing_value']     ?? 0;
+        $data['igst_rate']          = $data['igst_rate']          ?? 0;
+        $data['sgst_rate']          = $data['sgst_rate']          ?? 0;
+        $data['cgst_rate']          = $data['cgst_rate']          ?? 0;
+        $data['cess_rate']          = $data['cess_rate']          ?? 0;
+        $data['denominator']        = $data['denominator']        ?? 1;
+        $data['is_gst_applicable']  = $data['is_gst_applicable']  ?? false;
+        $data['is_batch_wise']      = $data['is_batch_wise']      ?? false;
+        $data['is_perishable']      = $data['is_perishable']      ?? false;
+        $data['has_mfg_date']       = $data['has_mfg_date']       ?? false;
+        $data['allow_expired_items']= $data['allow_expired_items']?? false;
+        $data['ignore_batches']     = $data['ignore_batches']     ?? false;
+        $data['ignore_godowns']     = $data['ignore_godowns']     ?? false;
+        $data['ignore_neg_stock']   = $data['ignore_neg_stock']   ?? false;
+        $data['is_cost_centres_on'] = $data['is_cost_centres_on'] ?? false;
+        $data['is_cost_tracking_on']= $data['is_cost_tracking_on']?? false;
+        $data['inclusive_tax']       = $data['inclusive_tax']       ?? false;
+        $data['modify_mrp_rate']     = $data['modify_mrp_rate']     ?? false;
+        $data['calc_on_mrp']         = $data['calc_on_mrp']         ?? false;
+        $data['mrp_incl_of_tax']     = $data['mrp_incl_of_tax']     ?? false;
+        $data['opening_balance']    = $data['opening_balance']    ?? 0;
+        $data['opening_rate']       = $data['opening_rate']       ?? 0;
+        $data['opening_value']      = $data['opening_value']      ?? 0;
+        $data['closing_balance']    = $data['closing_balance']    ?? 0;
+        $data['closing_rate']       = $data['closing_rate']       ?? 0;
+        $data['closing_value']      = $data['closing_value']      ?? 0;
 
         $this->validateBatchAllocations($data['batch_allocations'] ?? [], $data['opening_balance']);
 
@@ -499,12 +541,15 @@ class TallyMasterCrudController extends Controller
             'aliases.*.Alias'                   => 'nullable|string|max:255',
             'part_nos'                          => 'nullable|array',
             'part_nos.*.PartNo'                 => 'nullable|string|max:100',
+            // Classification
             'stock_group_name'                  => 'required|string|max:255',
             'category_name'                     => 'nullable|string|max:255',
+            // Units
             'unit_name'                         => 'required|string|max:50',
             'alternate_unit'                    => 'nullable|string|max:50',
             'conversion'                        => 'nullable|numeric|min:0',
             'denominator'                       => 'nullable|integer|min:1',
+            // GST
             'is_gst_applicable'                 => 'nullable|boolean',
             'taxability'                        => 'nullable|string|max:50',
             'calculation_type'                  => 'nullable|string|max:50',
@@ -513,34 +558,73 @@ class TallyMasterCrudController extends Controller
             'sgst_rate'                         => 'nullable|numeric|min:0|max:100',
             'cgst_rate'                         => 'nullable|numeric|min:0|max:100',
             'cess_rate'                         => 'nullable|numeric|min:0|max:100',
+            'type_of_supply'                    => 'nullable|string|max:50',
+            // Pricing
             'mrp_rate'                          => 'nullable|numeric|min:0',
+            'inclusive_tax'                     => 'nullable|boolean',
+            'modify_mrp_rate'                   => 'nullable|boolean',
+            'calc_on_mrp'                       => 'nullable|boolean',
+            'mrp_incl_of_tax'                   => 'nullable|boolean',
+            // Costing
+            'costing_method'                    => 'nullable|string|max:50',
+            'valuation_method'                  => 'nullable|string|max:50',
+            // Default Ledgers
+            'sales_ledger'                      => 'nullable|string|max:255',
+            'purchase_ledger'                   => 'nullable|string|max:255',
+            // Stock Levels
             'opening_balance'                   => 'nullable|numeric|min:0',
             'opening_rate'                      => 'nullable|numeric|min:0',
             'opening_value'                     => 'nullable|numeric|min:0',
             'closing_balance'                   => 'nullable|numeric',
             'closing_rate'                      => 'nullable|numeric|min:0',
             'closing_value'                     => 'nullable|numeric',
-            'batch_allocations'                 => 'nullable|array',
-            'batch_allocations.*.GodownName'    => 'nullable|string|max:255',
-            'batch_allocations.*.GodownID'      => 'nullable|integer',
-            'batch_allocations.*.BatchName'     => 'nullable|string|max:255',
-            'batch_allocations.*.OpeningBalance'=> 'nullable|numeric|min:0',
-            'batch_allocations.*.Rate'          => 'nullable|numeric|min:0',
-            'batch_allocations.*.OpeningValue'  => 'nullable|numeric',
+            // Inventory Behaviour
+            'is_batch_wise'                     => 'nullable|boolean',
+            'is_perishable'                     => 'nullable|boolean',
+            'has_mfg_date'                      => 'nullable|boolean',
+            'allow_expired_items'               => 'nullable|boolean',
+            'ignore_batches'                    => 'nullable|boolean',
+            'ignore_godowns'                    => 'nullable|boolean',
+            'ignore_neg_stock'                  => 'nullable|boolean',
+            'is_cost_centres_on'                => 'nullable|boolean',
+            'is_cost_tracking_on'               => 'nullable|boolean',
+            // Batch Allocations
+            'batch_allocations'                     => 'nullable|array',
+            'batch_allocations.*.GodownName'        => 'nullable|string|max:255',
+            'batch_allocations.*.GodownID'          => 'nullable|integer',
+            'batch_allocations.*.BatchName'         => 'nullable|string|max:255',
+            'batch_allocations.*.OpeningBalance'    => 'nullable|numeric|min:0',
+            'batch_allocations.*.Rate'              => 'nullable|numeric|min:0',
+            'batch_allocations.*.OpeningValue'      => 'nullable|numeric',
+            'batch_allocations.*.MFDON'             => 'nullable|string|max:20',
+            'batch_allocations.*.ExpiryPeriod'      => 'nullable|string|max:50',
         ]);
 
-        $data['igst_rate']         = $data['igst_rate']         ?? 0;
-        $data['sgst_rate']         = $data['sgst_rate']         ?? 0;
-        $data['cgst_rate']         = $data['cgst_rate']         ?? 0;
-        $data['cess_rate']         = $data['cess_rate']         ?? 0;
-        $data['denominator']       = $data['denominator']       ?? 1;
-        $data['is_gst_applicable'] = $data['is_gst_applicable'] ?? false;
-        $data['opening_balance']   = $data['opening_balance']   ?? 0;
-        $data['opening_rate']      = $data['opening_rate']      ?? 0;
-        $data['opening_value']     = $data['opening_value']     ?? 0;
-        $data['closing_balance']   = $data['closing_balance']   ?? 0;
-        $data['closing_rate']      = $data['closing_rate']      ?? 0;
-        $data['closing_value']     = $data['closing_value']     ?? 0;
+        $data['igst_rate']          = $data['igst_rate']          ?? 0;
+        $data['sgst_rate']          = $data['sgst_rate']          ?? 0;
+        $data['cgst_rate']          = $data['cgst_rate']          ?? 0;
+        $data['cess_rate']          = $data['cess_rate']          ?? 0;
+        $data['denominator']        = $data['denominator']        ?? 1;
+        $data['is_gst_applicable']  = $data['is_gst_applicable']  ?? false;
+        $data['is_batch_wise']      = $data['is_batch_wise']      ?? false;
+        $data['is_perishable']      = $data['is_perishable']      ?? false;
+        $data['has_mfg_date']       = $data['has_mfg_date']       ?? false;
+        $data['allow_expired_items']= $data['allow_expired_items']?? false;
+        $data['ignore_batches']     = $data['ignore_batches']     ?? false;
+        $data['ignore_godowns']     = $data['ignore_godowns']     ?? false;
+        $data['ignore_neg_stock']   = $data['ignore_neg_stock']   ?? false;
+        $data['is_cost_centres_on'] = $data['is_cost_centres_on'] ?? false;
+        $data['is_cost_tracking_on']= $data['is_cost_tracking_on']?? false;
+        $data['inclusive_tax']       = $data['inclusive_tax']       ?? false;
+        $data['modify_mrp_rate']     = $data['modify_mrp_rate']     ?? false;
+        $data['calc_on_mrp']         = $data['calc_on_mrp']         ?? false;
+        $data['mrp_incl_of_tax']     = $data['mrp_incl_of_tax']     ?? false;
+        $data['opening_balance']    = $data['opening_balance']    ?? 0;
+        $data['opening_rate']       = $data['opening_rate']       ?? 0;
+        $data['opening_value']      = $data['opening_value']      ?? 0;
+        $data['closing_balance']    = $data['closing_balance']    ?? 0;
+        $data['closing_rate']       = $data['closing_rate']       ?? 0;
+        $data['closing_value']      = $data['closing_value']      ?? 0;
 
         $this->validateBatchAllocations($data['batch_allocations'] ?? [], $data['opening_balance']);
 

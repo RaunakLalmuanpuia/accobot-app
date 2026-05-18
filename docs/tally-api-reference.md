@@ -464,44 +464,74 @@ Syncs Tally stock items (products/services). Auto-creates/updates a **Product** 
 | `full_sync` | boolean | no | Mark absent items inactive |
 | `TallyId` | integer | yes | Tally stock item ID (also `ID`/`Id`) |
 | `AlterID` | integer | yes | Alter/version ID |
+| `Guid` | string | no | Tally GUID |
 | `Action` | string | no | `"Create"` or `"Delete"` |
 | `Name` | string | yes | Item name |
 | `Description` | string | no | Description |
 | `Remarks` | string | no | Remarks |
 | `Aliases` | array | no | Array of `{"Alias": "..."}` objects |
+| `PartNos` | array | no | Array of part numbers from connector |
 | `StockGroupID` | integer | no | Tally stock group ID |
 | `StockGroupName` | string | no | Stock group name |
 | `StockCategoryID` | integer | no | Tally category ID |
 | `Category` | string | no | Category name (also `CategoryName`) |
 | `UnitID` | integer | no | Unit of measure ID |
-| `Unit` | string | no | Unit name e.g. `"NOS"`, `"KGS"` (also `UnitName`) |
-| `AlternateUnit` | string | no | Alternate unit |
+| `Unit` | string | no | Unit name e.g. `"Nos"`, `"Kgs"` (also `UnitName`) |
+| `AlternateUnit` | string | no | Alternate unit (`\x04 Not Applicable` stripped to null) |
 | `Conversion` | float | no | Conversion factor |
 | `Denominator` | integer | no | Denominator for conversion |
-| `IsGSTApplicable` | string | no | `"Applicable"` / `"Not Applicable"` (also `"Yes"` / `"No"`) |
+| `ReportingUOM` | string | no | Reporting unit of measure |
+| `ReportingUOMDate` | string | no | Date from which reporting UOM applies |
+| `IsGSTApplicable` | string | no | `"Applicable"` / `"Not Applicable"` |
 | `Taxablity` | string | no | `"Taxable"`, `"Exempt"`, `"Nil Rated"` — note Tally's spelling (also `Taxability`) |
 | `CalculationType` | string | no | GST calculation method |
 | `IGST_Rate` | float | no | IGST % (also `IGSTRate`) |
 | `SGST_Rate` | float | no | SGST % (also `SGSTRate`) |
 | `CGST_Rate` | float | no | CGST % (also `CGSTRate`) |
 | `CESS_Rate` | float | no | Cess % (also `CessRate`) |
-| `HSNCode` | string/integer | no | HSN / SAC code |
+| `HSNCode` | string/integer | no | HSN / SAC code (0 stored as null) |
+| `HSNDesc` | string | no | HSN description |
+| `TypeOfSupply` | string | no | `"Goods"`, `"Services"`, `"Capital Goods"` |
+| `TCSApplicable` | string | no | TCS applicability |
+| `TCSCategory` | string | no | TCS category name |
 | `MRPRate` | float | no | MRP |
-| `StandardCost` | float | no | Standard cost |
-| `StandardPrice` | float | no | Standard selling price |
+| `InclusiveTax` | string | no | `"Yes"` / `"No"` |
+| `ModifyMRPRate` | string | no | `"Yes"` / `"No"` |
+| `CalcOnMRP` | string | no | `"Yes"` / `"No"` |
+| `MRPInclOfTax` | string | no | `"Yes"` / `"No"` |
+| `BasicRateOfExcise` | float | no | Basic excise rate |
+| `CostingMethod` | string | no | `"Avg. Cost"`, `"FIFO"`, `"LIFO Annual"`, etc. |
+| `ValuationMethod` | string | no | `"Avg. Price"`, `"FIFO"`, `"Standard Price"`, etc. |
+| `SalesLedger` | string | no | Default sales ledger name |
+| `SalesLedgerRate` | float | no | Default sales ledger rate |
+| `PurchaseLedger` | string | no | Default purchase ledger name |
+| `PurchaseLedgerRate` | float | no | Default purchase ledger rate |
 | `Opening_Balance` | float | no | Opening stock quantity (also `OpeningBalance`) |
 | `Opening_Rate` | float | no | Opening rate (also `OpeningRate`) |
 | `Opening_Value` | float | no | Opening value (also `OpeningValue`) |
 | `Closing_Balance` | float | no | Closing stock quantity (also `ClosingBalance`) |
 | `Closing_Rate` | float | no | Closing rate (also `ClosingRate`) |
 | `Closing_Value` | float | no | Closing value (also `ClosingValue`) |
-| `CostingMethod` | string | no | `"FIFO"`, `"Avg Cost"`, etc. |
-| `IsBatchApplicable` | string | no | `"Yes"` / `"No"` |
-| `IsExpiryDateApplicable` | string | no | `"Yes"` / `"No"` |
-| `ReorderLevel` | float | no | Reorder level quantity |
-| `ReorderQuantity` | float | no | Reorder quantity |
-| `MaximumQuantity` | float | no | Maximum stock quantity |
-| `BatchAllocations` | array | no | Batch allocation details |
+| `IsBatchWise` | string | no | `"Yes"` / `"No"` — track batches/lots |
+| `IsPerishable` | string | no | `"Yes"` / `"No"` — has expiry date |
+| `HasMfgDate` | string | no | `"Yes"` / `"No"` — track manufacturing date |
+| `AllowExpiredItems` | string | no | `"Yes"` / `"No"` |
+| `IgnoreBatches` | string | no | `"Yes"` / `"No"` |
+| `IgnoreGodowns` | string | no | `"Yes"` / `"No"` |
+| `IgnorePhysDiff` | string | no | `"Yes"` / `"No"` |
+| `IgnoreNegStock` | string | no | `"Yes"` / `"No"` |
+| `TreatSalesAsMfg` | string | no | `"Yes"` / `"No"` |
+| `TreatPurchConsumed` | string | no | `"Yes"` / `"No"` |
+| `TreatRejectsScrap` | string | no | `"Yes"` / `"No"` |
+| `IsCostCentresOn` | string | no | `"Yes"` / `"No"` |
+| `IsCostTrackingOn` | string | no | `"Yes"` / `"No"` |
+| `IsEntryTaxApplicable` | string | no | Legacy entry tax flag |
+| `IsRateInclusiveVAT` | string | no | Legacy VAT flag |
+| `VATBaseUnit` | string | no | Legacy VAT base unit |
+| `BatchAllocations` | array | no | Each element: `GodownName`, `GodownID`, `BatchName`, `MFDON` (yyyymmdd), `ExpiryPeriod`, `OpeningBalnace` (Tally typo), `Rate`, `OpeningValue` |
+| `GSTDetailsList` | array | no | Structured GST rate details per applicable-from date |
+| `HSNDetailsList` | array | no | HSN code/description history |
+| `VATDetails` | array | no | Legacy VAT rate history |
 
 **Response**
 

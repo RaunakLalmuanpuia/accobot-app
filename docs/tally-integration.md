@@ -246,16 +246,23 @@ All account masters — customers, vendors, bank accounts, tax ledgers, expense 
 > **Column renames (2026-05-18):** `gst_type` → `gst_type_ledger`, `is_cost_centre_applicable` → `is_cost_centres_on`. The old `gst_type` column was mapped to a non-existent payload field and was never populated.
 
 #### tally_stock_items
-All product/inventory masters.
+All product/inventory masters. Schema consolidated in `2026_04_19_000006_create_tally_stock_items_table`.
 
 | Section | Columns |
 |---------|---------|
-| Identity | tally_id, alter_id, action, name, description, remarks, aliases (jsonb) |
+| Identity | tally_id, alter_id, guid, action, name, description, remarks, aliases (jsonb), part_nos (jsonb) |
 | Classification | stock_group_id, stock_group_name, stock_category_id, category_name |
-| Units | unit_id, unit_name, alternate_unit, conversion, denominator |
-| GST | is_gst_applicable, taxability, calculation_type, igst_rate, sgst_rate, cgst_rate, cess_rate, hsn_code |
-| Pricing | mrp_rate |
+| Units | unit_id, unit_name, alternate_unit, conversion, denominator, reporting_uom, reporting_uom_date |
+| GST & Tax | is_gst_applicable, taxability, calculation_type, igst_rate, sgst_rate, cgst_rate, cess_rate, hsn_code, hsn_desc, type_of_supply |
+| TCS | tcs_applicable, tcs_category |
+| Pricing | mrp_rate, inclusive_tax, modify_mrp_rate, calc_on_mrp, mrp_incl_of_tax, basic_rate_of_excise |
+| Costing | costing_method, valuation_method |
+| Default Ledgers | sales_ledger, sales_ledger_rate, purchase_ledger, purchase_ledger_rate |
 | Stock | opening_balance, opening_rate, opening_value, closing_balance, closing_rate, closing_value |
+| Inventory Behaviour | is_batch_wise, is_perishable, has_mfg_date, allow_expired_items, ignore_batches, ignore_godowns, ignore_phys_diff, ignore_neg_stock, treat_sales_as_mfg, treat_purch_consumed, treat_rejects_scrap, is_cost_centres_on, is_cost_tracking_on |
+| Legacy VAT | is_entry_tax_applicable, is_rate_inclusive_vat, vat_base_unit |
+| Batch / Godown | batch_allocations (jsonb — GodownName, GodownID, BatchName, MFDON, ExpiryPeriod, OpeningBalnace, Rate, OpeningValue) |
+| GST Details | gst_details_list (jsonb), hsn_details_list (jsonb), vat_details (jsonb) |
 | Mapping | mapped_product_id FK → products |
 
 #### tally_stock_groups
@@ -911,7 +918,7 @@ All pages show data to any user with `integrations.view`. Edit / New / Delete ac
 | LedgerGroups.vue | tally.ledger-groups.index | Ledger Groups — CRUD slide-over (max-w-lg, Tally Prime tally-row layout). Fields: Name*, Under (Parent)*, Nature of Group, Method to Allocate; Flags section: Is Addable, Is Sub Ledger, Is Deemed Positive, Used for Calculation (all Yes/No selects). |
 | Ledgers.vue | tally.ledgers.index | Full CRUD slide-over (max-w-2xl, Tally Prime tally-row layout) with context-sensitive sections derived from real connector payload (2026-05-16). Group constants: PARTY_GROUPS (Sundry Debtors/Creditors, Loans & Advances, Branch/Divisions, U Branch/Division); BANK_GROUPS (Bank Accounts, Bank OD A/c, Branch/Divisions, U Branch/Division); ADDRESS_GROUPS (superset of party+bank+loans+capital+current assets/liabilities+deposits+fixed assets+investments+indirect); GST_GROUPS (party+bank+capital+current+deposits+fixed+investments+loans+secured); TDS_GROUPS (wide — party+loans+branch+capital+current liabilities+deposits+direct expense/income+duties+fixed+indirect incomes+investments+misc+provisions+reserves+secured+suspense); TCS_GROUPS (direct incomes, duties & taxes, indirect incomes, sales); COST_CENTRE_GROUPS (direct/indirect expense/income, purchase/sales); PAYROLL_GROUPS (direct expenses); TAX_TYPE_GROUPS (duties & taxes); BILLWISE_GROUPS and CREDIT_GROUPS (Sundry Debtors/Creditors only); INVENTORY_GROUPS (purchase/sales only). Sections: **Name & Classification** (always) — Name*, Under*, MailingName, Aliases; **Behaviour** (always) — OpeningBalance+Dr/Cr, BillWise (party only), CreditPeriod/CreditLimit/CheckCreditDays (party only), InventoryAffected (purchase/sales), CostCentresApplicable (income/expense/purchase/sales), IsRelatedParty (party groups), ForPayroll (direct expenses); **GST/Tax Registration** (GST_GROUPS) — GSTIN, PAN, GSTRegType, GSTApplicableFrom, GSTTypeLedger, NameOnPAN, IsTransporter, IsSEZParty, IsRCMApplicable; **Tax Classification** (Duties & Taxes) — AppropriateFor (CGST/SGST/IGST/UTGST/Cess/CST/VAT/ServiceTax); **TDS** (TDS_GROUPS) — IsTDSApplicable → DeducteeType; **TCS** (TCS_GROUPS) — IsTCSApplicable; **Interest** (INTEREST_GROUPS) — IsInterestOn → TypeOfInterestOn, InterestOnBillWise, OverrideInterest, InclDayOfAddition/Deduction; **Address & Contact** (ADDRESS_GROUPS) — Address lines (dynamic), State, Country, PIN, Mobile, ContactPerson, Email, CC, Fax, Website; **Bank Configuration** (BANK_GROUPS) — flat fields (AccountHolderName, BranchName, SWIFTCode, BSRCode, DefaultTransferMode, ChequePrinting) + per-account list (BankName, IFSCode, AccountNumber, PaymentFavouring, TransactionName, TransactionType); **Opening Bill Allocations** (when BillWise=Yes) — per-bill tally-rows: BillName, Date, Amount+Dr/Cr inline; **Other** — Description, Notes. Custom sub-groups resolve to their parent standard group for section visibility. |
 | StockMasters.vue | tally.stock-masters.index | Stock Groups, Stock Categories, Godowns (tabs). Each has a CRUD slide-over (max-w-lg, Tally Prime tally-row layout). Stock Group: Name*, Parent Group, Aliases. Stock Category: Name*, Parent Category, Aliases. Godown: Name*, Under. |
-| StockItems.vue | tally.stock-items.index | Stock Items — Name, Group, Category, Unit, HSN, GST rates (IGST/SGST/CGST/CESS), Opening Balance, Batch Allocations (Godown dropdown from tally_godowns) |
+| StockItems.vue | tally.stock-items.index | Stock Items — Name, Group, Category, Unit, Alternate Unit/Conversion, Type of Supply, GST details (HSN, IGST/SGST/CGST/CESS), MRP Rate, Costing/Valuation methods, Default Ledgers, Opening/Closing Balance, Inventory Behaviour (batch-wise, perishable, mfg-date, expiry flags), Batch Allocations with MFDON and ExpiryPeriod when applicable |
 | StatutoryMasters.vue | tally.statutory-masters.index | Statutory Masters — Name, Type, Reg. No., State Code, Reg. Type, PAN, TAN, Applicable From |
 | Payroll.vue | tally.payroll.index | 4 tabs with full CRUD, all slide-overs use Tally Prime tally-row layout. **Employee** (max-w-xl): sections — Basic Info (Name*, Employee No, Gender, Group, Designation, Function, Location), Dates (DOJ, Resignation, DOB), Personal (Father's/Spouse's Name), Contact (Phone, Email, Address lines, Aliases). **Employee Group** (max-w-lg): Name*, Under, Cost Centre Category, Aliases. **Pay Head** (max-w-lg): sections — Basic Info (Name*, Pay Type, Income Type, Parent Group), Calculation (Calculation Type, Calculation Period, Leave Type). **Attendance Type** (max-w-lg): Name*, Under, Attendance Type, Attendance Period, Aliases. |
 | Units.vue | tally.units.index | Units of Measure (max-w-lg, Tally Prime tally-row layout). Fields: Name/Symbol* (always the same), Formal Name, Decimal Places, UQC. Symbol auto-set to Name in backend. DB unique constraint on (tenant_id, name). |
