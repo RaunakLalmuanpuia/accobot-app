@@ -1,0 +1,1 @@
+import{O as e,v as t,w as n}from"./app-CFAg09oI.js";var r=Object.assign({inheritAttrs:!1},{__name:`ApplicationLogo`,setup(r){return(r,i)=>(e(),t(`img`,n({src:`/logo.jpg`,alt:`App Logo`},r.$attrs),null,16))}});export{r as t};
