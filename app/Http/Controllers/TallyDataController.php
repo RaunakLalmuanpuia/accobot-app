@@ -106,7 +106,7 @@ class TallyDataController extends Controller
             'units'  => $this->addSyncStatus(
                 TallyUnit::where('tenant_id', $tenant->id)
                     ->orderBy('name')
-                    ->get(['id', 'tally_id', 'name', 'symbol', 'formal_name', 'decimal_places', 'uqc', 'is_active', 'last_synced_at']),
+                    ->get(['id', 'tally_id', 'name', 'symbol', 'formal_name', 'original_name', 'decimal_places', 'uqc', 'is_simple_unit', 'conversion', 'is_active', 'last_synced_at']),
                 $map
             ),
         ]);
@@ -121,18 +121,23 @@ class TallyDataController extends Controller
             'stockGroups'     => $this->addSyncStatus(
                 TallyStockGroup::where('tenant_id', $tenant->id)
                     ->orderBy('name')
-                    ->get(['id', 'tally_id', 'name', 'parent', 'aliases', 'is_active', 'last_synced_at']),
+                    ->get([
+                        'id', 'tally_id', 'name', 'parent_name', 'aliases',
+                        'costing_method', 'valuation_method',
+                        'is_batch_wise_on', 'is_perishable_on', 'is_addable',
+                        'is_active', 'last_synced_at',
+                    ]),
                 $sgMap
             ),
             'stockCategories' => $this->addSyncStatus(
                 TallyStockCategory::where('tenant_id', $tenant->id)
                     ->orderBy('name')
-                    ->get(['id', 'tally_id', 'name', 'parent', 'aliases', 'is_active', 'last_synced_at']),
+                    ->get(['id', 'tally_id', 'name', 'parent_name', 'aliases', 'is_active', 'last_synced_at']),
                 $scMap
             ),
             'godowns'         => TallyGodown::where('tenant_id', $tenant->id)
                 ->orderBy('name')
-                ->get(['id', 'name', 'under', 'guid', 'is_active', 'last_synced_at']),
+                ->get(['id', 'tally_id', 'name', 'under', 'guid', 'has_no_space', 'has_no_stock', 'is_external', 'is_internal', 'is_active', 'last_synced_at']),
         ]);
     }
 

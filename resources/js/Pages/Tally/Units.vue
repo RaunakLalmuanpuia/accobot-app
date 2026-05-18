@@ -150,7 +150,10 @@ function destroy(unit) {
                         </div>
                         <div class="col-span-3">
                             <p class="text-sm font-medium text-gray-900">{{ unit.name }}</p>
-                            <p v-if="unit.uqc" class="text-xs text-gray-400 mt-0.5">{{ unit.uqc }}</p>
+                            <p class="text-xs text-gray-400 mt-0.5">
+            <span v-if="!unit.is_simple_unit" class="text-amber-600 font-medium">Compound · </span>
+            <span v-if="unit.uqc">{{ unit.uqc }}</span>
+        </p>
                         </div>
                         <div class="col-span-2 text-sm text-gray-500">{{ unit.formal_name || '—' }}</div>
                         <div class="col-span-1 text-center text-sm text-gray-500">{{ unit.decimal_places ?? 0 }}</div>

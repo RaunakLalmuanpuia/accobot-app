@@ -238,13 +238,32 @@ class TallyOutboundFormatter
     public function formatStockGroups(Collection $groups): array
     {
         return $groups->map(fn ($g) => $this->dropNulls([
-            'AccobotId' => $g->id,
-            'TallyId'   => $g->tally_id,
-            'AlterID'   => $g->alter_id,
-            'Action'    => $g->action,
-            'Name'      => $g->name,
-            'Parent'    => $g->parent,
-            'Aliases'   => $g->aliases ?? [],
+            'AccobotId'               => $g->id,
+            'TallyId'                 => $g->tally_id,
+            'AlterID'                 => $g->alter_id,
+            'Action'                  => $g->action,
+            'Name'                    => $g->name,
+            'Parent'                  => $g->parent_name ?? '',
+            'Aliases'                 => $g->aliases ?? [],
+            // Inventory Behaviour
+            'CostingMethod'           => $g->costing_method    ?? '',
+            'ValuationMethod'         => $g->valuation_method  ?? '',
+            'IsBatchWiseOn'           => $this->boolStr($g->is_batch_wise_on),
+            'IsPerishableOn'          => $this->boolStr($g->is_perishable_on),
+            'IsAddable'               => $this->boolStr($g->is_addable),
+            'IgnorePhysicalDifference'=> $this->boolStr($g->ignore_phys_diff),
+            'IgnoreNegativeStock'     => $this->boolStr($g->ignore_neg_stock),
+            'TreatSalesAsManufactured'=> $this->boolStr($g->treat_sales_as_mfg),
+            'TreatPurchasesAsConsumed'=> $this->boolStr($g->treat_purch_consumed),
+            'TreatRejectsAsScrap'     => $this->boolStr($g->treat_rejects_scrap),
+            'HasMfgDate'              => $this->boolStr($g->has_mfg_date),
+            'AllowUseOfExpiredItems'  => $this->boolStr($g->allow_expired_items),
+            'IgnoreBatches'           => $this->boolStr($g->ignore_batches),
+            'IgnoreGodowns'           => $this->boolStr($g->ignore_godowns),
+            'Denominator'             => (int) ($g->denominator ?? 1),
+            'Conversion'              => (float) ($g->conversion ?? 0),
+            'GSTDetails'              => $g->gst_details  ?? [],
+            'HSNDetails'              => $g->hsn_details  ?? [],
         ]))->values()->all();
     }
 
@@ -256,7 +275,7 @@ class TallyOutboundFormatter
             'AlterID'   => $c->alter_id,
             'Action'    => $c->action,
             'Name'      => $c->name,
-            'Parent'    => $c->parent,
+            'Parent'    => $c->parent_name ?? '',
             'Aliases'   => $c->aliases ?? [],
         ]))->values()->all();
     }
@@ -322,28 +341,40 @@ class TallyOutboundFormatter
     public function formatGodowns(Collection $godowns): array
     {
         return $godowns->map(fn ($g) => $this->dropNulls([
-            'AccobotId' => $g->id,
-            'TallyId'   => $g->tally_id,
-            'AlterID'   => $g->alter_id,
-            'Action'    => $g->action,
-            'Name'      => $g->name,
-            'Under'     => $g->under,
-            'Guid'      => $g->guid,
+            'AccobotId'  => $g->id,
+            'TallyId'    => $g->tally_id,
+            'AlterID'    => $g->alter_id,
+            'Action'     => $g->action,
+            'Guid'       => $g->guid       ?? '',
+            'Name'       => $g->name,
+            'Under'      => $g->under      ?? '',
+            'Aliases'    => $g->aliases    ?? [],
+            'HasNoSpace' => $this->boolStr($g->has_no_space),
+            'HasNoStock' => $this->boolStr($g->has_no_stock),
+            'IsExternal' => $this->boolStr($g->is_external),
+            'IsInternal' => $this->boolStr($g->is_internal),
+            'Address'    => $g->address    ?? [],
         ]))->values()->all();
     }
 
     public function formatUnits(Collection $units): array
     {
         return $units->map(fn ($u) => $this->dropNulls([
-            'AccobotId'     => $u->id,
-            'TallyId'       => $u->tally_id,
-            'AlterID'       => $u->alter_id,
-            'Action'        => $u->action,
-            'Name'          => $u->name,
-            'Symbol'        => $u->symbol,
-            'FormalName'    => $u->formal_name,
-            'DecimalPlaces' => $u->decimal_places,
-            'UQC'           => $u->uqc,
+            'AccobotId'            => $u->id,
+            'TallyId'              => $u->tally_id,
+            'AlterID'              => $u->alter_id,
+            'Action'               => $u->action,
+            'Guid'                 => $u->guid          ?? '',
+            'Name'                 => $u->name,
+            'Symbol'               => $u->symbol        ?? $u->name,
+            'FormalName'           => $u->formal_name   ?? '',
+            'OriginalName'         => $u->original_name ?? '',
+            'DecimalPlaces'        => (int) ($u->decimal_places ?? 0),
+            'UQC'                  => $u->uqc           ?? '',
+            'IsSimpleUnit'         => $this->boolStr($u->is_simple_unit ?? true),
+            'IsGSTExcluded'        => $u->is_gst_excluded ?? '',
+            'CONVERSION'           => (float) ($u->conversion ?? 0),
+            'ReportingUQCDetails'  => $u->reporting_uqc_details ?? [],
         ]))->values()->all();
     }
 

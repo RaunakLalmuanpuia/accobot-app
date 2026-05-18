@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class TallyLedgerGroup extends Model
 {
@@ -31,5 +32,20 @@ class TallyLedgerGroup extends Model
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);
+    }
+
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(TallyLedgerGroup::class, 'under_name', 'name');
+    }
+
+    public function children(): HasMany
+    {
+        return $this->hasMany(TallyLedgerGroup::class, 'under_name', 'name');
+    }
+
+    public function ledgers(): HasMany
+    {
+        return $this->hasMany(TallyLedger::class, 'group_name', 'name');
     }
 }

@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class TallyStockCategory extends Model
 {
@@ -12,7 +13,7 @@ class TallyStockCategory extends Model
 
     protected $fillable = [
         'tenant_id', 'tally_id', 'alter_id', 'action',
-        'name', 'parent', 'aliases',
+        'name', 'parent_name', 'aliases',
         'is_active', 'last_synced_at',
     ];
 
@@ -25,5 +26,20 @@ class TallyStockCategory extends Model
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);
+    }
+
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(TallyStockCategory::class, 'parent_name', 'name');
+    }
+
+    public function children(): HasMany
+    {
+        return $this->hasMany(TallyStockCategory::class, 'parent_name', 'name');
+    }
+
+    public function stockItems(): HasMany
+    {
+        return $this->hasMany(TallyStockItem::class, 'category_name', 'name');
     }
 }

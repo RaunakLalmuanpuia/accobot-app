@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('tally_godowns', function (Blueprint $table) {
@@ -18,8 +15,19 @@ return new class extends Migration
             $table->integer('alter_id')->default(0);
             $table->string('action')->default('Create');
             $table->string('guid')->nullable();
+
+            // Identity
             $table->string('name');
             $table->string('under')->nullable();
+            $table->jsonb('aliases')->nullable();
+
+            // Properties
+            $table->boolean('has_no_space')->default(false);
+            $table->boolean('has_no_stock')->default(false);
+            $table->boolean('is_external')->default(false);
+            $table->boolean('is_internal')->default(false);
+            $table->jsonb('address')->nullable();
+
             $table->boolean('is_active')->default(true);
             $table->timestamp('last_synced_at')->nullable();
             $table->timestamps();
@@ -29,9 +37,6 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('tally_godowns');

@@ -917,7 +917,7 @@ All pages show data to any user with `integrations.view`. Edit / New / Delete ac
 |------|-------|---------------|
 | LedgerGroups.vue | tally.ledger-groups.index | Ledger Groups — CRUD slide-over (max-w-lg, Tally Prime tally-row layout). Fields: Name*, Under (Parent)*, Nature of Group, Method to Allocate; Flags section: Is Addable, Is Sub Ledger, Is Deemed Positive, Used for Calculation (all Yes/No selects). |
 | Ledgers.vue | tally.ledgers.index | Full CRUD slide-over (max-w-2xl, Tally Prime tally-row layout) with context-sensitive sections derived from real connector payload (2026-05-16). Group constants: PARTY_GROUPS (Sundry Debtors/Creditors, Loans & Advances, Branch/Divisions, U Branch/Division); BANK_GROUPS (Bank Accounts, Bank OD A/c, Branch/Divisions, U Branch/Division); ADDRESS_GROUPS (superset of party+bank+loans+capital+current assets/liabilities+deposits+fixed assets+investments+indirect); GST_GROUPS (party+bank+capital+current+deposits+fixed+investments+loans+secured); TDS_GROUPS (wide — party+loans+branch+capital+current liabilities+deposits+direct expense/income+duties+fixed+indirect incomes+investments+misc+provisions+reserves+secured+suspense); TCS_GROUPS (direct incomes, duties & taxes, indirect incomes, sales); COST_CENTRE_GROUPS (direct/indirect expense/income, purchase/sales); PAYROLL_GROUPS (direct expenses); TAX_TYPE_GROUPS (duties & taxes); BILLWISE_GROUPS and CREDIT_GROUPS (Sundry Debtors/Creditors only); INVENTORY_GROUPS (purchase/sales only). Sections: **Name & Classification** (always) — Name*, Under*, MailingName, Aliases; **Behaviour** (always) — OpeningBalance+Dr/Cr, BillWise (party only), CreditPeriod/CreditLimit/CheckCreditDays (party only), InventoryAffected (purchase/sales), CostCentresApplicable (income/expense/purchase/sales), IsRelatedParty (party groups), ForPayroll (direct expenses); **GST/Tax Registration** (GST_GROUPS) — GSTIN, PAN, GSTRegType, GSTApplicableFrom, GSTTypeLedger, NameOnPAN, IsTransporter, IsSEZParty, IsRCMApplicable; **Tax Classification** (Duties & Taxes) — AppropriateFor (CGST/SGST/IGST/UTGST/Cess/CST/VAT/ServiceTax); **TDS** (TDS_GROUPS) — IsTDSApplicable → DeducteeType; **TCS** (TCS_GROUPS) — IsTCSApplicable; **Interest** (INTEREST_GROUPS) — IsInterestOn → TypeOfInterestOn, InterestOnBillWise, OverrideInterest, InclDayOfAddition/Deduction; **Address & Contact** (ADDRESS_GROUPS) — Address lines (dynamic), State, Country, PIN, Mobile, ContactPerson, Email, CC, Fax, Website; **Bank Configuration** (BANK_GROUPS) — flat fields (AccountHolderName, BranchName, SWIFTCode, BSRCode, DefaultTransferMode, ChequePrinting) + per-account list (BankName, IFSCode, AccountNumber, PaymentFavouring, TransactionName, TransactionType); **Opening Bill Allocations** (when BillWise=Yes) — per-bill tally-rows: BillName, Date, Amount+Dr/Cr inline; **Other** — Description, Notes. Custom sub-groups resolve to their parent standard group for section visibility. |
-| StockMasters.vue | tally.stock-masters.index | Stock Groups, Stock Categories, Godowns (tabs). Each has a CRUD slide-over (max-w-lg, Tally Prime tally-row layout). Stock Group: Name*, Parent Group, Aliases. Stock Category: Name*, Parent Category, Aliases. Godown: Name*, Under. |
+| StockMasters.vue | tally.stock-masters.index | Stock Groups, Stock Categories, Godowns (tabs). Each has a CRUD slide-over (max-w-lg, Tally Prime tally-row layout). **Stock Group**: Name*, Parent Group (select, defaults to "Primary"), Costing Method (select), Valuation Method (select), Batch-wise / Perishable / Add Quantities checkboxes, Aliases. **Stock Category**: Name*, Parent Category (select, defaults to "Primary"), Aliases. **Godown**: Name*, Under (select), Has No Space / Has No Stock / Is External / Is Internal checkboxes. Delete distinguishes synced vs unsynced: synced marks inactive + queues Tally deletion; unsynced hard-deletes. |
 | StockItems.vue | tally.stock-items.index | Stock Items — Name, Group, Category, Unit, Alternate Unit/Conversion, Type of Supply, GST details (HSN, IGST/SGST/CGST/CESS), MRP Rate, Costing/Valuation methods, Default Ledgers, Opening/Closing Balance, Inventory Behaviour (batch-wise, perishable, mfg-date, expiry flags), Batch Allocations with MFDON and ExpiryPeriod when applicable |
 | StatutoryMasters.vue | tally.statutory-masters.index | Statutory Masters — Name, Type, Reg. No., State Code, Reg. Type, PAN, TAN, Applicable From |
 | Payroll.vue | tally.payroll.index | 4 tabs with full CRUD, all slide-overs use Tally Prime tally-row layout. **Employee** (max-w-xl): sections — Basic Info (Name*, Employee No, Gender, Group, Designation, Function, Location), Dates (DOJ, Resignation, DOB), Personal (Father's/Spouse's Name), Contact (Phone, Email, Address lines, Aliases). **Employee Group** (max-w-lg): Name*, Under, Cost Centre Category, Aliases. **Pay Head** (max-w-lg): sections — Basic Info (Name*, Pay Type, Income Type, Parent Group), Calculation (Calculation Type, Calculation Period, Leave Type). **Attendance Type** (max-w-lg): Name*, Under, Attendance Type, Attendance Period, Aliases. |
@@ -1005,7 +1005,7 @@ The "Tally" link appears in the top navigation for any user with `integrations.v
 | `TallyConnectionController` | show(), save(), regenerateToken(), destroy(), testConnection(). Manages the `tally_connections` row for a tenant. |
 | `TallySyncController` | index() (builds Sync.vue props: latest logs per entity, all logs, report snapshots, stats including statutory_masters + employees counts), trigger() (logs a manual trigger entry). |
 | `TallyDataController` | Data browse: ledgerGroups(), ledgers(), stockItems(), vouchers(), voucherShow(), statutoryMasters(), payroll(). Passes `ledgerGroups` (id/name/under_name objects) for the ledger group dropdown; `stockGroupNames`, `stockCategoryNames` for other master dropdowns; `ledgers` (id/ledger_name/group_name objects), `stockItems` (id/name/hsn_code/unit_name/igst_rate/cess_rate/stock_group_name/mrp_rate objects), and `godowns` (id/name objects) for voucher form auto-fill and dropdowns. |
-| `TallyMasterCrudController` | 30 methods. store/update/destroy for: LedgerGroup, Ledger, StockGroup, StockCategory, StockItem, StatutoryMaster, EmployeeGroup, Employee, PayHead, AttendanceType. |
+| `TallyMasterCrudController` | 33 methods. store/update/destroy for: LedgerGroup, Ledger, StockGroup, StockCategory, StockItem, Godown, Unit, StatutoryMaster, EmployeeGroup, Employee, PayHead, AttendanceType. All mutations route through `logPayload()` → `auditMaster()` → `AuditEvent::log()`. Delete distinguishes synced (soft-delete + queue) from unsynced (hard-delete + purge queue) for all masters including Godown. |
 | `TallyVoucherCrudController` | 3 methods: voucherStore, voucherUpdate, voucherDestroy. Child entries (ledger + inventory) delete-reinserted in transaction on every update. `voucher_base_type` is the required primary field; `voucher_type` is nullable and inferred from `voucher_base_type` when not explicitly set. |
 
 ---
@@ -1017,9 +1017,9 @@ database/migrations/
   2026_04_19_000001_create_tally_connections_table.php
   2026_04_19_000002_create_tally_ledger_groups_table.php
   2026_04_19_000003_create_tally_ledgers_table.php  ← single source of truth; all payload columns included; do NOT add piecemeal migrations for this table
-  2026_04_19_000004_create_tally_stock_groups_table.php
-  2026_04_19_000005_create_tally_stock_categories_table.php
-  2026_04_19_000006_create_tally_stock_items_table.php
+  2026_04_19_000004_create_tally_stock_groups_table.php   ← single source of truth; all payload + inventory-behaviour columns included
+  2026_04_19_000005_create_tally_stock_categories_table.php  ← single source of truth
+  2026_04_19_000006_create_tally_stock_items_table.php   ← single source of truth; all payload columns included
   2026_04_19_000007_create_tally_vouchers_table.php
   2026_04_19_000008_create_tally_voucher_inventory_entries_table.php
   2026_04_19_000009_create_tally_voucher_ledger_entries_table.php
@@ -1031,27 +1031,32 @@ database/migrations/
   2026_04_19_000015_create_tally_pay_heads_table.php
   2026_04_19_000016_create_tally_attendance_types_table.php
   2026_04_19_000017_create_tally_employees_table.php
+  2026_04_21_085902_create_tally_godowns_table.php        ← single source of truth; all payload columns + unique(tenant_id, tally_id)
   2026_04_21_121802_create_tally_inbound_logs_table.php
+  2026_04_28_200001_create_tally_units_table.php          ← single source of truth; unique(tenant_id, tally_id) + unique(tenant_id, name)
   2026_05_07_000001_add_new_payload_fields_to_tally_tables.php  ← adds erp_id/is_sub_ledger/etc to ledger_groups; salary_details to employee_groups; contact/email/address/salary_details to employees; aliases to attendance_types
 
 app/Models/
   TallyConnection.php           — per-tenant auth token, auto-generates on creating()
-  TallyLedgerGroup.php
-  TallyLedger.php               — mapped_client_id / mapped_vendor_id FKs
-  TallyStockGroup.php
-  TallyStockCategory.php
-  TallyStockItem.php            — mapped_product_id FK
-  TallyVoucher.php              — mapped_invoice_id FK; has inventoryEntries / ledgerEntries relations
-  TallyVoucherInventoryEntry.php
-  TallyVoucherLedgerEntry.php
+  TallyLedgerGroup.php          — parent()/children() self-ref via under_name→name; ledgers() HasMany
+  TallyLedger.php               — group() BelongsTo LedgerGroup; voucherLedgerEntries()/vouchersAsParty() HasMany; mapped_client_id/mapped_vendor_id FKs
+  TallyStockGroup.php           — parent()/children() self-ref via parent_name→name; stockItems() HasMany
+  TallyStockCategory.php        — parent()/children() self-ref via parent_name→name; stockItems() HasMany
+  TallyUnit.php                 — stockItems() HasMany via unit_name→name; stockItemsAlternate() HasMany via alternate_unit→name
+  TallyGodown.php               — parent()/children() self-ref via under→name; inventoryEntries() HasMany via godown_name→name
+  TallyStockItem.php            — stockGroup()/stockCategory()/unit()/alternateUnit() BelongsTo; salesLedger()/purchaseLedger() BelongsTo TallyLedger; inventoryEntries() HasMany; mapped_product_id FK
+  TallyVoucher.php              — partyLedger() BelongsTo; inventoryEntries()/ledgerEntries()/employeeAllocations() HasMany; mapped_invoice_id/mapped_vendor_id FKs; type scopes: scopeSales/Purchase/CreditNote/DebitNote/Receipt/Payment/Contra/Journal/Payroll/Attendance/Inventory/Accounting
+  TallyVoucherInventoryEntry.php — voucher()/stockItem()/godown()/tradingLedger() BelongsTo — tradingLedger() resolves the sales_ledger string (Purchase uses this field too, named SalesLedger in Tally payload)
+  TallyVoucherLedgerEntry.php   — voucher()/ledger() BelongsTo
+  TallyVoucherEmployeeAllocation.php — voucher()/employee() BelongsTo
   TallyReport.php
   TallySyncLog.php
-  TallyInboundLog.php            — raw JSON of every inbound POST, stored before processing
+  TallyInboundLog.php           — raw JSON of every inbound POST, stored before processing
   TallyStatutoryMaster.php      — details cast to array, applicable_from cast to date
-  TallyEmployeeGroup.php
+  TallyEmployeeGroup.php        — parent()/children() self-ref via under→name; employees() HasMany via parent→name
+  TallyEmployee.php             — employeeGroup() BelongsTo via parent→name; addresses/salary_details cast to array; date fields cast to date
   TallyPayHead.php              — rate cast to float
   TallyAttendanceType.php
-  TallyEmployee.php             — addresses/salary_details cast to array; date fields cast to date
   Client.php                    — added tally_ledger_id FK + tallyLedger() relation
   Vendor.php                    — added tally_ledger_id FK + tallyLedger() relation
   Product.php                   — added tally_stock_item_id FK + tallyStockItem() relation

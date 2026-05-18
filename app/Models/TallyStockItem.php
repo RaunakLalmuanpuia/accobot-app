@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class TallyStockItem extends Model
 {
@@ -96,6 +97,41 @@ class TallyStockItem extends Model
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);
+    }
+
+    public function stockGroup(): BelongsTo
+    {
+        return $this->belongsTo(TallyStockGroup::class, 'stock_group_name', 'name');
+    }
+
+    public function stockCategory(): BelongsTo
+    {
+        return $this->belongsTo(TallyStockCategory::class, 'category_name', 'name');
+    }
+
+    public function unit(): BelongsTo
+    {
+        return $this->belongsTo(TallyUnit::class, 'unit_name', 'name');
+    }
+
+    public function alternateUnit(): BelongsTo
+    {
+        return $this->belongsTo(TallyUnit::class, 'alternate_unit', 'name');
+    }
+
+    public function salesLedger(): BelongsTo
+    {
+        return $this->belongsTo(TallyLedger::class, 'sales_ledger', 'ledger_name');
+    }
+
+    public function purchaseLedger(): BelongsTo
+    {
+        return $this->belongsTo(TallyLedger::class, 'purchase_ledger', 'ledger_name');
+    }
+
+    public function inventoryEntries(): HasMany
+    {
+        return $this->hasMany(TallyVoucherInventoryEntry::class, 'tally_stock_item_id');
     }
 
     public function mappedProduct(): BelongsTo

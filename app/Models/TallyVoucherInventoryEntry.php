@@ -44,4 +44,14 @@ class TallyVoucherInventoryEntry extends Model
     {
         return $this->belongsTo(TallyStockItem::class, 'tally_stock_item_id');
     }
+
+    public function godown(): BelongsTo
+    {
+        return $this->belongsTo(TallyGodown::class, 'godown_name', 'name');
+    }
+
+    public function tradingLedger(): BelongsTo
+    {
+        return $this->belongsTo(TallyLedger::class, 'sales_ledger', 'ledger_name');
+    }
 }

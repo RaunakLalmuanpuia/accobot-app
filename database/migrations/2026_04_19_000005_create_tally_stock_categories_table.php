@@ -14,8 +14,11 @@ return new class extends Migration
             $table->integer('tally_id');
             $table->integer('alter_id');
             $table->string('action')->default('Create');
+
             $table->string('name');
             $table->string('parent_name')->nullable();
+            $table->jsonb('aliases')->nullable();
+
             $table->boolean('is_active')->default(true);
             $table->timestamp('last_synced_at')->nullable();
             $table->timestamps();

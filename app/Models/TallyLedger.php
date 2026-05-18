@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class TallyLedger extends Model
 {
@@ -107,6 +108,21 @@ class TallyLedger extends Model
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);
+    }
+
+    public function group(): BelongsTo
+    {
+        return $this->belongsTo(TallyLedgerGroup::class, 'group_name', 'name');
+    }
+
+    public function voucherLedgerEntries(): HasMany
+    {
+        return $this->hasMany(TallyVoucherLedgerEntry::class, 'tally_ledger_id');
+    }
+
+    public function vouchersAsParty(): HasMany
+    {
+        return $this->hasMany(TallyVoucher::class, 'party_tally_ledger_id');
     }
 
     public function mappedClient(): BelongsTo

@@ -21,6 +21,7 @@ use App\Models\TallyStockCategory;
 use App\Models\TallyStockGroup;
 use App\Models\TallyStockItem;
 use App\Models\TallyStatutoryMaster;
+use App\Models\TallyUnit;
 use App\Models\TallySyncLog;
 use App\Models\TallyVoucher;
 use App\Models\TallyVoucherEmployeeAllocation;
@@ -200,7 +201,7 @@ class TallySeeder extends Seeder
         ] as [$id, $name, $parent]) {
             $stockGroups[$id] = TallyStockGroup::firstOrCreate(
                 ['tenant_id' => $tid, 'tally_id' => $id],
-                ['alter_id' => $id, 'name' => $name, 'parent' => $parent, 'is_active' => true, 'last_synced_at' => now()->subHours(1)]
+                ['alter_id' => $id, 'name' => $name, 'parent_name' => $parent, 'costing_method' => 'Avg. Cost', 'valuation_method' => 'Avg. Price', 'is_addable' => true, 'is_active' => true, 'last_synced_at' => now()->subHours(1)]
             );
         }
 
@@ -213,18 +214,53 @@ class TallySeeder extends Seeder
         ] as [$id, $name]) {
             $stockCategories[$id] = TallyStockCategory::firstOrCreate(
                 ['tenant_id' => $tid, 'tally_id' => $id],
-                ['alter_id' => $id, 'name' => $name, 'parent' => null, 'is_active' => true, 'last_synced_at' => now()->subHours(1)]
+                ['alter_id' => $id, 'name' => $name, 'parent_name' => null, 'is_active' => true, 'last_synced_at' => now()->subHours(1)]
+            );
+        }
+
+        // ── Units ─────────────────────────────────────────────────────────
+        foreach ([
+            [501, 'Nos',  'Nos',  'Numbers',  0, 'NOS-NUMBERS',  true],
+            [502, 'Pkt',  'Pkt',  'Packets',  0, 'PAC-PACKETS',  true],
+            [503, 'Box',  'Box',  'Box Unit', 0, 'BOX-BOX',      true],
+            [504, 'Kgs',  'Kgs',  'Kilograms',3, 'KGS-KILOGRAMS',true],
+            [505, 'Ltrs', 'Ltrs', 'Litres',   3, 'LTR-LITRES',   true],
+        ] as [$id, $name, $symbol, $formalName, $decimals, $uqc, $isSimple]) {
+            TallyUnit::firstOrCreate(
+                ['tenant_id' => $tid, 'tally_id' => $id],
+                [
+                    'alter_id'       => $id,
+                    'name'           => $name,
+                    'symbol'         => $symbol,
+                    'formal_name'    => $formalName,
+                    'decimal_places' => $decimals,
+                    'uqc'            => $uqc,
+                    'is_simple_unit' => $isSimple,
+                    'is_active'      => true,
+                    'last_synced_at' => now()->subHours(1),
+                ]
             );
         }
 
         // ── Godowns ───────────────────────────────────────────────────────
         foreach ([
-            [1, 'Main Godown',      null],
-            [2, 'Secondary Godown', 'Main Godown'],
-        ] as [$id, $name, $under]) {
+            [1, 'Main Godown',      null,           false, false],
+            [2, 'Secondary Godown', 'Main Godown',  false, false],
+        ] as [$id, $name, $under, $hasNoSpace, $hasNoStock]) {
             TallyGodown::firstOrCreate(
                 ['tenant_id' => $tid, 'tally_id' => $id],
-                ['alter_id' => $id, 'guid' => 'GUID-GDN-00' . $id, 'name' => $name, 'under' => $under, 'is_active' => true, 'last_synced_at' => now()->subHours(1)]
+                [
+                    'alter_id'      => $id,
+                    'guid'          => 'GUID-GDN-00' . $id,
+                    'name'          => $name,
+                    'under'         => $under,
+                    'has_no_space'  => $hasNoSpace,
+                    'has_no_stock'  => $hasNoStock,
+                    'is_external'   => false,
+                    'is_internal'   => false,
+                    'is_active'     => true,
+                    'last_synced_at'=> now()->subHours(1),
+                ]
             );
         }
 
@@ -1189,11 +1225,11 @@ class TallySeeder extends Seeder
 
         TallyStockGroup::firstOrCreate(
             ['tenant_id' => $tid, 'tally_id' => 10],
-            ['alter_id' => 10, 'name' => 'Network Equipment', 'parent' => null, 'is_active' => true, 'last_synced_at' => now()->subHours(1)]
+            ['alter_id' => 10, 'name' => 'Network Equipment', 'parent_name' => null, 'costing_method' => 'Avg. Cost', 'valuation_method' => 'Avg. Price', 'is_addable' => true, 'is_active' => true, 'last_synced_at' => now()->subHours(1)]
         );
         TallyStockCategory::firstOrCreate(
             ['tenant_id' => $tid, 'tally_id' => 5],
-            ['alter_id' => 5, 'name' => 'Lease Line Services', 'parent' => null, 'is_active' => true, 'last_synced_at' => now()->subHours(1)]
+            ['alter_id' => 5, 'name' => 'Lease Line Services', 'parent_name' => null, 'is_active' => true, 'last_synced_at' => now()->subHours(1)]
         );
 
         $leaseLineItem = TallyStockItem::firstOrCreate(

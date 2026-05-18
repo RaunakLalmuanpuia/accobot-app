@@ -28,7 +28,7 @@ const filteredGroups = computed(() => {
     if (!q) return props.stockGroups
     return props.stockGroups.filter(g =>
         g.name.toLowerCase().includes(q) ||
-        (g.parent ?? '').toLowerCase().includes(q)
+        (g.parent_name ?? '').toLowerCase().includes(q)
     )
 })
 
@@ -40,7 +40,7 @@ const filteredCategories = computed(() => {
     if (!q) return props.stockCategories
     return props.stockCategories.filter(c =>
         c.name.toLowerCase().includes(q) ||
-        (c.parent ?? '').toLowerCase().includes(q)
+        (c.parent_name ?? '').toLowerCase().includes(q)
     )
 })
 
@@ -58,7 +58,7 @@ const filteredGodowns = computed(() => {
 
 const godownModal     = ref(null)
 const isEditingGodown = computed(() => godownModal.value && godownModal.value !== 'create')
-const godownForm      = useForm({ name: '', under: '' })
+const godownForm      = useForm({ name: '', under: '', has_no_space: false, has_no_stock: false, is_external: false, is_internal: false })
 
 const godownUnderOptions = computed(() =>
     props.godowns
@@ -73,8 +73,12 @@ function openCreateGodown() {
 }
 
 function openEditGodown(godown) {
-    godownForm.name  = godown.name
-    godownForm.under = godown.under ?? ''
+    godownForm.name         = godown.name
+    godownForm.under        = godown.under ?? ''
+    godownForm.has_no_space = !!godown.has_no_space
+    godownForm.has_no_stock = !!godown.has_no_stock
+    godownForm.is_external  = !!godown.is_external
+    godownForm.is_internal  = !!godown.is_internal
     godownForm.clearErrors()
     godownModal.value = godown
 }
@@ -97,7 +101,10 @@ function submitGodown() {
 }
 
 function destroyGodown(godown) {
-    if (!confirm(`Delete "${godown.name}"?`)) return
+    const msg = godown.tally_id
+        ? `Mark "${godown.name}" inactive and queue deletion in Tally?`
+        : `Delete "${godown.name}"? It was never synced to Tally.`
+    if (!confirm(msg)) return
     router.delete(route('tally.godowns.destroy', { tenant: props.tenant.id, godown: godown.id }))
 }
 
@@ -123,7 +130,11 @@ function aliasText(aliases) {
 const groupModal     = ref(null)
 const isEditingGroup = computed(() => groupModal.value && groupModal.value !== 'create')
 
-const groupForm = useForm({ name: '', parent: '', aliases: [] })
+const groupForm = useForm({
+    name: '', parent_name: '', aliases: [],
+    costing_method: '', valuation_method: '',
+    is_batch_wise_on: false, is_perishable_on: false, is_addable: false,
+})
 
 const groupParentOptions = computed(() =>
     props.stockGroups.filter(g => g.is_active && g.id !== groupModal.value?.id).map(g => g.name)
@@ -139,9 +150,14 @@ function openCreateGroup() {
 }
 
 function openEditGroup(group) {
-    groupForm.name    = group.name
-    groupForm.parent  = group.parent ?? ''
-    groupForm.aliases = group.aliases ? JSON.parse(JSON.stringify(group.aliases)) : []
+    groupForm.name             = group.name
+    groupForm.parent_name      = group.parent_name ?? ''
+    groupForm.aliases          = group.aliases ? JSON.parse(JSON.stringify(group.aliases)) : []
+    groupForm.costing_method   = group.costing_method  ?? ''
+    groupForm.valuation_method = group.valuation_method ?? ''
+    groupForm.is_batch_wise_on = !!group.is_batch_wise_on
+    groupForm.is_perishable_on = !!group.is_perishable_on
+    groupForm.is_addable       = !!group.is_addable
     groupForm.clearErrors()
     groupModal.value = group
 }
@@ -175,7 +191,7 @@ function destroyGroup(group) {
 const catModal     = ref(null)
 const isEditingCat = computed(() => catModal.value && catModal.value !== 'create')
 
-const catForm = useForm({ name: '', parent: '', aliases: [] })
+const catForm = useForm({ name: '', parent_name: '', aliases: [] })
 
 const catParentOptions = computed(() =>
     props.stockCategories.filter(c => c.is_active && c.id !== catModal.value?.id).map(c => c.name)
@@ -191,9 +207,9 @@ function openCreateCat() {
 }
 
 function openEditCat(cat) {
-    catForm.name    = cat.name
-    catForm.parent  = cat.parent ?? ''
-    catForm.aliases = cat.aliases ? JSON.parse(JSON.stringify(cat.aliases)) : []
+    catForm.name        = cat.name
+    catForm.parent_name = cat.parent_name ?? ''
+    catForm.aliases     = cat.aliases ? JSON.parse(JSON.stringify(cat.aliases)) : []
     catForm.clearErrors()
     catModal.value = cat
 }
@@ -319,7 +335,7 @@ function destroyCat(cat) {
                                     {{ aliasText(group.aliases) }}
                                 </p>
                             </div>
-                            <div class="col-span-3 text-sm text-gray-500 truncate">{{ group.parent ?? '—' }}</div>
+                            <div class="col-span-3 text-sm text-gray-500 truncate">{{ group.parent_name ?? '—' }}</div>
                             <div class="col-span-1 text-center">
                                 <span :class="group.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'"
                                       class="text-xs px-2 py-0.5 rounded-full font-medium">
@@ -371,7 +387,7 @@ function destroyCat(cat) {
                                     {{ aliasText(cat.aliases) }}
                                 </p>
                             </div>
-                            <div class="col-span-3 text-sm text-gray-500">{{ cat.parent ?? '—' }}</div>
+                            <div class="col-span-3 text-sm text-gray-500">{{ cat.parent_name ?? '—' }}</div>
                             <div class="col-span-1 text-center">
                                 <span :class="cat.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'"
                                       class="text-xs px-2 py-0.5 rounded-full font-medium">
@@ -468,11 +484,55 @@ function destroyCat(cat) {
                     <div class="tally-row">
                         <span class="tally-label">Parent Group</span>
                         <div class="tally-input">
-                            <select v-model="groupForm.parent" class="tally-field">
-                                <option value="">— None —</option>
+                            <select v-model="groupForm.parent_name" class="tally-field">
+                                <option value="">Primary</option>
                                 <option v-for="n in groupParentOptions" :key="n" :value="n">{{ n }}</option>
                             </select>
                         </div>
+                    </div>
+                    <div class="tally-row">
+                        <span class="tally-label">Costing Method</span>
+                        <select v-model="groupForm.costing_method" class="tally-input tally-field">
+                            <option value="">— Default —</option>
+                            <option>Avg. Cost</option>
+                            <option>FIFO</option>
+                            <option>LIFO Annual</option>
+                            <option>LIFO Perpetual</option>
+                            <option>Standard Cost</option>
+                        </select>
+                    </div>
+                    <div class="tally-row">
+                        <span class="tally-label">Valuation Method</span>
+                        <select v-model="groupForm.valuation_method" class="tally-input tally-field">
+                            <option value="">— Default —</option>
+                            <option>Avg. Price</option>
+                            <option>FIFO</option>
+                            <option>LIFO Annual</option>
+                            <option>LIFO Perpetual</option>
+                            <option>Standard Price</option>
+                            <option>At Zero Price</option>
+                        </select>
+                    </div>
+                    <div class="tally-row">
+                        <span class="tally-label">Batch-wise</span>
+                        <label class="tally-input flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" v-model="groupForm.is_batch_wise_on" class="rounded border-gray-300 text-violet-600" />
+                            <span class="text-sm text-gray-600">Track batches / lots</span>
+                        </label>
+                    </div>
+                    <div class="tally-row">
+                        <span class="tally-label">Perishable</span>
+                        <label class="tally-input flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" v-model="groupForm.is_perishable_on" class="rounded border-gray-300 text-violet-600" />
+                            <span class="text-sm text-gray-600">Items have expiry date</span>
+                        </label>
+                    </div>
+                    <div class="tally-row">
+                        <span class="tally-label">Add Quantities</span>
+                        <label class="tally-input flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" v-model="groupForm.is_addable" class="rounded border-gray-300 text-violet-600" />
+                            <span class="text-sm text-gray-600">Quantities of sub-groups are added</span>
+                        </label>
                     </div>
 
                     <div class="tally-row items-start">
@@ -528,11 +588,38 @@ function destroyCat(cat) {
                         <span class="tally-label">Under</span>
                         <div class="tally-input">
                             <select v-model="godownForm.under" class="tally-field">
-                                <option value="">— Select —</option>
-                                <option value="Primary">Primary</option>
+                                <option value="">Primary</option>
                                 <option v-for="n in godownUnderOptions" :key="n" :value="n">{{ n }}</option>
                             </select>
                         </div>
+                    </div>
+                    <div class="tally-row">
+                        <span class="tally-label">No Storage Space</span>
+                        <label class="tally-input flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" v-model="godownForm.has_no_space" class="rounded border-gray-300 text-violet-600" />
+                            <span class="text-sm text-gray-600">Godown has no storage space</span>
+                        </label>
+                    </div>
+                    <div class="tally-row">
+                        <span class="tally-label">No Stock</span>
+                        <label class="tally-input flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" v-model="godownForm.has_no_stock" class="rounded border-gray-300 text-violet-600" />
+                            <span class="text-sm text-gray-600">Godown holds no physical stock</span>
+                        </label>
+                    </div>
+                    <div class="tally-row">
+                        <span class="tally-label">External</span>
+                        <label class="tally-input flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" v-model="godownForm.is_external" class="rounded border-gray-300 text-violet-600" />
+                            <span class="text-sm text-gray-600">External godown (out of premises)</span>
+                        </label>
+                    </div>
+                    <div class="tally-row">
+                        <span class="tally-label">Internal</span>
+                        <label class="tally-input flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" v-model="godownForm.is_internal" class="rounded border-gray-300 text-violet-600" />
+                            <span class="text-sm text-gray-600">Internal godown (within premises)</span>
+                        </label>
                     </div>
 
                     <div class="flex gap-3 px-4 py-4">
@@ -575,8 +662,8 @@ function destroyCat(cat) {
                     <div class="tally-row">
                         <span class="tally-label">Parent Category</span>
                         <div class="tally-input">
-                            <select v-model="catForm.parent" class="tally-field">
-                                <option value="">— None —</option>
+                            <select v-model="catForm.parent_name" class="tally-field">
+                                <option value="">Primary</option>
                                 <option v-for="n in catParentOptions" :key="n" :value="n">{{ n }}</option>
                             </select>
                         </div>

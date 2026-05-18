@@ -14,16 +14,28 @@ return new class extends Migration
             $table->integer('tally_id')->nullable();
             $table->integer('alter_id')->default(0);
             $table->string('action')->default('Create');
+            $table->string('guid')->nullable();
+
+            // Identity
             $table->string('name');
             $table->string('symbol')->nullable();
             $table->string('formal_name')->nullable();
+            $table->string('original_name')->nullable();
             $table->integer('decimal_places')->default(0);
             $table->string('uqc')->nullable();
+
+            // Unit behaviour
+            $table->boolean('is_simple_unit')->default(true);
+            $table->string('is_gst_excluded')->nullable();
+            $table->decimal('conversion', 10, 4)->nullable();
+            $table->jsonb('reporting_uqc_details')->nullable();
+
             $table->boolean('is_active')->default(true);
             $table->timestamp('last_synced_at')->nullable();
             $table->timestamps();
 
             $table->unique(['tenant_id', 'tally_id']);
+            $table->unique(['tenant_id', 'name'], 'tally_units_tenant_name_unique');
             $table->index('tenant_id');
         });
     }

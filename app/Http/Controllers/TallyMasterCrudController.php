@@ -312,11 +312,20 @@ class TallyMasterCrudController extends Controller
     public function stockGroupStore(Request $request, Tenant $tenant)
     {
         $data = $request->validate([
-            'name'            => 'required|string|max:255',
-            'parent'          => 'nullable|string|max:255',
-            'aliases'         => 'nullable|array',
-            'aliases.*.Alias' => 'nullable|string|max:255',
+            'name'              => 'required|string|max:255',
+            'parent_name'       => 'nullable|string|max:255',
+            'aliases'           => 'nullable|array',
+            'aliases.*.Alias'   => 'nullable|string|max:255',
+            'costing_method'    => 'nullable|string|max:50',
+            'valuation_method'  => 'nullable|string|max:50',
+            'is_batch_wise_on'  => 'nullable|boolean',
+            'is_perishable_on'  => 'nullable|boolean',
+            'is_addable'        => 'nullable|boolean',
         ]);
+
+        $data['is_batch_wise_on'] = $data['is_batch_wise_on'] ?? false;
+        $data['is_perishable_on'] = $data['is_perishable_on'] ?? false;
+        $data['is_addable']       = $data['is_addable']       ?? false;
 
         $record = TallyStockGroup::create(array_merge($data, [
             'tenant_id' => $tenant->id,
@@ -332,11 +341,20 @@ class TallyMasterCrudController extends Controller
         abort_unless($stockGroup->tenant_id === $tenant->id, 404);
 
         $data = $request->validate([
-            'name'            => 'required|string|max:255',
-            'parent'          => 'nullable|string|max:255',
-            'aliases'         => 'nullable|array',
-            'aliases.*.Alias' => 'nullable|string|max:255',
+            'name'              => 'required|string|max:255',
+            'parent_name'       => 'nullable|string|max:255',
+            'aliases'           => 'nullable|array',
+            'aliases.*.Alias'   => 'nullable|string|max:255',
+            'costing_method'    => 'nullable|string|max:50',
+            'valuation_method'  => 'nullable|string|max:50',
+            'is_batch_wise_on'  => 'nullable|boolean',
+            'is_perishable_on'  => 'nullable|boolean',
+            'is_addable'        => 'nullable|boolean',
         ]);
+
+        $data['is_batch_wise_on'] = $data['is_batch_wise_on'] ?? false;
+        $data['is_perishable_on'] = $data['is_perishable_on'] ?? false;
+        $data['is_addable']       = $data['is_addable']       ?? false;
 
         $stockGroup->update($data);
 
@@ -370,7 +388,7 @@ class TallyMasterCrudController extends Controller
     {
         $data = $request->validate([
             'name'            => 'required|string|max:255',
-            'parent'          => 'nullable|string|max:255',
+            'parent_name'     => 'nullable|string|max:255',
             'aliases'         => 'nullable|array',
             'aliases.*.Alias' => 'nullable|string|max:255',
         ]);
@@ -390,7 +408,7 @@ class TallyMasterCrudController extends Controller
 
         $data = $request->validate([
             'name'            => 'required|string|max:255',
-            'parent'          => 'nullable|string|max:255',
+            'parent_name'     => 'nullable|string|max:255',
             'aliases'         => 'nullable|array',
             'aliases.*.Alias' => 'nullable|string|max:255',
         ]);
@@ -1081,17 +1099,26 @@ class TallyMasterCrudController extends Controller
     public function godownStore(Request $request, Tenant $tenant)
     {
         $data = $request->validate([
-            'name'  => 'required|string|max:255',
-            'under' => 'nullable|string|max:255',
+            'name'         => 'required|string|max:255',
+            'under'        => 'nullable|string|max:255',
+            'has_no_space' => 'nullable|boolean',
+            'has_no_stock' => 'nullable|boolean',
+            'is_external'  => 'nullable|boolean',
+            'is_internal'  => 'nullable|boolean',
         ]);
+
+        $data['has_no_space'] = $data['has_no_space'] ?? false;
+        $data['has_no_stock'] = $data['has_no_stock'] ?? false;
+        $data['is_external']  = $data['is_external']  ?? false;
+        $data['is_internal']  = $data['is_internal']  ?? false;
 
         $record = TallyGodown::create(array_merge($data, [
             'tenant_id' => $tenant->id,
             'is_active' => true,
         ]));
 
-        AuditEvent::log('tally.godown.created', ['id' => $record->id, 'name' => $record->name]);
-        return back()->with('success', 'Godown created.');
+        $this->logPayload($record, 'created');
+        return back()->with('success', 'Godown created and queued for Tally sync.');
     }
 
     public function godownUpdate(Request $request, Tenant $tenant, TallyGodown $godown)
@@ -1099,9 +1126,18 @@ class TallyMasterCrudController extends Controller
         abort_unless($godown->tenant_id === $tenant->id, 404);
 
         $data = $request->validate([
-            'name'  => 'required|string|max:255',
-            'under' => 'nullable|string|max:255',
+            'name'         => 'required|string|max:255',
+            'under'        => 'nullable|string|max:255',
+            'has_no_space' => 'nullable|boolean',
+            'has_no_stock' => 'nullable|boolean',
+            'is_external'  => 'nullable|boolean',
+            'is_internal'  => 'nullable|boolean',
         ]);
+
+        $data['has_no_space'] = $data['has_no_space'] ?? false;
+        $data['has_no_stock'] = $data['has_no_stock'] ?? false;
+        $data['is_external']  = $data['is_external']  ?? false;
+        $data['is_internal']  = $data['is_internal']  ?? false;
 
         $godown->update($data);
 
@@ -1109,17 +1145,24 @@ class TallyMasterCrudController extends Controller
             return back()->with('info', 'No changes detected.');
         }
 
-        AuditEvent::log('tally.godown.updated', ['id' => $godown->id, 'name' => $godown->name]);
-        return back()->with('success', 'Godown updated.');
+        $this->logPayload($godown, 'updated');
+        return back()->with('success', 'Godown updated and queued for Tally sync.');
     }
 
     public function godownDestroy(Tenant $tenant, TallyGodown $godown)
     {
         abort_unless($godown->tenant_id === $tenant->id, 404);
 
-        $godown->delete();
-        AuditEvent::log('tally.godown.deleted', ['id' => $godown->id]);
-        return back()->with('success', 'Godown deleted.');
+        if (! $godown->tally_id) {
+            $this->purgeFromQueue($tenant->id, TallyGodown::class, $godown->id);
+            $godown->delete();
+            AuditEvent::log('tally.godown.deleted', ['id' => $godown->id]);
+            return back()->with('success', 'Godown deleted (was never synced to Tally).');
+        }
+
+        $godown->update(['is_active' => false]);
+        $this->logPayload($godown, 'deleted');
+        return back()->with('success', 'Godown marked inactive and queued for deletion in Tally.');
     }
 
     // ── Units ──────────────────────────────────────────────────────────────────
@@ -1139,7 +1182,8 @@ class TallyMasterCrudController extends Controller
             'uqc'            => 'nullable|string|max:100',
         ]);
 
-        $data['symbol'] = $data['name'];
+        $data['symbol']         = $data['name'];
+        $data['decimal_places'] = $data['decimal_places'] ?? 0;
 
         $record = TallyUnit::create(array_merge($data, [
             'tenant_id' => $tenant->id,
@@ -1167,7 +1211,8 @@ class TallyMasterCrudController extends Controller
             'uqc'            => 'nullable|string|max:100',
         ]);
 
-        $data['symbol'] = $data['name'];
+        $data['symbol']         = $data['name'];
+        $data['decimal_places'] = $data['decimal_places'] ?? 0;
 
         $unit->update($data);
 
@@ -1221,6 +1266,7 @@ class TallyMasterCrudController extends Controller
             $record instanceof TallyPayHead         => 'pay_head',
             $record instanceof TallyAttendanceType  => 'attendance_type',
             $record instanceof TallyUnit            => 'unit',
+            $record instanceof TallyGodown          => 'godown',
             default                                 => 'master',
         };
 
@@ -1250,6 +1296,7 @@ class TallyMasterCrudController extends Controller
             $record instanceof TallyPayHead         => $this->formatter->formatPayHeads($collection),
             $record instanceof TallyAttendanceType  => $this->formatter->formatAttendanceTypes($collection),
             $record instanceof TallyUnit            => $this->formatter->formatUnits($collection),
+            $record instanceof TallyGodown          => $this->formatter->formatGodowns($collection),
             default                                 => [],
         };
 

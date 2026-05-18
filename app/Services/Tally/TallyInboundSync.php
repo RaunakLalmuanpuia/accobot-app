@@ -287,15 +287,36 @@ class TallyInboundSync
                 }
 
                 $data = [
-                    'tenant_id'            => $conn->tenant_id,
-                    'tally_id'             => $tallyId,
-                    'alter_id'             => $alterId,
-                    'action'               => $action,
-                    'name'    => $item['Name'] ?? '',
-                    'parent'  => $item['Parent'] ?? $item['ParentName'] ?? null,
-                    'aliases' => $item['Aliases'] ?? null,
-                    'is_active'            => true,
-                    'last_synced_at'       => now(),
+                    'tenant_id'      => $conn->tenant_id,
+                    'tally_id'       => $tallyId,
+                    'alter_id'       => $alterId,
+                    'action'         => $action,
+                    // Identity
+                    'name'           => $item['Name'] ?? '',
+                    'parent_name'    => ($item['Parent'] ?? $item['ParentName'] ?? null) ?: null,
+                    'aliases'        => $item['Aliases'] ?? null,
+                    // Inventory Behaviour (cascades to items in this group)
+                    'costing_method'      => ($item['CostingMethod'] ?? null) ?: null,
+                    'valuation_method'    => ($item['ValuationMethod'] ?? null) ?: null,
+                    'is_batch_wise_on'    => $this->parseBool($item['IsBatchWiseOn'] ?? null) ?? false,
+                    'is_perishable_on'    => $this->parseBool($item['IsPerishableOn'] ?? null) ?? false,
+                    'is_addable'          => $this->parseBool($item['IsAddable'] ?? null) ?? false,
+                    'ignore_phys_diff'    => $this->parseBool($item['IgnorePhysicalDifference'] ?? null) ?? false,
+                    'ignore_neg_stock'    => $this->parseBool($item['IgnoreNegativeStock'] ?? null) ?? false,
+                    'treat_sales_as_mfg'  => $this->parseBool($item['TreatSalesAsManufactured'] ?? null) ?? false,
+                    'treat_purch_consumed'=> $this->parseBool($item['TreatPurchasesAsConsumed'] ?? null) ?? false,
+                    'treat_rejects_scrap' => $this->parseBool($item['TreatRejectsAsScrap'] ?? null) ?? false,
+                    'has_mfg_date'        => $this->parseBool($item['HasMfgDate'] ?? null) ?? false,
+                    'allow_expired_items' => $this->parseBool($item['AllowUseOfExpiredItems'] ?? null) ?? false,
+                    'ignore_batches'      => $this->parseBool($item['IgnoreBatches'] ?? null) ?? false,
+                    'ignore_godowns'      => $this->parseBool($item['IgnoreGodowns'] ?? null) ?? false,
+                    'denominator'         => isset($item['Denominator']) ? (int) $item['Denominator'] : 1,
+                    'conversion'          => isset($item['Conversion']) ? (float) $item['Conversion'] : null,
+                    // GST / HSN arrays
+                    'gst_details'    => $item['GSTDetails'] ?? null,
+                    'hsn_details'    => $item['HSNDetails'] ?? null,
+                    'is_active'      => true,
+                    'last_synced_at' => now(),
                 ];
 
                 if ($existing) { $existing->update($data); $log->records_updated++; }
@@ -330,14 +351,14 @@ class TallyInboundSync
                 }
 
                 $data = [
-                    'tenant_id'    => $conn->tenant_id,
-                    'tally_id'     => $tallyId,
-                    'alter_id'     => $alterId,
-                    'action'       => $action,
-                    'name'    => $item['Name'] ?? '',
-                    'parent'  => $item['Parent'] ?? $item['ParentName'] ?? null,
-                    'aliases' => $item['Aliases'] ?? null,
-                    'is_active'    => true,
+                    'tenant_id'      => $conn->tenant_id,
+                    'tally_id'       => $tallyId,
+                    'alter_id'       => $alterId,
+                    'action'         => $action,
+                    'name'           => $item['Name'] ?? '',
+                    'parent_name'    => ($item['Parent'] ?? $item['ParentName'] ?? null) ?: null,
+                    'aliases'        => $item['Aliases'] ?? null,
+                    'is_active'      => true,
                     'last_synced_at' => now(),
                 ];
 
@@ -948,8 +969,16 @@ class TallyInboundSync
                     'alter_id'       => $alterId,
                     'action'         => $action,
                     'guid'           => $item['Guid'] ?? null,
+                    // Identity
                     'name'           => $item['Name'] ?? '',
-                    'under'          => $item['Under'] ?? $item['UnderName'] ?? null,
+                    'under'          => ($item['Under'] ?? $item['UnderName'] ?? null) ?: null,
+                    'aliases'        => $item['Aliases'] ?? null,
+                    // Properties
+                    'has_no_space'   => $this->parseBool($item['HasNoSpace'] ?? null) ?? false,
+                    'has_no_stock'   => $this->parseBool($item['HasNoStock'] ?? null) ?? false,
+                    'is_external'    => $this->parseBool($item['IsExternal'] ?? null) ?? false,
+                    'is_internal'    => $this->parseBool($item['IsInternal'] ?? null) ?? false,
+                    'address'        => $item['Address'] ?? null,
                     'is_active'      => true,
                     'last_synced_at' => now(),
                 ];
@@ -990,11 +1019,17 @@ class TallyInboundSync
                     'tally_id'       => $tallyId,
                     'alter_id'       => $alterId,
                     'action'         => $action,
+                    'guid'           => $item['Guid'] ?? null,
                     'name'           => $item['Name'] ?? '',
                     'symbol'         => $item['Symbol'] ?? null,
-                    'formal_name'    => $item['FormalName'] ?? null,
+                    'formal_name'    => ($item['FormalName'] ?? null) ?: null,
+                    'original_name'  => ($item['OriginalName'] ?? null) ?: null,
                     'decimal_places' => (int) ($item['DecimalPlaces'] ?? 0),
-                    'uqc'            => $item['UQC'] ?? null,
+                    'uqc'            => ($item['UQC'] ?? null) ?: null,
+                    'is_simple_unit' => $this->parseBool($item['IsSimpleUnit'] ?? null) ?? true,
+                    'is_gst_excluded'=> ($item['IsGSTExcluded'] ?? null) ?: null,
+                    'conversion'     => isset($item['CONVERSION']) ? (float) $item['CONVERSION'] : null,
+                    'reporting_uqc_details' => $item['ReportingUQCDetails'] ?? null,
                     'is_active'      => true,
                     'last_synced_at' => now(),
                 ];

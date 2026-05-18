@@ -35,4 +35,9 @@ class TallyEmployee extends Model
     {
         return $this->belongsTo(Tenant::class);
     }
+
+    public function employeeGroup(): BelongsTo
+    {
+        return $this->belongsTo(TallyEmployeeGroup::class, 'parent', 'name');
+    }
 }
