@@ -75,7 +75,7 @@ export function useInvoiceVoucherForm(props, config = {}) {
     })
 
     // ── Common sales ledger (applies to all inventory items) ──────────────────
-    const commonSalesLedger = ref('')
+    const commonSalesLedger = ref(props.form.inventory_entries?.[0]?.sales_ledger || '')
 
     function applyCommonSalesLedger() {
         if (!commonSalesLedger.value) return
