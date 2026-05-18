@@ -12,9 +12,7 @@ return new class extends Migration
             $table->dropColumn(['is_revenue', 'affects_gross', 'is_addable']);
         });
 
-        Schema::table('tally_ledgers', function (Blueprint $table) {
-            $table->dropColumn(['is_cost_centre_applicable', 'tan_number', 'is_rcm_applicable', 'bank_details']);
-        });
+        // tally_ledgers columns consolidated into 2026_04_19_000003_create_tally_ledgers_table
 
         Schema::table('tally_stock_groups', function (Blueprint $table) {
             $table->dropColumn(['parent_id', 'nature_of_group', 'should_add_quantities']);
@@ -50,12 +48,7 @@ return new class extends Migration
             $table->boolean('is_addable')->nullable();
         });
 
-        Schema::table('tally_ledgers', function (Blueprint $table) {
-            $table->boolean('is_cost_centre_applicable')->default(false);
-            $table->string('tan_number')->nullable();
-            $table->boolean('is_rcm_applicable')->default(false);
-            $table->jsonb('bank_details')->nullable();
-        });
+        // tally_ledgers columns consolidated into 2026_04_19_000003_create_tally_ledgers_table
 
         Schema::table('tally_stock_groups', function (Blueprint $table) {
             $table->integer('parent_id')->nullable();

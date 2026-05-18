@@ -123,25 +123,25 @@ Syncs Tally ledgers (accounts). Debtors → auto-creates/updates **Client**. Cre
       "TallyId": 101,
       "AlterID": 205,
       "Action": "Create",
+      "Guid": "479d7fd6-fcdf-4337-ae5c-78331d2aa65e-00000112",
       "LedgerName": "BLUE STAR LIMITED",
       "Group": "Sundry Debtors",
       "ParentGroup": "Current Assets",
       "IsBillWiseOn": "Yes",
       "InventoryAffected": false,
-      "IsCostCentreApplicable": "No",
-      "GSTIN_Number": "21AAACB4487D1Z4",
-      "PAN_Number": "AAACB4487D",
-      "TAN_Number": null,
-      "GST_Type": "Regular",
-      "IsRCMApplicable": "No",
+      "IsCostCentresOn": "No",
+      "GSTINNumber": "21AAACB4487D1Z4",
+      "PANNumber": "AAACB4487D",
+      "GSTRegistrationType": "Regular",
+      "GSTApplicableFrom": "20260401",
+      "IsGSTApplicable": "Yes",
+      "GSTTypeLedger": "",
+      "IsTDSApplicable": "No",
+      "IsTCSApplicable": "No",
       "MailingName": "BLUE STAR LIMITED",
-      "Mobile_Number": "9358444502",
+      "MobileNumber": "9358444502",
       "ContactPerson": "Akash",
-      "ContactPerson_Email": "abc@gmail.com",
-      "ContactPerson_EmailCC": null,
-      "ContactPerson_Fax": null,
-      "ContactPerson_Website": null,
-      "ContactPerson_Mobile": "9358444502",
+      "ContactPersonEmail": "abc@gmail.com",
       "LedgerAddress": [
         { "Address": "Add1" },
         { "Address": "Add2" }
@@ -151,11 +151,17 @@ Syncs Tally ledgers (accounts). Debtors → auto-creates/updates **Client**. Cre
       "PinCode": "752101",
       "CreditPeriod": 120,
       "CreditLimit": 120000,
-      "Opening_Balance": 100000.00,
-      "Opening_Balance_Type": "Dr",
+      "OpeningBalance": 100000.00,
+      "OpeningBalanceType": "Dr",
+      "BankAccountHolderName": "Blue Star Ltd",
+      "BranchName": "Bhubaneswar Main",
+      "SwiftCode": "",
+      "BankBSRCode": "",
+      "DefaultTransferMode": "NEFT",
+      "IsChequePrintingEnabled": "Yes",
       "BankDetails": [
         {
-          "BankName": "Icici Bank",
+          "BankName": "ICICI Bank",
           "IFSCode": "ICIC0001234",
           "AccountNumber": "1234567890",
           "PaymentFavouring": "BLUE STAR LIMITED",
@@ -163,9 +169,17 @@ Syncs Tally ledgers (accounts). Debtors → auto-creates/updates **Client**. Cre
           "TransactionType": "Inter Bank Transfer"
         }
       ],
+      "GSTRegistrationDetails": [
+        {
+          "ApplicableFrom": "20260401",
+          "GSTRegistrationType": "Regular",
+          "GSTIN": "21AAACB4487D1Z4",
+          "PlaceOfSupply": "Odisha",
+          "IsTransporter": "No"
+        }
+      ],
       "Aliases": [
-        { "Alias": "BLUE STAR LIMITED" },
-        { "Alias": "Ledger Alias" }
+        { "Alias": "BLUE STAR LIMITED" }
       ],
       "Description": "Ledger desc",
       "Notes": "Ledger notes"
@@ -179,28 +193,53 @@ Syncs Tally ledgers (accounts). Debtors → auto-creates/updates **Client**. Cre
 | `full_sync` | boolean | no | If `true`, ledgers absent from payload are marked inactive |
 | `Data` | array | yes | Array of ledger objects |
 | `TallyId` | integer | yes | Tally ledger ID (also accepted as `ID`/`Id`) |
+| `Guid` | string | no | Tally GUID for deduplication |
 | `AlterID` | integer | yes | Alter/version ID |
 | `Action` | string | no | `"Create"` or `"Delete"` |
 | `LedgerName` | string | yes | Ledger name (also accepted as `Name`) |
 | `Group` | string | no | Immediate group — used to derive category (also `GroupName`) |
 | `ParentGroup` | string | no | Top-level group — used to derive category |
-| `IsBillWiseOn` | string | no | Bill-by-bill tracking. Defaults to `false` if omitted |
-| `InventoryAffected` | string/bool | no | Affects inventory. Defaults to `false` if omitted |
-| `IsCostCentreApplicable` | string | no | Cost centre on. Defaults to `false` if omitted |
-| `GSTIN_Number` | string | no | GST registration number (also `GSTINNumber`) |
-| `PAN_Number` | string | no | PAN (also `PANNumber`) |
-| `TAN_Number` | string | no | TAN (also `TANNumber`) |
-| `GST_Type` | string | no | `"Regular"`, `"Composition"`, `"Unregistered"`, etc. (also `GSTType`) |
+| `CurrencyName` | string | no | Currency symbol (e.g. `₹`) |
+| `IsBillWiseOn` | string | no | Bill-by-bill tracking |
+| `InventoryAffected` | string/bool | no | Affects inventory |
+| `IsCostCentresOn` | string | no | Cost centre tracking on |
+| `IsCostTrackingOn` | string | no | Cost tracking on |
+| `GSTINNumber` | string | no | GST registration number (also `GSTIN_Number`) |
+| `PANNumber` | string | no | PAN (also `PAN_Number`) |
+| `GSTRegistrationType` | string | no | `"Regular"`, `"Composition"`, `"Unregistered/Consumer"` |
+| `GSTApplicableFrom` | string | no | Date string `YYYYMMDD` |
+| `IsGSTApplicable` | string | no | `"Yes"` / `"No"` |
+| `GSTTypeLedger` | string | no | GST ledger type (e.g. Central Tax, State Tax) |
+| `IsSEZParty` | string | no | SEZ party flag |
+| `IsTransporter` | string | no | Transporter flag |
+| `IsCommonParty` | string | no | Common party flag |
+| `IsOtherTerritoryAssessee` | string | no | Other territory assessee |
+| `PANApplicableFrom` | string | no | PAN applicable from date `YYYYMMDD` |
+| `NameOnPAN` | string | no | Name as on PAN |
+| `IsTDSApplicable` | string | no | TDS applicable flag |
+| `TDSDeducteeType` | string | no | TDS deductee type |
+| `IsTDSProjected` | string | no | TDS projected flag |
+| `IsTCSApplicable` | string | no | TCS applicable flag |
 | `IsRCMApplicable` | string | no | Reverse Charge Mechanism |
+| `IsCreditDaysCheckOn` | string | no | Credit days check enabled |
+| `OverrideCreditLimit` | string | no | Override credit limit |
+| `IsRelatedParty` | string | no | Related party flag |
+| `ForPayroll` | string | no | Payroll ledger flag |
+| `BankAccountHolderName` | string | no | Bank account holder name (flat field) |
+| `SwiftCode` | string | no | SWIFT code |
+| `BranchName` | string | no | Bank branch name |
+| `BankBSRCode` | string | no | Bank BSR code |
+| `DefaultTransferMode` | string | no | `"NEFT"`, `"RTGS"`, etc. |
+| `IsChequePrintingEnabled` | string | no | Cheque printing flag |
 | `MailingName` | string | no | Display / mailing name |
-| `Mobile_Number` | string | no | Primary mobile (also `MobileNumber`) |
+| `MobileNumber` | string | no | Primary mobile (also `Mobile_Number`) |
 | `ContactPerson` | string | no | Contact name |
-| `ContactPerson_Email` | string | no | Contact email (also `ContactPersonEmail`) |
-| `ContactPerson_EmailCC` | string | no | CC email (also `ContactPersonEmailCC`) |
-| `ContactPerson_Fax` | string | no | Fax (also `ContactPersonFax`) |
-| `ContactPerson_Website` | string | no | Website (also `ContactPersonWebsite`) |
-| `ContactPerson_Mobile` | string | no | Contact mobile (also `ContactPersonMobile`) |
-| `LedgerAddress` | array | no | Array of `{"Address": "..."}` objects (also `Addresses`) |
+| `ContactPersonEmail` | string | no | Contact email (also `ContactPerson_Email`) |
+| `ContactPersonEmailCC` | string | no | CC email (also `ContactPerson_EmailCC`) |
+| `ContactPersonFax` | string | no | Fax (also `ContactPerson_Fax`) |
+| `ContactPersonWebsite` | string | no | Website (also `ContactPerson_Website`) |
+| `ContactPersonMobile` | string | no | Contact mobile (also `ContactPerson_Mobile`) |
+| `LedgerAddress` | array | no | Array of `{"Address": "..."}` objects |
 | `StateName` | string | no | State |
 | `CountryName` | string | no | Country |
 | `PinCode` | string | no | PIN / postal code |

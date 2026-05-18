@@ -176,7 +176,7 @@ export function useInvoiceVoucherForm(props, config = {}) {
 
         // GST / tax details
         form.buyer_gstin                 = m.gstin_number || ''
-        form.buyer_gst_registration_type = m.gst_type     || ''
+        form.buyer_gst_registration_type = m.gst_registration_type || ''
 
         // Address — Tally stores addresses as [{Address:"line1"},{Address:"line2"}]
         const lines = Array.isArray(m.addresses)

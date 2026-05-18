@@ -19,17 +19,7 @@ return new class extends Migration
             $table->jsonb('tds_category_details')->nullable()->after('is_addable');
         });
 
-        // Ledgers — interest and TDS fields from real connector payload
-        Schema::table('tally_ledgers', function (Blueprint $table) {
-            $table->string('type_of_interest_on')->nullable()->after('notes');
-            $table->boolean('is_interest_on')->nullable()->after('type_of_interest_on');
-            $table->boolean('is_interest_on_bill_wise')->nullable()->after('is_interest_on');
-            $table->boolean('override_interest')->nullable()->after('is_interest_on_bill_wise');
-            $table->boolean('interest_incl_day_of_addition')->nullable()->after('override_interest');
-            $table->boolean('interest_incl_day_of_deduction')->nullable()->after('interest_incl_day_of_addition');
-            $table->boolean('is_tds_applicable')->nullable()->after('interest_incl_day_of_deduction');
-            $table->string('tds_deductee_type')->nullable()->after('is_tds_applicable');
-        });
+        // tally_ledgers columns consolidated into 2026_04_19_000003_create_tally_ledgers_table
 
         // Employee Groups — salary defaults from real connector payload
         Schema::table('tally_employee_groups', function (Blueprint $table) {
@@ -59,13 +49,7 @@ return new class extends Migration
             ]);
         });
 
-        Schema::table('tally_ledgers', function (Blueprint $table) {
-            $table->dropColumn([
-                'type_of_interest_on', 'is_interest_on', 'is_interest_on_bill_wise',
-                'override_interest', 'interest_incl_day_of_addition', 'interest_incl_day_of_deduction',
-                'is_tds_applicable', 'tds_deductee_type',
-            ]);
-        });
+        // tally_ledgers columns consolidated into 2026_04_19_000003_create_tally_ledgers_table
 
         Schema::table('tally_employee_groups', function (Blueprint $table) {
             $table->dropColumn('salary_details');

@@ -223,20 +223,27 @@ All account masters — customers, vendors, bank accounts, tax ledgers, expense 
 
 | Section | Columns |
 |---------|---------|
-| Identity | tally_id, alter_id, action, ledger_name, group_name, parent_group |
+| Identity | guid, tally_id, alter_id, action, ledger_name, group_name, parent_group, currency_name, ledger_country_isd_code |
 | Derived | ledger_category (customer/vendor/bank/tax/income/expense/asset/liability/other) |
-| Flags | is_bill_wise_on, inventory_affected |
-| GST | gstin_number, pan_number, gst_type |
-| Contact | mailing_name, mobile_number, contact_person, contact_person_email, contact_person_email_cc, contact_person_fax, contact_person_website, contact_person_mobile |
-| Address | addresses (jsonb), state_name, country_name, pin_code |
-| Credit | credit_period, credit_limit |
+| Flags | is_bill_wise_on, inventory_affected, is_cost_centres_on, is_cost_tracking_on |
+| GST | gstin_number, gst_registration_type (Regular/Composition/Unregistered/Consumer), gst_applicable_from, is_gst_applicable, gst_type_ledger, is_sez_party, is_transporter, is_common_party, is_other_territory_assessee, appropriate_for, gst_registration_details (jsonb) |
+| PAN | pan_number, pan_applicable_from, name_on_pan |
+| TDS / TCS | is_tds_applicable, tds_deductee_type, is_tds_projected, is_tcs_applicable, tds_category_details (jsonb), tcs_category_details (jsonb), deduct_in_same_vch_rules (jsonb) |
+| RCM | is_rcm_applicable |
+| Legacy Tax | vat_tin_number, tax_type, used_for_tax_type, registration_number, service_category, importer_exporter_code |
+| Contact | mailing_name, mobile_number, contact_person, contact_person_email, contact_person_email_cc, contact_person_fax, contact_person_website, contact_person_mobile, contact_details (jsonb) |
+| Address | addresses (jsonb), state_name, country_name, pin_code, led_multi_address_list (jsonb) |
+| Credit | credit_period, credit_limit, is_credit_days_check_on, override_credit_limit |
 | Opening Balance | opening_balance, opening_balance_type (Dr/Cr) |
-| Other | aliases (jsonb), description, notes |
-| Interest | type_of_interest_on, is_interest_on (bool), is_interest_on_bill_wise (bool), override_interest (bool), interest_incl_day_of_addition (bool), interest_incl_day_of_deduction (bool) |
-| TDS | is_tds_applicable (bool), tds_deductee_type |
-| Bank | bank_details (jsonb) — array of {BankName, IFSCode, AccountNumber, PaymentFavouring, TransactionName, TransactionType} |
+| Interest | type_of_interest_on, is_interest_on, is_interest_on_bill_wise, override_interest, override_adv_interest, is_interest_incl_last_day, interest_incl_day_of_addition, interest_incl_day_of_deduction, interest_collection (jsonb) |
+| Bank (flat) | bank_account_holder_name, swift_code, branch_name, bank_bsr_code, default_transfer_mode, is_cheque_printing_enabled |
+| Bank (arrays) | bank_details (jsonb) — account list {BankName, IFSCode, AccountNumber, PaymentFavouring, TransactionName, TransactionType}, cheque_ranges (jsonb), transfer_mode_limits (jsonb) |
+| Party / Payroll | is_related_party, for_payroll, use_for_esi_eligibility, is_e_cash_ledger, ignore_mismatch_with_warning, ignore_tds_exempt, it_exempt_applicable |
 | Bills | bill_allocations (jsonb) — array of {Date, BillName, Amount, AmountType (Dr/Cr)} |
+| Other | aliases (jsonb), description, notes |
 | Mapping | mapped_client_id FK → clients, mapped_vendor_id FK → vendors |
+
+> **Column renames (2026-05-18):** `gst_type` → `gst_type_ledger`, `is_cost_centre_applicable` → `is_cost_centres_on`. The old `gst_type` column was mapped to a non-existent payload field and was never populated.
 
 #### tally_stock_items
 All product/inventory masters.
@@ -902,7 +909,7 @@ All pages show data to any user with `integrations.view`. Edit / New / Delete ac
 | Page | Route | CRUD entities |
 |------|-------|---------------|
 | LedgerGroups.vue | tally.ledger-groups.index | Ledger Groups — CRUD slide-over (max-w-lg, Tally Prime tally-row layout). Fields: Name*, Under (Parent)*, Nature of Group, Method to Allocate; Flags section: Is Addable, Is Sub Ledger, Is Deemed Positive, Used for Calculation (all Yes/No selects). |
-| Ledgers.vue | tally.ledgers.index | Full CRUD slide-over (max-w-2xl, Tally Prime tally-row layout) with context-sensitive sections. Sections shown/hidden based on selected group: **Name & Classification** (always) — Name*, Under*, MailingName, Aliases; **Behaviour** (always) — OpeningBalance+Dr/Cr inline, BillWise (party+bank+loan groups), CreditPeriod/CreditLimit (party only), InventoryAffected (income/expense/party); **GST/Tax Registration** (party groups) — GSTIN, PAN, GSTType*, IsRCMApplicable; **TDS** (party groups) — IsTDSApplicable → DeducteeType; **Interest** (party+bank+loan) — IsInterestOn → TypeOfInterestOn, InterestOnBillWise, OverrideInterest, InclDayOfAddition/Deduction; **Address & Contact** (party+bank) — Address lines (dynamic), State, Country, PIN, Mobile, ContactPerson, Email, CC, Fax, Website; **Bank Details** (Bank Accounts, Bank OD A/c) — per-account tally-rows: BankName, IFSCode, AccountNumber, PaymentFavouring, TransactionName, TransactionType; **Opening Bill Allocations** (when BillWise=Yes) — per-bill tally-rows: BillName, Date, Amount+Dr/Cr inline; **Other** — Description, Notes. Custom sub-groups resolve to their parent standard group for section visibility. |
+| Ledgers.vue | tally.ledgers.index | Full CRUD slide-over (max-w-2xl, Tally Prime tally-row layout) with context-sensitive sections derived from real connector payload (2026-05-16). Group constants: PARTY_GROUPS (Sundry Debtors/Creditors, Loans & Advances, Branch/Divisions, U Branch/Division); BANK_GROUPS (Bank Accounts, Bank OD A/c, Branch/Divisions, U Branch/Division); ADDRESS_GROUPS (superset of party+bank+loans+capital+current assets/liabilities+deposits+fixed assets+investments+indirect); GST_GROUPS (party+bank+capital+current+deposits+fixed+investments+loans+secured); TDS_GROUPS (wide — party+loans+branch+capital+current liabilities+deposits+direct expense/income+duties+fixed+indirect incomes+investments+misc+provisions+reserves+secured+suspense); TCS_GROUPS (direct incomes, duties & taxes, indirect incomes, sales); COST_CENTRE_GROUPS (direct/indirect expense/income, purchase/sales); PAYROLL_GROUPS (direct expenses); TAX_TYPE_GROUPS (duties & taxes); BILLWISE_GROUPS and CREDIT_GROUPS (Sundry Debtors/Creditors only); INVENTORY_GROUPS (purchase/sales only). Sections: **Name & Classification** (always) — Name*, Under*, MailingName, Aliases; **Behaviour** (always) — OpeningBalance+Dr/Cr, BillWise (party only), CreditPeriod/CreditLimit/CheckCreditDays (party only), InventoryAffected (purchase/sales), CostCentresApplicable (income/expense/purchase/sales), IsRelatedParty (party groups), ForPayroll (direct expenses); **GST/Tax Registration** (GST_GROUPS) — GSTIN, PAN, GSTRegType, GSTApplicableFrom, GSTTypeLedger, NameOnPAN, IsTransporter, IsSEZParty, IsRCMApplicable; **Tax Classification** (Duties & Taxes) — AppropriateFor (CGST/SGST/IGST/UTGST/Cess/CST/VAT/ServiceTax); **TDS** (TDS_GROUPS) — IsTDSApplicable → DeducteeType; **TCS** (TCS_GROUPS) — IsTCSApplicable; **Interest** (INTEREST_GROUPS) — IsInterestOn → TypeOfInterestOn, InterestOnBillWise, OverrideInterest, InclDayOfAddition/Deduction; **Address & Contact** (ADDRESS_GROUPS) — Address lines (dynamic), State, Country, PIN, Mobile, ContactPerson, Email, CC, Fax, Website; **Bank Configuration** (BANK_GROUPS) — flat fields (AccountHolderName, BranchName, SWIFTCode, BSRCode, DefaultTransferMode, ChequePrinting) + per-account list (BankName, IFSCode, AccountNumber, PaymentFavouring, TransactionName, TransactionType); **Opening Bill Allocations** (when BillWise=Yes) — per-bill tally-rows: BillName, Date, Amount+Dr/Cr inline; **Other** — Description, Notes. Custom sub-groups resolve to their parent standard group for section visibility. |
 | StockMasters.vue | tally.stock-masters.index | Stock Groups, Stock Categories, Godowns (tabs). Each has a CRUD slide-over (max-w-lg, Tally Prime tally-row layout). Stock Group: Name*, Parent Group, Aliases. Stock Category: Name*, Parent Category, Aliases. Godown: Name*, Under. |
 | StockItems.vue | tally.stock-items.index | Stock Items — Name, Group, Category, Unit, HSN, GST rates (IGST/SGST/CGST/CESS), Opening Balance, Batch Allocations (Godown dropdown from tally_godowns) |
 | StatutoryMasters.vue | tally.statutory-masters.index | Statutory Masters — Name, Type, Reg. No., State Code, Reg. Type, PAN, TAN, Applicable From |
@@ -1002,7 +1009,7 @@ The "Tally" link appears in the top navigation for any user with `integrations.v
 database/migrations/
   2026_04_19_000001_create_tally_connections_table.php
   2026_04_19_000002_create_tally_ledger_groups_table.php
-  2026_04_19_000003_create_tally_ledgers_table.php
+  2026_04_19_000003_create_tally_ledgers_table.php  ← single source of truth; all payload columns included; do NOT add piecemeal migrations for this table
   2026_04_19_000004_create_tally_stock_groups_table.php
   2026_04_19_000005_create_tally_stock_categories_table.php
   2026_04_19_000006_create_tally_stock_items_table.php
@@ -1018,7 +1025,7 @@ database/migrations/
   2026_04_19_000016_create_tally_attendance_types_table.php
   2026_04_19_000017_create_tally_employees_table.php
   2026_04_21_121802_create_tally_inbound_logs_table.php
-  2026_05_07_000001_add_new_payload_fields_to_tally_tables.php  ← adds erp_id/TDS/interest cols to ledger_groups + ledgers; salary_details to employee_groups; contact/email/address/salary_details to employees; aliases to attendance_types
+  2026_05_07_000001_add_new_payload_fields_to_tally_tables.php  ← adds erp_id/is_sub_ledger/etc to ledger_groups; salary_details to employee_groups; contact/email/address/salary_details to employees; aliases to attendance_types
 
 app/Models/
   TallyConnection.php           — per-tenant auth token, auto-generates on creating()
@@ -1196,7 +1203,7 @@ The real Tally connector uses different field name conventions from the simplifi
 | `PAN_Number` | `PANNumber` |
 | `Mobile_Number` | `MobileNumber` |
 | `ContactPerson_Email` | `ContactPersonEmail` |
-| `GST_Type` | `GSTType` |
+| `GSTTypeLedger` | — (was wrongly mapped as `GST_Type`/`GSTType` — corrected 2026-05-18) |
 | `Opening_Balance` | `OpeningBalance` |
 | `Opening_Balance_Type` | `OpeningBalanceType` |
 | `LedgerAddress` | `Addresses` |

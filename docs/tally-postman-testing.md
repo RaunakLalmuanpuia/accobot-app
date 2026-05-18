@@ -232,7 +232,7 @@ These are optional — if `CompanyGUID` is absent, the upsert is silently skippe
 }
 ```
 
-**Bug fixed:** Non-nullable boolean columns (`is_bill_wise_on`, `inventory_affected`, `is_cost_centre_applicable`, `is_rcm_applicable`) were receiving `null` from `parseBool()` when fields were omitted. Fixed with `?? false` fallback in `TallyInboundSync::syncLedgers()`.
+**Bug fixed:** Non-nullable boolean columns (`is_bill_wise_on`, `inventory_affected`, `is_cost_centres_on`, `is_rcm_applicable`) were receiving `null` from `parseBool()` when fields were omitted. Fixed with `?? false` fallback in `TallyInboundSync::syncLedgers()`. Note: `is_cost_centre_applicable` was renamed to `is_cost_centres_on` on 2026-05-18.
 
 **Behaviours verified:**
 - `GroupName: "Sundry Debtors"` → auto-creates a Client record

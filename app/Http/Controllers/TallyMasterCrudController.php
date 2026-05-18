@@ -108,9 +108,26 @@ class TallyMasterCrudController extends Controller
             'parent_group'                      => 'nullable|string|max:255',
             'is_bill_wise_on'                   => 'boolean',
             'inventory_affected'                => 'boolean',
+            'is_cost_centres_on'                => 'boolean',
+            // GST / Tax
             'gstin_number'                      => 'nullable|string|max:50',
             'pan_number'                        => 'nullable|string|max:20',
-            'gst_type'                          => 'nullable|string|max:50',
+            'gst_type_ledger'                   => 'nullable|string|max:50',
+            'gst_registration_type'             => 'nullable|in:Regular,Composition,Unregistered/Consumer',
+            'gst_applicable_from'               => 'nullable|string|max:20',
+            'is_gst_applicable'                 => 'boolean',
+            'is_sez_party'                      => 'boolean',
+            'is_transporter'                    => 'boolean',
+            'is_other_territory_assessee'       => 'boolean',
+            'pan_applicable_from'               => 'nullable|string|max:20',
+            'name_on_pan'                       => 'nullable|string|max:255',
+            'is_rcm_applicable'                 => 'boolean',
+            'appropriate_for'                   => 'nullable|string|max:50',
+            // TDS / TCS
+            'is_tds_applicable'                 => 'boolean',
+            'tds_deductee_type'                 => 'nullable|string|max:100',
+            'is_tcs_applicable'                 => 'boolean',
+            // Contact
             'mailing_name'                      => 'nullable|string|max:255',
             'mobile_number'                     => 'nullable|string|max:20',
             'contact_person'                    => 'nullable|string|max:255',
@@ -119,15 +136,37 @@ class TallyMasterCrudController extends Controller
             'contact_person_fax'                => 'nullable|string|max:50',
             'contact_person_website'            => 'nullable|url|max:255',
             'contact_person_mobile'             => 'nullable|string|max:20',
+            // Address
             'addresses'                         => 'nullable|array',
             'addresses.*.Address'               => 'nullable|string|max:500',
             'state_name'                        => 'nullable|string|max:100',
             'country_name'                      => 'nullable|string|max:100',
             'pin_code'                          => 'nullable|string|max:20',
+            // Credit
             'credit_period'                     => 'nullable|integer|min:0',
             'credit_limit'                      => 'nullable|numeric|min:0',
+            'is_credit_days_check_on'           => 'boolean',
+            // Opening Balance
             'opening_balance'                   => 'nullable|numeric',
             'opening_balance_type'              => 'nullable|in:Dr,Cr',
+            // Bank flat fields
+            'bank_account_holder_name'          => 'nullable|string|max:255',
+            'swift_code'                        => 'nullable|string|max:50',
+            'branch_name'                       => 'nullable|string|max:255',
+            'bank_bsr_code'                     => 'nullable|string|max:50',
+            'default_transfer_mode'             => 'nullable|string|max:50',
+            'is_cheque_printing_enabled'        => 'boolean',
+            // Party / payroll
+            'is_related_party'                  => 'boolean',
+            'for_payroll'                       => 'boolean',
+            // Interest
+            'is_interest_on'                    => 'boolean',
+            'type_of_interest_on'               => 'nullable|string|max:100',
+            'is_interest_on_bill_wise'          => 'boolean',
+            'override_interest'                 => 'boolean',
+            'interest_incl_day_of_addition'     => 'boolean',
+            'interest_incl_day_of_deduction'    => 'boolean',
+            // Other
             'aliases'                           => 'nullable|array',
             'aliases.*.Alias'                   => 'nullable|string|max:255',
             'description'                       => 'nullable|string|max:1000',
@@ -144,18 +183,6 @@ class TallyMasterCrudController extends Controller
             'bill_allocations.*.BillName'       => 'nullable|string|max:255',
             'bill_allocations.*.Amount'         => 'nullable|numeric',
             'bill_allocations.*.AmountType'     => 'nullable|in:Dr,Cr',
-            // GST / Tax
-            'is_rcm_applicable'                 => 'boolean',
-            // TDS
-            'is_tds_applicable'                 => 'boolean',
-            'tds_deductee_type'                 => 'nullable|string|max:100',
-            // Interest
-            'is_interest_on'                    => 'boolean',
-            'type_of_interest_on'               => 'nullable|string|max:100',
-            'is_interest_on_bill_wise'          => 'boolean',
-            'override_interest'                 => 'boolean',
-            'interest_incl_day_of_addition'     => 'boolean',
-            'interest_incl_day_of_deduction'    => 'boolean',
         ]);
 
         $record = TallyLedger::create(array_merge($data, [
@@ -177,9 +204,26 @@ class TallyMasterCrudController extends Controller
             'parent_group'                      => 'nullable|string|max:255',
             'is_bill_wise_on'                   => 'boolean',
             'inventory_affected'                => 'boolean',
+            'is_cost_centres_on'                => 'boolean',
+            // GST / Tax
             'gstin_number'                      => 'nullable|string|max:50',
             'pan_number'                        => 'nullable|string|max:20',
-            'gst_type'                          => 'nullable|string|max:50',
+            'gst_type_ledger'                   => 'nullable|string|max:50',
+            'gst_registration_type'             => 'nullable|in:Regular,Composition,Unregistered/Consumer',
+            'gst_applicable_from'               => 'nullable|string|max:20',
+            'is_gst_applicable'                 => 'boolean',
+            'is_sez_party'                      => 'boolean',
+            'is_transporter'                    => 'boolean',
+            'is_other_territory_assessee'       => 'boolean',
+            'pan_applicable_from'               => 'nullable|string|max:20',
+            'name_on_pan'                       => 'nullable|string|max:255',
+            'is_rcm_applicable'                 => 'boolean',
+            'appropriate_for'                   => 'nullable|string|max:50',
+            // TDS / TCS
+            'is_tds_applicable'                 => 'boolean',
+            'tds_deductee_type'                 => 'nullable|string|max:100',
+            'is_tcs_applicable'                 => 'boolean',
+            // Contact
             'mailing_name'                      => 'nullable|string|max:255',
             'mobile_number'                     => 'nullable|string|max:20',
             'contact_person'                    => 'nullable|string|max:255',
@@ -188,15 +232,37 @@ class TallyMasterCrudController extends Controller
             'contact_person_fax'                => 'nullable|string|max:50',
             'contact_person_website'            => 'nullable|url|max:255',
             'contact_person_mobile'             => 'nullable|string|max:20',
+            // Address
             'addresses'                         => 'nullable|array',
             'addresses.*.Address'               => 'nullable|string|max:500',
             'state_name'                        => 'nullable|string|max:100',
             'country_name'                      => 'nullable|string|max:100',
             'pin_code'                          => 'nullable|string|max:20',
+            // Credit
             'credit_period'                     => 'nullable|integer|min:0',
             'credit_limit'                      => 'nullable|numeric|min:0',
+            'is_credit_days_check_on'           => 'boolean',
+            // Opening Balance
             'opening_balance'                   => 'nullable|numeric',
             'opening_balance_type'              => 'nullable|in:Dr,Cr',
+            // Bank flat fields
+            'bank_account_holder_name'          => 'nullable|string|max:255',
+            'swift_code'                        => 'nullable|string|max:50',
+            'branch_name'                       => 'nullable|string|max:255',
+            'bank_bsr_code'                     => 'nullable|string|max:50',
+            'default_transfer_mode'             => 'nullable|string|max:50',
+            'is_cheque_printing_enabled'        => 'boolean',
+            // Party / payroll
+            'is_related_party'                  => 'boolean',
+            'for_payroll'                       => 'boolean',
+            // Interest
+            'is_interest_on'                    => 'boolean',
+            'type_of_interest_on'               => 'nullable|string|max:100',
+            'is_interest_on_bill_wise'          => 'boolean',
+            'override_interest'                 => 'boolean',
+            'interest_incl_day_of_addition'     => 'boolean',
+            'interest_incl_day_of_deduction'    => 'boolean',
+            // Other
             'aliases'                           => 'nullable|array',
             'aliases.*.Alias'                   => 'nullable|string|max:255',
             'description'                       => 'nullable|string|max:1000',
@@ -213,18 +279,6 @@ class TallyMasterCrudController extends Controller
             'bill_allocations.*.BillName'       => 'nullable|string|max:255',
             'bill_allocations.*.Amount'         => 'nullable|numeric',
             'bill_allocations.*.AmountType'     => 'nullable|in:Dr,Cr',
-            // GST / Tax
-            'is_rcm_applicable'                 => 'boolean',
-            // TDS
-            'is_tds_applicable'                 => 'boolean',
-            'tds_deductee_type'                 => 'nullable|string|max:100',
-            // Interest
-            'is_interest_on'                    => 'boolean',
-            'type_of_interest_on'               => 'nullable|string|max:100',
-            'is_interest_on_bill_wise'          => 'boolean',
-            'override_interest'                 => 'boolean',
-            'interest_incl_day_of_addition'     => 'boolean',
-            'interest_incl_day_of_deduction'    => 'boolean',
         ]);
 
         $ledger->update($data);

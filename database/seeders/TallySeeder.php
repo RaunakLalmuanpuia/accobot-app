@@ -148,6 +148,13 @@ class TallySeeder extends Seeder
                 str_contains(strtolower($group), 'creditor') => 'vendor',
                 default                                      => null,
             };
+            $appropriateFor = null;
+            if ($group === 'Duties & Taxes') {
+                if      (stripos($name, 'IGST') !== false) $appropriateFor = 'IGST';
+                elseif  (stripos($name, 'CGST') !== false) $appropriateFor = 'CGST';
+                elseif  (stripos($name, 'SGST') !== false) $appropriateFor = 'SGST';
+                elseif  (stripos($name, 'CESS') !== false) $appropriateFor = 'Cess';
+            }
 
             $ledgers[$id] = TallyLedger::firstOrCreate(
                 ['tenant_id' => $tid, 'tally_id' => $id],
@@ -157,7 +164,8 @@ class TallySeeder extends Seeder
                     'group_name'            => $group,
                     'ledger_category'       => $category,
                     'gstin_number'          => $gstin,
-                    'gst_type'              => $gstType,
+                    'gst_registration_type' => $gstType,
+                    'appropriate_for'       => $appropriateFor,
                     'mailing_name'          => $mailing ?? $name,
                     'contact_person'        => $mailing,
                     'contact_person_mobile' => $mobile,
@@ -1124,7 +1132,7 @@ class TallySeeder extends Seeder
                 'ledger_name'           => 'BlueStar Technologies',
                 'group_name'            => 'Sundry Debtors',
                 'gstin_number'          => '27AABCT1234A1Z5',
-                'gst_type'              => 'Regular',
+                'gst_registration_type' => 'Regular',
                 'mailing_name'          => 'BlueStar Technologies Pvt Ltd',
                 'contact_person'        => 'Rajesh Kumar',
                 'contact_person_email'  => 'rajesh@bluestar.in',

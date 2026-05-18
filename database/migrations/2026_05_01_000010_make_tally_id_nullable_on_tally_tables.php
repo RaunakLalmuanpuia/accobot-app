@@ -8,7 +8,7 @@ return new class extends Migration
 {
     private array $tables = [
         'tally_ledger_groups',
-        'tally_ledgers',
+        // tally_ledgers consolidated into 2026_04_19_000003_create_tally_ledgers_table
         'tally_stock_groups',
         'tally_stock_categories',
         'tally_stock_items',

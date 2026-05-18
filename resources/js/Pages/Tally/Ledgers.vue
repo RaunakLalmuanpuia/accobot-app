@@ -12,16 +12,46 @@ const props = defineProps({
 
 const canManage = hasPermission('integrations.manage')
 
-// ── Group classification (matches Tally Prime field visibility rules) ──────────
-const PARTY_GROUPS     = ['Sundry Debtors', 'Sundry Creditors', 'Loans & Advances (Asset)', 'Branch / Divisions']
-const BANK_GROUPS      = ['Bank Accounts', 'Bank OD A/c']
-const BILLWISE_GROUPS  = ['Sundry Debtors', 'Sundry Creditors', 'Loans & Advances (Asset)', 'Secured Loans', 'Unsecured Loans', 'Bank Accounts', 'Bank OD A/c', 'Deposits (Asset)']
+// ── Group classification (derived from real connector payload 2026-05-16) ──────
+const PARTY_GROUPS     = ['Sundry Debtors', 'Sundry Creditors', 'Loans & Advances (Asset)', 'Branch/Divisions', 'U Branch/Division']
+const BANK_GROUPS      = ['Bank Accounts', 'Bank OD A/c', 'Branch/Divisions', 'U Branch/Division']
+const ADDRESS_GROUPS   = [
+    'Sundry Debtors', 'Sundry Creditors', 'Loans & Advances (Asset)', 'Secured Loans', 'Unsecured Loans',
+    'Loans (Liability)', 'Bank Accounts', 'Bank OD A/c', 'Branch/Divisions', 'U Branch/Division',
+    'Capital Account', 'Current Assets', 'Current Liabilities', 'Deposits (Asset)',
+    'Fixed Assets', 'Indirect Expenses', 'Indirect Incomes', 'Investments',
+]
+const BILLWISE_GROUPS  = ['Sundry Debtors', 'Sundry Creditors']
 const CREDIT_GROUPS    = ['Sundry Debtors', 'Sundry Creditors']
-const INVENTORY_GROUPS = ['Sales Accounts', 'Purchase Accounts', 'Direct Expenses', 'Direct Incomes', 'Indirect Expenses', 'Indirect Incomes', 'Sundry Debtors', 'Sundry Creditors']
-const GST_GROUPS       = ['Sundry Debtors', 'Sundry Creditors', 'Branch / Divisions', 'Loans & Advances (Asset)']
-const INTEREST_GROUPS  = ['Sundry Debtors', 'Sundry Creditors', 'Loans & Advances (Asset)', 'Secured Loans', 'Unsecured Loans', 'Bank Accounts', 'Bank OD A/c', 'Deposits (Asset)']
-const TDS_GROUPS       = ['Sundry Debtors', 'Sundry Creditors', 'Loans & Advances (Asset)']
-const ALL_CLASSIFIED   = [...new Set([...PARTY_GROUPS, ...BANK_GROUPS, ...BILLWISE_GROUPS, ...CREDIT_GROUPS, ...INVENTORY_GROUPS, ...GST_GROUPS, ...INTEREST_GROUPS, ...TDS_GROUPS])]
+const INVENTORY_GROUPS = ['Purchase Accounts', 'Sales Accounts']
+const GST_GROUPS       = [
+    'Sundry Debtors', 'Sundry Creditors', 'Branch/Divisions', 'U Branch/Division',
+    'Capital Account', 'Bank Accounts', 'Bank OD A/c', 'Current Assets', 'Current Liabilities',
+    'Deposits (Asset)', 'Fixed Assets', 'Investments', 'Loans & Advances (Asset)',
+    'Loans (Liability)', 'Secured Loans',
+]
+const INTEREST_GROUPS  = [
+    'Sundry Debtors', 'Sundry Creditors', 'Loans & Advances (Asset)', 'Secured Loans', 'Unsecured Loans',
+    'Loans (Liability)', 'Bank Accounts', 'Bank OD A/c', 'Deposits (Asset)', 'Fixed Assets',
+    'Current Assets', 'Current Liabilities', 'Capital Account', 'Investments', 'Branch/Divisions',
+    'U Branch/Division', 'Misc. Expenses (ASSET)', 'Provisions', 'Reserves & Surplus', 'Suspense A/c',
+]
+const TDS_GROUPS       = [
+    'Sundry Debtors', 'Sundry Creditors', 'Branch/Divisions', 'U Branch/Division',
+    'Capital Account', 'Current Liabilities', 'Deposits (Asset)', 'Direct Expenses',
+    'Direct Incomes', 'Duties & Taxes', 'Fixed Assets', 'Indirect Incomes', 'Investments',
+    'Loans & Advances (Asset)', 'Loans (Liability)', 'Misc. Expenses (ASSET)', 'Provisions',
+    'Reserves & Surplus', 'Secured Loans', 'Suspense A/c',
+]
+const TCS_GROUPS          = ['Direct Incomes', 'Duties & Taxes', 'Indirect Incomes', 'Sales Accounts']
+const COST_CENTRE_GROUPS  = ['Direct Expenses', 'Direct Incomes', 'Indirect Expenses', 'Indirect Incomes', 'Purchase Accounts', 'Sales Accounts']
+const PAYROLL_GROUPS      = ['Direct Expenses']
+const TAX_TYPE_GROUPS     = ['Duties & Taxes']
+const ALL_CLASSIFIED      = [...new Set([
+    ...PARTY_GROUPS, ...BANK_GROUPS, ...ADDRESS_GROUPS, ...BILLWISE_GROUPS, ...CREDIT_GROUPS,
+    ...INVENTORY_GROUPS, ...GST_GROUPS, ...INTEREST_GROUPS, ...TDS_GROUPS, ...TCS_GROUPS,
+    ...COST_CENTRE_GROUPS, ...PAYROLL_GROUPS, ...TAX_TYPE_GROUPS,
+])]
 
 // ── List ───────────────────────────────────────────────────────────────────────
 const search      = ref('')
@@ -89,14 +119,24 @@ const form = useForm({
     credit_period:        '',
     credit_limit:         '',
     inventory_affected:   false,
+    is_cost_centres_on:   false,
     // GST / Tax Registration
-    gstin_number:         '',
-    pan_number:           '',
-    gst_type:             '',
-    is_rcm_applicable:    false,
-    // TDS
-    is_tds_applicable:    false,
-    tds_deductee_type:    '',
+    gstin_number:               '',
+    pan_number:                 '',
+    gst_type_ledger:            '',
+    gst_registration_type:      '',
+    gst_applicable_from:        '',
+    is_gst_applicable:          false,
+    is_sez_party:               false,
+    is_transporter:             false,
+    is_other_territory_assessee:false,
+    appropriate_for:            '',
+    name_on_pan:                '',
+    is_rcm_applicable:          false,
+    // TDS / TCS
+    is_tds_applicable:          false,
+    tds_deductee_type:          '',
+    is_tcs_applicable:          false,
     // Interest
     is_interest_on:                  false,
     type_of_interest_on:             'Voucher Date',
@@ -116,10 +156,21 @@ const form = useForm({
     contact_person_email_cc:  '',
     contact_person_fax:       '',
     contact_person_website:   '',
-    // Bank Details
+    is_credit_days_check_on:  false,
+    // Bank Details (flat fields)
+    bank_account_holder_name: '',
+    swift_code:               '',
+    branch_name:              '',
+    bank_bsr_code:            '',
+    default_transfer_mode:    '',
+    is_cheque_printing_enabled:false,
+    // Bank Details (account list)
     bank_details:         [],
     // Bill Allocations
     bill_allocations:     [],
+    // Party / payroll
+    is_related_party:     false,
+    for_payroll:          false,
     // Other
     description:          '',
     notes:                '',
@@ -138,17 +189,21 @@ const effectiveGroup = computed(() => {
     return g.under_name ?? ''
 })
 
-const isPartyLedger        = computed(() => PARTY_GROUPS.includes(effectiveGroup.value))
-const isBankLedger         = computed(() => BANK_GROUPS.includes(effectiveGroup.value))
-const showBillWise         = computed(() => BILLWISE_GROUPS.includes(effectiveGroup.value))
-const showCreditTerms      = computed(() => CREDIT_GROUPS.includes(effectiveGroup.value))
-const showInventoryAffected= computed(() => INVENTORY_GROUPS.includes(effectiveGroup.value))
-const showGstSection       = computed(() => GST_GROUPS.includes(effectiveGroup.value))
-const showInterestSection  = computed(() => INTEREST_GROUPS.includes(effectiveGroup.value))
-const showTdsSection       = computed(() => TDS_GROUPS.includes(effectiveGroup.value))
-const showAddressSection   = computed(() => isPartyLedger.value || isBankLedger.value)
-const showBankSection      = computed(() => isBankLedger.value)
-const showBillAllocations  = computed(() => showBillWise.value && form.is_bill_wise_on)
+const isPartyLedger          = computed(() => PARTY_GROUPS.includes(effectiveGroup.value))
+const isBankLedger           = computed(() => BANK_GROUPS.includes(effectiveGroup.value))
+const showBillWise           = computed(() => BILLWISE_GROUPS.includes(effectiveGroup.value))
+const showCreditTerms        = computed(() => CREDIT_GROUPS.includes(effectiveGroup.value))
+const showInventoryAffected  = computed(() => INVENTORY_GROUPS.includes(effectiveGroup.value))
+const showCostCentresSection = computed(() => COST_CENTRE_GROUPS.includes(effectiveGroup.value))
+const showPayrollField       = computed(() => PAYROLL_GROUPS.includes(effectiveGroup.value))
+const showGstSection         = computed(() => GST_GROUPS.includes(effectiveGroup.value))
+const showInterestSection    = computed(() => INTEREST_GROUPS.includes(effectiveGroup.value))
+const showTdsSection         = computed(() => TDS_GROUPS.includes(effectiveGroup.value))
+const showTcsSection         = computed(() => TCS_GROUPS.includes(effectiveGroup.value))
+const showTaxTypeSection     = computed(() => TAX_TYPE_GROUPS.includes(effectiveGroup.value))
+const showAddressSection     = computed(() => ADDRESS_GROUPS.includes(effectiveGroup.value))
+const showBankSection        = computed(() => isBankLedger.value)
+const showBillAllocations    = computed(() => showBillWise.value && form.is_bill_wise_on)
 
 // ── Watchers ───────────────────────────────────────────────────────────────────
 function onGroupChange() {
@@ -207,12 +262,22 @@ function openEdit(ledger) {
     form.credit_period                   = ledger.credit_period ?? ''
     form.credit_limit                    = ledger.credit_limit ?? ''
     form.inventory_affected              = ledger.inventory_affected ?? false
+    form.is_cost_centres_on             = ledger.is_cost_centres_on ?? false
     form.gstin_number                    = ledger.gstin_number ?? ''
     form.pan_number                      = ledger.pan_number ?? ''
-    form.gst_type                        = ledger.gst_type ?? ''
+    form.gst_type_ledger                 = ledger.gst_type_ledger ?? ''
+    form.gst_registration_type           = ledger.gst_registration_type ?? ''
+    form.gst_applicable_from             = ledger.gst_applicable_from ?? ''
+    form.is_gst_applicable               = ledger.is_gst_applicable ?? false
+    form.is_sez_party                    = ledger.is_sez_party ?? false
+    form.is_transporter                  = ledger.is_transporter ?? false
+    form.is_other_territory_assessee     = ledger.is_other_territory_assessee ?? false
+    form.appropriate_for                 = ledger.appropriate_for ?? ''
+    form.name_on_pan                     = ledger.name_on_pan ?? ''
     form.is_rcm_applicable               = ledger.is_rcm_applicable ?? false
     form.is_tds_applicable               = ledger.is_tds_applicable ?? false
     form.tds_deductee_type               = ledger.tds_deductee_type ?? ''
+    form.is_tcs_applicable               = ledger.is_tcs_applicable ?? false
     form.is_interest_on                  = ledger.is_interest_on ?? false
     form.type_of_interest_on             = ledger.type_of_interest_on ?? 'Voucher Date'
     form.is_interest_on_bill_wise        = ledger.is_interest_on_bill_wise ?? false
@@ -230,6 +295,15 @@ function openEdit(ledger) {
     form.contact_person_email_cc         = ledger.contact_person_email_cc ?? ''
     form.contact_person_fax              = ledger.contact_person_fax ?? ''
     form.contact_person_website          = ledger.contact_person_website ?? ''
+    form.is_credit_days_check_on         = ledger.is_credit_days_check_on ?? false
+    form.bank_account_holder_name        = ledger.bank_account_holder_name ?? ''
+    form.swift_code                      = ledger.swift_code ?? ''
+    form.branch_name                     = ledger.branch_name ?? ''
+    form.bank_bsr_code                   = ledger.bank_bsr_code ?? ''
+    form.default_transfer_mode           = ledger.default_transfer_mode ?? ''
+    form.is_cheque_printing_enabled      = ledger.is_cheque_printing_enabled ?? false
+    form.is_related_party                = ledger.is_related_party ?? false
+    form.for_payroll                     = ledger.for_payroll ?? false
     form.bank_details                    = ledger.bank_details ? JSON.parse(JSON.stringify(ledger.bank_details)) : []
     form.bill_allocations                = ledger.bill_allocations ? JSON.parse(JSON.stringify(ledger.bill_allocations)) : []
     form.description                     = ledger.description ?? ''
@@ -474,10 +548,50 @@ function destroy(ledger) {
                         </div>
                     </div>
 
+                    <div v-if="showCreditTerms" class="tally-row">
+                        <span class="tally-label">Check Credit Days</span>
+                        <div class="tally-input">
+                            <select v-model="form.is_credit_days_check_on" class="tally-field">
+                                <option :value="false">No</option>
+                                <option :value="true">Yes</option>
+                            </select>
+                        </div>
+                    </div>
+
                     <div v-if="showInventoryAffected" class="tally-row">
                         <span class="tally-label">Inventory Affected</span>
                         <div class="tally-input">
                             <select v-model="form.inventory_affected" class="tally-field">
+                                <option :value="false">No</option>
+                                <option :value="true">Yes</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div v-if="showCostCentresSection" class="tally-row">
+                        <span class="tally-label">Cost Centres Applicable</span>
+                        <div class="tally-input">
+                            <select v-model="form.is_cost_centres_on" class="tally-field">
+                                <option :value="false">No</option>
+                                <option :value="true">Yes</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div v-if="isPartyLedger" class="tally-row">
+                        <span class="tally-label">Is Related Party</span>
+                        <div class="tally-input">
+                            <select v-model="form.is_related_party" class="tally-field">
+                                <option :value="false">No</option>
+                                <option :value="true">Yes</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div v-if="showPayrollField" class="tally-row">
+                        <span class="tally-label">For Payroll</span>
+                        <div class="tally-input">
+                            <select v-model="form.for_payroll" class="tally-field">
                                 <option :value="false">No</option>
                                 <option :value="true">Yes</option>
                             </select>
@@ -503,18 +617,56 @@ function destroy(ledger) {
                         </div>
 
                         <div class="tally-row">
-                            <span class="tally-label">GST Reg. Type <span class="text-red-500">*</span></span>
+                            <span class="tally-label">GST Reg. Type</span>
                             <div class="tally-input">
-                                <select v-model="form.gst_type" class="tally-field">
+                                <select v-model="form.gst_registration_type" class="tally-field">
                                     <option value="">— Select —</option>
                                     <option>Regular</option>
                                     <option>Composition</option>
-                                    <option>Unregistered</option>
-                                    <option>Consumer</option>
-                                    <option>Overseas</option>
-                                    <option>Unknown</option>
+                                    <option>Unregistered/Consumer</option>
                                 </select>
-                                <p v-if="form.errors.gst_type" class="mt-0.5 text-xs text-red-500">{{ form.errors.gst_type }}</p>
+                                <p v-if="form.errors.gst_registration_type" class="mt-0.5 text-xs text-red-500">{{ form.errors.gst_registration_type }}</p>
+                            </div>
+                        </div>
+
+                        <div class="tally-row">
+                            <span class="tally-label">GST Applicable From</span>
+                            <div class="tally-input">
+                                <input v-model="form.gst_applicable_from" type="text" placeholder="YYYYMMDD" class="tally-field" />
+                            </div>
+                        </div>
+
+                        <div class="tally-row">
+                            <span class="tally-label">GST Type (Ledger)</span>
+                            <div class="tally-input">
+                                <input v-model="form.gst_type_ledger" type="text" placeholder="e.g. Central Tax" class="tally-field" />
+                            </div>
+                        </div>
+
+                        <div class="tally-row">
+                            <span class="tally-label">Name on PAN</span>
+                            <div class="tally-input">
+                                <input v-model="form.name_on_pan" type="text" class="tally-field" />
+                            </div>
+                        </div>
+
+                        <div class="tally-row">
+                            <span class="tally-label">Is Transporter</span>
+                            <div class="tally-input">
+                                <select v-model="form.is_transporter" class="tally-field">
+                                    <option :value="false">No</option>
+                                    <option :value="true">Yes</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="tally-row">
+                            <span class="tally-label">Is SEZ Party</span>
+                            <div class="tally-input">
+                                <select v-model="form.is_sez_party" class="tally-field">
+                                    <option :value="false">No</option>
+                                    <option :value="true">Yes</option>
+                                </select>
                             </div>
                         </div>
 
@@ -524,6 +676,28 @@ function destroy(ledger) {
                                 <select v-model="form.is_rcm_applicable" class="tally-field">
                                     <option :value="false">No</option>
                                     <option :value="true">Yes</option>
+                                </select>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- ── Tax Classification (Duties & Taxes) ───────────── -->
+                    <template v-if="showTaxTypeSection">
+                        <div class="tally-section-header">Tax Classification</div>
+
+                        <div class="tally-row">
+                            <span class="tally-label">Appropriate For</span>
+                            <div class="tally-input">
+                                <select v-model="form.appropriate_for" class="tally-field">
+                                    <option value="">— None —</option>
+                                    <option>CGST</option>
+                                    <option>SGST</option>
+                                    <option>IGST</option>
+                                    <option>UTGST</option>
+                                    <option>Cess</option>
+                                    <option>CST</option>
+                                    <option>VAT</option>
+                                    <option>Service Tax</option>
                                 </select>
                             </div>
                         </div>
@@ -552,6 +726,21 @@ function destroy(ledger) {
                                     <option>Non Company Deductee</option>
                                 </select>
                                 <p v-if="form.errors.tds_deductee_type" class="mt-0.5 text-xs text-red-500">{{ form.errors.tds_deductee_type }}</p>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- ── TCS ───────────────────────────────────────────── -->
+                    <template v-if="showTcsSection">
+                        <div class="tally-section-header">TCS</div>
+
+                        <div class="tally-row">
+                            <span class="tally-label">Is TCS Applicable</span>
+                            <div class="tally-input">
+                                <select v-model="form.is_tcs_applicable" class="tally-field">
+                                    <option :value="false">No</option>
+                                    <option :value="true">Yes</option>
+                                </select>
                             </div>
                         </div>
                     </template>
@@ -714,8 +903,49 @@ function destroy(ledger) {
 
                     <!-- ── Bank Details ──────────────────────────────────── -->
                     <template v-if="showBankSection">
+                        <div class="tally-section-header">Bank Configuration</div>
+
+                        <div class="tally-row">
+                            <span class="tally-label">Account Holder Name</span>
+                            <div class="tally-input"><input v-model="form.bank_account_holder_name" type="text" class="tally-field" /></div>
+                        </div>
+                        <div class="tally-row">
+                            <span class="tally-label">Branch Name</span>
+                            <div class="tally-input"><input v-model="form.branch_name" type="text" class="tally-field" /></div>
+                        </div>
+                        <div class="tally-row">
+                            <span class="tally-label">SWIFT Code</span>
+                            <div class="tally-input"><input v-model="form.swift_code" type="text" class="tally-field" /></div>
+                        </div>
+                        <div class="tally-row">
+                            <span class="tally-label">BSR Code</span>
+                            <div class="tally-input"><input v-model="form.bank_bsr_code" type="text" class="tally-field" /></div>
+                        </div>
+                        <div class="tally-row">
+                            <span class="tally-label">Default Transfer Mode</span>
+                            <div class="tally-input">
+                                <select v-model="form.default_transfer_mode" class="tally-field">
+                                    <option value="">— None —</option>
+                                    <option>NEFT</option>
+                                    <option>RTGS</option>
+                                    <option>IMPS</option>
+                                    <option>UPI</option>
+                                    <option>Same Bank Transfer</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="tally-row">
+                            <span class="tally-label">Cheque Printing</span>
+                            <div class="tally-input">
+                                <select v-model="form.is_cheque_printing_enabled" class="tally-field">
+                                    <option :value="false">No</option>
+                                    <option :value="true">Yes</option>
+                                </select>
+                            </div>
+                        </div>
+
                         <div class="tally-section-header flex items-center justify-between pr-4">
-                            <span>Bank Details</span>
+                            <span>Bank Accounts</span>
                             <button type="button" @click="addBank"
                                     class="text-xs text-violet-600 hover:text-violet-800 font-medium normal-case tracking-normal">+ Add Account</button>
                         </div>
