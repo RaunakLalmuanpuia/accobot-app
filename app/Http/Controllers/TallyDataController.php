@@ -101,7 +101,7 @@ class TallyDataController extends Controller
     public function units(Tenant $tenant)
     {
         $map = $this->queueMap($tenant->id, TallyUnit::class);
-        return inertia('Tally/Units', [
+        return inertia('Tally/StockMasters/Units', [
             'tenant' => $tenant,
             'units'  => $this->addSyncStatus(
                 TallyUnit::where('tenant_id', $tenant->id)
@@ -114,12 +114,23 @@ class TallyDataController extends Controller
 
     public function stockMasters(Tenant $tenant)
     {
-        $sgMap  = $this->queueMap($tenant->id, TallyStockGroup::class);
-        $scMap  = $this->queueMap($tenant->id, TallyStockCategory::class);
-        $unitMap = $this->queueMap($tenant->id, TallyUnit::class);
-        return inertia('Tally/StockMasters', [
-            'tenant'          => $tenant,
-            'stockGroups'     => $this->addSyncStatus(
+        return inertia('Tally/StockMasters/Index', [
+            'tenant' => $tenant,
+            'counts' => [
+                'stockGroups'     => TallyStockGroup::where('tenant_id', $tenant->id)->where('is_active', true)->count(),
+                'stockCategories' => TallyStockCategory::where('tenant_id', $tenant->id)->where('is_active', true)->count(),
+                'godowns'         => TallyGodown::where('tenant_id', $tenant->id)->where('is_active', true)->count(),
+                'units'           => TallyUnit::where('tenant_id', $tenant->id)->where('is_active', true)->count(),
+            ],
+        ]);
+    }
+
+    public function stockGroups(Tenant $tenant)
+    {
+        $map = $this->queueMap($tenant->id, TallyStockGroup::class);
+        return inertia('Tally/StockMasters/StockGroups', [
+            'tenant'      => $tenant,
+            'stockGroups' => $this->addSyncStatus(
                 TallyStockGroup::where('tenant_id', $tenant->id)
                     ->orderBy('name')
                     ->get([
@@ -128,23 +139,32 @@ class TallyDataController extends Controller
                         'is_batch_wise_on', 'is_perishable_on', 'is_addable',
                         'is_active', 'last_synced_at',
                     ]),
-                $sgMap
+                $map
             ),
+        ]);
+    }
+
+    public function stockCategories(Tenant $tenant)
+    {
+        $map = $this->queueMap($tenant->id, TallyStockCategory::class);
+        return inertia('Tally/StockMasters/StockCategories', [
+            'tenant'          => $tenant,
             'stockCategories' => $this->addSyncStatus(
                 TallyStockCategory::where('tenant_id', $tenant->id)
                     ->orderBy('name')
                     ->get(['id', 'tally_id', 'name', 'parent_name', 'aliases', 'is_active', 'last_synced_at']),
-                $scMap
+                $map
             ),
-            'godowns'         => TallyGodown::where('tenant_id', $tenant->id)
+        ]);
+    }
+
+    public function godowns(Tenant $tenant)
+    {
+        return inertia('Tally/StockMasters/Godowns', [
+            'tenant'  => $tenant,
+            'godowns' => TallyGodown::where('tenant_id', $tenant->id)
                 ->orderBy('name')
                 ->get(['id', 'tally_id', 'name', 'under', 'guid', 'has_no_space', 'has_no_stock', 'is_external', 'is_internal', 'is_active', 'last_synced_at']),
-            'units'           => $this->addSyncStatus(
-                TallyUnit::where('tenant_id', $tenant->id)
-                    ->orderBy('name')
-                    ->get(['id', 'tally_id', 'name', 'symbol', 'formal_name', 'original_name', 'decimal_places', 'uqc', 'is_simple_unit', 'conversion', 'is_active', 'last_synced_at']),
-                $unitMap
-            ),
         ]);
     }
 
