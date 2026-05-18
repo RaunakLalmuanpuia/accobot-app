@@ -144,6 +144,8 @@ const form = useForm({
     override_interest:               false,
     interest_incl_day_of_addition:   true,
     interest_incl_day_of_deduction:  true,
+    interest_rate:                   '',
+    interest_style:                  '365-Day Year',
     // Address & Contact
     addresses:                [],
     state_name:               '',
@@ -246,6 +248,7 @@ function openCreate() {
     form.type_of_interest_on  = 'Voucher Date'
     form.interest_incl_day_of_addition  = true
     form.interest_incl_day_of_deduction = true
+    form.interest_style       = '365-Day Year'
     form.clearErrors()
     modal.value = 'create'
 }
@@ -284,6 +287,8 @@ function openEdit(ledger) {
     form.override_interest               = ledger.override_interest ?? false
     form.interest_incl_day_of_addition   = ledger.interest_incl_day_of_addition ?? true
     form.interest_incl_day_of_deduction  = ledger.interest_incl_day_of_deduction ?? true
+    form.interest_rate                   = ledger.interest_rate ?? ''
+    form.interest_style                  = ledger.interest_style ?? '365-Day Year'
     form.addresses                       = ledger.addresses ? JSON.parse(JSON.stringify(ledger.addresses)) : []
     form.state_name                      = ledger.state_name ?? ''
     form.country_name                    = ledger.country_name ?? 'India'
@@ -685,20 +690,38 @@ function destroy(ledger) {
                     <template v-if="showTaxTypeSection">
                         <div class="tally-section-header">Tax Classification</div>
 
+                        <!-- GST Tax Type — which GST component this ledger represents (e.g. CGST, SGST) -->
+                        <div class="tally-row">
+                            <span class="tally-label">GST Tax Type</span>
+                            <div class="tally-input">
+                                <select v-model="form.gst_type_ledger" class="tally-field">
+                                    <option value="">— None / Not GST —</option>
+                                    <option>Central Tax</option>
+                                    <option>State Tax</option>
+                                    <option>Integrated Tax</option>
+                                    <option>UT Tax</option>
+                                    <option>Cess</option>
+                                </select>
+                                <p class="mt-0.5 text-xs text-gray-400">Maps to Tally's Tax Type field (Central Tax = CGST, State Tax = SGST, Integrated Tax = IGST)</p>
+                            </div>
+                        </div>
+
+                        <!-- Appropriate For — legacy statutory tax regime this ledger applies to -->
                         <div class="tally-row">
                             <span class="tally-label">Appropriate For</span>
                             <div class="tally-input">
                                 <select v-model="form.appropriate_for" class="tally-field">
                                     <option value="">— None —</option>
-                                    <option>CGST</option>
-                                    <option>SGST</option>
-                                    <option>IGST</option>
-                                    <option>UTGST</option>
-                                    <option>Cess</option>
-                                    <option>CST</option>
+                                    <option>GST</option>
                                     <option>VAT</option>
+                                    <option>CST</option>
+                                    <option>Excise</option>
+                                    <option>Excise &amp; GST</option>
+                                    <option>Excise &amp; VAT</option>
+                                    <option>Excise &amp; CST</option>
                                     <option>Service Tax</option>
                                 </select>
+                                <p class="mt-0.5 text-xs text-gray-400">Legacy statutory classification (for older tax regimes)</p>
                             </div>
                         </div>
                     </template>
@@ -760,6 +783,27 @@ function destroy(ledger) {
                         </div>
 
                         <template v-if="form.is_interest_on">
+                            <div class="tally-row">
+                                <span class="tally-label">Rate (% p.a.) <span class="text-red-500">*</span></span>
+                                <div class="tally-input">
+                                    <input v-model="form.interest_rate" type="number" step="0.01" min="0" max="100"
+                                           placeholder="e.g. 18" class="tally-field" />
+                                    <p v-if="form.errors.interest_rate" class="mt-0.5 text-xs text-red-500">{{ form.errors.interest_rate }}</p>
+                                </div>
+                            </div>
+
+                            <div class="tally-row">
+                                <span class="tally-label">Interest Style</span>
+                                <div class="tally-input">
+                                    <select v-model="form.interest_style" class="tally-field">
+                                        <option>365-Day Year</option>
+                                        <option>Calendar Month</option>
+                                        <option>30-Day Month</option>
+                                        <option>Calendar Year</option>
+                                    </select>
+                                </div>
+                            </div>
+
                             <div class="tally-row">
                                 <span class="tally-label">Calculate On</span>
                                 <div class="tally-input">

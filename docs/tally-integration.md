@@ -235,7 +235,7 @@ All account masters — customers, vendors, bank accounts, tax ledgers, expense 
 | Address | addresses (jsonb), state_name, country_name, pin_code, led_multi_address_list (jsonb) |
 | Credit | credit_period, credit_limit, is_credit_days_check_on, override_credit_limit |
 | Opening Balance | opening_balance, opening_balance_type (Dr/Cr) |
-| Interest | type_of_interest_on, is_interest_on, is_interest_on_bill_wise, override_interest, override_adv_interest, is_interest_incl_last_day, interest_incl_day_of_addition, interest_incl_day_of_deduction, interest_collection (jsonb) |
+| Interest | type_of_interest_on, is_interest_on, is_interest_on_bill_wise, override_interest, override_adv_interest, is_interest_incl_last_day, interest_incl_day_of_addition, interest_incl_day_of_deduction, interest_rate (decimal — flat from InterestCollection[0].InterestRate), interest_style (string — flat from InterestCollection[0].InterestStyle e.g. "365-Day Year"), interest_collection (jsonb full array) |
 | Bank (flat) | bank_account_holder_name, swift_code, branch_name, bank_bsr_code, default_transfer_mode, is_cheque_printing_enabled |
 | Bank (arrays) | bank_details (jsonb) — account list {BankName, IFSCode, AccountNumber, PaymentFavouring, TransactionName, TransactionType}, cheque_ranges (jsonb), transfer_mode_limits (jsonb) |
 | Party / Payroll | is_related_party, for_payroll, use_for_esi_eligibility, is_e_cash_ledger, ignore_mismatch_with_warning, ignore_tds_exempt, it_exempt_applicable |
@@ -1022,7 +1022,8 @@ The "Tally" link appears in the top navigation for any user with `integrations.v
 database/migrations/
   2026_04_19_000001_create_tally_connections_table.php
   2026_04_19_000002_create_tally_ledger_groups_table.php
-  2026_04_19_000003_create_tally_ledgers_table.php  ← single source of truth; all payload columns included; do NOT add piecemeal migrations for this table
+  2026_04_19_000003_create_tally_ledgers_table.php  ← single source of truth; all payload columns included
+  2026_05_18_000001_add_interest_rate_style_to_tally_ledgers.php  ← adds interest_rate + interest_style flat columns (extracted from InterestCollection[0])
   2026_04_19_000004_create_tally_stock_groups_table.php   ← single source of truth; all payload + inventory-behaviour columns included
   2026_04_19_000005_create_tally_stock_categories_table.php  ← single source of truth
   2026_04_19_000006_create_tally_stock_items_table.php   ← single source of truth; all payload columns included

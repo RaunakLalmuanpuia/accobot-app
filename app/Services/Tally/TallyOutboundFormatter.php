@@ -128,7 +128,9 @@ class TallyOutboundFormatter
             'GSTRegistrationDetails'    => $l->gst_registration_details ?? [],
             'ChequeRanges'              => $l->cheque_ranges ?? [],
             'TransferModeLimits'        => $l->transfer_mode_limits ?? [],
-            'InterestCollection'        => $l->interest_collection ?? [],
+            'InterestCollection'        => $l->interest_rate !== null
+                ? [['InterestStyle' => $l->interest_style ?? '', 'InterestRate' => (float) $l->interest_rate]]
+                : ($l->interest_collection ?? []),
             'TDSCategoryDetails'        => $l->tds_category_details ?? [],
             'TCSCategoryDetails'        => $l->tcs_category_details ?? [],
             'ContactDetails'            => $l->contact_details ?? [],

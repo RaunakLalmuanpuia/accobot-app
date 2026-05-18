@@ -166,6 +166,8 @@ class TallyMasterCrudController extends Controller
             'override_interest'                 => 'boolean',
             'interest_incl_day_of_addition'     => 'boolean',
             'interest_incl_day_of_deduction'    => 'boolean',
+            'interest_rate'                     => 'nullable|numeric|min:0|max:100',
+            'interest_style'                    => 'nullable|string|max:50',
             // Other
             'aliases'                           => 'nullable|array',
             'aliases.*.Alias'                   => 'nullable|string|max:255',
@@ -262,6 +264,8 @@ class TallyMasterCrudController extends Controller
             'override_interest'                 => 'boolean',
             'interest_incl_day_of_addition'     => 'boolean',
             'interest_incl_day_of_deduction'    => 'boolean',
+            'interest_rate'                     => 'nullable|numeric|min:0|max:100',
+            'interest_style'                    => 'nullable|string|max:50',
             // Other
             'aliases'                           => 'nullable|array',
             'aliases.*.Alias'                   => 'nullable|string|max:255',

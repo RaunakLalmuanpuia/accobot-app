@@ -229,6 +229,16 @@ class TallyInboundSync
                     'cheque_ranges'             => $item['ChequeRanges'] ?? null,
                     'transfer_mode_limits'      => $item['TransferModeLimits'] ?? null,
                     'interest_collection'       => $item['InterestCollection'] ?? null,
+                    'interest_rate'             => (function () use ($item) {
+                        $ic = $item['InterestCollection'] ?? [];
+                        $first = is_array($ic) && isset($ic[0]) ? $ic[0] : [];
+                        return isset($first['InterestRate']) ? (float) $first['InterestRate'] : null;
+                    })(),
+                    'interest_style'            => (function () use ($item) {
+                        $ic = $item['InterestCollection'] ?? [];
+                        $first = is_array($ic) && isset($ic[0]) ? $ic[0] : [];
+                        return ($first['InterestStyle'] ?? null) ?: null;
+                    })(),
                     'tds_category_details'      => $item['TDSCategoryDetails'] ?? null,
                     'tcs_category_details'      => $item['TCSCategoryDetails'] ?? null,
                     'contact_details'           => $item['ContactDetails'] ?? null,

@@ -102,6 +102,8 @@ return new class extends Migration
             $table->boolean('is_interest_incl_last_day')->nullable();
             $table->boolean('interest_incl_day_of_addition')->nullable();
             $table->boolean('interest_incl_day_of_deduction')->nullable();
+            $table->decimal('interest_rate', 10, 4)->nullable();           // flat from InterestCollection[0].InterestRate
+            $table->string('interest_style', 50)->nullable();              // flat from InterestCollection[0].InterestStyle
 
             // Bank — flat fields (top-level payload scalars for the ledger's own bank account)
             $table->string('bank_account_holder_name')->nullable();
