@@ -233,7 +233,7 @@ class TallyDataController extends Controller
     public function vouchers(Tenant $tenant)
     {
         $map = $this->queueMap($tenant->id, TallyVoucher::class);
-        return inertia('Tally/Vouchers', [
+        return inertia('Tally/Vouchers/Index', [
             'tenant'   => $tenant,
             'vouchers' => $this->addSyncStatus(
                 TallyVoucher::where('tenant_id', $tenant->id)
@@ -251,7 +251,7 @@ class TallyDataController extends Controller
 
     public function voucherCreate(Tenant $tenant)
     {
-        return inertia('Tally/VoucherCreate', [
+        return inertia('Tally/Vouchers/Create', [
             'tenant'                 => $tenant,
             'ledgers'                => TallyLedger::where('tenant_id', $tenant->id)->where('is_active', true)->orderBy('ledger_name')->get(['id', 'ledger_name', 'group_name', 'gstin_number', 'gst_type_ledger', 'gst_registration_type', 'mailing_name', 'mobile_number', 'contact_person_email', 'state_name', 'pin_code', 'country_name', 'addresses']),
             'stockItems'             => TallyStockItem::where('tenant_id', $tenant->id)->where('is_active', true)->orderBy('name')->get(['id', 'name', 'hsn_code', 'unit_name', 'igst_rate', 'cess_rate', 'stock_group_name', 'mrp_rate', 'opening_rate']),
@@ -266,7 +266,7 @@ class TallyDataController extends Controller
             'ledgerEntries:id,tally_voucher_id,ledger_name,ledger_group,ledger_amount,is_deemed_positive,is_party_ledger,igst_rate,hsn_code,cess_rate,bills_allocation,bank_allocation_details,category_allocation',
             'inventoryEntries:id,tally_voucher_id,stock_item_name,item_code,group_name,hsn_code,unit,igst_rate,cess_rate,is_deemed_positive,actual_qty,billed_qty,rate,discount_percent,amount,tax_amount,mrp,sales_ledger,godown_name,batch_name,batch_allocations,accounting_allocations',
         ]);
-        return inertia('Tally/VoucherEdit', [
+        return inertia('Tally/Vouchers/Edit', [
             'tenant'     => $tenant,
             'voucher'    => $voucher,
             'ledgers'    => TallyLedger::where('tenant_id', $tenant->id)->where('is_active', true)->orderBy('ledger_name')->get(['id', 'ledger_name', 'group_name', 'gstin_number', 'gst_type_ledger', 'gst_registration_type', 'mailing_name', 'mobile_number', 'contact_person_email', 'state_name', 'pin_code', 'country_name', 'addresses']),
@@ -397,7 +397,7 @@ class TallyDataController extends Controller
             default      => [],
         };
 
-        return inertia('Tally/VoucherShow', [
+        return inertia('Tally/Vouchers/Show', [
             'tenant'  => $tenant,
             'voucher' => $voucher,
             'payload' => $payload[0] ?? null,

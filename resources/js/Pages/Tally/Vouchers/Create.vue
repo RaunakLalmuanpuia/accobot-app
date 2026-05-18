@@ -2,14 +2,14 @@
 import { ref, watch } from 'vue'
 import { Link, useForm, router } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
-import SalesVoucherForm    from './Vouchers/SalesVoucherForm.vue'
-import PurchaseVoucherForm from './Vouchers/PurchaseVoucherForm.vue'
-import CreditNoteForm      from './Vouchers/CreditNoteForm.vue'
-import DebitNoteForm       from './Vouchers/DebitNoteForm.vue'
-import ReceiptVoucherForm  from './Vouchers/ReceiptVoucherForm.vue'
-import PaymentVoucherForm  from './Vouchers/PaymentVoucherForm.vue'
-import ContraVoucherForm   from './Vouchers/ContraVoucherForm.vue'
-import JournalVoucherForm  from './Vouchers/JournalVoucherForm.vue'
+import SalesVoucherForm    from './SalesVoucherForm.vue'
+import PurchaseVoucherForm from './PurchaseVoucherForm.vue'
+import CreditNoteForm      from './CreditNoteForm.vue'
+import DebitNoteForm       from './DebitNoteForm.vue'
+import ReceiptVoucherForm  from './ReceiptVoucherForm.vue'
+import PaymentVoucherForm  from './PaymentVoucherForm.vue'
+import ContraVoucherForm   from './ContraVoucherForm.vue'
+import JournalVoucherForm  from './JournalVoucherForm.vue'
 
 const props = defineProps({
     tenant:                   Object,
