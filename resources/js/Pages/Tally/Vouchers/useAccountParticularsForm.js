@@ -44,9 +44,18 @@ export function useAccountParticularsForm(props, config = {}) {
     )
 
     function syncAccountAmount() {
-        if (accountEntry.value) accountEntry.value.ledger_amount = particularsTotal.value || ''
-        props.form.voucher_total = particularsTotal.value || ''
+        if (accountEntry.value) accountEntry.value.ledger_amount = parseFloat(particularsTotal.value.toFixed(2)) || ''
+        props.form.voucher_total = parseFloat(particularsTotal.value.toFixed(2)) || ''
     }
+
+    // Reactively keep voucher_total, account amount, and party_name in sync
+    watch(particularsTotal, (total) => {
+        props.form.voucher_total = parseFloat(total.toFixed(2)) || ''
+        if (accountEntry.value) accountEntry.value.ledger_amount = parseFloat(total.toFixed(2)) || ''
+    })
+    watch(() => particulars.value[0]?.ledger_name, (name) => {
+        props.form.party_name = name || ''
+    }, { immediate: true })
 
     function addParticular() {
         props.form.ledger_entries.push({

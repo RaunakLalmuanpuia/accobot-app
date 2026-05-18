@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { fmt, emptyBillRef } from './voucherHelpers.js'
 import VoucherGuide from './VoucherGuide.vue'
 
@@ -46,6 +46,11 @@ const crTotal = computed(() =>
 )
 const isBalanced = computed(() => Math.abs(drTotal.value - crTotal.value) < 0.01)
 const diff       = computed(() => Math.abs(drTotal.value - crTotal.value))
+
+watch(drTotal, (v) => { props.form.voucher_total = parseFloat(v.toFixed(2)) || '' })
+watch(() => props.form.ledger_entries[0]?.ledger_name, (name) => {
+    props.form.party_name = name || ''
+}, { immediate: true })
 
 const showGuide = ref(false)
 </script>
