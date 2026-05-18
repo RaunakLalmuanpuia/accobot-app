@@ -41,7 +41,7 @@ class TallyDataController extends Controller
     public function ledgerGroups(Tenant $tenant)
     {
         $map = $this->queueMap($tenant->id, TallyLedgerGroup::class);
-        return inertia('Tally/LedgerGroups', [
+        return inertia('Tally/Ledgers/Groups', [
             'tenant' => $tenant,
             'groups' => $this->addSyncStatus(
                 TallyLedgerGroup::where('tenant_id', $tenant->id)
@@ -55,7 +55,7 @@ class TallyDataController extends Controller
     public function ledgers(Tenant $tenant)
     {
         $map = $this->queueMap($tenant->id, TallyLedger::class);
-        return inertia('Tally/Ledgers', [
+        return inertia('Tally/Ledgers/Index', [
             'tenant'           => $tenant,
             'ledgers'          => $this->addSyncStatus(
                 TallyLedger::where('tenant_id', $tenant->id)
@@ -171,7 +171,7 @@ class TallyDataController extends Controller
     public function stockItems(Tenant $tenant)
     {
         $map = $this->queueMap($tenant->id, TallyStockItem::class);
-        return inertia('Tally/StockItems', [
+        return inertia('Tally/StockMasters/StockItems', [
             'tenant'             => $tenant,
             'items'              => $this->addSyncStatus(
                 TallyStockItem::where('tenant_id', $tenant->id)
