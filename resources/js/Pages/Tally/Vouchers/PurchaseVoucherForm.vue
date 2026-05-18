@@ -16,7 +16,7 @@ const {
     voucherNoLabel, voucherNoPlaceholder,
     mode, expandedItems, grandTotalLocked,
     buyerAddressLines,
-    partyLedgers, ledgerEntryOptions, taxableTotal, ledgerTotal, autoTaxGroups,
+    partyLedgers, ledgerEntryOptions, taxableTotal, ledgerTotal, nonPartyLedgerTotal, autoTaxGroups,
     commonSalesLedger, applyCommonSalesLedger,
     onPartyChange,
     toggleExpand, recalcItemAmount, onStockItemChange,
@@ -34,6 +34,7 @@ const {
     defaultMode:             props.defaultMode,
     syncIsInvoice:           true,
     inventoryDeemedPositive: true,
+    partyDeemedPositive:     false,
 })
 
 const purchaseLedgers = computed(() => {
@@ -430,7 +431,7 @@ const MODE_HINT   = {
         </div>
         <div class="flex items-center justify-between text-sm mb-3">
             <span class="text-gray-600">Tax &amp; Duties</span>
-            <span class="font-mono font-medium text-gray-800">{{ fmt(ledgerTotal) }}</span>
+            <span class="font-mono font-medium text-gray-800">{{ fmt(nonPartyLedgerTotal) }}</span>
         </div>
         <div class="flex items-center justify-between pt-2 border-t border-violet-200">
             <span class="text-sm font-semibold text-violet-900">Grand Total</span>

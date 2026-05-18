@@ -17,6 +17,7 @@ export function useInvoiceVoucherForm(props, config = {}) {
         defaultMode              = 'item',     // 'item' | 'accounting' | 'voucher'
         syncIsInvoice            = false,      // if true, mode drives form.is_invoice
         inventoryDeemedPositive  = false,      // true for Purchase/DebitNote (stock in)
+        partyDeemedPositive      = true,       // false for Purchase/CreditNote (party is Cr)
     } = config
 
     // ── Mode ─────────────────────────────────────────────────────────────────
@@ -188,10 +189,21 @@ export function useInvoiceVoucherForm(props, config = {}) {
         form.buyer_mobile = m.mobile_number       || ''
         form.buyer_email  = m.contact_person_email || ''
 
-        // Also mark any already-added ledger entry that matches the party as IsPartyLedger
-        form.ledger_entries.forEach(le => {
-            le.is_party_ledger = le.ledger_name === form.party_name
-        })
+        // Auto-insert the party ledger entry (replace if one already exists)
+        const computedAmount = parseFloat((taxableTotal.value + nonPartyLedgerTotal.value).toFixed(2)) || ''
+        const partyEntry = {
+            ledger_name: form.party_name, ledger_group: m.group_name || '',
+            ledger_amount: computedAmount, is_deemed_positive: partyDeemedPositive,
+            is_party_ledger: true,
+            igst_rate: '', hsn_code: '', cess_rate: '',
+            bills_allocation: [], bank_allocation_details: [],
+        }
+        const existingIdx = form.ledger_entries.findIndex(le => le.is_party_ledger)
+        if (existingIdx >= 0) {
+            form.ledger_entries.splice(existingIdx, 1, partyEntry)
+        } else {
+            form.ledger_entries.unshift(partyEntry)
+        }
     }
 
     // ── Ledger entry helpers ──────────────────────────────────────────────────
@@ -242,18 +254,33 @@ export function useInvoiceVoucherForm(props, config = {}) {
     const ledgerTotal = computed(() =>
         props.form.ledger_entries.reduce((s, le) => s + (parseFloat(le.ledger_amount) || 0), 0)
     )
+    const nonPartyLedgerTotal = computed(() =>
+        props.form.ledger_entries
+            .filter(le => !le.is_party_ledger)
+            .reduce((s, le) => s + (parseFloat(le.ledger_amount) || 0), 0)
+    )
     const grandTotalLocked = ref(false)
 
-    watch(taxableTotal, (v) => {
-        if (!grandTotalLocked.value && mode.value === 'item') props.form.voucher_total = v || ''
+    watch([taxableTotal, nonPartyLedgerTotal], ([items, others]) => {
+        if (!grandTotalLocked.value && mode.value === 'item')
+            props.form.voucher_total = parseFloat((items + others).toFixed(2)) || ''
     })
     watch(ledgerTotal, (v) => {
         if (!grandTotalLocked.value && mode.value === 'accounting') props.form.voucher_total = v || ''
     })
 
+    // In item mode: party amount = inventory total + all non-party ledger lines (tax, charges)
+    watch([taxableTotal, nonPartyLedgerTotal], ([items, others]) => {
+        if (mode.value !== 'item') return
+        const partyEntry = props.form.ledger_entries.find(le => le.is_party_ledger)
+        if (partyEntry) partyEntry.ledger_amount = parseFloat((items + others).toFixed(2)) || ''
+    })
+
     function resetGrandTotal() {
         grandTotalLocked.value = false
-        props.form.voucher_total = (mode.value === 'item' ? taxableTotal.value : ledgerTotal.value) || ''
+        props.form.voucher_total = (mode.value === 'item'
+            ? parseFloat((taxableTotal.value + nonPartyLedgerTotal.value).toFixed(2))
+            : ledgerTotal.value) || ''
     }
 
     // ── Auto tax suggestion ───────────────────────────────────────────────────
@@ -304,8 +331,8 @@ export function useInvoiceVoucherForm(props, config = {}) {
                 ledger_name: ledgerName, ledger_group: ledgerGroup,
                 ledger_amount: g.amount,
                 is_deemed_positive: false, is_party_ledger: false,
-                igst_rate: g.type === 'igst' ? g.rate : '',
-                hsn_code: '', cess_rate: g.type === 'cess' ? g.rate : '',
+                igst_rate: g.type === 'igst' ? String(g.rate) : '',
+                hsn_code: '', cess_rate: g.type === 'cess' ? String(g.rate) : '',
                 bills_allocation: [], bank_allocation_details: [],
                 _suggestLabel: g.label,
             })
@@ -367,6 +394,7 @@ export function useInvoiceVoucherForm(props, config = {}) {
         ledgerEntryOptions,
         taxableTotal,
         ledgerTotal,
+        nonPartyLedgerTotal,
         autoTaxGroups,
         taxLedgers,
         // Common sales ledger

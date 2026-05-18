@@ -16,7 +16,7 @@ const {
     voucherNoLabel, voucherNoPlaceholder,
     mode, expandedItems, grandTotalLocked,
     buyerAddressLines, consigneeAddressLines,
-    partyLedgers, salesLedgers, ledgerEntryOptions, taxableTotal, ledgerTotal, autoTaxGroups,
+    partyLedgers, salesLedgers, ledgerEntryOptions, taxableTotal, ledgerTotal, nonPartyLedgerTotal, autoTaxGroups,
     commonSalesLedger, applyCommonSalesLedger,
     onPartyChange,
     toggleExpand, recalcItemAmount, onStockItemChange, onSalesLedgerChange,
@@ -34,6 +34,7 @@ const {
     partyType:            'debtor',
     defaultMode:          props.defaultMode,
     syncIsInvoice:        true,
+    partyDeemedPositive:  true,
 })
 
 const showGuide = ref(false)
@@ -426,7 +427,7 @@ const MODE_HINT   = {
         </div>
         <div class="flex items-center justify-between text-sm mb-3">
             <span class="text-gray-600">Tax &amp; Duties</span>
-            <span class="font-mono font-medium text-gray-800">{{ fmt(ledgerTotal) }}</span>
+            <span class="font-mono font-medium text-gray-800">{{ fmt(nonPartyLedgerTotal) }}</span>
         </div>
         <div class="flex items-center justify-between pt-2 border-t border-violet-200">
             <span class="text-sm font-semibold text-violet-900">Grand Total</span>
