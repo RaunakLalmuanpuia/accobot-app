@@ -180,7 +180,20 @@ class TallyOutboundFormatter
 
     public function formatContraVouchers(Collection $vouchers): array
     {
-        return $this->formatVouchers($vouchers);
+        return $this->formatVouchers($vouchers, function (array $base, $v): array {
+            // Tally Contra: both ledger entries have IsPartyLedger=Yes.
+            // From account (Cr, IsDeemedPositive=No) also appears as PartyName on the header.
+            if (empty($base['PartyName'])) {
+                $fromEntry = $v->ledgerEntries->first(fn ($le) => !$le->is_deemed_positive);
+                if ($fromEntry) $base['PartyName'] = $fromEntry->ledger_name;
+            }
+            // Ensure all Contra ledger entries are flagged as party ledger (Tally requirement)
+            $base['ledgerentries'] = array_map(function ($le) {
+                $le['IsPartyLedger'] = 'Yes';
+                return $le;
+            }, $base['ledgerentries']);
+            return $base;
+        });
     }
 
     public function formatJournalVouchers(Collection $vouchers): array
@@ -432,9 +445,9 @@ class TallyOutboundFormatter
 
     // ── Private ────────────────────────────────────────────────────────────────
 
-    private function formatVouchers(Collection $vouchers): array
+    private function formatVouchers(Collection $vouchers, ?callable $postProcess = null): array
     {
-        return $vouchers->map(function ($v) {
+        return $vouchers->map(function ($v) use ($postProcess) {
             $base = $this->dropNulls([
                 'AccobotId'     => $v->id,
                 'TallyId'       => $v->tally_id,
@@ -547,7 +560,7 @@ class TallyOutboundFormatter
                 'CategoryAllocation'    => $le->category_allocation ?? [],
             ]))->values()->all();
 
-            return $base;
+            return $postProcess ? $postProcess($base, $v) : $base;
         })->values()->all();
     }
 

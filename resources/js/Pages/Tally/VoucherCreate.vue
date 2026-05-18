@@ -104,11 +104,20 @@ watch(selectedType, (val) => {
     if (val === 'Sales' && !form.voucher_number) {
         form.voucher_number = String(props.nextSalesVoucherNumber)
     }
-    if (['Receipt', 'Payment', 'Contra'].includes(val)) {
-        const isDr = ['Receipt', 'Contra'].includes(val)
+    if (['Receipt', 'Payment'].includes(val)) {
+        const isDr = val === 'Receipt'
         form.ledger_entries = [{
             ledger_name: '', ledger_group: '', ledger_amount: '',
             is_deemed_positive: isDr, is_party_ledger: false,
+            igst_rate: '', hsn_code: '', cess_rate: '',
+            bills_allocation: [], bank_allocation_details: [],
+        }]
+    }
+    if (val === 'Contra') {
+        // Seed one To entry (Dr, is_deemed_positive:true) matching Tally's double-entry Contra format
+        form.ledger_entries = [{
+            ledger_name: '', ledger_group: '', ledger_amount: '',
+            is_deemed_positive: true, is_party_ledger: true,
             igst_rate: '', hsn_code: '', cess_rate: '',
             bills_allocation: [], bank_allocation_details: [],
         }]

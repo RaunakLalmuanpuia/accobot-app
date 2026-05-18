@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { emptyBankAlloc, TRANSFER_MODES } from './voucherHelpers.js'
 import VoucherGuide from './VoucherGuide.vue'
 
@@ -9,16 +9,16 @@ const props = defineProps({
     isEditing: Boolean,
 })
 
-// First non-party entry = "To" account (destination — where money goes)
-const toAccount = computed(() => props.form.ledger_entries.find(le => !le.is_party_ledger) ?? null)
-// Party entries = "From" accounts (sources)
-const fromAccounts = computed(() => props.form.ledger_entries.filter(le => le.is_party_ledger))
+// Tally Contra: both entries are IsPartyLedger=Yes.
+// To account (Deposit Into) = IsDeemedPositive:true (Dr). From account (Withdraw From) = IsDeemedPositive:false (Cr).
+const toAccount   = computed(() => props.form.ledger_entries.find(le => le.is_deemed_positive)  ?? null)
+const fromAccounts = computed(() => props.form.ledger_entries.filter(le => !le.is_deemed_positive))
 
 function ensureToAccount() {
     if (!toAccount.value) {
         props.form.ledger_entries.unshift({
             ledger_name: '', ledger_group: '', ledger_amount: '',
-            is_deemed_positive: true, is_party_ledger: false,
+            is_deemed_positive: true, is_party_ledger: true,
             igst_rate: '', hsn_code: '', cess_rate: '',
             bills_allocation: [], bank_allocation_details: [],
         })
@@ -54,9 +54,21 @@ function removeBankAlloc(le, j) { le.bank_allocation_details.splice(j, 1) }
 
 function syncTotal() {
     const total = fromAccounts.value.reduce((s, le) => s + (parseFloat(le.ledger_amount) || 0), 0)
-    if (toAccount.value) toAccount.value.ledger_amount = total || ''
-    props.form.voucher_total = total || ''
+    if (toAccount.value) toAccount.value.ledger_amount = parseFloat(total.toFixed(2)) || ''
+    props.form.voucher_total = parseFloat(total.toFixed(2)) || ''
 }
+
+// Reactively keep party_name (= primary From account) and voucher_total in sync
+const fromTotal = computed(() =>
+    fromAccounts.value.reduce((s, le) => s + (parseFloat(le.ledger_amount) || 0), 0)
+)
+watch(fromTotal, (total) => {
+    props.form.voucher_total = parseFloat(total.toFixed(2)) || ''
+    if (toAccount.value) toAccount.value.ledger_amount = parseFloat(total.toFixed(2)) || ''
+})
+watch(() => fromAccounts.value[0]?.ledger_name, (name) => {
+    props.form.party_name = name || ''
+}, { immediate: true })
 
 if (!toAccount.value) ensureToAccount()
 
