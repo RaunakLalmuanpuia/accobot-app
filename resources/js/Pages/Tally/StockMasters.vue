@@ -9,6 +9,7 @@ const props = defineProps({
     stockGroups:     Array,
     stockCategories: Array,
     godowns:         Array,
+    units:           Array,
 })
 
 const canManage = hasPermission('integrations.manage')
@@ -18,6 +19,7 @@ const tabs = [
     { key: 'stockGroups',     label: 'Stock Groups' },
     { key: 'stockCategories', label: 'Stock Categories' },
     { key: 'godowns',         label: 'Godowns' },
+    { key: 'units',           label: 'Units' },
 ]
 
 // ── Stock Groups ───────────────────────────────────────────────────────────────
@@ -124,6 +126,70 @@ function syncBadge(status) {
 function aliasText(aliases) {
     if (!aliases || !aliases.length) return null
     return aliases.map(a => a.Alias).filter(Boolean).join(', ')
+}
+
+// ── Units ──────────────────────────────────────────────────────────────────────
+const unitSearch = ref('')
+
+const filteredUnits = computed(() => {
+    const q = unitSearch.value.toLowerCase()
+    if (!q) return props.units
+    return props.units.filter(u =>
+        u.name.toLowerCase().includes(q) ||
+        (u.symbol ?? '').toLowerCase().includes(q) ||
+        (u.formal_name ?? '').toLowerCase().includes(q) ||
+        (u.uqc ?? '').toLowerCase().includes(q)
+    )
+})
+
+const unitModal     = ref(null)
+const isEditingUnit = computed(() => unitModal.value && unitModal.value !== 'create')
+
+const unitForm = useForm({
+    name:           '',
+    formal_name:    '',
+    decimal_places: 0,
+    uqc:            '',
+})
+
+function openCreateUnit() {
+    unitForm.reset()
+    unitForm.clearErrors()
+    unitModal.value = 'create'
+}
+
+function openEditUnit(unit) {
+    unitForm.name           = unit.name
+    unitForm.formal_name    = unit.formal_name ?? ''
+    unitForm.decimal_places = unit.decimal_places ?? 0
+    unitForm.uqc            = unit.uqc ?? ''
+    unitForm.clearErrors()
+    unitModal.value = unit
+}
+
+function closeUnitModal() {
+    unitModal.value = null
+    unitForm.reset()
+}
+
+function submitUnit() {
+    if (!isEditingUnit.value) {
+        unitForm.post(route('tally.units.store', { tenant: props.tenant.id }), {
+            onSuccess: () => closeUnitModal(),
+        })
+    } else {
+        unitForm.put(route('tally.units.update', { tenant: props.tenant.id, unit: unitModal.value.id }), {
+            onSuccess: () => closeUnitModal(),
+        })
+    }
+}
+
+function destroyUnit(unit) {
+    const msg = unit.tally_id
+        ? `Mark "${unit.name}" inactive and queue deletion in Tally?`
+        : `Delete "${unit.name}"? It was never synced to Tally.`
+    if (!confirm(msg)) return
+    router.delete(route('tally.units.destroy', { tenant: props.tenant.id, unit: unit.id }))
 }
 
 // ── Stock Group CRUD ───────────────────────────────────────────────────────────
@@ -247,7 +313,7 @@ function destroyCat(cat) {
                 <div>
                     <h1 class="text-xl font-semibold text-gray-900">Stock Masters</h1>
                     <p class="text-sm text-gray-500 mt-0.5">
-                        {{ stockGroups.length }} groups · {{ stockCategories.length }} categories · {{ godowns.length }} godowns
+                        {{ stockGroups.length }} groups · {{ stockCategories.length }} categories · {{ godowns.length }} godowns · {{ units.length }} units
                     </p>
                 </div>
                 <div class="flex items-center gap-4">
@@ -265,6 +331,11 @@ function destroyCat(cat) {
                             @click="openCreateGodown"
                             class="inline-flex items-center rounded-lg bg-violet-600 px-3 py-2 text-sm font-medium text-white hover:bg-violet-700 transition">
                         + New Godown
+                    </button>
+                    <button v-if="canManage && activeTab === 'units'"
+                            @click="openCreateUnit"
+                            class="inline-flex items-center rounded-lg bg-violet-600 px-3 py-2 text-sm font-medium text-white hover:bg-violet-700 transition">
+                        + New Unit
                     </button>
                     <Link :href="route('tally.stock-items.index', { tenant: tenant.id })"
                           class="text-sm text-violet-600 hover:text-violet-800 font-medium">
@@ -304,7 +375,8 @@ function destroyCat(cat) {
                               :class="activeTab === tab.key ? 'bg-violet-100 text-violet-700' : 'bg-gray-100 text-gray-500'">
                             {{ tab.key === 'stockGroups' ? stockGroups.length
                                : tab.key === 'stockCategories' ? stockCategories.length
-                               : godowns.length }}
+                               : tab.key === 'godowns' ? godowns.length
+                               : units.length }}
                         </span>
                     </button>
                 </div>
@@ -452,6 +524,65 @@ function destroyCat(cat) {
                         </div>
 
                         <p v-if="!filteredGodowns.length" class="text-center text-gray-400 py-12 text-sm">No godowns found.</p>
+                    </div>
+                </template>
+
+                <!-- ── Units tab ── -->
+                <template v-if="activeTab === 'units'">
+                    <div class="flex items-center gap-3">
+                        <input v-model="unitSearch" type="text" placeholder="Search units…"
+                               class="w-64 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent" />
+                        <span class="text-sm text-gray-400">{{ filteredUnits.length }} result{{ filteredUnits.length !== 1 ? 's' : '' }}</span>
+                    </div>
+
+                    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                        <div class="grid grid-cols-12 px-6 py-3 bg-gray-50 border-b border-gray-100 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                            <div class="col-span-2">Symbol</div>
+                            <div class="col-span-3">Name</div>
+                            <div class="col-span-2">Formal Name</div>
+                            <div class="col-span-1 text-center">Decimals</div>
+                            <div class="col-span-1 text-center">Status</div>
+                            <div class="col-span-1 text-center">Tally</div>
+                            <div class="col-span-1">Last Synced</div>
+                            <div class="col-span-1 text-right" v-if="canManage">Actions</div>
+                        </div>
+
+                        <div v-for="unit in filteredUnits" :key="unit.id"
+                             class="grid grid-cols-12 items-center px-6 py-4 border-b border-gray-50 last:border-0 hover:bg-gray-50/60 transition">
+                            <div class="col-span-2">
+                                <span class="font-mono text-sm font-medium text-gray-900">{{ unit.symbol || '—' }}</span>
+                            </div>
+                            <div class="col-span-3">
+                                <p class="text-sm font-medium text-gray-900">{{ unit.name }}</p>
+                                <p class="text-xs text-gray-400 mt-0.5">
+                                    <span v-if="!unit.is_simple_unit" class="text-amber-600 font-medium">Compound · </span>
+                                    <span v-if="unit.uqc">{{ unit.uqc }}</span>
+                                </p>
+                            </div>
+                            <div class="col-span-2 text-sm text-gray-500">{{ unit.formal_name || '—' }}</div>
+                            <div class="col-span-1 text-center text-sm text-gray-500">{{ unit.decimal_places ?? 0 }}</div>
+                            <div class="col-span-1 text-center">
+                                <span :class="unit.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'"
+                                      class="text-xs px-2 py-0.5 rounded-full font-medium">
+                                    {{ unit.is_active ? 'Active' : 'Inactive' }}
+                                </span>
+                            </div>
+                            <div class="col-span-1 text-center">
+                                <span :class="syncBadge(unit.sync_status).cls"
+                                      class="text-xs px-2 py-0.5 rounded-full font-medium">
+                                    {{ syncBadge(unit.sync_status).label }}
+                                </span>
+                            </div>
+                            <div class="col-span-1 text-xs text-gray-400">{{ formatDate(unit.last_synced_at) }}</div>
+                            <div class="col-span-1 text-right" v-if="canManage">
+                                <button @click="openEditUnit(unit)"
+                                        class="text-xs text-violet-600 hover:text-violet-800 font-medium">Edit</button>
+                                <button @click="destroyUnit(unit)"
+                                        class="text-xs text-red-500 hover:text-red-700 font-medium ml-2">Del</button>
+                            </div>
+                        </div>
+
+                        <p v-if="!filteredUnits.length" class="text-center text-gray-400 py-12 text-sm">No units found.</p>
                     </div>
                 </template>
 
@@ -628,6 +759,66 @@ function destroyCat(cat) {
                             {{ isEditingGodown ? 'Update' : 'Create' }}
                         </button>
                         <button type="button" @click="closeGodownModal"
+                                class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 transition">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </Teleport>
+
+    <!-- Unit slide-over -->
+    <Teleport to="body">
+        <div v-if="unitModal !== null" class="fixed inset-0 z-40 flex justify-end">
+            <div class="absolute inset-0 bg-black/30" @click="closeUnitModal" />
+            <div class="relative z-50 w-full max-w-lg bg-white shadow-xl flex flex-col">
+                <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-base font-semibold text-gray-900">
+                        {{ isEditingUnit ? 'Edit Unit' : 'New Unit' }}
+                    </h2>
+                    <button @click="closeUnitModal" class="text-gray-400 hover:text-gray-600 text-lg leading-none">✕</button>
+                </div>
+                <form @submit.prevent="submitUnit" class="flex-1 overflow-y-auto divide-y divide-gray-100">
+                    <div class="tally-section-header">Unit Definition</div>
+
+                    <div class="tally-row">
+                        <span class="tally-label">Name / Symbol <span class="text-red-500">*</span></span>
+                        <div class="tally-input">
+                            <input v-model="unitForm.name" type="text" placeholder="e.g. PCS" class="tally-field" />
+                            <p class="mt-0.5 text-xs text-gray-400">Name and symbol are always the same in Tally.</p>
+                            <p v-if="unitForm.errors.name" class="mt-0.5 text-xs text-red-500">{{ unitForm.errors.name }}</p>
+                        </div>
+                    </div>
+
+                    <div class="tally-row">
+                        <span class="tally-label">Formal Name</span>
+                        <div class="tally-input">
+                            <input v-model="unitForm.formal_name" type="text" placeholder="e.g. Pieces" class="tally-field" />
+                            <p v-if="unitForm.errors.formal_name" class="mt-0.5 text-xs text-red-500">{{ unitForm.errors.formal_name }}</p>
+                        </div>
+                    </div>
+
+                    <div class="tally-row">
+                        <span class="tally-label">Decimal Places</span>
+                        <div class="tally-input">
+                            <input v-model.number="unitForm.decimal_places" type="number" min="0" max="9" class="tally-field" />
+                        </div>
+                    </div>
+
+                    <div class="tally-row">
+                        <span class="tally-label">UQC</span>
+                        <div class="tally-input">
+                            <input v-model="unitForm.uqc" type="text" placeholder="e.g. PCS-PIECES" class="tally-field" />
+                        </div>
+                    </div>
+
+                    <div class="flex gap-3 px-4 py-4">
+                        <button type="submit" :disabled="unitForm.processing"
+                                class="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 transition disabled:opacity-50">
+                            {{ isEditingUnit ? 'Update' : 'Create' }}
+                        </button>
+                        <button type="button" @click="closeUnitModal"
                                 class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 transition">
                             Cancel
                         </button>

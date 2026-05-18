@@ -114,8 +114,9 @@ class TallyDataController extends Controller
 
     public function stockMasters(Tenant $tenant)
     {
-        $sgMap = $this->queueMap($tenant->id, TallyStockGroup::class);
-        $scMap = $this->queueMap($tenant->id, TallyStockCategory::class);
+        $sgMap  = $this->queueMap($tenant->id, TallyStockGroup::class);
+        $scMap  = $this->queueMap($tenant->id, TallyStockCategory::class);
+        $unitMap = $this->queueMap($tenant->id, TallyUnit::class);
         return inertia('Tally/StockMasters', [
             'tenant'          => $tenant,
             'stockGroups'     => $this->addSyncStatus(
@@ -138,6 +139,12 @@ class TallyDataController extends Controller
             'godowns'         => TallyGodown::where('tenant_id', $tenant->id)
                 ->orderBy('name')
                 ->get(['id', 'tally_id', 'name', 'under', 'guid', 'has_no_space', 'has_no_stock', 'is_external', 'is_internal', 'is_active', 'last_synced_at']),
+            'units'           => $this->addSyncStatus(
+                TallyUnit::where('tenant_id', $tenant->id)
+                    ->orderBy('name')
+                    ->get(['id', 'tally_id', 'name', 'symbol', 'formal_name', 'original_name', 'decimal_places', 'uqc', 'is_simple_unit', 'conversion', 'is_active', 'last_synced_at']),
+                $unitMap
+            ),
         ]);
     }
 
