@@ -110,8 +110,8 @@ const MODE_HINT   = {
         </div>
     </div>
 
-    <!-- ── PARTY & SUPPLY ────────────────────────────────────────────────────── -->
-    <div class="grid grid-cols-2 gap-3">
+    <!-- ── PARTY & SUPPLY (item mode only — accounting/voucher modes use ledger lines) -->
+    <div v-if="mode === 'item'" class="grid grid-cols-2 gap-3">
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">
                 Party A/c Name <span class="text-red-500">*</span>

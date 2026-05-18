@@ -166,6 +166,7 @@ export function useInvoiceVoucherForm(props, config = {}) {
 
     // ── Party auto-fill (Tally-style: party select → populate all buyer fields) ─
     function onPartyChange(form) {
+        if (mode.value !== 'item') return
         const m = ledgerMap.value[form.party_name]
         if (!m) return
 
