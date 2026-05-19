@@ -10,7 +10,6 @@ const props = defineProps({
 })
 
 const canManage = hasPermission('integrations.manage')
-
 const search = ref('')
 
 const filtered = computed(() => {
@@ -39,6 +38,33 @@ function aliasText(aliases) {
     return aliases.map(a => a.Alias).filter(Boolean).join(', ')
 }
 
+// ── Helpers for parsing Tally-format arrays ────────────────────────────────────
+function parseGSTDetails(raw) {
+    return (raw || []).map(g => {
+        const rates = g.StatewiseDetails?.[0]?.RateDetails || []
+        return {
+            applicable_from:   g.ApplicableFrom || '',
+            taxability:        g.Taxability || '',
+            source_of_details: g.SourceOfDetails || 'As per Company/Stock Group',
+            is_ineligible_itc: g.IsIneligibleITC === 'Yes',
+            is_reverse_charge: g.IsReverseChargeApplicable === 'Yes',
+            is_non_gst:        g.IsNonGSTGoods === 'Yes',
+            cgst_rate:         rates.find(r => r.DutyHead === 'CGST')?.GSTRate ?? 0,
+            sgst_rate:         rates.find(r => r.DutyHead === 'SGST/UTGST')?.GSTRate ?? 0,
+            igst_rate:         rates.find(r => r.DutyHead === 'IGST')?.GSTRate ?? 0,
+        }
+    })
+}
+
+function parseHSNDetails(raw) {
+    return (raw || []).map(h => ({
+        applicable_from:   h.ApplicableFrom || '',
+        hsn_code:          h.HSNCode || '',
+        hsn_description:   h.HSNDescription || '',
+        source_of_details: h.SourceOfDetails || 'As per Company/Stock Group',
+    }))
+}
+
 // ── CRUD ──────────────────────────────────────────────────────────────────────
 const modal     = ref(null)
 const isEditing = computed(() => modal.value && modal.value !== 'create')
@@ -46,15 +72,29 @@ const isEditing = computed(() => modal.value && modal.value !== 'create')
 const form = useForm({
     name: '', parent_name: '', aliases: [],
     costing_method: '', valuation_method: '',
+    // Behaviour
     is_batch_wise_on: false, is_perishable_on: false, is_addable: false,
+    has_mfg_date: false, allow_expired_items: false,
+    ignore_batches: false, ignore_godowns: false,
+    ignore_phys_diff: false, ignore_neg_stock: false,
+    treat_sales_as_mfg: false, treat_purch_consumed: false, treat_rejects_scrap: false,
+    // UOM
+    denominator: 1, conversion: 0,
+    // Complex arrays (simplified form format)
+    gst_details: [],
+    hsn_details: [],
 })
 
 const parentOptions = computed(() =>
     props.stockGroups.filter(g => g.is_active && g.id !== modal.value?.id).map(g => g.name)
 )
 
-function addAlias()     { form.aliases.push({ Alias: '' }) }
-function removeAlias(i) { form.aliases.splice(i, 1) }
+function addAlias()        { form.aliases.push({ Alias: '' }) }
+function removeAlias(i)    { form.aliases.splice(i, 1) }
+function addGSTEntry()     { form.gst_details.push({ applicable_from: '', taxability: '', source_of_details: 'As per Company/Stock Group', is_ineligible_itc: false, is_reverse_charge: false, is_non_gst: false, cgst_rate: 0, sgst_rate: 0, igst_rate: 0 }) }
+function removeGST(i)      { form.gst_details.splice(i, 1) }
+function addHSNEntry()     { form.hsn_details.push({ applicable_from: '', hsn_code: '', hsn_description: '', source_of_details: 'As per Company/Stock Group' }) }
+function removeHSN(i)      { form.hsn_details.splice(i, 1) }
 
 function openCreate() {
     form.reset()
@@ -63,14 +103,27 @@ function openCreate() {
 }
 
 function openEdit(group) {
-    form.name             = group.name
-    form.parent_name      = group.parent_name ?? ''
-    form.aliases          = group.aliases ? JSON.parse(JSON.stringify(group.aliases)) : []
-    form.costing_method   = group.costing_method ?? ''
-    form.valuation_method = group.valuation_method ?? ''
-    form.is_batch_wise_on = !!group.is_batch_wise_on
-    form.is_perishable_on = !!group.is_perishable_on
-    form.is_addable       = !!group.is_addable
+    form.name              = group.name
+    form.parent_name       = group.parent_name ?? ''
+    form.aliases           = group.aliases ? JSON.parse(JSON.stringify(group.aliases)) : []
+    form.costing_method    = group.costing_method ?? ''
+    form.valuation_method  = group.valuation_method ?? ''
+    form.is_batch_wise_on  = !!group.is_batch_wise_on
+    form.is_perishable_on  = !!group.is_perishable_on
+    form.is_addable        = !!group.is_addable
+    form.has_mfg_date      = !!group.has_mfg_date
+    form.allow_expired_items = !!group.allow_expired_items
+    form.ignore_batches    = !!group.ignore_batches
+    form.ignore_godowns    = !!group.ignore_godowns
+    form.ignore_phys_diff  = !!group.ignore_phys_diff
+    form.ignore_neg_stock  = !!group.ignore_neg_stock
+    form.treat_sales_as_mfg    = !!group.treat_sales_as_mfg
+    form.treat_purch_consumed  = !!group.treat_purch_consumed
+    form.treat_rejects_scrap   = !!group.treat_rejects_scrap
+    form.denominator       = group.denominator ?? 1
+    form.conversion        = group.conversion ?? 0
+    form.gst_details       = parseGSTDetails(group.gst_details)
+    form.hsn_details       = parseHSNDetails(group.hsn_details)
     form.clearErrors()
     modal.value = group
 }
@@ -191,14 +244,17 @@ function destroy(group) {
     <Teleport to="body">
         <div v-if="modal !== null" class="fixed inset-0 z-40 flex justify-end">
             <div class="absolute inset-0 bg-black/30" @click="closeModal" />
-            <div class="relative z-50 w-full max-w-lg bg-white shadow-xl flex flex-col">
+            <div class="relative z-50 w-full max-w-2xl bg-white shadow-xl flex flex-col">
                 <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
                     <h2 class="text-base font-semibold text-gray-900">
                         {{ isEditing ? 'Edit Stock Group' : 'New Stock Group' }}
                     </h2>
                     <button @click="closeModal" class="text-gray-400 hover:text-gray-600 text-lg leading-none">✕</button>
                 </div>
+
                 <form @submit.prevent="submit" class="flex-1 overflow-y-auto divide-y divide-gray-100">
+
+                    <!-- Basic Information -->
                     <div class="tally-section-header">Basic Information</div>
 
                     <div class="tally-row">
@@ -218,6 +274,7 @@ function destroy(group) {
                             </select>
                         </div>
                     </div>
+
                     <div class="tally-row">
                         <span class="tally-label">Costing Method</span>
                         <select v-model="form.costing_method" class="tally-input tally-field">
@@ -229,6 +286,7 @@ function destroy(group) {
                             <option>Standard Cost</option>
                         </select>
                     </div>
+
                     <div class="tally-row">
                         <span class="tally-label">Valuation Method</span>
                         <select v-model="form.valuation_method" class="tally-input tally-field">
@@ -241,6 +299,20 @@ function destroy(group) {
                             <option>At Zero Price</option>
                         </select>
                     </div>
+
+                    <div class="tally-row">
+                        <span class="tally-label">Denominator</span>
+                        <input v-model.number="form.denominator" type="number" min="0" class="tally-input tally-field" />
+                    </div>
+
+                    <div class="tally-row">
+                        <span class="tally-label">Conversion</span>
+                        <input v-model.number="form.conversion" type="number" min="0" step="0.0001" class="tally-input tally-field" />
+                    </div>
+
+                    <!-- Inventory Behaviour -->
+                    <div class="tally-section-header">Inventory Behaviour</div>
+
                     <div class="tally-row">
                         <span class="tally-label">Batch-wise</span>
                         <label class="tally-input flex items-center gap-2 cursor-pointer">
@@ -248,6 +320,7 @@ function destroy(group) {
                             <span class="text-sm text-gray-600">Track batches / lots</span>
                         </label>
                     </div>
+
                     <div class="tally-row">
                         <span class="tally-label">Perishable</span>
                         <label class="tally-input flex items-center gap-2 cursor-pointer">
@@ -255,6 +328,23 @@ function destroy(group) {
                             <span class="text-sm text-gray-600">Items have expiry date</span>
                         </label>
                     </div>
+
+                    <div class="tally-row">
+                        <span class="tally-label">Track Mfg. Date</span>
+                        <label class="tally-input flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" v-model="form.has_mfg_date" class="rounded border-gray-300 text-violet-600" />
+                            <span class="text-sm text-gray-600">Track manufacturing date</span>
+                        </label>
+                    </div>
+
+                    <div class="tally-row">
+                        <span class="tally-label">Allow Expired</span>
+                        <label class="tally-input flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" v-model="form.allow_expired_items" class="rounded border-gray-300 text-violet-600" />
+                            <span class="text-sm text-gray-600">Allow use of expired items</span>
+                        </label>
+                    </div>
+
                     <div class="tally-row">
                         <span class="tally-label">Add Quantities</span>
                         <label class="tally-input flex items-center gap-2 cursor-pointer">
@@ -262,6 +352,175 @@ function destroy(group) {
                             <span class="text-sm text-gray-600">Quantities of sub-groups are added</span>
                         </label>
                     </div>
+
+                    <div class="tally-row">
+                        <span class="tally-label">Ignore Batches</span>
+                        <label class="tally-input flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" v-model="form.ignore_batches" class="rounded border-gray-300 text-violet-600" />
+                            <span class="text-sm text-gray-600">Ignore batch differences</span>
+                        </label>
+                    </div>
+
+                    <div class="tally-row">
+                        <span class="tally-label">Ignore Godowns</span>
+                        <label class="tally-input flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" v-model="form.ignore_godowns" class="rounded border-gray-300 text-violet-600" />
+                            <span class="text-sm text-gray-600">Ignore godown differences</span>
+                        </label>
+                    </div>
+
+                    <div class="tally-row">
+                        <span class="tally-label">Ignore Phys. Diff.</span>
+                        <label class="tally-input flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" v-model="form.ignore_phys_diff" class="rounded border-gray-300 text-violet-600" />
+                            <span class="text-sm text-gray-600">Ignore physical differences</span>
+                        </label>
+                    </div>
+
+                    <div class="tally-row">
+                        <span class="tally-label">Ignore Neg. Stock</span>
+                        <label class="tally-input flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" v-model="form.ignore_neg_stock" class="rounded border-gray-300 text-violet-600" />
+                            <span class="text-sm text-gray-600">Ignore negative stock warnings</span>
+                        </label>
+                    </div>
+
+                    <div class="tally-row">
+                        <span class="tally-label">Sales = Mfg.</span>
+                        <label class="tally-input flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" v-model="form.treat_sales_as_mfg" class="rounded border-gray-300 text-violet-600" />
+                            <span class="text-sm text-gray-600">Treat sales as manufactured</span>
+                        </label>
+                    </div>
+
+                    <div class="tally-row">
+                        <span class="tally-label">Purchases = Consumed</span>
+                        <label class="tally-input flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" v-model="form.treat_purch_consumed" class="rounded border-gray-300 text-violet-600" />
+                            <span class="text-sm text-gray-600">Treat purchases as consumed</span>
+                        </label>
+                    </div>
+
+                    <div class="tally-row">
+                        <span class="tally-label">Rejects = Scrap</span>
+                        <label class="tally-input flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" v-model="form.treat_rejects_scrap" class="rounded border-gray-300 text-violet-600" />
+                            <span class="text-sm text-gray-600">Treat rejects as scrap</span>
+                        </label>
+                    </div>
+
+                    <!-- HSN Details -->
+                    <div class="tally-section-header flex items-center justify-between pr-4">
+                        <span>HSN Details</span>
+                        <button type="button" @click="addHSNEntry" class="text-xs text-violet-600 hover:text-violet-800 font-medium">+ Add</button>
+                    </div>
+
+                    <div v-if="!form.hsn_details.length" class="px-4 py-2 text-xs text-gray-400">No HSN entries.</div>
+
+                    <div v-for="(h, i) in form.hsn_details" :key="i" class="px-4 py-3 space-y-2 border-b border-gray-100 last:border-0">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-gray-500">Entry {{ i + 1 }}</span>
+                            <button type="button" @click="removeHSN(i)" class="text-xs text-red-400 hover:text-red-600">Remove</button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="text-xs text-gray-500">Applicable From</label>
+                                <input v-model="h.applicable_from" type="text" placeholder="YYYYMMDD" class="tally-field border border-gray-200 rounded px-2 py-1 w-full text-xs" />
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500">Source</label>
+                                <select v-model="h.source_of_details" class="tally-field border border-gray-200 rounded px-2 py-1 w-full text-xs">
+                                    <option>As per Company/Stock Group</option>
+                                    <option>Specify Details Here</option>
+                                </select>
+                            </div>
+                        </div>
+                        <template v-if="h.source_of_details === 'Specify Details Here'">
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="text-xs text-gray-500">HSN Code</label>
+                                    <input v-model="h.hsn_code" type="text" class="tally-field border border-gray-200 rounded px-2 py-1 w-full text-xs" />
+                                </div>
+                                <div>
+                                    <label class="text-xs text-gray-500">HSN Description</label>
+                                    <input v-model="h.hsn_description" type="text" class="tally-field border border-gray-200 rounded px-2 py-1 w-full text-xs" />
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- GST Details -->
+                    <div class="tally-section-header flex items-center justify-between pr-4">
+                        <span>GST Details</span>
+                        <button type="button" @click="addGSTEntry" class="text-xs text-violet-600 hover:text-violet-800 font-medium">+ Add</button>
+                    </div>
+
+                    <div v-if="!form.gst_details.length" class="px-4 py-2 text-xs text-gray-400">No GST entries.</div>
+
+                    <div v-for="(g, i) in form.gst_details" :key="i" class="px-4 py-3 space-y-2 border-b border-gray-100 last:border-0">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-gray-500">Entry {{ i + 1 }}</span>
+                            <button type="button" @click="removeGST(i)" class="text-xs text-red-400 hover:text-red-600">Remove</button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="text-xs text-gray-500">Applicable From</label>
+                                <input v-model="g.applicable_from" type="text" placeholder="YYYYMMDD" class="tally-field border border-gray-200 rounded px-2 py-1 w-full text-xs" />
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500">Source</label>
+                                <select v-model="g.source_of_details" class="tally-field border border-gray-200 rounded px-2 py-1 w-full text-xs">
+                                    <option>As per Company/Stock Group</option>
+                                    <option>Specify Details Here</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="text-xs text-gray-500">Taxability</label>
+                                <select v-model="g.taxability" class="tally-field border border-gray-200 rounded px-2 py-1 w-full text-xs">
+                                    <option value="">— As per group —</option>
+                                    <option>Taxable</option>
+                                    <option>Exempt</option>
+                                    <option>Nil Rated</option>
+                                    <option>Non-GST</option>
+                                </select>
+                            </div>
+                            <div class="flex flex-col gap-1 pt-1">
+                                <label class="flex items-center gap-1.5 text-xs text-gray-600 cursor-pointer">
+                                    <input type="checkbox" v-model="g.is_ineligible_itc" class="rounded border-gray-300 text-violet-600" />
+                                    Ineligible ITC
+                                </label>
+                                <label class="flex items-center gap-1.5 text-xs text-gray-600 cursor-pointer">
+                                    <input type="checkbox" v-model="g.is_reverse_charge" class="rounded border-gray-300 text-violet-600" />
+                                    Reverse Charge
+                                </label>
+                                <label class="flex items-center gap-1.5 text-xs text-gray-600 cursor-pointer">
+                                    <input type="checkbox" v-model="g.is_non_gst" class="rounded border-gray-300 text-violet-600" />
+                                    Non-GST Goods
+                                </label>
+                            </div>
+                        </div>
+                        <template v-if="g.source_of_details === 'Specify Details Here'">
+                            <div class="grid grid-cols-3 gap-2">
+                                <div>
+                                    <label class="text-xs text-gray-500">CGST %</label>
+                                    <input v-model.number="g.cgst_rate" type="number" min="0" step="0.01" class="tally-field border border-gray-200 rounded px-2 py-1 w-full text-xs" />
+                                </div>
+                                <div>
+                                    <label class="text-xs text-gray-500">SGST/UTGST %</label>
+                                    <input v-model.number="g.sgst_rate" type="number" min="0" step="0.01" class="tally-field border border-gray-200 rounded px-2 py-1 w-full text-xs" />
+                                </div>
+                                <div>
+                                    <label class="text-xs text-gray-500">IGST %</label>
+                                    <input v-model.number="g.igst_rate" type="number" min="0" step="0.01" class="tally-field border border-gray-200 rounded px-2 py-1 w-full text-xs" />
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- Aliases -->
+                    <div class="tally-section-header">Aliases</div>
 
                     <div class="tally-row items-start">
                         <span class="tally-label pt-2.5">Aliases</span>
@@ -275,6 +534,7 @@ function destroy(group) {
                         </div>
                     </div>
 
+                    <!-- Actions -->
                     <div class="flex gap-3 px-4 py-4">
                         <button type="submit" :disabled="form.processing"
                                 class="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 transition disabled:opacity-50">
@@ -285,6 +545,7 @@ function destroy(group) {
                             Cancel
                         </button>
                     </div>
+
                 </form>
             </div>
         </div>

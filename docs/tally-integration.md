@@ -251,6 +251,10 @@ All account masters — customers, vendors, bank accounts, tax ledgers, expense 
 
 > **Column renames (2026-05-18):** `gst_type` → `gst_type_ledger`, `is_cost_centre_applicable` → `is_cost_centres_on`. The old `gst_type` column was mapped to a non-existent payload field and was never populated.
 
+> **StockGroups.vue fully aligned with inbound payload (2026-05-19):** Added all missing fields to the CRUD form and controller — `HasMfgDate`, `AllowUseOfExpiredItems`, `IgnoreBatches`, `IgnoreGodowns`, `IgnorePhysicalDifference`, `IgnoreNegativeStock`, `TreatSalesAsManufactured`, `TreatPurchasesAsConsumed`, `TreatRejectsAsScrap`, `Denominator`, `Conversion`, `GSTDetails`, `HSNDetails`. Form uses a simplified GST/HSN format; `buildGSTDetails()`/`buildHSNDetails()` in the controller transform to Tally's nested structure before saving. `parseGSTDetails()`/`parseHSNDetails()` in Vue parse back for edit. Slide-over widened to max-w-2xl.
+
+> **Outbound StockGroup + LedgerGroup payload fixed (2026-05-19):** `formatStockGroups` switched from `dropNulls` to `nullToEmpty` (so `TallyId`/`AlterID` are sent as `""` on Create instead of being dropped), key order aligned with inbound (`TallyId` first, `Name` before `Action`, `Aliases` after `Conversion`), `LanguageNames` added. `formatLedgerGroups` also switched to `nullToEmpty` for the same reason.
+
 > **Outbound ledger payload aligned with inbound (2026-05-19):** `TallyOutboundFormatter::formatLedgers` key order, presence, and sub-array order now match the Tally inbound payload exactly (verified against 42-entry Master Export). Added `LanguageNames` (derived from `ledger_name`). Removed only `IsRCMApplicable` (genuinely absent from all 42 inbound entries). Sub-array order: `LedgerAddress → BillAllocations → Aliases → BankDetails → InterestCollection → ContactDetails → GSTRegistrationDetails → TDSCategoryDetails → TCSCategoryDetails → TransferModeLimits → ChequeRanges → DeductInSameVchRules → LedMultiAddressList → LanguageNames`.
 
 #### tally_stock_items

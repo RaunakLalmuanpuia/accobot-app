@@ -8,7 +8,7 @@ class TallyOutboundFormatter
 {
     public function formatLedgerGroups(Collection $groups): array
     {
-        return $groups->map(fn ($g) => $this->dropNulls([
+        return $groups->map(fn ($g) => $this->nullToEmpty([
             'AccobotId'           => $g->id,
             'TallyId'             => $g->tally_id,
             'ERPID'               => $g->erp_id ?? '',
@@ -140,30 +140,14 @@ class TallyOutboundFormatter
 
     public function formatStockItems(Collection $items): array
     {
-        return $items->map(fn ($s) => $this->dropNulls([
-            'AccobotId'          => $s->id,
+        return $items->map(fn ($s) => $this->nullToEmpty([
             'TallyId'            => $s->tally_id,
             'Guid'               => $s->guid ?? '',
-            'AlterID'            => $s->alter_id,
-            'Action'             => $s->action,
-            // Identity
+            'AccobotId'          => $s->id,
             'Name'               => $s->name,
+            'Action'             => $s->action,
             'Description'        => $s->description     ?? '',
             'Remarks'            => $s->remarks          ?? '',
-            // Classification
-            'StockCategoryID'    => (int) ($s->stock_category_id ?? 0),
-            'Category'           => $s->category_name    ?? '',
-            'StockGroupID'       => (int) ($s->stock_group_id    ?? 0),
-            'StockGroupName'     => $s->stock_group_name ?? '',
-            // Units
-            'UnitID'             => (int) ($s->unit_id   ?? 0),
-            'Unit'               => $s->unit_name        ?? '',
-            'AlternateUnit'      => $s->alternate_unit   ?? '',
-            'Conversion'         => (float) ($s->conversion ?? 0),
-            'Denominator'        => (int) $s->denominator,
-            'ReportingUOM'       => $s->reporting_uom    ?? '',
-            'ReportingUOMDate'   => $s->reporting_uom_date ?? '',
-            // GST & Tax
             'IsGSTApplicable'    => $s->is_gst_applicable ? 'Applicable' : 'Not Applicable',
             'CalculationType'    => $s->calculation_type ?? '',
             'Taxablity'          => $s->taxability       ?? '',
@@ -172,34 +156,27 @@ class TallyOutboundFormatter
             'CGST_Rate'          => (float) $s->cgst_rate,
             'CESS_Rate'          => (float) $s->cess_rate,
             'HSNCode'            => $s->hsn_code         ?? '',
-            'HSNDesc'            => $s->hsn_desc         ?? '',
-            'TypeOfSupply'       => $s->type_of_supply   ?? '',
-            // TCS
-            'TCSApplicable'      => $s->tcs_applicable   ?? '',
-            'TCSCategory'        => $s->tcs_category     ?? '',
-            // Pricing
-            'MRPRate'            => (float) ($s->mrp_rate ?? 0),
-            'InclusiveTax'       => $this->boolStr($s->inclusive_tax),
-            'ModifyMRPRate'      => $this->boolStr($s->modify_mrp_rate),
-            'CalcOnMRP'          => $this->boolStr($s->calc_on_mrp),
-            'MRPInclOfTax'       => $this->boolStr($s->mrp_incl_of_tax),
-            'BasicRateOfExcise'  => (float) ($s->basic_rate_of_excise ?? 0),
-            // Costing / Valuation
-            'CostingMethod'      => $s->costing_method   ?? '',
-            'ValuationMethod'    => $s->valuation_method ?? '',
-            // Default Ledgers
-            'SalesLedger'        => $s->sales_ledger     ?? '',
-            'SalesLedgerRate'    => (float) ($s->sales_ledger_rate ?? 0),
-            'PurchaseLedger'     => $s->purchase_ledger  ?? '',
-            'PurchaseLedgerRate' => (float) ($s->purchase_ledger_rate ?? 0),
-            // Stock Levels
+            'StockCategoryID'    => (int) ($s->stock_category_id ?? 0),
+            'Category'           => $s->category_name    ?? '',
+            'StockGroupID'       => (int) ($s->stock_group_id    ?? 0),
+            'StockGroupName'     => $s->stock_group_name ?? '',
+            'UnitID'             => (int) ($s->unit_id   ?? 0),
+            'Unit'               => $s->unit_name        ?? '',
+            'AlternateUnit'      => $s->alternate_unit   ?? '',
+            'Conversion'         => (float) ($s->conversion ?? 0),
+            'Denominator'        => (int) $s->denominator,
             'Opening_Balance'    => (float) $s->opening_balance,
             'Opening_Rate'       => (float) $s->opening_rate,
             'Opening_Value'      => (float) $s->opening_value,
             'Closing_Balance'    => (float) $s->closing_balance,
             'Closing_Rate'       => (float) $s->closing_rate,
             'Closing_Value'      => (float) $s->closing_value,
-            // Inventory Behaviour
+            'HSNDesc'            => $s->hsn_desc         ?? '',
+            'TypeOfSupply'       => $s->type_of_supply   ?? '',
+            'CostingMethod'      => $s->costing_method   ?? '',
+            'ValuationMethod'    => $s->valuation_method ?? '',
+            'TCSApplicable'      => $s->tcs_applicable   ?? '',
+            'TCSCategory'        => $s->tcs_category     ?? '',
             'IsBatchWise'        => $this->boolStr($s->is_batch_wise),
             'IsPerishable'       => $this->boolStr($s->is_perishable),
             'HasMfgDate'         => $this->boolStr($s->has_mfg_date),
@@ -213,40 +190,47 @@ class TallyOutboundFormatter
             'TreatRejectsScrap'  => $this->boolStr($s->treat_rejects_scrap),
             'IsCostCentresOn'    => $this->boolStr($s->is_cost_centres_on),
             'IsCostTrackingOn'   => $this->boolStr($s->is_cost_tracking_on),
-            // Legacy VAT
+            'InclusiveTax'       => $this->boolStr($s->inclusive_tax),
+            'ModifyMRPRate'      => $this->boolStr($s->modify_mrp_rate),
+            'CalcOnMRP'          => $this->boolStr($s->calc_on_mrp),
+            'MRPInclOfTax'       => $this->boolStr($s->mrp_incl_of_tax),
+            'ReportingUOM'       => $s->reporting_uom    ?? '',
+            'ReportingUOMDate'   => $s->reporting_uom_date ?? '',
+            'SalesLedger'        => $s->sales_ledger     ?? '',
+            'SalesLedgerRate'    => (float) ($s->sales_ledger_rate ?? 0),
+            'BasicRateOfExcise'  => (float) ($s->basic_rate_of_excise ?? 0),
+            'PurchaseLedger'     => $s->purchase_ledger  ?? '',
+            'PurchaseLedgerRate' => (float) ($s->purchase_ledger_rate ?? 0),
             'IsEntryTaxApplicable' => $s->is_entry_tax_applicable ?? '',
             'IsRateInclusiveVAT'   => $s->is_rate_inclusive_vat   ?? '',
             'VATBaseUnit'          => $s->vat_base_unit            ?? '',
-            // Arrays
-            'PartNos'            => $s->part_nos         ?? [],
             'Aliases'            => $s->aliases          ?? [],
             'BatchAllocations'   => collect($s->batch_allocations ?? [])->map(fn ($ba) => [
                 'GodownName'     => $ba['GodownName']     ?? '',
                 'GodownID'       => (int) ($ba['GodownID'] ?? 0),
                 'BatchName'      => $ba['BatchName']      ?? '',
                 'MFDON'          => $ba['MFDON']          ?? '',
-                'ExpiryPeriod'   => $ba['ExpiryPeriod']   ?? '',
                 'OpeningBalnace' => (float) ($ba['OpeningBalnace'] ?? $ba['OpeningBalance'] ?? 0),
                 'Rate'           => (float) ($ba['Rate']   ?? 0),
                 'OpeningValue'   => (float) ($ba['OpeningValue'] ?? 0),
+                'ExpiryPeriod'   => $ba['ExpiryPeriod']   ?? '',
             ])->all(),
+            'VATDetails'         => $s->vat_details        ?? [],
             'GSTDetailsList'     => $s->gst_details_list  ?? [],
             'HSNDetailsList'     => $s->hsn_details_list  ?? [],
-            'VATDetails'         => $s->vat_details        ?? [],
+            'LanguageNames'      => [['LanguageID' => 1033, 'Names' => [['Name' => $s->name]]]],
         ]))->values()->all();
     }
 
     public function formatStockGroups(Collection $groups): array
     {
-        return $groups->map(fn ($g) => $this->dropNulls([
-            'AccobotId'               => $g->id,
+        return $groups->map(fn ($g) => $this->nullToEmpty([
             'TallyId'                 => $g->tally_id,
+            'AccobotId'               => $g->id,
             'AlterID'                 => $g->alter_id,
-            'Action'                  => $g->action,
             'Name'                    => $g->name,
+            'Action'                  => $g->action,
             'Parent'                  => $g->parent_name ?? '',
-            'Aliases'                 => $g->aliases ?? [],
-            // Inventory Behaviour
             'CostingMethod'           => $g->costing_method    ?? '',
             'ValuationMethod'         => $g->valuation_method  ?? '',
             'IsBatchWiseOn'           => $this->boolStr($g->is_batch_wise_on),
@@ -263,21 +247,24 @@ class TallyOutboundFormatter
             'IgnoreGodowns'           => $this->boolStr($g->ignore_godowns),
             'Denominator'             => (int) ($g->denominator ?? 1),
             'Conversion'              => (float) ($g->conversion ?? 0),
+            'Aliases'                 => $g->aliases ?? [],
             'GSTDetails'              => $g->gst_details  ?? [],
             'HSNDetails'              => $g->hsn_details  ?? [],
+            'LanguageNames'           => [['LanguageID' => 1033, 'Names' => [['Name' => $g->name]]]],
         ]))->values()->all();
     }
 
     public function formatStockCategories(Collection $cats): array
     {
-        return $cats->map(fn ($c) => $this->dropNulls([
-            'AccobotId' => $c->id,
+        return $cats->map(fn ($c) => $this->nullToEmpty([
             'TallyId'   => $c->tally_id,
+            'AccobotId' => $c->id,
             'AlterID'   => $c->alter_id,
-            'Action'    => $c->action,
             'Name'      => $c->name,
+            'Action'    => $c->action,
             'Parent'    => $c->parent_name ?? '',
             'Aliases'   => $c->aliases ?? [],
+            'LanguageNames' => [['LanguageID' => 1033, 'Names' => [['Name' => $c->name]]]],
         ]))->values()->all();
     }
 
@@ -341,41 +328,42 @@ class TallyOutboundFormatter
 
     public function formatGodowns(Collection $godowns): array
     {
-        return $godowns->map(fn ($g) => $this->dropNulls([
+        return $godowns->map(fn ($g) => $this->nullToEmpty([
             'AccobotId'  => $g->id,
+            'Guid'       => $g->guid       ?? '',
             'TallyId'    => $g->tally_id,
             'AlterID'    => $g->alter_id,
             'Action'     => $g->action,
-            'Guid'       => $g->guid       ?? '',
             'Name'       => $g->name,
             'Under'      => $g->under      ?? '',
-            'Aliases'    => $g->aliases    ?? [],
             'HasNoSpace' => $this->boolStr($g->has_no_space),
             'HasNoStock' => $this->boolStr($g->has_no_stock),
             'IsExternal' => $this->boolStr($g->is_external),
             'IsInternal' => $this->boolStr($g->is_internal),
             'Address'    => $g->address    ?? [],
+            'Aliases'    => $g->aliases    ?? [],
+            'LanguageNames' => [['LanguageID' => 1033, 'Names' => [['Name' => $g->name]]]],
         ]))->values()->all();
     }
 
     public function formatUnits(Collection $units): array
     {
-        return $units->map(fn ($u) => $this->dropNulls([
-            'AccobotId'            => $u->id,
-            'TallyId'              => $u->tally_id,
-            'AlterID'              => $u->alter_id,
-            'Action'               => $u->action,
-            'Guid'                 => $u->guid          ?? '',
-            'Name'                 => $u->name,
-            'Symbol'               => $u->symbol        ?? $u->name,
-            'FormalName'           => $u->formal_name   ?? '',
-            'OriginalName'         => $u->original_name ?? '',
-            'DecimalPlaces'        => (int) ($u->decimal_places ?? 0),
-            'UQC'                  => $u->uqc           ?? '',
-            'IsSimpleUnit'         => $this->boolStr($u->is_simple_unit ?? true),
-            'IsGSTExcluded'        => $u->is_gst_excluded ?? '',
-            'CONVERSION'           => (float) ($u->conversion ?? 0),
-            'ReportingUQCDetails'  => $u->reporting_uqc_details ?? [],
+        return $units->map(fn ($u) => $this->nullToEmpty([
+            'TallyId'             => $u->tally_id,
+            'Guid'                => $u->guid          ?? '',
+            'AccobotId'           => $u->id,
+            'AlterID'             => $u->alter_id,
+            'Name'                => $u->name,
+            'Symbol'              => $u->symbol        ?? $u->name,
+            'FormalName'          => $u->formal_name   ?? '',
+            'DecimalPlaces'       => (int) ($u->decimal_places ?? 0),
+            'Action'              => $u->action,
+            'UQC'                 => $u->uqc           ?? '',
+            'OriginalName'        => $u->original_name ?? '',
+            'IsGSTExcluded'       => $u->is_gst_excluded ?? '',
+            'IsSimpleUnit'        => $this->boolStr($u->is_simple_unit ?? true),
+            'CONVERSION'          => (float) ($u->conversion ?? 0),
+            'ReportingUQCDetails' => $u->reporting_uqc_details ?? [],
         ]))->values()->all();
     }
 
@@ -475,44 +463,80 @@ class TallyOutboundFormatter
 
     public function formatEmployeeGroups(Collection $groups): array
     {
-        return $groups->map(fn ($g) => $this->dropNulls([
-            'AccobotId'          => $g->id,
-            'TallyId'            => $g->tally_id,
-            'AlterID'            => $g->alter_id,
-            'Action'             => $g->action,
-            'Guid'               => $g->guid,
-            'Name'               => $g->name,
-            'Under'              => $g->under,
-            'CostCentreCategory' => $g->cost_centre_category,
-            'Aliases'            => $g->aliases ?? [],
-            'SalaryDetails'      => $g->salary_details ?? [],
+        return $groups->map(fn ($g) => $this->nullToEmpty([
+            'TallyId'          => $g->tally_id,
+            'AccobotId'        => $g->id,
+            'AlterID'          => $g->alter_id,
+            'Action'           => $g->action,
+            'Name'             => $g->name,
+            'Under'            => $g->under,
+            'CountryISDCode'   => '',
+            'EmpDisplayName'   => '',
+            'Category'         => $g->cost_centre_category,
+            'ForJobCosting'    => '',
+            'IsEmployeeGroup'  => '',
+            'SortPosition'     => '',
+            'Aliases'          => $g->aliases ?? [],
+            'SalaryDetails'    => $g->salary_details ?? [],
+            'LanguageNames'    => [['LanguageID' => 1033, 'Names' => [['Name' => $g->name]]]],
         ]))->values()->all();
     }
 
     public function formatEmployees(Collection $employees): array
     {
-        return $employees->map(fn ($e) => $this->dropNulls([
-            'AccobotId'      => $e->id,
-            'TallyId'        => $e->tally_id,
-            'AlterID'        => $e->alter_id,
-            'Action'         => $e->action,
-            'Name'           => $e->name,
-            'EmployeeNumber' => $e->employee_number,
-            'Parent'         => $e->parent,
-            'Designation'    => $e->designation,
-            'Function'       => $e->employee_function,
-            'Location'       => $e->location,
-            'JoiningDate'    => $e->date_of_joining?->format('Ymd'),
-            'ResignationDate' => $e->date_of_leaving?->format('Ymd'),
-            'DOB'            => $e->date_of_birth?->format('Ymd'),
-            'Gender'         => $e->gender,
-            'FatherName'     => $e->father_name,
-            'SpouseName'     => $e->spouse_name,
-            'ContactNumber'  => $e->contact_number,
-            'Email'          => $e->email_address,
-            'Address'        => $e->address ?? [],
-            'Aliases'        => $e->aliases ?? [],
-            'SalaryDetails'  => $e->salary_details ?? [],
+        return $employees->map(fn ($e) => $this->nullToEmpty([
+            'AccobotId'            => $e->id,
+            'Guid'                 => '',
+            'TallyId'              => $e->tally_id,
+            'AlterID'              => $e->alter_id,
+            'Name'                 => $e->name,
+            'Action'               => $e->action,
+            'Parent'               => $e->parent,
+            'JoiningDate'          => $e->date_of_joining?->format('Ymd'),
+            'ResignationDate'      => $e->date_of_leaving?->format('Ymd'),
+            'EmployeeNumber'       => $e->employee_number,
+            'Designation'          => $e->designation,
+            'Function'             => $e->employee_function,
+            'Location'             => $e->location,
+            'Gender'               => $e->gender,
+            'DOB'                  => $e->date_of_birth?->format('Ymd'),
+            'FatherName'           => $e->father_name,
+            'SpouseName'           => $e->spouse_name,
+            'ContactNumber'        => $e->contact_number,
+            'Email'                => $e->email_address,
+            'BloodGroup'           => '',
+            'PANNumber'            => '',
+            'AadharNumber'         => '',
+            'UANNumber'            => '',
+            'ESINumber'            => '',
+            'ESIDispensaryName'    => '',
+            'PFAccountNumber'      => '',
+            'FPFAccountNumber'     => '',
+            'PRAccountNumber'      => '',
+            'PFJoiningDate'        => '',
+            'BankAccountNumber'    => '',
+            'BankBranch'           => '',
+            'IFSCode'              => '',
+            'BankName'             => '',
+            'BankDetailsBankID'    => 0,
+            'PassportNumber'       => '',
+            'PassportExpiryDate'   => '',
+            'VisaNumber'           => '',
+            'VisaExpiryDate'       => '',
+            'WorkPermitNumber'     => '',
+            'CountryOfIssue'       => '',
+            'ContractStartDate'    => '',
+            'ContractExpiryDate'   => '',
+            'CountryISDCode'       => '',
+            'Category'             => '',
+            'IsEmployeeGroup'      => '',
+            'ForPayroll'           => '',
+            'ForJobCosting'        => '',
+            'Aliases'              => $e->aliases ?? [],
+            'Address'              => $e->address ?? [],
+            'SalaryDetails'        => $e->salary_details ?? [],
+            'TaxRegimeDetails'     => [],
+            'LanguageNames'        => [['LanguageID' => 1033, 'Names' => [['Name' => $e->name]]]],
         ]))->values()->all();
     }
 
@@ -535,17 +559,19 @@ class TallyOutboundFormatter
 
     public function formatAttendanceTypes(Collection $types): array
     {
-        return $types->map(fn ($t) => $this->dropNulls([
-            'AccobotId'       => $t->id,
-            'TallyId'         => $t->tally_id,
-            'AlterID'         => $t->alter_id,
-            'Action'          => $t->action,
-            'Guid'            => $t->guid,
-            'Name'            => $t->name,
-            'Under'           => $t->under,
-            'AttendanceType'  => $t->attendance_type,
-            'AttendancePeriod'=> $t->attendance_period,
-            'Aliases'         => $t->aliases ?? [],
+        return $types->map(fn ($t) => $this->nullToEmpty([
+            'TallyId'          => $t->tally_id,
+            'AccobotId'        => $t->id,
+            'AlterID'          => $t->alter_id,
+            'Action'           => $t->action,
+            'Name'             => $t->name,
+            'Under'            => $t->under,
+            'AttendanceType'   => $t->attendance_type,
+            'AttendancePeriod' => $t->attendance_period,
+            'UnitOfMeasure'    => '',
+            'ShowInReport'     => '',
+            'Aliases'          => $t->aliases ?? [],
+            'LanguageNames'    => [['LanguageID' => 1033, 'Names' => [['Name' => $t->name]]]],
         ]))->values()->all();
     }
 

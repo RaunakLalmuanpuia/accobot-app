@@ -315,21 +315,10 @@ class TallyMasterCrudController extends Controller
 
     public function stockGroupStore(Request $request, Tenant $tenant)
     {
-        $data = $request->validate([
-            'name'              => 'required|string|max:255',
-            'parent_name'       => 'nullable|string|max:255',
-            'aliases'           => 'nullable|array',
-            'aliases.*.Alias'   => 'nullable|string|max:255',
-            'costing_method'    => 'nullable|string|max:50',
-            'valuation_method'  => 'nullable|string|max:50',
-            'is_batch_wise_on'  => 'nullable|boolean',
-            'is_perishable_on'  => 'nullable|boolean',
-            'is_addable'        => 'nullable|boolean',
-        ]);
-
-        $data['is_batch_wise_on'] = $data['is_batch_wise_on'] ?? false;
-        $data['is_perishable_on'] = $data['is_perishable_on'] ?? false;
-        $data['is_addable']       = $data['is_addable']       ?? false;
+        $data = $this->validateStockGroup($request);
+        $data = $this->normaliseStockGroupBools($data);
+        $data['gst_details'] = $this->buildGSTDetails($data['gst_details'] ?? []);
+        $data['hsn_details'] = $this->buildHSNDetails($data['hsn_details'] ?? []);
 
         $record = TallyStockGroup::create(array_merge($data, [
             'tenant_id' => $tenant->id,
@@ -344,21 +333,10 @@ class TallyMasterCrudController extends Controller
     {
         abort_unless($stockGroup->tenant_id === $tenant->id, 404);
 
-        $data = $request->validate([
-            'name'              => 'required|string|max:255',
-            'parent_name'       => 'nullable|string|max:255',
-            'aliases'           => 'nullable|array',
-            'aliases.*.Alias'   => 'nullable|string|max:255',
-            'costing_method'    => 'nullable|string|max:50',
-            'valuation_method'  => 'nullable|string|max:50',
-            'is_batch_wise_on'  => 'nullable|boolean',
-            'is_perishable_on'  => 'nullable|boolean',
-            'is_addable'        => 'nullable|boolean',
-        ]);
-
-        $data['is_batch_wise_on'] = $data['is_batch_wise_on'] ?? false;
-        $data['is_perishable_on'] = $data['is_perishable_on'] ?? false;
-        $data['is_addable']       = $data['is_addable']       ?? false;
+        $data = $this->validateStockGroup($request);
+        $data = $this->normaliseStockGroupBools($data);
+        $data['gst_details'] = $this->buildGSTDetails($data['gst_details'] ?? []);
+        $data['hsn_details'] = $this->buildHSNDetails($data['hsn_details'] ?? []);
 
         $stockGroup->update($data);
 
@@ -368,6 +346,101 @@ class TallyMasterCrudController extends Controller
 
         $this->logPayload($stockGroup, 'updated');
         return back()->with('success', 'Stock group updated and queued for Tally sync.');
+    }
+
+    private function validateStockGroup(Request $request): array
+    {
+        return $request->validate([
+            'name'                            => 'required|string|max:255',
+            'parent_name'                     => 'nullable|string|max:255',
+            'aliases'                         => 'nullable|array',
+            'aliases.*.Alias'                 => 'nullable|string|max:255',
+            'costing_method'                  => 'nullable|string|max:50',
+            'valuation_method'                => 'nullable|string|max:50',
+            'is_batch_wise_on'                => 'nullable|boolean',
+            'is_perishable_on'                => 'nullable|boolean',
+            'is_addable'                      => 'nullable|boolean',
+            'has_mfg_date'                    => 'nullable|boolean',
+            'allow_expired_items'             => 'nullable|boolean',
+            'ignore_batches'                  => 'nullable|boolean',
+            'ignore_godowns'                  => 'nullable|boolean',
+            'ignore_phys_diff'                => 'nullable|boolean',
+            'ignore_neg_stock'                => 'nullable|boolean',
+            'treat_sales_as_mfg'              => 'nullable|boolean',
+            'treat_purch_consumed'            => 'nullable|boolean',
+            'treat_rejects_scrap'             => 'nullable|boolean',
+            'denominator'                     => 'nullable|integer|min:0',
+            'conversion'                      => 'nullable|numeric|min:0',
+            'gst_details'                     => 'nullable|array',
+            'gst_details.*.applicable_from'   => 'nullable|string|max:20',
+            'gst_details.*.taxability'        => 'nullable|string|max:50',
+            'gst_details.*.source_of_details' => 'nullable|string|max:100',
+            'gst_details.*.is_ineligible_itc' => 'nullable|boolean',
+            'gst_details.*.is_reverse_charge' => 'nullable|boolean',
+            'gst_details.*.is_non_gst'        => 'nullable|boolean',
+            'gst_details.*.cgst_rate'         => 'nullable|numeric|min:0',
+            'gst_details.*.sgst_rate'         => 'nullable|numeric|min:0',
+            'gst_details.*.igst_rate'         => 'nullable|numeric|min:0',
+            'hsn_details'                     => 'nullable|array',
+            'hsn_details.*.applicable_from'   => 'nullable|string|max:20',
+            'hsn_details.*.hsn_code'          => 'nullable|string|max:50',
+            'hsn_details.*.hsn_description'   => 'nullable|string|max:255',
+            'hsn_details.*.source_of_details' => 'nullable|string|max:100',
+        ]);
+    }
+
+    private function normaliseStockGroupBools(array $data): array
+    {
+        $bools = [
+            'is_batch_wise_on', 'is_perishable_on', 'is_addable',
+            'has_mfg_date', 'allow_expired_items', 'ignore_batches', 'ignore_godowns',
+            'ignore_phys_diff', 'ignore_neg_stock',
+            'treat_sales_as_mfg', 'treat_purch_consumed', 'treat_rejects_scrap',
+        ];
+        foreach ($bools as $key) {
+            $data[$key] = $data[$key] ?? false;
+        }
+        return $data;
+    }
+
+    private function buildGSTDetails(array $entries): array
+    {
+        return array_map(function (array $g): array {
+            $specify = ($g['source_of_details'] ?? '') === 'Specify Details Here';
+            $rates = [
+                ['DutyHead' => 'CGST',       'ValuationType' => 'Based on Value',      'GSTRate' => $specify ? (float)($g['cgst_rate'] ?? 0) : 0.0],
+                ['DutyHead' => 'SGST/UTGST', 'ValuationType' => 'Based on Value',      'GSTRate' => $specify ? (float)($g['sgst_rate'] ?? 0) : 0.0],
+                ['DutyHead' => 'IGST',       'ValuationType' => 'Based on Value',      'GSTRate' => $specify ? (float)($g['igst_rate'] ?? 0) : 0.0],
+                ['DutyHead' => 'Cess',       'ValuationType' => "\x04 Not Applicable", 'GSTRate' => 0.0],
+                ['DutyHead' => 'State Cess', 'ValuationType' => 'Based on Value',      'GSTRate' => 0.0],
+            ];
+            return [
+                'ApplicableFrom'           => $g['applicable_from'] ?? '',
+                'Taxability'               => $g['taxability'] ?? '',
+                'SourceOfDetails'          => $g['source_of_details'] ?? 'As per Company/Stock Group',
+                'IsReverseChargeApplicable'=> ($g['is_reverse_charge'] ?? false) ? 'Yes' : '',
+                'IsNonGSTGoods'            => ($g['is_non_gst']        ?? false) ? 'Yes' : '',
+                'IsIneligibleITC'          => ($g['is_ineligible_itc'] ?? false) ? 'Yes' : '',
+                'INCLUDEEXPFORSLABCALC'    => '',
+                'GSTCALCSLABONMRP'         => '',
+                'HSNMASTERNAME'            => '',
+                'StatewiseDetails'         => [['StateName' => 'Any', 'RateDetails' => $rates]],
+            ];
+        }, $entries);
+    }
+
+    private function buildHSNDetails(array $entries): array
+    {
+        return array_map(function (array $h): array {
+            $specify = ($h['source_of_details'] ?? '') === 'Specify Details Here';
+            return [
+                'ApplicableFrom'       => $h['applicable_from'] ?? '',
+                'HSNCode'              => $specify ? ($h['hsn_code']          ?? '') : '',
+                'HSNDescription'       => $specify ? ($h['hsn_description']   ?? '') : '',
+                'SourceOfDetails'      => $h['source_of_details'] ?? 'As per Company/Stock Group',
+                'HSNCLASSIFICATIONNAME'=> '',
+            ];
+        }, $entries);
     }
 
     public function stockGroupDestroy(Tenant $tenant, TallyStockGroup $stockGroup)
