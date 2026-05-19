@@ -86,8 +86,8 @@ class TallyVoucher extends Model
     // ── Type scopes ────────────────────────────────────────────────────────────
     public function scopeSales(Builder $q): Builder        { return $q->where('voucher_base_type', 'Sales'); }
     public function scopePurchase(Builder $q): Builder     { return $q->where('voucher_base_type', 'Purchase'); }
-    public function scopeCreditNote(Builder $q): Builder   { return $q->where('voucher_base_type', 'Credit Note'); }
-    public function scopeDebitNote(Builder $q): Builder    { return $q->where('voucher_base_type', 'Debit Note'); }
+    public function scopeCreditNote(Builder $q): Builder   { return $q->where('voucher_base_type', 'CreditNote'); }
+    public function scopeDebitNote(Builder $q): Builder    { return $q->where('voucher_base_type', 'DebitNote'); }
     public function scopeReceipt(Builder $q): Builder      { return $q->where('voucher_base_type', 'Receipt'); }
     public function scopePayment(Builder $q): Builder      { return $q->where('voucher_base_type', 'Payment'); }
     public function scopeContra(Builder $q): Builder       { return $q->where('voucher_base_type', 'Contra'); }
@@ -97,7 +97,7 @@ class TallyVoucher extends Model
 
     public function scopeInventory(Builder $q): Builder
     {
-        return $q->whereIn('voucher_base_type', ['Sales', 'Purchase', 'Credit Note', 'Debit Note']);
+        return $q->whereIn('voucher_base_type', ['Sales', 'Purchase', 'CreditNote', 'DebitNote']);
     }
 
     public function scopeAccounting(Builder $q): Builder
