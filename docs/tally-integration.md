@@ -235,7 +235,7 @@ All account masters — customers, vendors, bank accounts, tax ledgers, expense 
 | GST | gstin_number, gst_registration_type (Regular/Composition/Unregistered/Consumer), gst_applicable_from, is_gst_applicable, gst_type_ledger, is_sez_party, is_transporter, is_common_party, is_other_territory_assessee, appropriate_for, gst_registration_details (jsonb) |
 | PAN | pan_number, pan_applicable_from, name_on_pan |
 | TDS / TCS | is_tds_applicable, tds_deductee_type, is_tds_projected, is_tcs_applicable, tds_category_details (jsonb), tcs_category_details (jsonb), deduct_in_same_vch_rules (jsonb) |
-| RCM | is_rcm_applicable |
+| RCM | is_rcm_applicable (stored in DB but not sent in outbound payload — absent from Tally inbound) |
 | Legacy Tax | vat_tin_number, tax_type, used_for_tax_type, registration_number, service_category, importer_exporter_code |
 | Contact | mailing_name, mobile_number, contact_person, contact_person_email, contact_person_email_cc, contact_person_fax, contact_person_website, contact_person_mobile, contact_details (jsonb) |
 | Address | addresses (jsonb), state_name, country_name, pin_code, led_multi_address_list (jsonb) |
@@ -250,6 +250,8 @@ All account masters — customers, vendors, bank accounts, tax ledgers, expense 
 | Mapping | mapped_client_id FK → clients, mapped_vendor_id FK → vendors |
 
 > **Column renames (2026-05-18):** `gst_type` → `gst_type_ledger`, `is_cost_centre_applicable` → `is_cost_centres_on`. The old `gst_type` column was mapped to a non-existent payload field and was never populated.
+
+> **Outbound ledger payload aligned with inbound (2026-05-19):** `TallyOutboundFormatter::formatLedgers` key order, presence, and sub-array order now match the Tally inbound payload exactly (verified against 42-entry Master Export). Added `LanguageNames` (derived from `ledger_name`). Removed only `IsRCMApplicable` (genuinely absent from all 42 inbound entries). Sub-array order: `LedgerAddress → BillAllocations → Aliases → BankDetails → InterestCollection → ContactDetails → GSTRegistrationDetails → TDSCategoryDetails → TCSCategoryDetails → TransferModeLimits → ChequeRanges → DeductInSameVchRules → LedMultiAddressList → LanguageNames`.
 
 #### tally_stock_items
 All product/inventory masters. Schema consolidated in `2026_04_19_000006_create_tally_stock_items_table`.

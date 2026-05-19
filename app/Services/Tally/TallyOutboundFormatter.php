@@ -30,9 +30,9 @@ class TallyOutboundFormatter
     public function formatLedgers(Collection $ledgers): array
     {
         return $ledgers->map(fn ($l) => $this->nullToEmpty([
-            'AccobotId'             => $l->id,
-            'TallyId'               => $l->tally_id,
             'Guid'                  => $l->guid,
+            'TallyId'               => $l->tally_id,
+            'AccobotId'             => $l->id,
             'AlterID'               => $l->alter_id,
             'LedgerName'            => $l->ledger_name,
             'Action'                => $l->action,
@@ -42,16 +42,11 @@ class TallyOutboundFormatter
             'Notes'                 => $l->notes,
             'CurrencyName'          => $l->currency_name,
             'MailingName'           => $l->mailing_name,
-            // Credit
             'CreditPeriod'          => $l->credit_period,
             'CreditLimit'           => $l->credit_limit,
             'IsCreditDaysCheckOn'   => $this->boolStr($l->is_credit_days_check_on),
             'OverrideCreditLimit'   => $this->boolStr($l->override_credit_limit),
-            // Behaviour
             'InventoryAffected'     => $l->inventory_affected,
-            'IsBillWiseOn'          => $this->boolStr($l->is_bill_wise_on),
-            'IsCostCentresOn'       => $this->boolStr($l->is_cost_centres_on),
-            'IsCostTrackingOn'      => $this->boolStr($l->is_cost_tracking_on),
             // Address
             'StateName'             => $l->state_name,
             'CountryName'           => $l->country_name,
@@ -63,14 +58,13 @@ class TallyOutboundFormatter
             'ContactPersonEmail'    => $l->contact_person_email,
             'ContactPersonEmailCC'  => $l->contact_person_email_cc,
             'ContactPersonFax'      => $l->contact_person_fax,
-            'ContactPersonWebsite'  => $l->contact_person_website,
             'ContactPersonMobile'   => $l->contact_person_mobile,
+            'ContactPersonWebsite'  => $l->contact_person_website,
             // Opening Balance
             'OpeningBalance'        => $l->opening_balance,
             'OpeningBalanceType'    => $l->opening_balance_type,
             // GST
             'GSTINNumber'           => $l->gstin_number,
-            'GSTTypeLedger'         => $l->gst_type_ledger,
             'GSTRegistrationType'   => $l->gst_registration_type,
             'GSTApplicableFrom'     => $l->gst_applicable_from,
             'IsGSTApplicable'       => $this->boolStr($l->is_gst_applicable),
@@ -78,7 +72,7 @@ class TallyOutboundFormatter
             'IsTransporter'         => $this->boolStr($l->is_transporter),
             'IsCommonParty'         => $this->boolStr($l->is_common_party),
             'IsOtherTerritoryAssessee' => $this->boolStr($l->is_other_territory_assessee),
-            'IsRCMApplicable'       => $this->boolStr($l->is_rcm_applicable),
+            'GSTTypeLedger'         => $l->gst_type_ledger,
             'AppropriateFor'        => $l->appropriate_for,
             // PAN
             'PANNumber'             => $l->pan_number,
@@ -89,22 +83,19 @@ class TallyOutboundFormatter
             'TDSDeducteeType'       => $l->tds_deductee_type,
             'IsTDSProjected'        => $this->boolStr($l->is_tds_projected),
             'IsTCSApplicable'       => $this->boolStr($l->is_tcs_applicable),
-            // Legacy tax
-            'VATTINNumber'          => $l->vat_tin_number,
-            'TaxType'               => $l->tax_type,
-            'UsedForTaxType'        => $l->used_for_tax_type,
-            'RegistrationNumber'    => $l->registration_number,
-            'ServiceCategory'       => $l->service_category,
-            'ImporterExporterCode'  => $l->importer_exporter_code,
+            // Behaviour
+            'IsBillWiseOn'          => $this->boolStr($l->is_bill_wise_on),
             // Interest
-            'TypeOfInterestOn'              => $l->type_of_interest_on,
             'IsInterestOn'                  => $this->boolStr($l->is_interest_on),
+            'TypeOfInterestOn'              => $l->type_of_interest_on,
             'InterestOnBillWise'            => $this->boolStr($l->is_interest_on_bill_wise),
             'OverrideInterest'              => $this->boolStr($l->override_interest),
             'OverrideAdvInterest'           => $this->boolStr($l->override_adv_interest),
-            'IsInterestInclLastDay'         => $this->boolStr($l->is_interest_incl_last_day),
             'InterestInclDayOfAddition'     => $this->boolStr($l->interest_incl_day_of_addition),
             'InterestInclDayOfDeduction'    => $this->boolStr($l->interest_incl_day_of_deduction),
+            'IsInterestInclLastDay'         => $this->boolStr($l->is_interest_incl_last_day),
+            'IsCostCentresOn'       => $this->boolStr($l->is_cost_centres_on),
+            'IsCostTrackingOn'      => $this->boolStr($l->is_cost_tracking_on),
             // Bank flat fields
             'BankAccountHolderName' => $l->bank_account_holder_name,
             'SwiftCode'             => $l->swift_code,
@@ -120,22 +111,30 @@ class TallyOutboundFormatter
             'IgnoreMismatchWithWarning' => $this->boolStr($l->ignore_mismatch_with_warning),
             'IgnoreTDSExempt'       => $this->boolStr($l->ignore_tds_exempt),
             'ITExemptApplicable'    => $l->it_exempt_applicable,
-            // JSONB arrays
+            // Legacy tax
+            'VATTINNumber'          => $l->vat_tin_number,
+            'TaxType'               => $l->tax_type,
+            'UsedForTaxType'        => $l->used_for_tax_type,
+            'RegistrationNumber'    => $l->registration_number,
+            'ServiceCategory'       => $l->service_category,
+            'ImporterExporterCode'  => $l->importer_exporter_code,
+            // JSONB arrays — order matches inbound
             'LedgerAddress'             => $l->addresses ?? [],
+            'BillAllocations'           => $l->bill_allocations ?? [],
             'Aliases'                   => $l->aliases ?? [],
             'BankDetails'               => $l->bank_details ?? [],
-            'BillAllocations'           => $l->bill_allocations ?? [],
-            'GSTRegistrationDetails'    => $l->gst_registration_details ?? [],
-            'ChequeRanges'              => $l->cheque_ranges ?? [],
-            'TransferModeLimits'        => $l->transfer_mode_limits ?? [],
             'InterestCollection'        => $l->interest_rate !== null
                 ? [['InterestStyle' => $l->interest_style ?? '', 'InterestRate' => (float) $l->interest_rate]]
                 : ($l->interest_collection ?? []),
+            'ContactDetails'            => $l->contact_details ?? [],
+            'GSTRegistrationDetails'    => $l->gst_registration_details ?? [],
             'TDSCategoryDetails'        => $l->tds_category_details ?? [],
             'TCSCategoryDetails'        => $l->tcs_category_details ?? [],
-            'ContactDetails'            => $l->contact_details ?? [],
+            'TransferModeLimits'        => $l->transfer_mode_limits ?? [],
+            'ChequeRanges'              => $l->cheque_ranges ?? [],
             'DeductInSameVchRules'      => $l->deduct_in_same_vch_rules ?? [],
             'LedMultiAddressList'       => $l->led_multi_address_list ?? [],
+            'LanguageNames'             => [['LanguageID' => 1033, 'Names' => [['Name' => $l->ledger_name]]]],
         ]))->values()->all();
     }
 
